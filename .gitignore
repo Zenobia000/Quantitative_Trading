@@ -1,0 +1,114 @@
+# =====================================================
+# Secrets — 絕不能 commit
+# =====================================================
+.env
+.env.local
+.env.*.local
+*.pem
+*.pfx
+*.key
+*.token
+credentials*.json
+secrets*.json
+
+# =====================================================
+# Python
+# =====================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.hypothesis/
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# =====================================================
+# Data — 大檔不進 git
+# =====================================================
+*.parquet
+*.feather
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+data/raw/
+data/processed/
+data/cache/
+backtest_platform/data/raw/
+backtest_platform/data/processed/
+
+# =====================================================
+# Claude Code — 設定保留，logs/cache 不要
+# =====================================================
+.claude/logs/
+.claude/taskmaster-data/.session-*
+.claude/taskmaster-data/*.jsonl
+.claude/context/
+.claude/coordination/
+.claude/output-styles/
+*.exe
+
+# =====================================================
+# OS
+# =====================================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# =====================================================
+# IDE
+# =====================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# =====================================================
+# Logs
+# =====================================================
+*.log
+logs/
+
+# =====================================================
+# Docker
+# =====================================================
+docker/data/
+docker/volumes/
+
+# =====================================================
+# 待釐清的版本歷史檔（可選）
+# =====================================================
+strategy/archive/

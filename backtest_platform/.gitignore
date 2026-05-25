@@ -1,0 +1,58 @@
+# Secrets
+.env
+.env.local
+*.pem
+*.pfx
+ca/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Data artifacts
+data/raw/
+data/parquet/
+data/cache/
+*.parquet
+*.duckdb
+*.sqlite
+
+# Logs
+logs/
+*.log
+
+# Backtest outputs
+backtest_results/
+reports/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Docker volumes
+docker/volumes/
