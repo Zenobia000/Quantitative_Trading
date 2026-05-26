@@ -54,6 +54,12 @@ class StubLoader:
             }
         )
 
+    def taiwan_stock_dividend(
+        self, stock_id: str, start_date: str, end_date: str
+    ) -> pd.DataFrame:
+        # No dividends in test range
+        return pd.DataFrame()
+
 
 def test_fetch_bundle_with_stub_loader_returns_valid_bundle() -> None:
     bundle = fetch_bundle(

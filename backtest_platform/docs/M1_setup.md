@@ -87,7 +87,20 @@ PYTHONPATH=src python3 -m pytest -p no:asyncio
 - [x] `src/backtest_platform/strategy/signals.py`（state machine + `compute_signals` + `evaluate_bar`）
 - [x] `src/backtest_platform/data/schemas.py`（Pydantic ETL schemas + `merged()` join helper）
 - [x] `src/backtest_platform/data/finmind_etl.py`（CLI + 可注入 loader）
-- [x] `tests/` 24 個單元測試全綠
+- [x] `src/backtest_platform/data/adjustment.py`（前復權因子計算，含 cash + 近似 stock dividend）
+- [x] `src/backtest_platform/data/db_writer.py`（TimescaleDB idempotent upsert，含 ON CONFLICT）
+- [x] `src/backtest_platform/data/universe.py`（v2.md 2.2 標的池過濾 pure function）
+- [x] `src/backtest_platform/pipeline.py`（端到端 smoke CLI：ETL → 計分 → 訊號 → 報表）
+- [x] `tests/` 44 個單元測試全綠（1 個 integration 標記）
+
+### 端到端驗證
+
+```bash
+PYTHONPATH=src python3 -m backtest_platform.pipeline run \
+    --stock-id 2330 --start 2023-01-01 --end 2024-12-31
+```
+
+實測 2023-01 ~ 2024-12 台積電：481 bars 拉取 → 421 bars 有效訊號（暖機後）→ 產出 8 buy / 8 exit / 6 reduce / 4 add 訊號，calendar 寫入 `reports/`。
 
 ## 4. 已知限制 / M2 待辦
 

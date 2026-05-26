@@ -42,6 +42,9 @@ class FinMindLike(Protocol):
     def taiwan_stock_day_trading(
         self, stock_id: str, start_date: str, end_date: str
     ) -> pd.DataFrame: ...
+    def taiwan_stock_dividend(
+        self, stock_id: str, start_date: str, end_date: str
+    ) -> pd.DataFrame: ...
 
 
 @dataclass(slots=True, frozen=True)
@@ -85,13 +88,23 @@ def fetch_bundle(
     loader: FinMindLike | None = None,
     token: str | None = None,
     rate_limit_seconds: float = 0.6,
+    apply_adjustment: bool = True,
 ) -> ETLBundle:
     """Pull OHLCV + institutional + day-trading frames for one stock.
 
     Broker chip data (top10 / gov / geo) is not in FinMind's free tier;
     columns are returned as zero placeholders so downstream scoring still
     runs. M2 will add a backfill path (TWSE / paid source) for those.
+
+    When ``apply_adjustment`` is True (default), forward-adjusts OHLC from
+    cash dividends; raw values preserved in ``raw_*`` columns and
+    ``adj_factor`` column added.
     """
+    from backtest_platform.data.adjustment import (
+        apply_adjustment as _apply_adj,
+        compute_adj_factor,
+    )
+
     loader = loader or _build_loader(token or os.environ.get("FINMIND_TOKEN"))
     s, e = start.isoformat(), end.isoformat()
 
@@ -109,6 +122,24 @@ def fetch_bundle(
     dt_raw = loader.taiwan_stock_day_trading(stock_id=stock_id, start_date=s, end_date=e)
 
     daily = _normalize_daily(daily_raw, stock_id)
+
+    if apply_adjustment and not daily.empty:
+        time.sleep(rate_limit_seconds)
+        logger.info("fetch dividends stock={} {}..{}", stock_id, s, e)
+        try:
+            div_raw = loader.taiwan_stock_dividend(stock_id=stock_id, start_date=s, end_date=e)
+            adj_factor = compute_adj_factor(daily, div_raw)
+            daily = _apply_adj(daily, adj_factor)
+            distinct_factors = adj_factor.round(6).nunique()
+            n_adjusted_bars = int((adj_factor < 1.0).sum())
+            logger.info(
+                "applied adjustment: {} distinct factor levels, {} bars adjusted",
+                distinct_factors,
+                n_adjusted_bars,
+            )
+        except Exception as exc:  # noqa: BLE001 — adjustment is best-effort
+            logger.warning("adjustment skipped due to error: {}", exc)
+
     institutional = _normalize_institutional(inst_raw, stock_id)
     broker_chips = _normalize_day_trading(dt_raw, stock_id)
     return ETLBundle(
@@ -230,7 +261,12 @@ def write_parquet(bundle: ETLBundle, root: Path) -> dict[str, Path]:
     "--output",
     type=click.Path(path_type=Path),
     default=None,
-    help="Directory to write parquet files. Omit for dry-run.",
+    help="Directory to write parquet files. Omit to skip parquet output.",
+)
+@click.option(
+    "--db / --no-db",
+    default=False,
+    help="Also upsert into TimescaleDB (uses POSTGRES_* env vars).",
 )
 @click.option(
     "--token",
@@ -238,7 +274,14 @@ def write_parquet(bundle: ETLBundle, root: Path) -> dict[str, Path]:
     default=None,
     help="FinMind API token (or set FINMIND_TOKEN env var).",
 )
-def main(stock_id: str, start: datetime, end: datetime, output: Path | None, token: str | None) -> None:
+def main(
+    stock_id: str,
+    start: datetime,
+    end: datetime,
+    output: Path | None,
+    db: bool,
+    token: str | None,
+) -> None:
     """Pull one stock's OHLCV + chip data via FinMind."""
     bundle = fetch_bundle(stock_id, start.date(), end.date(), token=token)
     logger.info(
@@ -252,8 +295,12 @@ def main(stock_id: str, start: datetime, end: datetime, output: Path | None, tok
         paths = write_parquet(bundle, output)
         for table, path in paths.items():
             logger.info("wrote {} -> {}", table, path)
-    else:
-        logger.info("dry-run complete (no --output specified)")
+    if db:
+        from backtest_platform.data.db_writer import upsert_bundle
+
+        upsert_bundle(bundle)
+    if not output and not db:
+        logger.info("dry-run complete (no --output or --db specified)")
 
 
 if __name__ == "__main__":
