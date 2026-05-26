@@ -1,165 +1,459 @@
 # 架構與設計文件 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 已實作 / M2-5 待擴充
+> **版本：** v1.3 | **更新：** 2026-05-26 | **狀態：** M1 已實作 / M2-5 待擴充
+> **v1.3 修正**：補齊 partial disclosure（Telegram / TWSE / UI / live container）、L3-A 補 live+engines 子模組、新增 M5 Target State、L3-B 改寫、補 Sequence Diagram、箭頭加 protocol、DDD 戰術 + 限界上下文 Strategic Relationship、§5.1 重畫成 C4 Deployment
 
 ---
 
 ## 第 1 部分：架構總覽
 
-### 1.1 C4 模型
+### 1.1 C4 模型（嚴格版）
 
-#### L1 系統情境圖
+#### 1.1.0 命名防呆
 
-```mermaid
-graph TB
-    User[策略研究者]
-    BT[backtest_platform]
-    FM[(FinMind API)]
-    Shio[(Shioaji API<br/>M5)]
-    XQ[XQ 終端<br/>人工對照]
-    Github[GitHub<br/>程式碼版控]
+| 術語 | 指什麼 | 勿混淆 |
+| :--- | :--- | :--- |
+| **C4 L1–L4** | 架構圖縮放層級（情境 → 容器 → 元件 → 程式碼） | ≠ `strategy/v2.md` 的 v2 L1–L4 計分 |
+| **C4 Context（L1）** | 整個軟體系統相對外界 | ≠ DDD「限界上下文」 |
+| **C4 Container（L2）** | 可獨立部署 / 執行的 runtime 單位 | ≠ Python package、≠ Clean Architecture 分層 |
+| **C4 Component（L3）** | **單一** L2 容器內的模組 | 禁止跨容器畫在同一張 L3 |
 
-    User -->|跑回測 / 看報表| BT
-    BT -->|拉日線/法人/籌碼| FM
-    BT -.->|M5 下單| Shio
-    User -.->|抽查訊號| XQ
-    User -->|git push| Github
-```
+策略四層計分請寫 **「v2 L1–L4」** 或 **「結構分 / 法人分…」**；C4 章節禁止用裸的 L1–L4。
 
-#### L2 容器圖
+#### 1.1.1 層級規則
 
-```mermaid
-graph LR
-    subgraph "外部"
-        FM[(FinMind)]
-        Shio[(Shioaji)]
-    end
+| 層級 | 英文名 | 一張圖只回答 | 方塊必須是 | 禁止 |
+| :---: | :--- | :--- | :--- | :--- |
+| **L1** | System Context | 誰在用系統？與哪些外部系統互動？ | 人、本軟體系統（**一個**邊界）、外部系統 | 內部模組、Python 檔名、GitHub 等開發工具 |
+| **L2** | Container | 系統內有哪些 **runtime**？ | Process、DB、檔案儲存、排程服務 | 把 `scoring.py` 當容器；用「資料平面」當 C4 元素 |
+| **L3** | Component | **某一個** L2 容器內部怎麼拆？ | 模組 / package（對應 repo 路徑） | 跨容器 zoom；一張圖混 ETL + 策略 + DB schema |
+| **L4** | Code | 類別 / 函式（可選） | class、function | 單體 Python 可省略，改連結 `10_class_relationships_template.md` |
 
-    subgraph "資料平面"
-        ETL[ETL CLI<br/>finmind_etl.py]
-        Parquet[Parquet 快取<br/>data/parquet/]
-        TSDB[(TimescaleDB)]
-    end
+**層級關係**：樹狀 zoom-in（父 → 子），**不是** ETL → 計分 → 回測的執行串序。
 
-    subgraph "計算平面"
-        Pipeline[Pipeline CLI<br/>pipeline.py]
-        Scoring[Strategy<br/>scoring + signals<br/>純函式]
-        Engines[Engines<br/>rqalpha/vectorbt<br/>M2+]
-        Validation[Validation<br/>PBO/WFA/MC<br/>M3+]
-    end
+#### 1.1.2 Container 清單（Modular Monolith）
 
-    subgraph "監控平面 M4+"
-        Grafana[Grafana]
-        Prefect[Prefect 排程]
-    end
+> M1 一個 Python process 跑完全部 CLI；對齊 §3.1 模組化單體決策。
 
-    FM --> ETL
-    ETL --> Parquet
-    ETL --> TSDB
-    Pipeline --> Scoring
-    Engines --> Scoring
-    Engines --> TSDB
-    Validation --> TSDB
-    Grafana --> TSDB
-    Prefect --> ETL
-    Prefect --> Engines
-    Shio -.-> Pipeline
-```
+| Container | 類型 | 技術 | 何時獨立 | L3 圖 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Application** | 應用程式 | `python -m backtest_platform.*` | M1 起 | L3-A ✅ |
+| **TimescaleDB** | 資料庫 | Docker `timescaledb:2.14` | M1 起 | L3-B（表代圖）|
+| **Parquet Cache** | 檔案儲存 | `data/parquet/` | M1 起 | 略（純檔案，無 internal component）|
+| **Streamlit UI** | UI Phase 1 | `streamlit` | M4+（虛線） | M4 補 |
+| **Prefect Worker** | 排程 | Docker Prefect 2.x | M4+（虛線） | M4 補 |
+| **Grafana** | 監控 UI | Docker Grafana | M4+（虛線） | M4 補 |
+| **Telegram Bot** | 告警通道 | `python-telegram-bot` 服務 | M4+（虛線） | M4 補 |
+| **Shioaji Executor** | 下單 wrapper | Docker（Shioaji SDK + risk wrapper） | M5（虛線） | M5 補 |
+| **FastAPI** | HTTP API | `uvicorn` | M5（虛線） | M5 補 |
+| **React Frontend** | UI Phase 2 | Node + Vite | M6+（虛線） | M6 補 |
 
-#### L3 元件圖（核心策略容器）
+- **L3 Component（非 Container）**：`strategy/scoring.py`、`data/finmind_etl.py`、`pipeline.py` ...
+- **外部系統（邊界外）**：
+  - 資料源：FinMind API、TWSE 公開資訊（下市股 / 券商分點 backup）、TEJ（M3 評估）
+  - 交易：Shioaji API（M5）
+  - 對照：XQ 終端（人工抽查）
+  - 推送：Telegram API（M4+ 告警接收方）
+  - 備份：GCS / S3（M5 災難恢復）
+  - 雲端：GCP Compute Engine（M5 託管平台）
+
+#### L1 — System Context
 
 ```mermaid
-graph TD
-    subgraph "config/"
-        Config[StrategyConfig<br/>frozen Pydantic]
+flowchart TB
+    user["策略研究者 / 運維者<br/>(Person)"]
+
+    subgraph boundary["「backtest_platform」軟體系統"]
+        sys["backtest_platform"]
     end
 
-    subgraph "data/"
-        Schemas[schemas.py<br/>ETLBundle / 3 RowModels]
-        ETLMod[finmind_etl.py<br/>fetch_bundle]
-        Adj[adjustment.py<br/>compute_adj_factor]
-        DBW[db_writer.py<br/>upsert_bundle]
-        Univ[universe.py<br/>apply_filters]
-    end
+    finmind[("FinMind API")]
+    twse[("TWSE 公開資訊<br/>下市股 / 券商分點 backup")]
+    tej[("TEJ<br/>M3 評估")]
+    xq["XQ 終端<br/>人工抽查"]
+    shioaji[("Shioaji API<br/>M5")]
+    telegram[("Telegram API<br/>M4+ 告警")]
+    gcs[("GCS / S3<br/>M5 備份")]
+    gcp["GCP Compute Engine<br/>M5 託管"]
 
-    subgraph "strategy/"
-        Ind[indicators.py<br/>RSI/KD/MACD/Swing]
-        Score[scoring.py<br/>compute_scores]
-        Sig[signals.py<br/>compute_signals<br/>+ evaluate_bar]
-    end
-
-    subgraph "pipeline.py"
-        CLI[run_pipeline<br/>+ signal_calendar<br/>+ summary_stats]
-    end
-
-    Config --> Score
-    Config --> Sig
-    Schemas --> ETLMod
-    Schemas --> DBW
-    Adj --> ETLMod
-    ETLMod --> CLI
-    Score --> Sig
-    Ind --> Score
-    Sig --> CLI
+    user -->|"CLI / Web UI<br/>看報表"| sys
+    sys -->|"HTTPS 拉日線/法人/籌碼"| finmind
+    sys -.->|"HTTPS 爬下市清單 (M2+)"| twse
+    sys -.->|"HTTPS 拉資料 (M3 if needed)"| tej
+    sys -.->|"WebSocket/HTTPS 下單 (M5)"| shioaji
+    sys -.->|"HTTPS Bot API (M4+)"| telegram
+    sys -.->|"gsutil/aws s3 backup (M5)"| gcs
+    sys -.->|"deploy on (M5)"| gcp
+    user -.->|"視覺對照訊號"| xq
 ```
+
+- **邊界內**：本 repo 實作的軟體（CLI + 函式庫 + UI + 排程 + DB），自己 deploy 的所有東西。
+- **邊界外**：所有第三方服務 / SaaS / IaaS。
+- **不含**：GitHub（版控屬開發流程，見 `01_workflow_manual.md`）、IDE、CI runner（無自動 CI runner，個人專案）。
+
+**L1 檢查**：邊界內僅一個系統節點 · 無 GitHub/IDE · 箭頭標協議+目的非 import 路徑 · 虛線 = 尚未啟用
+
+#### L2 — Container（M1 Current State）
+
+> 僅呈現 M1 已啟用 + 已規劃的 Container（虛線 = M4+/M5 尚未啟用）。M5 完整視野見 §1.1.2.5。
+
+```mermaid
+flowchart TB
+    user["策略研究者 / 運維者"]
+
+    subgraph boundary["backtest_platform"]
+        app["Application<br/>Python CLI<br/>pipeline · etl · engines · validation"]
+        parquet[("Parquet Cache<br/>data/parquet/")]
+        tsdb[("TimescaleDB")]
+        ui["Streamlit UI<br/>M4+"]
+        prefect["Prefect Worker<br/>M4+"]
+        grafana["Grafana<br/>M4+"]
+        tgbot["Telegram Bot<br/>M4+"]
+        shio_exec["Shioaji Executor<br/>M5"]
+        api["FastAPI<br/>M5"]
+    end
+
+    finmind[("FinMind API")]
+    twse[("TWSE 公開資訊")]
+    shioaji[("Shioaji API")]
+    telegram[("Telegram API")]
+    gcs[("GCS / S3")]
+
+    user -->|"shell"| app
+    user -.->|"HTTP (M4+)"| ui
+    ui -.->|"in-proc call"| app
+    app -->|"file I/O (parquet)"| parquet
+    app -->|"libpq / TCP 5432"| tsdb
+    app -->|"HTTPS"| finmind
+    app -.->|"HTTPS / scrape (M2+)"| twse
+    prefect -.->|"trigger CLI"| app
+    grafana -.->|"SQL via TCP 5432"| tsdb
+    tgbot -.->|"poll alerts table"| tsdb
+    tgbot -.->|"HTTPS Bot API"| telegram
+    app -.->|"in-proc call (M5)"| shio_exec
+    shio_exec -.->|"WebSocket"| shioaji
+    api -.->|"HTTP wrap (M5)"| app
+    app -.->|"gsutil/aws (M5 backup)"| gcs
+```
+
+| Container | 對應執行方式 | 啟用時機 | 備註 |
+| :--- | :--- | :---: | :--- |
+| **Application** | `python -m backtest_platform.pipeline` 等 | M1 | `strategy/`、`data/`、`engines/` 皆為**同進程模組** |
+| **Parquet Cache** | 本機 `data/parquet/` | M1 | 列式快取 |
+| **TimescaleDB** | `docker-compose` | M1 | 持久化時序資料 |
+| **Streamlit UI** | `streamlit run` | M4+ | Phase 1 視覺化 |
+| **Prefect Worker** | Docker | M4+ | 排程 ETL / 訊號 |
+| **Grafana** | Docker | M4+ | 監控儀表板 |
+| **Telegram Bot** | Python 常駐 | M4+ | 告警推送 |
+| **Shioaji Executor** | Docker | M5 | 含風控 wrapper |
+| **FastAPI** | `uvicorn` | M5 | HTTP API |
+
+**L2 檢查**：邊界內僅 Application + Datastore + UI + 排程/監控/告警 + Live ·  M4+/M5 用虛線 · 每條跨 Container 箭頭標 protocol · Domain/Infrastructure 分層寫 §1.3 不在 L2 subgraph
+
+#### 1.1.2.5 L2 — Container（M5 Target State，全部啟用）
+
+```mermaid
+flowchart TB
+    user["策略研究者 / 運維者"]
+
+    subgraph cloud["GCP Compute Engine"]
+        subgraph boundary["backtest_platform"]
+            app["Application"]
+            parquet[("Parquet Cache")]
+            tsdb[("TimescaleDB")]
+            ui["Streamlit UI"]
+            prefect["Prefect Worker"]
+            grafana["Grafana"]
+            tgbot["Telegram Bot"]
+            shio_exec["Shioaji Executor"]
+            api["FastAPI"]
+            react["React Frontend<br/>M6+"]
+        end
+    end
+
+    finmind[("FinMind API")]
+    twse[("TWSE 公開資訊")]
+    shioaji[("Shioaji API")]
+    telegram[("Telegram API")]
+    gcs[("GCS / S3")]
+
+    user -->|"HTTPS"| react
+    user -->|"HTTPS"| ui
+    react -->|"HTTP"| api
+    api -->|"in-proc"| app
+    ui -->|"in-proc"| app
+    app -->|"file I/O"| parquet
+    app -->|"libpq"| tsdb
+    app -->|"HTTPS"| finmind
+    app -->|"HTTPS"| twse
+    app -->|"in-proc"| shio_exec
+    shio_exec -->|"WebSocket"| shioaji
+    prefect -->|"trigger"| app
+    grafana -->|"SQL"| tsdb
+    tgbot -->|"poll"| tsdb
+    tgbot -->|"HTTPS Bot API"| telegram
+    app -->|"backup nightly"| gcs
+```
+
+**差異**：M5 沒有任何虛線 — 全部啟用、託管於 GCP Compute Engine 單 VM（M6+ 再考慮 K8s 拆分）。
+
+#### L3-A — Component（zoom: Application）
+
+> 僅展開 L2 **Application**。Clean Architecture 分層標籤供對照 §1.3，**非** C4 元素。
+> 箭頭表 **Python import dependency**（不是執行順序也不是資料流）。
+
+```mermaid
+flowchart TD
+    subgraph container["Container: Application"]
+        subgraph app_layer["Application 層"]
+            pipe["pipeline.py"]
+            subgraph engines_grp["engines/  M2+"]
+                rq["rqalpha_runner.py"]
+                vb["vectorbt_runner.py<br/>M3"]
+                mod_tw["mod_taiwan_stock/<br/>(rqalpha 自訂)"]
+            end
+            subgraph validation_grp["validation/  M3+"]
+                pbo["pbo.py"]
+                wfa["wfa.py"]
+                mc["monte_carlo.py"]
+                metrics["metrics.py"]
+            end
+            subgraph live_grp["live/  M4+ / M5"]
+                paper["paper_trader.py<br/>M4"]
+                shio["shioaji_executor.py<br/>M5"]
+            end
+        end
+        subgraph domain_layer["Domain 層"]
+            cfg["config/strategy_config.py"]
+            ind["strategy/indicators.py"]
+            score["strategy/scoring.py"]
+            sig["strategy/signals.py"]
+        end
+        subgraph infra_layer["Infrastructure 層"]
+            schemas["data/schemas.py"]
+            etl["data/finmind_etl.py"]
+            adj["data/adjustment.py"]
+            dbw["data/db_writer.py"]
+            univ["data/universe.py"]
+        end
+    end
+
+    pipe --> etl
+    pipe --> score
+    pipe --> sig
+    etl --> schemas
+    etl --> adj
+    dbw --> schemas
+    ind --> score
+    cfg --> score
+    cfg --> sig
+    score --> sig
+
+    rq -.-> sig
+    rq -.-> mod_tw
+    rq -.-> dbw
+    vb -.-> sig
+    vb -.-> dbw
+
+    pbo -.-> dbw
+    wfa -.-> dbw
+    mc -.-> dbw
+    metrics -.-> dbw
+
+    paper -.-> sig
+    paper -.-> dbw
+    paper -.-> etl
+    shio -.-> paper
+    shio -.-> sig
+```
+
+**L3-A 檢查**：
+- 標題含父 Container ✅
+- 不出現 DB 內部 table（改 §4.1 ER）✅
+- Domain 無箭頭指向 FinMind ✅（Domain 不依賴 Infrastructure）
+- 虛線 = 未實作（M2+/M3+/M4+/M5）✅
+- 同一張圖內所有元件都屬同一 L2 Container（Application）✅
+
+#### L3-B — Component（zoom: TimescaleDB）
+
+> **設計決定**：TimescaleDB 的「component」對映到 **table + extension**。
+> 完整 ER 圖（含欄位與關係）放在 §4.1 避免重複；此圖只呈現 runtime element 與 Application 互動。
+
+```mermaid
+flowchart TD
+    subgraph container["Container: TimescaleDB"]
+        subgraph extension["timescaledb extension"]
+            hyper["hypertable manager<br/>(time partitioning)"]
+            retention["retention policy<br/>(M5 啟用)"]
+        end
+
+        subgraph hypertables["hypertables"]
+            bars[("daily_bars")]
+            inst[("institutional_flows")]
+            chips[("broker_chips")]
+            eq[("equity_snapshots<br/>M2+")]
+        end
+
+        subgraph tables["regular tables"]
+            univ[("universe<br/>M2+")]
+            tr[("trades<br/>M2+ audit")]
+            dq[("data_quality_log")]
+        end
+
+        hyper -.controls.-> bars
+        hyper -.controls.-> inst
+        hyper -.controls.-> chips
+        hyper -.controls.-> eq
+        retention -.drops old data.-> bars
+    end
+
+    app["Application<br/>(來自 L3-A)"]
+    grafana["Grafana<br/>(L2)"]
+
+    app -->|"INSERT ... ON CONFLICT"| bars
+    app -->|"INSERT ... ON CONFLICT"| inst
+    app -->|"INSERT ... ON CONFLICT"| chips
+    app -->|"INSERT"| tr
+    app -->|"INSERT"| eq
+    app -->|"INSERT"| univ
+    app -->|"INSERT"| dq
+    grafana -.->|"SELECT (read-only)"| bars
+    grafana -.->|"SELECT (read-only)"| eq
+```
+
+**L3-B 檢查**：
+- 標題含父 Container ✅
+- 內部元件 = hypertables + regular tables + extension features ✅
+- 跨 Container 邊界（Application、Grafana 來自 L2）以單獨節點呈現並標 protocol ✅
+- 欄位細節 / 關係（PK / FK / ER）不在此圖，見 §4.1 ✅
+
+#### L4 — Code
+
+省略（單體 Python）；類別關係見 `10_class_relationships_template.md`。
+
+#### 1.1.3 C4 審查 Checklist（PR / milestone gate）
+
+**結構**：
+- [ ] L1–L3 各至少一張圖，且 **一圖一層級**
+- [ ] L3 每張圖對應 **且僅對應** 一個 L2 Container
+- [ ] 每個 L2 Container 都有對應 L3（或在 §1.1.2 Container 表明確說明跳過理由）
+- [ ] 補充圖：至少一張 Dynamic / Sequence Diagram（跨多 Container 的主要 use case）
+- [ ] 補充圖：Deployment Diagram 含 Node 屬性（OS、規格、port）
+
+**完整性**：
+- [ ] L1 含**所有**外部系統（資料源、交易、推送、備份、雲端 IaaS）— partial disclosure 是 bug
+- [ ] L2 含**所有**規劃中的 Container（虛線標 milestone）
+- [ ] 有獨立的 **future state（M5 Target）** 圖呈現完整視野
+
+**命名與語意**：
+- [ ] 無「v2 L1–L4」與「C4 L1–L4」混用
+- [ ] DDD 限界上下文圖箭頭採 Strategic Relationship（PL / CS / ACL / CF / SK），不是 data flow
+- [ ] DDD 戰術元素（Entity / Value Object / Aggregate / Service / Repository）有對應表
+
+**箭頭規範**：
+- [ ] 所有跨 Container / 跨 Node 箭頭標 **protocol + 動詞**（HTTPS / SQL / file I/O / in-proc）
+- [ ] L3 內部箭頭明說語意（import / data flow / call）
+
+**演進規則**：
+- [ ] 新增模組：先決定屬哪個 Container → 再畫進對應 L3
+- [ ] 若拆出新 process（例如獨立 Execution Service）→ **先改 L2**，再新增 L3
+- [ ] 任何架構變動 → 同步更新 08（結構）、09（依賴）、10（類別）、14（部署）
 
 ### 1.2 DDD 戰略設計
 
+> DDD **限界上下文** ≠ C4 **System Context（L1）**。
+
+#### C4 Container ↔ DDD 限界上下文
+
+| DDD 限界上下文 | 主要落在 C4 | 備註 |
+| :--- | :--- | :--- |
+| 資料 | Application（infra 模組）+ Parquet + TimescaleDB | DB 為獨立 Container |
+| 策略 | Application（domain 模組） | 非獨立 Container，除非未來拆微服務 |
+| 回測 | Application（`engines/`） | M2+ |
+| 驗證 | Application（`validation/`） | M3+ |
+| 運維 | Prefect + Grafana +（M5）Shioaji | M4+ 出現在 L2 |
+
 #### 通用語言（術語詞彙表）
 
-對齊 `strategy/v2.md` 6.1：
+對齊 `strategy/v2.md` 6.1（以下 **v2 L1–L4** 為策略計分層，非 C4 層級）：
 
 | 術語 | 定義 |
 | :--- | :--- |
-| L1 結構分 | 突破/中線/中線下三檔（0/1/2） |
-| L2 法人方向 | 外資+投信買進共識度（-1/0/1/2） |
-| L3 籌碼強度 | chip_total / net_volume 比例分級 |
-| L4 動能分 | 三陽開泰 / 四大金叉 / 熄火（-1/0/1/2） |
+| v2 L1 結構分 | 突破/中線/中線下三檔（0/1/2） |
+| v2 L2 法人方向 | 外資+投信買進共識度（-1/0/1/2） |
+| v2 L3 籌碼強度 | chip_total / net_volume 比例分級 |
+| v2 L4 動能分 | 三陽開泰 / 四大金叉 / 熄火（-1/0/1/2） |
 | 強多 (strong_buy) | 四項都 ≥ 1 且至少一項 = 2 |
 | 熄火 (flameout) | momentum=-1 或 close < box_lower |
 | ETLBundle | 一檔股票一次 ETL 的輸出 |
 | Heat | portfolio 假設全部停損的總虧損占帳戶比例 |
 | R | risk unit = 進場價 - 停損價的絕對值 |
 
-#### 限界上下文
+#### 限界上下文（Strategic Context Map）
+
+> 箭頭採 DDD **Strategic Relationship** 標記（非 data flow / 非 import）。
+> 縮寫：CS = Customer-Supplier · ACL = Anti-Corruption Layer · SK = Shared Kernel · CF = Conformist · PL = Published Language
 
 ```mermaid
 graph LR
-    subgraph "資料 Context"
-        ETL_C[ETL<br/>FinMind 介接]
-        Univ_C[Universe<br/>標的池過濾]
-        DBW_C[Storage<br/>TimescaleDB upsert]
+    subgraph data_ctx["資料 Context"]
+        D[ETL · Universe · Storage]
     end
 
-    subgraph "策略 Context"
-        Indi_C[Indicators<br/>純技術指標]
-        Score_C[Scoring<br/>四層計分]
-        Sig_C[Signals<br/>狀態機 + 執行]
+    subgraph strategy_ctx["策略 Context（Core Domain）"]
+        S[Indicators · Scoring · Signals]
     end
 
-    subgraph "回測 Context（M2+）"
-        Eng_C[Engines<br/>rqalpha / vectorbt]
+    subgraph backtest_ctx["回測 Context（M2+）"]
+        B[Engines]
     end
 
-    subgraph "驗證 Context（M3+）"
-        Val_C[Validation<br/>PBO / WFA / MC]
+    subgraph validation_ctx["驗證 Context（M3+）"]
+        V[PBO · WFA · MC · Metrics]
     end
 
-    subgraph "運維 Context（M4+）"
-        Mon_C[Monitoring<br/>Grafana / Prefect]
-        Exec_C[Execution<br/>Shioaji 下單]
+    subgraph ops_ctx["運維 Context（M4+）"]
+        O[Monitoring · Execution]
     end
 
-    ETL_C --> DBW_C
-    Univ_C --> DBW_C
-    DBW_C --> Score_C
-    Indi_C --> Score_C
-    Score_C --> Sig_C
-    Sig_C --> Eng_C
-    Eng_C --> Val_C
-    Val_C --> Mon_C
-    Sig_C --> Exec_C
+    D ==>|"PL: scoring-ready DataFrame schema"| S
+    S ==>|"PL: signal action enum"| B
+    B ==>|"CS: trade log + equity curve"| V
+    V -.->|"CF: passive metrics consumer"| O
+    S -.->|"CS: live signal stream (M5)"| O
+    D -.->|"ACL: _normalize_* 隔離 FinMind raw schema"| D
 ```
+
+| 上下文 | 角色 | 與其他 context 關係 |
+| :--- | :--- | :--- |
+| **資料 Context** | Upstream Supplier | 對 FinMind 用 **ACL**（`_normalize_*` 屏蔽外部 schema 變動）；對策略 Context 用 **Published Language**（`REQUIRED_COLUMNS` 14 欄位契約） |
+| **策略 Context** | Core Domain | 不依賴下游；產出 `action` enum 為 PL |
+| **回測 Context** | Customer of 策略 | 用策略產出 + 自管 portfolio state，回給驗證 |
+| **驗證 Context** | Conformist | 接受回測格式不要求變動 |
+| **運維 Context** | Downstream Consumer | 對策略 / 驗證 / 回測都 read-only |
+
+#### 1.2.5 DDD 戰術設計（Tactical Design）
+
+對應 §3.3 元件職責 + `10_class_relationships_template.md`：
+
+| DDD 元素 | 程式碼 | 說明 |
+| :--- | :--- | :--- |
+| **Value Object** | `StrategyConfig` | 不可變、相等性以值定 |
+| Value Object | `UniverseConfig` | 同上 |
+| Value Object | `DBConfig` / `ETLConfig` | 同上 |
+| Value Object | `EvaluateBar` | per-bar 上下文，evaluate 後即丟 |
+| **Aggregate Root** | `ETLBundle` | 一次 ETL 的三表 + invariants (`merged()`) |
+| **Domain Service（純函式）** | `compute_scores` | 給 DataFrame 回 DataFrame |
+| Domain Service | `compute_signals` / `evaluate_bar` | 狀態機 + 訊號優先序 |
+| Domain Service | indicators 內所有函式 | RSI / KD / MACD 等 |
+| **Domain Event（規劃）** | `SignalEmitted` / `PositionChanged`（M4+） | 目前直寫 DB；M5 才考慮 event bus |
+| **Repository（規劃）** | `IBarRepository`（M2 引入） | `ParquetBarRepository` / `TimescaleBarRepository` 實作 |
+| **Anti-Corruption Layer** | `data/_normalize_*` 系列 | 隔離 FinMind raw schema 變動 |
+| **Specification（規劃）** | `UniverseConfig.apply_filters`（已部分實作） | 集中過濾規則 |
+
+**為何沒有 Entity？**
+本系統的 state 主要由**值物件 + 事件**驅動（trade log、equity snapshot 都是 immutable record）。
+傳統意義的 mutable entity（如 User、Account）不在 domain 內 — Portfolio state 由引擎持有，不是 domain object。
 
 ### 1.3 分層架構
 
@@ -232,7 +526,7 @@ graph LR
 
 ### 3.2 系統元件圖
 
-見 1.1 L2/L3 圖。
+見 §1.1：**L2 Container**、**L3-A Application Component**、**L3-B TimescaleDB**。
 
 ### 3.3 元件職責
 
@@ -249,34 +543,97 @@ graph LR
 | `strategy/signals.py` | 狀態機 + 執行訊號 | pandas, numpy | scoring, config |
 | `pipeline.py` | 端到端 CLI 編排 | click, loguru | 全部 |
 
-### 3.4 關鍵使用者旅程
+### 3.4 關鍵使用者旅程（Dynamic Diagrams）
 
-#### 場景 1：策略研究者跑單檔 pipeline
+#### 場景 1：策略研究者跑單檔 pipeline（M1 已實作）
 
-```
-1. User → CLI: python -m backtest_platform.pipeline run --stock-id 2330 ...
-2. pipeline.run_pipeline:
-   2.1 → data.finmind_etl.fetch_bundle  (拉三表)
-   2.2 → data.adjustment.apply_adjustment (前復權)
-   2.3 → ETLBundle.merged()  (join 三表)
-   2.4 → strategy.scoring.compute_scores  (四層分)
-   2.5 → strategy.signals.compute_signals  (狀態 + 訊號)
-3. pipeline.signal_calendar → calendar CSV
-4. pipeline.summary_stats → console summary
+```mermaid
+sequenceDiagram
+    actor User as 策略研究者
+    participant CLI as pipeline.py CLI
+    participant ETL as data/finmind_etl
+    participant Adj as data/adjustment
+    participant FM as FinMind API
+    participant Parquet as Parquet Cache
+    participant Score as strategy/scoring
+    participant Sig as strategy/signals
+    participant FS as reports/ CSV
+
+    User->>CLI: python -m backtest_platform.pipeline run --stock-id 2330
+    CLI->>ETL: fetch_bundle("2330", start, end)
+    ETL->>FM: HTTPS taiwan_stock_daily
+    FM-->>ETL: DataFrame
+    ETL->>FM: HTTPS taiwan_stock_institutional_investors
+    FM-->>ETL: DataFrame
+    ETL->>FM: HTTPS taiwan_stock_day_trading
+    FM-->>ETL: DataFrame
+    ETL->>FM: HTTPS taiwan_stock_dividend
+    FM-->>ETL: DataFrame
+    ETL->>Adj: compute_adj_factor + apply
+    Adj-->>ETL: adjusted DataFrame
+    ETL-->>CLI: ETLBundle
+    CLI->>Parquet: write_parquet (optional)
+    CLI->>CLI: bundle.merged()
+    CLI->>Score: compute_scores(df, config)
+    Score-->>CLI: scored DataFrame
+    CLI->>Sig: compute_signals(scored, config)
+    Sig-->>CLI: signaled DataFrame with action column
+    CLI->>FS: write calendar CSV
+    CLI-->>User: console summary
 ```
 
-#### 場景 2：M2 跑 portfolio 回測（待實作）
+**重點觀察**：
+- 4 次 FinMind HTTPS 呼叫之間 sleep `rate_limit_seconds` 避免封鎖
+- Parquet 寫入是 optional（dry-run 不寫）
+- Score / Sig 為純函式呼叫，無 IO
 
+#### 場景 2：M2 portfolio 回測 + M3 統計驗證（規劃中）
+
+```mermaid
+sequenceDiagram
+    actor User as 策略研究者
+    participant CLI as engines.rqalpha_runner
+    participant Univ as data/universe
+    participant Repo as IBarRepository
+    participant TSDB as TimescaleDB
+    participant RQ as rqalpha kernel
+    participant Sig as signals.evaluate_bar
+    participant Trades as trades table
+    participant Val as validation.pbo
+    participant QS as quantstats
+
+    User->>CLI: rqalpha_runner --period 2015-01-01..2020-12-31
+    CLI->>Univ: apply_filters → snapshot
+    Univ-->>CLI: stock_id list
+    CLI->>Repo: get_bars(stock_id, period)
+    Repo->>TSDB: SELECT FROM daily_bars JOIN institutional_flows ...
+    TSDB-->>Repo: merged DataFrames
+    Repo-->>CLI: per-stock DataFrames
+
+    CLI->>RQ: init context with mod_taiwan_stock (T+1, 漲跌停, 手續費)
+    loop 每個 trading day
+        loop 每檔持倉/候選股
+            RQ->>Sig: evaluate_bar(bar, config)
+            Sig-->>RQ: action ("buy" / "stoploss" / ...)
+            alt action != none
+                RQ->>Trades: INSERT trade record
+            end
+        end
+    end
+    RQ-->>CLI: BacktestResult (equity curve + trades)
+    CLI->>QS: generate quantstats report
+    QS-->>User: HTML report
+
+    Note over User,Val: M3 接著跑統計驗證
+    User->>Val: pbo compute --strategies ... --n-blocks 16
+    Val->>TSDB: 讀 trade logs of all variants
+    Val-->>User: PBO / DSR / WFA 結果
 ```
-1. User → CLI: python -m backtest_platform.engines.rqalpha_runner --universe data/universe.parquet ...
-2. engines.rqalpha_runner:
-   2.1 → 載入 universe + ETL data
-   2.2 → init rqalpha context
-   2.3 → 每 bar 呼叫 strategy.signals.evaluate_bar
-   2.4 → 處理 stoploss > exit > ... > buy 優先序
-   2.5 → 寫 trade log → TimescaleDB
-3. validation.metrics → quantstats 報表
-```
+
+**重點觀察**：
+- IBarRepository 抽象（M2 引入）讓 rqalpha / vectorbt 都能切 Parquet 或 TimescaleDB
+- 每個 action 即時寫 trades 表 → audit trail 完整
+- 統計驗證階段只讀 TimescaleDB，不重跑回測（DSR N 完整記錄）
 
 ---
 
@@ -373,26 +730,96 @@ erDiagram
 
 ## 第 5 部分：部署與基礎設施
 
-### 5.1 部署視圖（當前 M1）
+### 5.1 部署視圖（C4 Deployment Diagram）
+
+> C4 Deployment = L2 Container 的**物理實體化**：把每個 logical Container instantiate 到具體 Node（PC / VM / Container Engine）。
+
+#### 5.1.1 M1 Deployment（當前）
 
 ```mermaid
-graph TB
-    subgraph "本機 Docker"
-        TSDB[TimescaleDB :5432]
-        Prefect[Prefect :4200]
-        Grafana[Grafana :3000]
+flowchart TB
+    subgraph host["Deployment Node: 本機 PC<br/>Windows 11 + WSL2 Ubuntu 22.04<br/>Intel i7 / 32GB RAM"]
+        subgraph venv["Deployment Node: Python venv<br/>Python 3.10.12"]
+            app_inst["《container instance》<br/>Application<br/>backtest_platform 0.1.0"]
+            parquet_inst["《container instance》<br/>Parquet Cache<br/>data/parquet/"]
+        end
+
+        subgraph dockerd["Deployment Node: Docker Engine 24.x"]
+            tsdb_inst["《container instance》<br/>TimescaleDB<br/>timescale/timescaledb:2.14.2-pg16<br/>port 5432"]
+        end
     end
 
-    subgraph "本機 Python"
-        Code[backtest_platform 0.1.0]
-    end
+    finmind[("FinMind API<br/>finmindtrade.com")]
 
-    Code --> TSDB
-    Prefect --> Code
-    Grafana --> TSDB
-
-    External[FinMind API] --> Code
+    app_inst -->|"libpq / TCP :5432"| tsdb_inst
+    app_inst -->|"file I/O"| parquet_inst
+    app_inst -->|"HTTPS"| finmind
 ```
+
+| 屬性 | 值 |
+| :--- | :--- |
+| Deployment 模式 | 單機 |
+| 高可用 | 無 |
+| Backup | 無（M1 是研究階段） |
+| 監控 | 無（log to file） |
+
+#### 5.1.2 M5 Deployment（Target）
+
+```mermaid
+flowchart TB
+    subgraph gcp["Deployment Node: GCP Compute Engine<br/>e2-small (2 vCPU, 4GB RAM)<br/>asia-east1<br/>Container-Optimized OS"]
+        subgraph dockerd5["Deployment Node: Docker Engine"]
+            app5["《container》<br/>Application + FastAPI<br/>backtest_platform 1.0.0<br/>port 8000"]
+            ui5["《container》<br/>Streamlit UI<br/>port 8501"]
+            tsdb5["《container》<br/>TimescaleDB<br/>port 5432 (internal only)"]
+            prefect5["《container》<br/>Prefect Worker"]
+            grafana5["《container》<br/>Grafana<br/>port 3000 (behind reverse proxy)"]
+            tgbot5["《container》<br/>Telegram Bot"]
+            shio5["《container》<br/>Shioaji Executor"]
+        end
+        cron["systemd timer:<br/>pg_dump nightly → GCS"]
+    end
+
+    subgraph user_pc["Deployment Node: 使用者 PC"]
+        browser["瀏覽器"]
+    end
+
+    finmind[("FinMind API")]
+    twse[("TWSE")]
+    shioaji[("Shioaji API")]
+    telegram[("Telegram API")]
+    gcs[("GCS Bucket")]
+
+    browser -->|"HTTPS"| ui5
+    browser -->|"HTTPS"| grafana5
+    ui5 -->|"localhost"| app5
+    app5 -->|"localhost:5432"| tsdb5
+    app5 -->|"HTTPS"| finmind
+    app5 -->|"HTTPS"| twse
+    app5 -->|"in-proc"| shio5
+    shio5 -->|"WebSocket TLS"| shioaji
+    prefect5 -->|"trigger CLI"| app5
+    grafana5 -->|"SQL"| tsdb5
+    tgbot5 -->|"SQL poll"| tsdb5
+    tgbot5 -->|"HTTPS"| telegram
+    cron -->|"gsutil cp"| gcs
+```
+
+| 屬性 | M5 值 |
+| :--- | :--- |
+| Deployment 模式 | 單 VM（M6+ 評估 K8s） |
+| Backup | 每日 pg_dump → GCS（保留 30 天） |
+| RPO / RTO | 24h / 1h |
+| 監控 | Grafana + Telegram |
+| TLS | reverse proxy（Caddy / Nginx）終止 TLS |
+
+#### 5.1.3 環境策略
+
+| 環境 | Deployment | 用途 |
+| :--- | :--- | :--- |
+| Dev | 本機 PC + WSL2 + Docker | 開發、unit test、M1–M3 回測 |
+| Staging | 同 Dev | M4 paper trading（同機跑模擬 = 排程觸發 paper_trader） |
+| Production | GCP Compute Engine（5.1.2） | M5 小倉位實盤、全倉 |
 
 ### 5.2 CI/CD 流程
 
@@ -452,7 +879,7 @@ graph TB
 
 | 風險 | 可能性 | 影響 | 緩解 |
 | :--- | :--- | :--- | :--- |
-| FinMind 免費版缺券商分點 → L3 計分不完整 | 高 | 中 | 升級 sponsor / 切 TEJ / 砍 L3 |
+| FinMind 免費版缺券商分點 → v2 L3 籌碼分不完整 | 高 | 中 | 升級 sponsor / 切 TEJ / 砍 v2 L3 |
 | 下市股資料源未解 → 生存者偏誤 | 高 | 高 | 早期 POC 評估 |
 | rqalpha 對台股 T+1 支援不完整 | 中 | 高 | 自寫 mod_taiwan_stock |
 | 訊號邏輯與 XQ 差異 > 0.5% | 中 | 高 | 100 訊號抽樣對照 |
@@ -468,6 +895,16 @@ graph TB
 | Phase 4 (M4) | Paper trading 3 個月 |
 | Phase 5 (M5) | 小倉位實盤 + Shioaji + Grafana |
 | Phase 6 (M6+) | React UI、多策略 |
+
+---
+
+## 變更紀錄
+
+| 版本 | 日期 | 變更 |
+| :--- | :--- | :--- |
+| v1.2 | 2026-05-26 | 將 C4 模板（規則、Container 清單、Checklist）整合進 §1.1；移除獨立模板檔 |
+| v1.1 | 2026-05-26 | C4 改嚴格版（L2 單一 Application、L3 按 Container zoom）；術語表改 v2 L1–L4 |
+| v1.0 | 2026-05-26 | 初版（M1） |
 
 ---
 

@@ -25,7 +25,7 @@
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
 | 04 | [adrs/](./adrs/) | 架構決策記錄（4 份 ADR） |
-| 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 / DDD） |
+| 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
 ### 階段 3：詳細設計

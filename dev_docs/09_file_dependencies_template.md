@@ -1,6 +1,7 @@
 # 模組依賴關係分析 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 已實作
+> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 已實作  
+> **與 C4 的關係**：本檔為 **Clean Architecture 分層依賴**（模組 import），不是 C4 Container 圖。部署 / runtime 邊界見 `05_architecture_and_design_document.md` §1.1（C4 嚴格版）。
 
 ---
 
@@ -21,6 +22,7 @@ graph TD
     Pipeline[pipeline.py<br/>Application]
     Engines[engines/<br/>Application M2+]
     Validation[validation/<br/>Application M3+]
+    Live[live/<br/>Application M4+/M5]
 
     Strategy[strategy/<br/>Domain<br/>純函式]
     Config[config/<br/>Domain<br/>Pydantic models]
@@ -30,6 +32,7 @@ graph TD
 
     FinMind[(FinMind API)]
     TSDB[(TimescaleDB)]
+    Shioaji[(Shioaji API)]
 
     Pipeline --> Engines
     Pipeline --> Data
@@ -37,6 +40,9 @@ graph TD
     Engines --> Strategy
     Engines --> Data
     Validation --> Data
+    Live --> Strategy
+    Live --> Data
+    Live -.->|M5| Shioaji
     Strategy --> Config
     Data --> Schemas
     Data --> FinMind
@@ -59,7 +65,7 @@ graph TD
 
 | 層級 | 職責 | 程式碼路徑 |
 | :--- | :--- | :--- |
-| **Application** | 編排業務流程、CLI 入口 | `pipeline.py`、`engines/*.py`、`validation/*.py` |
+| **Application** | 編排業務流程、CLI 入口 | `pipeline.py`、`engines/*.py`、`validation/*.py`、`live/*.py` |
 | **Domain** | 業務邏輯（策略計算、參數模型） | `strategy/`、`config/` |
 | **Infrastructure** | 外部 API、DB IO | `data/finmind_etl.py`、`data/db_writer.py` |
 | **Boundary** | 跨層資料契約 | `data/schemas.py` |

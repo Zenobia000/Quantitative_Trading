@@ -1,6 +1,7 @@
 # 專案結構指南 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26
+> **版本：** v1.0 | **更新：** 2026-05-26  
+> **架構圖**：目錄對應 C4 **L3-A Application** 元件，見 [05_architecture_and_design_document.md §1.1](./05_architecture_and_design_document.md)
 
 ---
 

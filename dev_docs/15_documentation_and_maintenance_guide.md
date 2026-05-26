@@ -11,6 +11,7 @@
 | **策略契約** | 四層共振戰法規格 | `strategy/v2.md` | Markdown |
 | **策略研究** | DOE 模板、IC 測試計畫 | `strategy/research/` | Markdown |
 | **工程文檔** | 架構、模組、API、ADR | `dev_docs/`（本目錄） | Markdown + Mermaid |
+| **C4（嚴格）** | 嚴格 C4 規則、L1–L3 圖、PR Checklist | `dev_docs/05_architecture_and_design_document.md` §1.1 | Markdown + Mermaid |
 | **工程運維** | M1/M2/... milestone setup | `backtest_platform/docs/` | Markdown |
 | **API 規範** | CLI + Python API | `dev_docs/06_api_design_specification.md` | Markdown |
 | **使用者文檔** | README + quick start | `README.md`、`backtest_platform/README.md` | Markdown |
@@ -84,6 +85,7 @@
 - [ ] 更新 `dev_docs/16_wbs_development_plan.md` 完成百分比
 - [ ] 更新 `dev_docs/01_workflow_manual.md` 當前狀態
 - [ ] 如有架構變更，新增 ADR 到 `dev_docs/adrs/`
+- [ ] 更新 `dev_docs/05_architecture_and_design_document.md` §1.1 C4 圖（含 Checklist）
 
 ### 每變更策略邏輯
 
