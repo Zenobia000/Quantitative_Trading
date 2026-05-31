@@ -1,6 +1,39 @@
 # 專案簡報與 PRD — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 已完成 / M2 規劃中
+> **版本：** v2.0 | **更新：** 2026-05-31 | **狀態：** M1 已完成 / M2 啟動中（**重大路線變更**）
+>
+> **v1.0** (2026-05-26)：M1 完成基線版本（rqalpha + FinMind 路線）
+> **v2.0** (2026-05-31)：M2+ 重大路線變更 — 詳見下方 v2.0 Pivot Banner
+
+---
+
+## 🚨 v2.0 Pivot Banner（2026-05-31）
+
+M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**。新規劃請參閱對應文檔：
+
+| 變更 | 從 → 到 | 正式文檔 |
+| :--- | :--- | :--- |
+| **回測引擎主骨架** | rqalpha → **TQuant-Lab (Zipline 台股 fork)** | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) |
+| **資料源** | FinMind 免費版 → **付費 FinLab** + FinMind fallback | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
+| **引擎策略** | 單引擎 → **雙引擎**（Zipline event + vectorbt vector） | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) |
+| **系統定位** | 回測平台 → **完整交易系統**（backtest / paper / live 三模式） | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
+| **監控架構** | Grafana 單一 → **Streamlit + Grafana + Telegram** 三層 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) |
+| **完整 M2-M5 規劃** | — | [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) |
+
+### 過時段落明確標示
+
+| 本文段落 | 狀態 | 對應新文檔 |
+| :--- | :--- | :--- |
+| §4 功能範圍表（M2-M5 列） | ⚠️ 過時 | [17 master plan §7](./17_m2_to_m5_master_plan.md) |
+| §4 假設（「FinMind 免費版 + sponsor」） | ⚠️ 過時 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
+| §4 依賴（缺 FinLab/TQuant-Lab/Zipline/Streamlit） | ⚠️ 過時 | [17 master plan §5](./17_m2_to_m5_master_plan.md) |
+| §5 Q-004（rqalpha 自訂 mod） | ✅ 已關閉 | 廢止，改 TQuant-Lab |
+| §3 Epic 1-3 user stories | ✅ 仍適用 | implementation 路線改新 plan |
+| §1-§2 商業目標、§6 成功判斷 | ✅ 仍適用 | — |
+
+下方原 §1-§7 內容**保留作 v1.0 歷史脈絡**，新讀者請直接讀 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md)。
+
+---
 
 ---
 

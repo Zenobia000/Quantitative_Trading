@@ -1,7 +1,45 @@
 # 架構與設計文件 — backtest_platform
 
-> **版本：** v1.3 | **更新：** 2026-05-26 | **狀態：** M1 已實作 / M2-5 待擴充
+> **版本：** v1.4 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / **M2+ 路線變更**
+> **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
 > **v1.3 修正**：補齊 partial disclosure（Telegram / TWSE / UI / live container）、L3-A 補 live+engines 子模組、新增 M5 Target State、L3-B 改寫、補 Sequence Diagram、箭頭加 protocol、DDD 戰術 + 限界上下文 Strategic Relationship、§5.1 重畫成 C4 Deployment
+
+---
+
+## 🚨 v1.4 架構變更通告（2026-05-31）
+
+下列原文段落需對齊新架構，**完整新架構請見 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) §3-5**：
+
+| 本文段落 | 狀態 | 對應新文檔 |
+| :--- | :--- | :--- |
+| §1.1.2 Container 表 | ⚠️ 缺新模組 | [17 §5 目錄結構](./17_m2_to_m5_master_plan.md) + [23 deployment topology](./23_deployment_topology.md) |
+| §1.4 技術選型表（回測主 rqalpha） | ⚠️ 過時 | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) |
+| §3.3 元件職責（缺 adapters/validation/orchestration/monitoring/dashboard） | ⚠️ 缺新模組 | [17 §5](./17_m2_to_m5_master_plan.md) |
+| §4.1 ER 圖（6 表） | ⚠️ 缺 6 張新表 | [21 data_contract §4](./21_data_contract.md) |
+| §5.1 Deployment Diagram | ⚠️ M5 需加 Streamlit/InfluxDB/Telegram bot | [23 deployment_topology](./23_deployment_topology.md) |
+| §6.1 可觀測性 | ⚠️ 過於簡略 | [20 dashboard_specification](./20_dashboard_specification.md) |
+| §7.2 演進路線（Phase 2-5 寫 rqalpha） | ⚠️ 過時 | [17 §7 M2-M5 排程](./17_m2_to_m5_master_plan.md) |
+| §1.1 C4 規則、§1.2 DDD、§1.3 分層 | ✅ 仍有效 | — |
+| §4.2 一致性策略、§4.3 資料分類 | ✅ 仍有效 | — |
+
+### 新增 Container 速覽（將於 v2.0 完整重畫 C4 圖）
+
+| 容器 / 模組 | 啟用 M | 用途 |
+| :--- | :---: | :--- |
+| TQuant-Lab (Zipline) | M2 | 主骨架，取代 rqalpha |
+| `adapters/data_bundle/` | M2 | FinLab/FinMind → Zipline bundle ingester |
+| `adapters/data_feed/` | M4 | 即時資料 polling |
+| `adapters/brokers/` | M4/M5 | PaperBroker + ShioajiBroker |
+| `validation/` | M3 | PBO/DSR/WFA/metrics |
+| `orchestration/` | M4 | 每日排程 daily_flow |
+| `monitoring/` | M4 | metrics emitter + Telegram alerter |
+| `dashboard/` | M3/M5 | Streamlit 5 面板 + Grafana 4 面板 |
+| InfluxDB / Prometheus | M4 | 系統 metric 時序儲存 |
+| Streamlit Container | M3 | 策略績效 dashboard |
+
+下方原 §1-§8 內容**保留作 v1.3 基線**，新讀者請優先閱讀新 plan + ADR-005~009。
+
+---
 
 ---
 

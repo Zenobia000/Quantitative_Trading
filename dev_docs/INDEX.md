@@ -2,6 +2,7 @@
 
 > 依 `VibeCoding_Workflow_Templates` v3.0 模板產出，對應實際 `backtest_platform/` 程式碼狀態。
 > **產出日期**：2026-05-26 | **對應版本**：backtest_platform 0.1.0 (M1)
+> **2026-05-31 更新**：新增階段 7（M2+ 規劃文檔），含 5 份新 ADR + 8 份新規格文檔（17-24）
 
 ---
 
@@ -24,7 +25,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（4 份 ADR） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**9 份 ADR**：原 4 份 + 2026-05-31 新增 005~009） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -58,6 +59,32 @@
 | :---: | :--- | :--- |
 | 15 | [documentation_and_maintenance_guide.md](./15_documentation_and_maintenance_guide.md) | 文檔維護 |
 | 16 | [wbs_development_plan.md](./16_wbs_development_plan.md) | WBS 開發計劃 |
+
+### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
+
+> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab、FinMind → FinLab、新增三模式+雙儀表板）
+
+| # | 檔名 | 用途 |
+| :---: | :--- | :--- |
+| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線選擇、17 週時程、Verification） |
+| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy |
+| 19 | [sprint_0_design.md](./19_sprint_0_design.md) | Sprint 0 spike 細部規格（6 個 spike + gate） |
+| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Telegram 告警 spec |
+| 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB DDL |
+| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍標準 + CI/CD |
+| 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 |
+| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 風控規範（ex-ante/ex-post/熔斷/SOP） |
+| — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） |
+
+#### 階段 7 新增 ADR
+
+| ADR | 主題 | Supersedes |
+| :---: | :--- | :--- |
+| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | 主骨架選定 TQuant-Lab（Zipline 台股 fork） | **ADR-001** |
+| [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
+| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized | — |
+| [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
+| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ Telegram 告警 | — |
 
 ---
 
