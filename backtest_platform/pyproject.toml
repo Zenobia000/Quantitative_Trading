@@ -68,10 +68,10 @@ ui = [
 broker = [
     "shioaji>=1.2",
 ]
-# Monitoring stack — see ADR-009
+# Monitoring stack — see ADR-009 (Discord notifier, migrated from Telegram)
 monitoring = [
     "prometheus-client>=0.20",
-    "python-telegram-bot>=21.0",
+    "httpx>=0.27",
 ]
 dev = [
     "pytest>=8.0",
