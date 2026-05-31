@@ -1,8 +1,9 @@
 # 專案簡報與 PRD — backtest_platform
 
-> **版本：** v2.0 | **更新：** 2026-05-31 | **狀態：** M1 已完成 / M2 啟動中（**重大路線變更**）
+> **版本：** v2.0 | **更新：** 2026-05-31
+> **進度狀態：** 詳見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源，見 [`15 §10`](./15_documentation_and_maintenance_guide.md) 規則）
 >
-> **v1.0** (2026-05-26)：M1 完成基線版本（rqalpha + FinMind 路線）
+> **v1.0** (2026-05-26)：M1 完成時的 PRD 基線版本（原 rqalpha + FinMind 路線）
 > **v2.0** (2026-05-31)：M2+ 重大路線變更 — 詳見下方 v2.0 Pivot Banner
 
 ---
