@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 
 from backtest_platform.config.strategy_config import StrategyConfig
-from backtest_platform.strategy.scoring import REQUIRED_COLUMNS, compute_scores
+from backtest_platform.strategies.four_layer_resonance.scoring import REQUIRED_COLUMNS, compute_scores
 
 
 def test_missing_columns_raises(synthetic_uptrend: pd.DataFrame, config: StrategyConfig) -> None:

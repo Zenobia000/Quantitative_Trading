@@ -95,7 +95,7 @@ def test_institutional_pivot_computes_net_correctly() -> None:
 
 def test_merged_bundle_has_all_required_columns() -> None:
     """merged() output must satisfy compute_scores REQUIRED_COLUMNS."""
-    from backtest_platform.strategy.scoring import REQUIRED_COLUMNS
+    from backtest_platform.strategies.four_layer_resonance.scoring import REQUIRED_COLUMNS
 
     bundle = fetch_bundle(
         stock_id="2330",

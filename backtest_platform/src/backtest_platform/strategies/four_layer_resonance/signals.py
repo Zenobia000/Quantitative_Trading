@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 from backtest_platform.config.strategy_config import StrategyConfig
-from backtest_platform.strategy.indicators import rolling_swing_low
+from .indicators import rolling_swing_low
 
 SIGNAL_PRIORITY: tuple[str, ...] = (
     "stoploss",

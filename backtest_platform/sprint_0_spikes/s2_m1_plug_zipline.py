@@ -31,8 +31,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from backtest_platform.config.strategy_config import StrategyConfig  # noqa: E402
-from backtest_platform.strategy.scoring import compute_scores  # noqa: E402
-from backtest_platform.strategy.signals import compute_signals  # noqa: E402
+from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores  # noqa: E402
+from backtest_platform.strategies.four_layer_resonance.signals import compute_signals  # noqa: E402
 
 RESULTS = Path(__file__).parent / "results"
 RESULTS.mkdir(exist_ok=True)

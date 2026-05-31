@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 
 from backtest_platform.config.strategy_config import StrategyConfig
-from backtest_platform.strategy.scoring import compute_scores
-from backtest_platform.strategy.signals import (
+from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores
+from backtest_platform.strategies.four_layer_resonance.signals import (
     SIGNAL_PRIORITY,
     compute_signals,
     compute_states,
