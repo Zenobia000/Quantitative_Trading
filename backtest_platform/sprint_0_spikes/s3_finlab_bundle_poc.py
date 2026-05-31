@@ -11,7 +11,7 @@ Requirements:
 - pip install finlab zipline-tej
 
 Pass criteria: `[S3] PASS` if all steps complete; user then runs:
-    poetry run zipline ingest -b finlab_poc
+    uv run zipline ingest -b finlab_poc
 
 Then verifies with s3_verify_bundle.py.
 """
@@ -159,8 +159,8 @@ register(
         "extension_template": str(ext_file),
         "next_steps": [
             f"1. Copy contents of {ext_file} into ~/.zipline/extension.py",
-            "2. Run: poetry run zipline ingest -b finlab_poc",
-            "3. Run: poetry run python sprint_0_spikes/s3_verify_bundle.py",
+            "2. Run: uv run zipline ingest -b finlab_poc",
+            "3. Run: uv run python sprint_0_spikes/s3_verify_bundle.py",
         ],
     }
 

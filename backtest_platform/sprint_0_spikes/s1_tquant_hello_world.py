@@ -7,7 +7,7 @@ Validates:
 4. Minimal Zipline algorithm initialization succeeds
 
 Requirements:
-- pip install zipline-tej exchange-calendars (or `poetry install --extras mainframe`)
+- uv sync --extra mainframe (or `pip install zipline-tej exchange-calendars`)
 
 No external API token required.
 

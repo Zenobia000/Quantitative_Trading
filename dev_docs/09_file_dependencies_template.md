@@ -222,7 +222,7 @@ graph LR
 
 - **每月**：`pip list --outdated` 檢查
 - **變更前**：跑完整 test suite
-- **重大變更**：M3 引入 lock file（poetry / uv）
+- **重大變更**：M2 引入 lock file `uv.lock`（ADR-012）
 
 ---
 

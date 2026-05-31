@@ -100,7 +100,7 @@
 
 - [ ] 審查 `dev_docs/INDEX.md` 是否仍與實際檔案一致
 - [ ] 檢查 dev_docs 內所有 git/file path 連結是否仍有效
-- [ ] `pip list --outdated` / `poetry show --outdated` 檢查依賴
+- [ ] `uv pip list --outdated` 檢查依賴（ADR-012）
 - [ ] 抽 10 個檔頭跑 §10.4 一致性檢查指令
 
 ### 每季

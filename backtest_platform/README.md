@@ -62,14 +62,14 @@ cp .env.example .env
 # 2. 啟動容器
 docker compose up -d
 
-# 3. 安裝 Python 依賴
-poetry install --extras sprint0
+# 3. 安裝 Python 依賴（uv 取代 poetry，見 ADR-012）
+uv sync --extra sprint0
 
 # 4. 跑單元測試
-poetry run pytest -v
+uv run pytest -v
 
 # 5. Sprint 0 spike (M2 啟動前)
-poetry run python sprint_0_spikes/s1_tquant_hello_world.py
+uv run python sprint_0_spikes/s1_tquant_hello_world.py
 # ...詳見 sprint_0_spikes/RUNBOOK.md
 ```
 

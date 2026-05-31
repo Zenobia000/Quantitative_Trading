@@ -80,7 +80,7 @@
 ### 依賴安全
 
 - [x] `pip install` 時不裝來源不明套件
-- [ ] M2 引入 lock file（uv / poetry）
+- [ ] M2 引入 `uv.lock` lock file（ADR-012）
 - [ ] M3 引入 `pip-audit` 定期掃描
 - [ ] M3 引入 Dependabot（如果 repo 是 public）
 
@@ -116,7 +116,7 @@
 
 | # | 行動項 | 優先級 | 預計 milestone |
 | :--- | :--- | :---: | :--- |
-| 1 | 引入 lock file（uv / poetry） | P1 | M2 |
+| 1 | 引入 `uv.lock`（ADR-012） | P1 | M2 |
 | 2 | 引入 `pip-audit` 排程掃描 | P2 | M3 |
 | 3 | M5 backup 加密策略 | P0 | M5 前 |
 | 4 | M5 HTTP API auth + rate limit | P0 | M5 前 |

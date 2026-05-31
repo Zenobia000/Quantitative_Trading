@@ -1,7 +1,7 @@
 """Sprint 0 Gate Review — aggregate spike results and emit decision report.
 
 Run after S1-S6 spikes complete:
-    poetry run python sprint_0_spikes/gate_review.py > sprint_0_spikes/results/gate_review.md
+    uv run python sprint_0_spikes/gate_review.py > sprint_0_spikes/results/gate_review.md
 
 Reads all spike result JSONs and produces a Markdown decision report aligned
 with plan v1.0 §8 decision tree.

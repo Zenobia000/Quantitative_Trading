@@ -8,7 +8,7 @@ Validates:
 5. Page loads in < 2 seconds
 
 Run AFTER s6_seed_equity_data.py:
-    poetry run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py
+    uv run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py
 
 Pass criteria: page opens at http://localhost:8501, equity curve visible.
 """
@@ -102,7 +102,7 @@ def main():
         df = load_equity(strategy_id)
     except Exception as e:
         st.error(f"DB load failed: {e}")
-        st.info("Run `poetry run python sprint_0_spikes/s6_seed_equity_data.py` first.")
+        st.info("Run `uv run python sprint_0_spikes/s6_seed_equity_data.py` first.")
         return
     load_ms = (time.perf_counter() - t0) * 1000
 

@@ -16,7 +16,7 @@
 | 項目 | 檢查指令 | 期望 |
 |:--|:--|:--|
 | Python 版本 | `python --version` | >= 3.10 |
-| Poetry | `poetry --version` | 已安裝 |
+| uv | `uv --version` | 已安裝（取代 poetry，見 ADR-012）|
 | Docker Desktop | `docker ps` | daemon 運行中 |
 | Git 分支 | `git branch --show-current` | `feat/m2-tquant-lab-integration` |
 
@@ -38,8 +38,9 @@ cp .env.example .env  # Windows: copy .env.example .env
 # 編輯 .env 填入 token
 
 # 2. 安裝 sprint 0 所有依賴
-poetry install --extras sprint0
-# 或分項：poetry install --extras "mainframe data_paid engines ui broker monitoring dev"
+uv sync --extra sprint0
+# 或分項：uv sync --extra mainframe --extra data_paid --extra engines --extra ui --extra broker --extra monitoring --extra dev
+# 或全部：uv sync --all-extras
 
 # 3. 啟動本機服務
 docker compose up -d  # 啟 TimescaleDB
@@ -68,7 +69,7 @@ docker ps             # 確認運行
 ### S1 — TQuant-Lab + XTAI 安裝跑通
 
 ```bash
-poetry run python sprint_0_spikes/s1_tquant_hello_world.py
+uv run python sprint_0_spikes/s1_tquant_hello_world.py
 ```
 
 **Pass 標準**（檔案內列出，輸出含 `[S1] PASS`）：
@@ -81,10 +82,10 @@ poetry run python sprint_0_spikes/s1_tquant_hello_world.py
 
 ```bash
 # 預設用 synthetic 資料（不需要 FinMind token）
-poetry run python sprint_0_spikes/s2_m1_plug_zipline.py
+uv run python sprint_0_spikes/s2_m1_plug_zipline.py
 
 # 或對拍 M1 既有 pipeline (需要 FinMind token)
-poetry run python sprint_0_spikes/s2_m1_plug_zipline.py --compare-m1 --stock 2330 --start 2024-01-01 --end 2024-06-30
+uv run python sprint_0_spikes/s2_m1_plug_zipline.py --compare-m1 --stock 2330 --start 2024-01-01 --end 2024-06-30
 ```
 
 **Pass 標準**：
@@ -96,9 +97,9 @@ poetry run python sprint_0_spikes/s2_m1_plug_zipline.py --compare-m1 --stock 233
 
 ```bash
 # 需 FINLAB_API_TOKEN
-poetry run python sprint_0_spikes/s3_finlab_bundle_poc.py
-poetry run zipline ingest -b finlab_poc
-poetry run python sprint_0_spikes/s3_verify_bundle.py
+uv run python sprint_0_spikes/s3_finlab_bundle_poc.py
+uv run zipline ingest -b finlab_poc
+uv run python sprint_0_spikes/s3_verify_bundle.py
 ```
 
 **Pass 標準**：
@@ -112,7 +113,7 @@ poetry run python sprint_0_spikes/s3_verify_bundle.py
 
 ```bash
 # 需 SHIOAJI_* + SHIOAJI_SIMULATION=true
-poetry run python sprint_0_spikes/s4_shioaji_sandbox.py
+uv run python sprint_0_spikes/s4_shioaji_sandbox.py
 ```
 
 **Pass 標準**：
@@ -126,7 +127,7 @@ poetry run python sprint_0_spikes/s4_shioaji_sandbox.py
 
 ```bash
 # 需 FINLAB_API_TOKEN，盤中或盤後都可（盤後拿最後一筆 snapshot）
-poetry run python sprint_0_spikes/s5_finlab_live_polling.py --stock 2330 --duration 60
+uv run python sprint_0_spikes/s5_finlab_live_polling.py --stock 2330 --duration 60
 ```
 
 **Pass 標準**：
@@ -138,8 +139,8 @@ poetry run python sprint_0_spikes/s5_finlab_live_polling.py --stock 2330 --durat
 
 ```bash
 # 需 Docker TimescaleDB 運行
-poetry run python sprint_0_spikes/s6_seed_equity_data.py  # 灌測試資料
-poetry run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py
+uv run python sprint_0_spikes/s6_seed_equity_data.py  # 灌測試資料
+uv run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py
 # 瀏覽器開 http://localhost:8501
 ```
 
@@ -157,7 +158,7 @@ poetry run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py
 
 ```bash
 # 自動匯總所有 spike 結果到一份報告
-poetry run python sprint_0_spikes/gate_review.py > sprint_0_spikes/results/gate_review.md
+uv run python sprint_0_spikes/gate_review.py > sprint_0_spikes/results/gate_review.md
 ```
 
 決策樹（見 plan §8、ADR-005 §4）：
@@ -180,10 +181,10 @@ poetry run python sprint_0_spikes/gate_review.py > sprint_0_spikes/results/gate_
 
 | 問題 | 解法 |
 |:--|:--|
-| `ModuleNotFoundError: zipline` | `poetry install --extras mainframe` |
+| `ModuleNotFoundError: zipline` | `uv sync --extra mainframe` |
 | `XTAI calendar not found` | 升級 `exchange-calendars>=4.5` |
 | Docker daemon 未啟動 | 啟 Docker Desktop |
-| `FINLAB_API_TOKEN` 未設 | 編輯 `.env` 加入 token，重新 `poetry shell` |
+| `FINLAB_API_TOKEN` 未設 | 編輯 `.env` 加入 token；uv 不需 shell，直接 `uv run` 即重讀 env |
 | `psycopg2 connection refused` | 確認 `docker compose up -d` 已跑、port 5432 不衝突 |
 | `Shioaji simulation` 找不到 | 確認 `.env` 的 `SHIOAJI_SIMULATION=true` |
 

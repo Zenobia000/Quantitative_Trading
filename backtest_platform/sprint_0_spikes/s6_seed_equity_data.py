@@ -105,7 +105,7 @@ def main():
 
         n = seed_synthetic_data(conn)
         print(f"Seeded {n} synthetic equity snapshots.")
-        print("Now run: poetry run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py")
+        print("Now run: uv run streamlit run sprint_0_spikes/s6_streamlit_dashboard.py")
         return 0
     except Exception:
         traceback.print_exc()

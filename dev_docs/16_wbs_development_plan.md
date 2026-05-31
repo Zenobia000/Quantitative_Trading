@@ -149,7 +149,7 @@
 | 0.1.4 | gate_review.py 自動匯總工具 | DEV | 2h | ✅ | 2026-05-31 | 0.1.1 |
 | 0.2.1 | FinLab 訂閱 + API token | Self | — | ⏳ | — | 預付費 |
 | 0.2.2 | Shioaji 沙箱憑證申請 | Self | — | ⏳ | — | 1-3 工作天 |
-| 0.2.3 | 本機 `poetry install --extras sprint0` | DEV | 1h | ⏳ | — | 0.2.1 |
+| 0.2.3 | 本機 `uv sync --extra sprint0`（ADR-012） | DEV | 1h | ⏳ | — | 0.2.1 |
 | 0.3.1 | S1 TQuant-Lab + XTAI hello world | DEV | 4h | ⏳ | — | 0.2.3 |
 | 0.3.2 | S2 M1 plug 進 Zipline Algorithm | DEV | 8h | ⏳ | — | 0.3.1 |
 | 0.3.3 | S3 FinLab bundle ingester POC | DEV | 8h | ⏳ | — | 0.3.1, 0.2.1 |
@@ -330,7 +330,7 @@
 1. 券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊）
 2. ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）
 3. SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 < 1% 差異）
-4. lock file 未引入（poetry.lock 應加入版控）
+4. lock file 未引入（M2 啟動後 `uv lock` 產出 `uv.lock` 入版控；ADR-012）
 
 ### 已解決的技術債（v1.0 列為待解，現已 fix）
 

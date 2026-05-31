@@ -174,7 +174,7 @@
     <tr><td>外部憑證</td><td>Shioaji 沙箱憑證</td><td><span class="badge warn">⏳ 待申請</span></td><td>1-3 工作天</td></tr>
     <tr><td>外部 repo</td><td>TQuant-Lab clone</td><td><span class="badge info">無門檻</span></td><td>5 分鐘</td></tr>
     <tr><td>本機環境</td><td>Docker Desktop 啟動</td><td><span class="badge warn">⏳ 需啟動</span></td><td>1 分鐘</td></tr>
-    <tr><td>本機環境</td><td><code>poetry install --extras sprint0</code></td><td><span class="badge warn">⏳ 未跑</span></td><td>10 分鐘</td></tr>
+    <tr><td>本機環境</td><td><code>uv sync --extra sprint0</code>（ADR-012）</td><td><span class="badge warn">⏳ 未跑</span></td><td>10 分鐘</td></tr>
     <tr><td>套件升級</td><td>pytest-asyncio &gt;= 0.24</td><td><span class="badge ok">✓ 完成</span></td><td>commit 9526869</td></tr>
   </tbody>
 </table>
@@ -186,7 +186,7 @@
   <li>券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊 → <a href="04_decisions.html#d2">D2</a>）</li>
   <li>ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）</li>
   <li>SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 &lt; 1% 差異）</li>
-  <li>poetry.lock 未入版控（M2 早期補）</li>
+  <li>uv.lock 未入版控（M2 早期 <code>uv lock</code> 產出後 commit；ADR-012）</li>
 </ol>
 <p style="font-size:13px;color:var(--ink-mute);">
   <strong>已解決</strong>：pytest-asyncio 9.x 不相容 ✓、rqalpha 自寫 mod 廢止（ADR-001 superseded by ADR-005）✓
