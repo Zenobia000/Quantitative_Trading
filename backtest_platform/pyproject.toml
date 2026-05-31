@@ -7,7 +7,7 @@ name = "backtest_platform"
 version = "0.1.0"
 description = "Four-Layer Resonance Strategy Backtest Platform for Taiwan Stocks"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.12"  # zipline-tej 上界 3.11；Spike S1 fixed (ADR-005)
 license = { text = "Proprietary" }
 authors = [{ name = "Self" }]
 
@@ -18,13 +18,16 @@ dependencies = [
     "pyarrow>=15.0",
     "duckdb>=1.0",
     "psycopg2-binary>=2.9",
-    "sqlalchemy>=2.0",
+    # SQLAlchemy 1.4 (zipline-tej 上界 <2; M1 db_writer 用 psycopg2 直連，S6 streamlit
+    # 用 create_engine 1.4 API 相容)
+    "sqlalchemy>=1.4,<2",
     "FinMind>=1.7",
     # Strategy / Math
     "scipy>=1.12",
-    "ta-lib-bin; sys_platform == 'win32'",
+    # Note: ta-lib-bin removed 2026-06-01 (Spike S1) — M1 indicators 全自寫純 numpy
+    # /pandas，無 import talib；ta-lib-bin 0.4.26 也無 Windows wheel
     # Backtest engines (installed selectively per milestone)
-    # rqalpha and vectorbt have heavy native deps; opt-in via extras.
+    # vectorbt has heavy native deps; opt-in via extras.
     # Utilities
     "pydantic>=2.6",
     "pydantic-settings>=2.2",
