@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PjM 視角 — backtest_platform Decision Brief</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <header>
+    <span class="brand">backtest_platform</span>
+    <span class="sub">Decision Brief</span>
+  </header>
+  <nav>
+    <a href="index.html"><span class="num">★</span>Dashboard</a>
+    <a href="01_executive_summary.html"><span class="num">1</span>Executive Summary</a>
+    <a href="02_pm_perspective.html"><span class="num">2</span>PM 視角</a>
+    <a href="03_pjm_perspective.html" class="active"><span class="num">3</span>PjM 視角</a>
+    <a href="04_decisions.html"><span class="num">4</span>待決策<span class="star">★</span></a>
+    <a href="05_risks.html"><span class="num">5</span>風險登記簿</a>
+    <a href="06_action_items.html"><span class="num">6</span>Action Items</a>
+    <a href="07_appendix.html"><span class="num">7</span>附錄</a>
+  </nav>
+  <footer>2026-06-01<br>commit ab623cc</footer>
+</aside>
+
+<main>
+<div class="breadcrumb"><a href="index.html">Brief</a> / 3. PjM 視角</div>
+
+<h1>PjM 視角 — 進度、資源、關鍵路徑</h1>
+<div class="page-meta">
+  <span>來源：16 WBS v2.0（單一狀態真相源）</span>
+  <span>對應視角：Project Manager / 技術 lead</span>
+</div>
+
+<section>
+<h2>3.1 里程碑時程</h2>
+
+<table class="gantt">
+  <thead>
+    <tr><th style="width:140px;">里程碑</th><th style="width:100px;">預計</th><th>2026-05 → 2027-08</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>M0 規格定稿</td><td>2026-05-25</td>
+      <td><div class="track"><span class="seg-done" style="left:0%;width:3%;">✓</span></div></td></tr>
+    <tr><td>M1 資料+策略</td><td>2026-05-26</td>
+      <td><div class="track"><span class="seg-done" style="left:3%;width:3%;">✓</span></div></td></tr>
+    <tr><td>M2 預備</td><td>2026-06-01</td>
+      <td><div class="track"><span class="seg-done" style="left:6%;width:3%;">✓</span></div></td></tr>
+    <tr><td><strong>Sprint 0 Gate</strong></td><td>2026-06-08</td>
+      <td><div class="track"><span class="seg-now" style="left:9%;width:3%;">●</span></div></td></tr>
+    <tr><td>M2 IS 回測</td><td>2026-08</td>
+      <td><div class="track"><span class="seg-plan" style="left:12%;width:14%;">M2 TQuant-Lab</span></div></td></tr>
+    <tr><td>M3 OOS+驗證</td><td>2026-11</td>
+      <td><div class="track"><span class="seg-plan" style="left:26%;width:18%;">M3 PBO/DSR/DOE</span></div></td></tr>
+    <tr><td>M4 Paper Trading</td><td>2027-02</td>
+      <td><div class="track"><span class="seg-plan" style="left:44%;width:20%;">M4 Discord+Grafana</span></div></td></tr>
+    <tr><td>M5 小倉位實盤</td><td>2027-05</td>
+      <td><div class="track"><span class="seg-plan" style="left:64%;width:18%;">M5 Shioaji</span></div></td></tr>
+    <tr><td>全倉位</td><td>2027-08</td>
+      <td><div class="track"><span class="seg-plan" style="left:82%;width:18%;">驗證 3 月</span></div></td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:12px;color:var(--ink-soft);">
+  <span style="display:inline-block;width:10px;height:10px;background:var(--ok);border-radius:2px;vertical-align:middle;"></span> 已完成 ·
+  <span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px;vertical-align:middle;"></span> 進行中 ·
+  <span style="display:inline-block;width:10px;height:10px;background:var(--ink-mute);opacity:0.5;border-radius:2px;vertical-align:middle;"></span> 計劃中
+</p>
+</section>
+
+<section>
+<h2>3.2 WBS 模組進度</h2>
+
+<table>
+  <thead>
+    <tr><th>模組</th><th class="num">工時</th><th class="num">完成</th><th style="width:140px;">進度</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>0.0 Sprint 0</td><td class="num">30</td><td class="num">12</td>
+        <td><div class="bar"><span style="width:40%;"></span></div></td>
+        <td><span class="badge accent">scaffolding 完</span></td></tr>
+    <tr><td>1.0 專案管理</td><td class="num">50</td><td class="num">42</td>
+        <td><div class="bar green"><span style="width:84%;"></span></div></td>
+        <td>持續</td></tr>
+    <tr><td>2.0 系統架構</td><td class="num">80</td><td class="num">80</td>
+        <td><div class="bar green"><span style="width:100%;"></span></div></td>
+        <td><span class="badge ok">M1+M2 重組完</span></td></tr>
+    <tr><td>3.0 資料層</td><td class="num">120</td><td class="num">64</td>
+        <td><div class="bar amber"><span style="width:53%;"></span></div></td>
+        <td>FinLab bundle 待</td></tr>
+    <tr><td>4.0 策略層</td><td class="num">70</td><td class="num">60</td>
+        <td><div class="bar green"><span style="width:86%;"></span></div></td>
+        <td>Zipline wrapper 待</td></tr>
+    <tr><td>5.0 回測引擎</td><td class="num">100</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td><span class="badge accent">M2 啟動</span></td></tr>
+    <tr><td>6.0 統計驗證</td><td class="num">180</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td>M3</td></tr>
+    <tr><td>7.0 Paper+實盤</td><td class="num">110</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td>M4-M5</td></tr>
+    <tr><td>8.0 監控與儀表板</td><td class="num">80</td><td class="num">12</td>
+        <td><div class="bar amber"><span style="width:15%;"></span></div></td>
+        <td>Discord 完</td></tr>
+    <tr><td>9.0 測試與品質</td><td class="num">80</td><td class="num">44</td>
+        <td><div class="bar amber"><span style="width:55%;"></span></div></td>
+        <td>56 tests 綠</td></tr>
+    <tr><td>10.0 文檔</td><td class="num">120</td><td class="num">110</td>
+        <td><div class="bar green"><span style="width:92%;"></span></div></td>
+        <td>持續</td></tr>
+    <tr><td>11.0 跨 milestone 維運</td><td class="num">30</td><td class="num">24</td>
+        <td><div class="bar green"><span style="width:80%;"></span></div></td>
+        <td>Discord+結構同步</td></tr>
+    <tr style="border-top:2px solid var(--ink);font-weight:600;">
+      <td>合計</td><td class="num">1,050</td><td class="num">448</td>
+      <td><div class="bar"><span style="width:43%;"></span></div></td>
+      <td><strong>43%</strong></td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2>3.3 資源與工時</h2>
+<div class="grid-3">
+  <div class="card">
+    <h4>剩餘工時</h4>
+    <div class="big">602h</div>
+    <div class="sub">1,050h − 448h</div>
+  </div>
+  <div class="card">
+    <h4>兼職速率</h4>
+    <div class="big">10h / 週</div>
+    <div class="sub">週末 8h + 平日 2h</div>
+  </div>
+  <div class="card">
+    <h4>預估剩時</h4>
+    <div class="big">~60 週</div>
+    <div class="sub">含 buffer，2027-08 全倉</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>3.4 關鍵路徑分析</h2>
+<div class="callout info">
+  <div class="label">Critical Path</div>
+  <p>
+    <code>Sprint 0 spike</code> → <code>FinLab bundle adapter (3.B)</code>
+    → <code>Zipline algorithm wrapper (4.4)</code>
+    → <code>TQuant-Lab IS 回測 (5.A)</code> → <strong>M2 Gate</strong>
+    → M3 驗證 → M4 paper → M5 live
+  </p>
+  <p style="margin-top:8px;">
+    任一節點 fail：M2 Gate 失敗 → 回 M0 重新檢視策略（非工具問題）；
+    Sprint 0 spike fail → 按決策樹退場（見 <a href="../01_workflow_manual.md">01 §5.A.4</a>）
+  </p>
+</div>
+</section>
+
+<section>
+<h2>3.5 依賴與外部阻擋</h2>
+<table>
+  <thead>
+    <tr><th>類型</th><th>項目</th><th>狀態</th><th>ETA</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>外部訂閱</td><td>FinLab API token</td><td><span class="badge warn">⏳ 待購</span></td><td>1 天</td></tr>
+    <tr><td>外部憑證</td><td>Shioaji 沙箱憑證</td><td><span class="badge warn">⏳ 待申請</span></td><td>1-3 工作天</td></tr>
+    <tr><td>外部 repo</td><td>TQuant-Lab clone</td><td><span class="badge info">無門檻</span></td><td>5 分鐘</td></tr>
+    <tr><td>本機環境</td><td>Docker Desktop 啟動</td><td><span class="badge warn">⏳ 需啟動</span></td><td>1 分鐘</td></tr>
+    <tr><td>本機環境</td><td><code>poetry install --extras sprint0</code></td><td><span class="badge warn">⏳ 未跑</span></td><td>10 分鐘</td></tr>
+    <tr><td>套件升級</td><td>pytest-asyncio &gt;= 0.24</td><td><span class="badge ok">✓ 完成</span></td><td>commit 9526869</td></tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2>3.6 技術債（M2 待處理）</h2>
+<ol>
+  <li>券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊 → <a href="04_decisions.html#d2">D2</a>）</li>
+  <li>ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）</li>
+  <li>SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 &lt; 1% 差異）</li>
+  <li>poetry.lock 未入版控（M2 早期補）</li>
+</ol>
+<p style="font-size:13px;color:var(--ink-mute);">
+  <strong>已解決</strong>：pytest-asyncio 9.x 不相容 ✓、rqalpha 自寫 mod 廢止（ADR-001 superseded by ADR-005）✓
+</p>
+</section>
+
+<section>
+<h2>3.7 Sprint 規劃</h2>
+<table>
+  <thead>
+    <tr><th>Sprint</th><th>日期</th><th>重點</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Sprint -1</td><td>5/15-5/25</td><td>M0 策略規格定稿</td><td><span class="badge ok">✓</span></td></tr>
+    <tr><td>Sprint 0a</td><td>5/26-5/30</td><td>M1 完成（資料+策略+pipeline）</td><td><span class="badge ok">✓</span></td></tr>
+    <tr><td>Sprint 0b</td><td>5/31-6/1</td><td>M2 重組 + scaffolding + ADR + Discord</td><td><span class="badge ok">✓</span></td></tr>
+    <tr><td><strong>Sprint 0c</strong></td><td>6/2-6/8</td><td>Sprint 0 spike 執行 + Gate</td><td><span class="badge accent">當前</span></td></tr>
+    <tr><td>Sprint 1</td><td>6/9-6/22</td><td>FinLab bundle adapter + Zipline wrapper</td><td><span class="badge mute">待</span></td></tr>
+    <tr><td>Sprint 2</td><td>6/23-7/6</td><td>TQuant-Lab IS 回測 2330 對拍</td><td><span class="badge mute">待</span></td></tr>
+    <tr><td>Sprint 3</td><td>7/7-7/20</td><td>Portfolio 100 檔 IS 回測</td><td><span class="badge mute">待</span></td></tr>
+    <tr><td>Sprint 4</td><td>7/21-8/3</td><td>M2 acceptance + M2_backtest_report</td><td><span class="badge mute">待</span></td></tr>
+  </tbody>
+</table>
+</section>
+
+<nav class="page-nav">
+  <a class="prev" href="02_pm_perspective.html"><span class="dir">← 上一頁</span>2. PM 視角</a>
+  <a class="next" href="04_decisions.html"><span class="dir">下一頁 →</span>4. 待決策 ★</a>
+</nav>
+
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Executive Summary — backtest_platform Decision Brief</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <header>
+    <span class="brand">backtest_platform</span>
+    <span class="sub">Decision Brief</span>
+  </header>
+  <nav>
+    <a href="index.html"><span class="num">★</span>Dashboard</a>
+    <a href="01_executive_summary.html" class="active"><span class="num">1</span>Executive Summary</a>
+    <a href="02_pm_perspective.html"><span class="num">2</span>PM 視角</a>
+    <a href="03_pjm_perspective.html"><span class="num">3</span>PjM 視角</a>
+    <a href="04_decisions.html"><span class="num">4</span>待決策<span class="star">★</span></a>
+    <a href="05_risks.html"><span class="num">5</span>風險登記簿</a>
+    <a href="06_action_items.html"><span class="num">6</span>Action Items</a>
+    <a href="07_appendix.html"><span class="num">7</span>附錄</a>
+  </nav>
+  <footer>2026-06-01<br>commit ab623cc</footer>
+</aside>
+
+<main>
+<div class="breadcrumb"><a href="index.html">Brief</a> / 1. Executive Summary</div>
+
+<h1>Executive Summary</h1>
+<div class="page-meta">
+  <span>給 stakeholder review — 30 秒掃完</span>
+  <span>建議閱讀順序：本頁 → §4 待決策</span>
+</div>
+
+<section>
+<h2>當前狀態（一段話）</h2>
+<div class="callout">
+  <p>
+    M0/M1 完成、M2 前置作業（11 ADR、22 規格文檔、目錄重組、Discord 遷移、Sprint 0 scaffolding）皆已就緒；
+    整體進度 <strong>43%</strong>，56 個 unit test 全綠。
+    <strong>下一步是 Sprint 0 spike</strong>（6 條 1 週 gate）驗證 TQuant-Lab 整合可行性；
+    通過後啟動 M2 IS 回測。預計全倉上線 2027-Q3。
+  </p>
+</div>
+</section>
+
+<section>
+<h2>三句話總結</h2>
+<ol>
+  <li><strong>原因</strong>：M1 完成後評估 4 條技術路線（自寫 / FinLab-Native / 原計畫 rqalpha / TQuant-Lab），決定改採 <a href="../adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md">TQuant-Lab 主骨架</a>（節省 ~4 週工期，鎖定風險可控）。</li>
+  <li><strong>已完成</strong>：架構決策（11 ADR）+ 規格文檔（22 主檔對齊 M2）+ 目錄重組（commit <code>ae869f5</code>）+ Discord 告警遷移（commit <code>ea5c8f8</code>）+ Sprint 0 scaffolding（10 檔）。</li>
+  <li><strong>下一步</strong>：Sprint 0 spike 1 週 gate；任一 fail 按決策樹退場（最多延 4 週）；全綠 → M2 Sprint 1 開始實作 FinLab bundle adapter + Zipline algorithm wrapper。</li>
+</ol>
+</section>
+
+<section>
+<h2>三個下週需決策點</h2>
+<p>詳細選項與推薦見 <a href="04_decisions.html">§4 待決策</a>。</p>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>主題</th><th>急迫</th><th>建議</th><th>截止</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>D1</strong></td>
+      <td><a href="04_decisions.html#d1">Sprint 0 spike 啟動時機</a></td>
+      <td><span class="badge warn">急</span></td>
+      <td>選 (B) — 先跑無依賴 S1/S2/S6，憑證到位再 S3/S4/S5</td>
+      <td>2026-06-04</td>
+    </tr>
+    <tr>
+      <td><strong>D2</strong></td>
+      <td><a href="04_decisions.html#d2">下市股資料源</a></td>
+      <td><span class="badge info">中</span></td>
+      <td>漸進 (C)→(D)→(B)：FinLab 試 → 接受偏誤 → 自爬</td>
+      <td>Sprint 0 結束</td>
+    </tr>
+    <tr>
+      <td><strong>D3</strong></td>
+      <td><a href="04_decisions.html#d3">vectorbt PRO $20/月</a></td>
+      <td><span class="badge mute">低</span></td>
+      <td>選 (C) — M3 真痛了再買月費試</td>
+      <td>2026-10</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section>
+<h2>主要紅旗</h2>
+<ul class="flag-list">
+  <li class="crit">
+    <span class="marker"></span>
+    <span class="text">
+      <strong>致命 · 策略本身可能無 Edge</strong>
+      M3 PBO/DSR 才能驗證；接受失敗即止 → 砍策略。本專案最大風險。
+    </span>
+  </li>
+  <li class="high">
+    <span class="marker"></span>
+    <span class="text">
+      <strong>高 · Sprint 0 S2 是 deal-breaker</strong>
+      M1 純函式 plug Zipline 不通 → 強制 debug 不退場（純函式整合本應無風險）。
+    </span>
+  </li>
+  <li class="med">
+    <span class="marker"></span>
+    <span class="text">
+      <strong>中 · FinLab 5GB/月流量限制</strong>
+      一次性歷史回填 → Zipline bundle 本地永久；日增量 &lt; 220MB/月，遠低於限額。
+    </span>
+  </li>
+</ul>
+<p style="font-size:13px;color:var(--ink-mute);">完整 9 條風險見 <a href="05_risks.html">§5 風險登記簿</a>。</p>
+</section>
+
+<section>
+<h2>過去 2 週交付（17 commits）</h2>
+<table>
+  <thead>
+    <tr><th>類別</th><th>內容</th><th>commits</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>架構決策</td><td>7 份新 ADR (005-011)</td><td>bc86725, 915f102, 31d1555</td></tr>
+    <tr><td>規格文檔</td><td>7 份新主檔 (17, 18, 20-24)</td><td>806547d</td></tr>
+    <tr><td>cross-ref</td><td>4 份既有檔加 v2.0 banner</td><td>94930e5, 1088006</td></tr>
+    <tr><td>目錄重組</td><td>strategies/ + adapters/ + monitoring/ 等</td><td>ae869f5</td></tr>
+    <tr><td>結構同步</td><td>06/08/09 對齊新 import path</td><td>466eda1</td></tr>
+    <tr><td>Sprint 0</td><td>10 檔 scaffolding + RUNBOOK</td><td>a8c7a00, 777c59b</td></tr>
+    <tr><td>Discord 遷移</td><td>notifier + tests + ADR-010</td><td>ea5c8f8, 4c6f292</td></tr>
+    <tr><td>狀態真相源</td><td>WBS v2.0 + 15 §10 規則</td><td>31d1555, ab623cc</td></tr>
+  </tbody>
+</table>
+</section>
+
+<nav class="page-nav">
+  <a class="prev" href="index.html"><span class="dir">← 上一頁</span>Dashboard</a>
+  <a class="next" href="02_pm_perspective.html"><span class="dir">下一頁 →</span>2. PM 視角</a>
+</nav>
+
+</main>
+</div>
+</body>
+</html>
