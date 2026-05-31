@@ -63,18 +63,19 @@
 ### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
 
 > 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab、FinMind → FinLab、新增三模式+雙儀表板）
+> **2026-05-31 整併**：原 19 號 sprint_0_design 已合併入 01 §5.A 並撤回；21/22/23/24 為既有 05/03/14/13 的**擴充版** source of truth
 
-| # | 檔名 | 用途 |
-| :---: | :--- | :--- |
-| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線選擇、17 週時程、Verification） |
-| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy |
-| 19 | [sprint_0_design.md](./19_sprint_0_design.md) | Sprint 0 spike 細部規格（6 個 spike + gate） |
-| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Telegram 告警 spec |
-| 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB DDL |
-| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍標準 + CI/CD |
-| 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 |
-| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 風控規範（ex-ante/ex-post/熔斷/SOP） |
-| — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） |
+| # | 檔名 | 用途 | 與既有檔關係 |
+| :---: | :--- | :--- | :--- |
+| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線、17 週時程、Verification） | 獨立（02/16 已加 v2.0 banner 指向）|
+| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy | 獨立（M3 指標實作時 single source of truth）|
+| ~~19~~ | ~~sprint_0_design.md~~ | ~~Sprint 0 spike 細部規格~~ | **已合併入 [01 §5.A](./01_workflow_manual.md)，本檔撤回** |
+| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Telegram/Discord 告警 spec | 獨立（UI 詳設）|
+| 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB 13 表 DDL | **擴充** [05 §4](./05_architecture_and_design_document.md)（05 為 M1 baseline，21 為 M2+ 完整版）|
+| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 + CI/CD YAML 草案 | **擴充** [03](./03_behavior_driven_development_guide.md)（03 §6 加金字塔摘要 + 指向 22）|
+| 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 + docker-compose | **擴充** [14 §1](./14_deployment_and_operations_guide.md)（14 為 SOP，23 為拓撲設計）|
+| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 12 條 ex-ante 規則 + 3 級熔斷狀態機 + SOP | **擴充** [13 §J](./13_security_and_readiness_checklists.md)（13 §J 為摘要 + 指向 24）|
+| — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） | 獨立 |
 
 #### 階段 7 新增 ADR
 

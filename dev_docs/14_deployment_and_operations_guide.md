@@ -6,6 +6,9 @@
 
 ## 1. 部署架構
 
+> **2026-05-31 補註**：本節為高層概述。**完整三環境拓撲（Dev/Staging/Production）含 docker-compose 詳細草案、port mapping、secrets 管理、災難復原拓撲 → 詳見 [23_deployment_topology.md](./23_deployment_topology.md)**。
+> 本文聚焦運維 SOP 與 Runbook；23 號文件聚焦拓撲與基礎設施設計。
+
 ### 當前（M1–M3：開發/回測階段）
 
 ```

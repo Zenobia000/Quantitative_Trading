@@ -201,3 +201,50 @@
 | 程式 bug | 立即停機 + 回滾 | 修復 → paper 1 週 → 再上線 |
 
 完整流程詳見 M5 Runbook（待寫）。
+
+---
+
+## J. 風險管理規範（總覽，詳見 24 號文件）
+
+> **2026-05-31 增補**：本章節為 24 號文件的高層摘要。**完整風控規範（兩階段框架、12 條 ex-ante 規則細節、3 級熔斷狀態機、4 個 SOP 步驟、kill_switch.sh 腳本） → 詳見 [24_risk_management_spec.md](./24_risk_management_spec.md)**。
+
+### J.1 風控框架（兩階段）
+
+| 階段 | 何時 | 失敗動作 |
+| :--- | :--- | :--- |
+| **Ex-ante**（事前）| 訊號 → broker submit 之前 | reject 訂單、寫 data_quality_log、Discord HIGH |
+| **Ex-post**（事後）| 每筆 fill 後 + 每 5 分鐘 + 收盤 | 觸發熔斷 L1/L2/L3、Discord CRITICAL |
+
+### J.2 Ex-ante 規則表（12 條，詳見 24 §2）
+
+| Rule ID | 名稱 | 閾值 | M |
+| :--- | :--- | :--- | :---: |
+| EX-001 | 單筆下單金額上限 | < NT$ 500k（M5 小倉）/ < 5% equity（全倉）| M4 |
+| EX-002 | 單檔持倉比例上限 | < 8% equity | M4 |
+| EX-003 | 產業集中度上限 | < 35% equity（單產業）| M4 |
+| EX-004 | Portfolio Heat 上限 | < 6%（v2.md §6）| M4 |
+| EX-005 | 現金保留下限 | > 10% equity | M4 |
+| EX-006 | 漲跌停價檢查 | 限價 ±10% from prev_close | M4 |
+| EX-007 | 最大同時持倉檔數 | ≤ 15（v2.md §2.2）| M4 |
+| EX-008 | 最小停損距離 | stop_loss ≥ entry × 0.95 | M4 |
+| EX-009 | 訂單頻率上限 | < 30 訂單 / minute（防 bug 暴衝）| M4 |
+| EX-010 | 流動性檢查 | qty ≤ 20% × 20D 平均日成交量 | M5 |
+| EX-011 | 黑名單檢查 | stock_id ∉ blacklist | M4 |
+| EX-012 | 風控熔斷狀態 | breaker.state != HALTED | M4 |
+
+### J.3 熔斷規則（3 級）
+
+| Level | 觸發 | 動作 |
+| :--- | :--- | :--- |
+| **L1 暫停** | DD > 限額 1.0x | 暫停加碼，仍允許停損 |
+| **L2 減倉** | DD > 限額 1.5x | 強制減半部位 + Discord CRITICAL |
+| **L3 全停** | DD > 限額 2.0x | 全部出場 + 停機 + 通知 |
+
+### J.4 設計鐵律
+
+1. 風控不可繞過：所有 signal 必經 `risk_gate.evaluate()`
+2. 熔斷自動執行：L2/L3 觸發 → 自動下單，不等人工確認
+3. 保守優先：拿不準時拒單
+4. 可追溯：每次拒單寫 audit trail（rule_id + context_json）
+
+完整實作邏輯（gate 評估順序、SOP 應變、kill_switch.sh）詳見 24 號文件。

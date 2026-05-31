@@ -677,6 +677,20 @@ sequenceDiagram
 
 ## 第 4 部分：資料架構
 
+> **v1.4 補註（2026-05-31）**：以下 §4.1 ER 圖為 M1 階段 6 表基線。
+> M2-M5 完整 schema（13 表 DDL + 三層資料流 + DQ rules + retention policy + 跨源 ACL）詳見 **[21_data_contract.md](./21_data_contract.md)**。本節保留作 M1 baseline 視覺參考，不再擴充。
+
+### 4.0 M2+ 資料層快覽（指向 21 號文件）
+
+| 維度 | M1 (本節) | M2+ (見 21 號文件) |
+| :--- | :--- | :--- |
+| 表數 | 6 表 | 13 表（4 新增 + 9 新增） |
+| 資料源 | FinMind 單源 | FinLab 主 + FinMind fallback + Shioaji live |
+| 儲存 | TimescaleDB only | TimescaleDB + Zipline bundle + Parquet cache |
+| 一致性 | ACID for trades | + ACL 三邊界 + 跨源 cross-check |
+| 備份 | 無 | M5 daily pg_dump → GCS |
+| Retention | 永久 | 13 個 retention policy |
+
 ### 4.1 資料模型（TimescaleDB Schema）
 
 ```mermaid

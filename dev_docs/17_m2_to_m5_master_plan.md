@@ -229,9 +229,9 @@ backtest_platform/src/backtest_platform/
 | 條件 | 行動 |
 | :--- | :--- |
 | 6 spike 全綠 | 啟動 M2 |
-| 任一 spike 紅 | 退回 Hybrid 路線（見 [19_sprint_0_design.md](./19_sprint_0_design.md) §6） |
+| 任一 spike 紅 | 退回 Hybrid 路線（見 [01_workflow_manual.md §5.A](./01_workflow_manual.md) §6） |
 
-詳見 [19_sprint_0_design.md](./19_sprint_0_design.md)。
+詳見 [01_workflow_manual.md §5.A](./01_workflow_manual.md)。
 
 ---
 
@@ -299,7 +299,7 @@ python -m adapters.data_feed.finlab_live --stock 2330 --duration 60
 streamlit run dashboard/streamlit_app.py
 ```
 
-詳見 [19_sprint_0_design.md](./19_sprint_0_design.md) §4。
+詳見 [01_workflow_manual.md §5.A](./01_workflow_manual.md) §4。
 
 ### 9.2 M2 驗收（第 5 週末）
 
@@ -394,7 +394,7 @@ streamlit run dashboard/streamlit_app.py
 | ADR-008（新增） | Monitoring：Streamlit + Grafana + Telegram 三層 | 待新增 |
 | ADR-009（新增） | Statistical validation：自寫 PBO/DSR/CPCV 避 AGPL | 待新增 |
 | [18_reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 本文件 §3 的詳細展開 | 同步建立 |
-| [19_sprint_0_design.md](./19_sprint_0_design.md) | 本文件 §7.2 的詳細展開 | 同步建立 |
+| [01_workflow_manual.md §5.A](./01_workflow_manual.md) | 本文件 §7.2 的詳細展開 | 同步建立 |
 | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 本變更的調研基礎 | 維持作 reference |
 
 ---
