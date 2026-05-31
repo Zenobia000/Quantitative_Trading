@@ -1,6 +1,8 @@
 # 風險管理規範 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** M1 universe + signal priority 已實作 / M4-5 風控完整啟用
+> **版本：** v1.0 | **更新：** 2026-05-31
+> **適用 M**：M1 universe + signal priority 既有 / M4-5 完整風控啟用
+> **進度**：見 [`16_wbs_development_plan.md §7.C`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** L5 風險管理層（對應 `05_architecture_and_design_document.md` §1.1.2）
 > **關聯文件：** `13_security_and_readiness_checklists.md` §I（緊急狀況）、`14_deployment_and_operations_guide.md` §5/§7（告警與 Runbook）、`strategy/v2.md` §6（Heat 定義）
 

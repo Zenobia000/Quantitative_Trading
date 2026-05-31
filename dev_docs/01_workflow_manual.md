@@ -34,14 +34,16 @@ graph LR
   M4 --> M5[小倉位實盤]
 ```
 
-| 階段 | 目標 | 當前狀態 | Gate |
-| :--- | :--- | :---: | :--- |
-| **M0** | 策略規格定稿（`strategy/v2.md`） | ✅ v2.1.0 | 蘇格拉底審查通過 |
-| **M1** | 資料 + 策略骨架 + 端到端 smoke | ✅ 完成 | 44 unit tests 全綠，2330 端到端跑通 |
-| **M2** | IS 回測通過（2015–2020） | 🚧 啟動中 | rqalpha 整合 + IS 全綠燈 |
-| **M3** | OOS + 統計驗證 | ⏳ 待 M2 | PBO < 30%、DSR > 0.95 |
-| **M4** | Paper trading 3 個月 | ⏳ | Sharpe > 0.7 × 回測 Sharpe |
-| **M5** | 小倉位實盤（1/4 倉位） | ⏳ | 月績效不退化、Shioaji 整合 |
+| 階段 | 目標 | Gate |
+| :--- | :--- | :--- |
+| **M0** | 策略規格定稿（`strategy/v2.md`） | 蘇格拉底審查通過 |
+| **M1** | 資料 + 策略骨架 + 端到端 smoke | 44 unit tests 全綠，2330 端到端跑通 |
+| **M2** | IS 回測通過（2015-2020） | TQuant-Lab 整合 + IS 全綠燈（ADR-005）|
+| **M3** | OOS + 統計驗證 | PBO < 30%、DSR > 0.95 |
+| **M4** | Paper trading 3 個月 | Sharpe > 0.7 × 回測 Sharpe |
+| **M5** | 小倉位實盤（1/4 倉位） | 月績效不退化、Shioaji 整合 |
+
+> **當前狀態**：見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源；本表只列目標與 Gate）
 
 ---
 

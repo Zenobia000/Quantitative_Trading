@@ -1,6 +1,7 @@
 # 文檔與維護指南 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26
+> **版本：** v1.1 | **更新：** 2026-06-01
+> **v1.1 變更**：新增 §10「狀態真相源規則 + AI slop 預防」— 明確規範 WBS 為單一狀態源、ADR 為架構決策唯一紀錄、v2.md §6.3 為策略變更唯一紀錄
 
 ---
 
@@ -81,11 +82,11 @@
 ### 每完成一個 milestone
 
 - [ ] 更新對應的 `backtest_platform/docs/M*_*.md`
-- [ ] 更新 `dev_docs/02_project_brief_and_prd.md` 進度表
-- [ ] 更新 `dev_docs/16_wbs_development_plan.md` 完成百分比
-- [ ] 更新 `dev_docs/01_workflow_manual.md` 當前狀態
+- [ ] **更新 `dev_docs/16_wbs_development_plan.md`**（唯一狀態源，見 §10）
 - [ ] 如有架構變更，新增 ADR 到 `dev_docs/adrs/`
 - [ ] 更新 `dev_docs/05_architecture_and_design_document.md` §1.1 C4 圖（含 Checklist）
+
+> ⚠️ **不要**手動更新 02 PRD / 01 workflow / README 等檔的「狀態」欄 — 這些已改為 cross-ref `16 WBS`（v1.1 起的紀律，見 §10）
 
 ### 每變更策略邏輯
 
@@ -99,8 +100,8 @@
 
 - [ ] 審查 `dev_docs/INDEX.md` 是否仍與實際檔案一致
 - [ ] 檢查 dev_docs 內所有 git/file path 連結是否仍有效
-- [ ] 更新 README 中的 milestone 狀態
-- [ ] `pip list --outdated` 檢查依賴
+- [ ] `pip list --outdated` / `poetry show --outdated` 檢查依賴
+- [ ] 抽 10 個檔頭跑 §10.4 一致性檢查指令
 
 ### 每季
 
@@ -272,3 +273,121 @@ grep -rn "TODO\|FIXME\|XXX" dev_docs/ strategy/ backtest_platform/docs/
 | 減碼 | reduce |
 | 賣出 | exit |
 | 買進 | buy |
+
+---
+
+## 10. 狀態真相源規則 + AI slop 預防（v1.1 新增）
+
+### 10.1 為什麼需要這條規則
+
+M1 完成後，「現在到哪一階段」散落在 README、01、02、05、16 WBS 至少 5 個位置，更新時容易漏改、AI 產 PR 時容易產生不一致內容（aka "AI slop"）。v1.1 確立**三類資訊三個唯一源**：
+
+| 資訊類型 | 唯一源 | 其他檔做什麼 |
+|:--|:--|:--|
+| **進度狀態**（M1 完成 / M2 啟動中 / sprint 在跑哪個 task）| [`16_wbs_development_plan.md`](./16_wbs_development_plan.md) | cross-ref `[詳見 16 WBS](./16_wbs_development_plan.md)`，禁止重寫狀態欄 |
+| **架構決策**（為何選 X 而非 Y、模組邊界）| `dev_docs/adrs/ADR-*.md` | 內文提及時 cross-ref `[ADR-XXX](./adrs/...)`，禁止重複論述 |
+| **策略變更**（門檻/參數/條件調整）| `strategy/v2.md` Part 6.3 changelog | 對應 code 改動 commit 須引用 v2.md §6.3 條目 |
+
+### 10.2 三類資訊的更新流程
+
+#### 進度狀態變更
+
+```
+1. 完成一個 task / 切 milestone / 切 sprint
+2. 更新 16 WBS（一次寫對）：
+   - 對應 task 標 ✅ + 完成日期
+   - 模組進度百分比
+   - §6 里程碑表（若 milestone 達成）
+   - §7 Sprint 規劃表（若切 sprint）
+3. commit message 引用 WBS 條目（如 "完成 WBS 0.3.1 spike S1"）
+4. 禁止同時改 README / 01 / 02 等檔的狀態描述
+```
+
+#### 架構決策
+
+```
+1. 重大架構/設計選擇前：寫 ADR-XXX（含背景、選項、決策、後果、執行計畫）
+2. ADR 編號從 ADR-{下一個} 起；舊 ADR superseded 時加 "Superseded by ADR-YYY"
+3. 對應實作 commit 在 message 引用 ADR 編號
+4. 若文件中需提及該決策：用 cross-ref，禁止重複論述決策理由
+```
+
+#### 策略變更
+
+```
+1. 修改 strategy/v2.md 對應條款
+2. 在 Part 6.3 加 changelog entry（含變更/原因/預期影響/變更人）
+3. 升版本號（MAJOR / MINOR / PATCH）
+4. 同步 backtest_platform/src/ 程式碼
+5. 同步 07_module_specification_and_tests.md
+6. commit message 引用 v2.md changelog entry
+```
+
+### 10.3 禁止 AI slop 的具體規則
+
+**Hard rule（PR review 駁回標準）**：
+
+| 違反行為 | 駁回理由 |
+|:--|:--|
+| 在 README/01/02/05 等非 WBS 檔加「milestone 狀態」欄 | 違反 §10.1；改 cross-ref |
+| 同一個架構決策在 2+ 個文件論述（如 ADR 與 17 plan 都寫一遍「為何 TQuant-Lab」）| 違反 §10.1；保留 ADR、其他改 cross-ref |
+| 同一個策略門檻在 2+ 處硬編碼（如 `box_period=60` 出現在文檔內文 + StrategyConfig 預設值之外的地方）| 違反 §10.1；改 cross-ref `strategy/v2.md §2.7` |
+| commit message 不引用 WBS task / ADR / v2.md changelog | 違反 §10.2；補引用 |
+| AI 產的文檔含「現在 M2 已完成」之類過時狀態（與 WBS 不一致）| 違反 §10.3；移除或改 cross-ref |
+| 新模組 / 新目錄無對應 ADR | 違反 §10.2；補 ADR |
+| 修改現有 ADR 正文（除非標 superseded 或補 audit footer）| 違反 ADR 不可變原則；新寫 ADR 取代 |
+
+**Soft rule（review 警告）**：
+
+- 跨文檔重複描述同一主題 > 50 字 → 拆出 single source + cross-ref
+- 文檔內容描述「行為」但 code 已不一致 → 修文檔或修 code（不能兩種都對）
+- 文檔中出現「TODO/FIXME」超過 30 天 → 排上 WBS 或刪除
+
+### 10.4 一致性檢查指令（每月跑）
+
+```bash
+# 1. 找出 dev_docs/ 中除 WBS 外、仍有 "M1 完成" / "M2 啟動" 等狀態字樣的檔
+grep -rn "M[1-5]\s*完成\|M[1-5]\s*啟動\|M[1-5]\s*待\|✅\|⏳\|🚧" dev_docs/ \
+  --include="*.md" \
+  | grep -v "16_wbs_development_plan.md" \
+  | grep -v "MIGRATION\|changelog\|變更紀錄\|cross-ref\|單一狀態\|詳見 16"
+
+# 2. 找出有架構決策論述但無對應 ADR 的段落
+grep -rn "決策\|考慮的選項\|為什麼選\|trade-off" dev_docs/ \
+  --include="*.md" \
+  | grep -v "adrs/" \
+  | grep -v "ADR-" \
+  | grep -v "cross-ref\|詳見"
+
+# 3. 找出 dev_docs 內 dead cross-ref（指向不存在的 ADR / 文件）
+grep -rno "(ADR-[0-9]\{3\}\|[0-9]\{2\}_[a-z_]\+\.md)" dev_docs/ \
+  | while IFS=: read -r file lineno match; do
+      target=$(echo "$match" | tr -d '()')
+      if [[ "$target" == ADR-* ]]; then
+          [ -f "dev_docs/adrs/$target"*.md ] || echo "MISSING: $file:$lineno → $target"
+      else
+          [ -f "dev_docs/$target" ] || echo "MISSING: $file:$lineno → $target"
+      fi
+  done
+
+# 4. 找出 commit message 沒引用 WBS/ADR/v2.md 的非 chore 變更
+git log --since='1 month ago' --pretty=format:'%h %s' \
+  | grep -vE '^[0-9a-f]+ (chore|docs|build|ci)'  \
+  | grep -vE 'WBS|ADR-[0-9]|v2\.md'  # 應該空
+```
+
+### 10.5 例外狀況
+
+允許重複的場景：
+- **快覽性質**：README 列里程碑「快覽」是 OK 的（如本專案 root README），但必須註明「詳見 16 WBS」
+- **歷史備份**：舊 commit 中的狀態描述不需追溯改
+- **教學/onboarding**：給新人讀的 quickstart 可重述少量狀態，但加「截至 YYYY-MM-DD」時間戳
+- **PR/issue/email**：跨工具溝通可重述，不算 in-tree slop
+
+### 10.6 工具支援（未來）
+
+考慮（M3+）：
+- pre-commit hook：自動檢測新加的「M1 完成」字樣
+- CI：跑 §10.4 一致性檢查指令
+- Linter：MD lint rule for cross-ref 強制
+

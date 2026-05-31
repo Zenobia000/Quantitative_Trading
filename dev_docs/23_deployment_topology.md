@@ -1,6 +1,8 @@
 # 部署拓撲 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** Dev 已有 / Staging M4 / Prod M5
+> **版本：** v1.0 | **更新：** 2026-05-31
+> **適用 M**：Dev (M2+) / Staging Paper (M4) / Production Live (M5)
+> **進度**：見 [`16_wbs_development_plan.md §7.D + §8.B`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** M2-M5 三環境部署
 > **關聯文件：** `14_deployment_and_operations_guide.md`（運維 SOP）、`05_architecture_and_design_document.md` §5（C4 Deployment）、`20_dashboard_specification.md`（監控元件）
 

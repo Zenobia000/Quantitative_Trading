@@ -2,7 +2,7 @@
 
 > 依 `VibeCoding_Workflow_Templates` v3.0 模板產出，對應實際 `backtest_platform/` 程式碼狀態。
 > **產出日期**：2026-05-26 | **對應版本**：backtest_platform 0.1.0 (M1)
-> **2026-05-31 更新**：新增階段 7（M2+ 規劃文檔），含 5 份新 ADR + 8 份新規格文檔（17-24）
+> **2026-06-01 更新**：階段 7 完整定版（11 份 ADR + 7 份規格文檔 17/18/20-24，原 19 已併入 01 §5.A）；16 WBS 升 v2.0 為單一狀態真相源（見 15 §10 規則）
 
 ---
 
@@ -25,7 +25,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**9 份 ADR**：原 4 份 + 2026-05-31 新增 005~009） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**11 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -85,7 +85,9 @@
 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized | — |
 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
-| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ Telegram 告警 | — |
+| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ 告警（Telegram 路線，已部分 superseded） | 被 ADR-010 部分取代 |
+| [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) | Discord 取代 Telegram 為告警通道 | 部分 supersede **ADR-009** |
+| [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
 
 ---
 

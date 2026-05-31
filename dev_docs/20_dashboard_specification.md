@@ -1,6 +1,8 @@
 # 儀表板規格 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** M3 MVP 待交付 / M4 完整版規劃中
+> **版本：** v1.0 | **更新：** 2026-05-31
+> **適用 M**：M3 MVP（Streamlit A+B+C）/ M4 加 Grafana + Discord / M5 補 D+E
+> **進度**：見 [`16_wbs_development_plan.md §8`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** L7 監控與歸因層（對應 `05_architecture_and_design_document.md` §1.1.2）
 > **關聯文件：** `21_data_contract.md`（資料 schema）、`23_deployment_topology.md`（部署）、`14_deployment_and_operations_guide.md` §5（告警分級）
 

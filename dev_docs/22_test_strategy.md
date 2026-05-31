@@ -1,6 +1,8 @@
 # 測試策略 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** M1 36 個 unit test 綠 / M2-5 待擴充
+> **版本：** v1.0 | **更新：** 2026-05-31
+> **適用 M**：全 milestone 測試規範
+> **進度**：見 [`16_wbs_development_plan.md §9`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** 全 milestone 測試規範
 > **關聯文件：** `03_behavior_driven_development_guide.md`、`13_security_and_readiness_checklists.md`、`.claude/rules/testing.md`
 

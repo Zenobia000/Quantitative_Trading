@@ -3,7 +3,8 @@
 > **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** 已批准（取代 02 PRD §4.1 表中 rqalpha + vectorbt 雙引擎技術線）
 > **路線代號：** Plan TQuant-Lab（「最小重構 + 主骨架整合」）
 > **對應 plan file：** `C:\Users\xdxd2\.claude\plans\maintain-calm-blossom.md`
-> **對應 ADR：** ADR-005 ~ ADR-009（待新增）
+> **對應 ADR：** ADR-005 ~ ADR-011
+> **進度追蹤：** 見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源；本文件為「路線與計畫書」，不含進度）
 
 ---
 

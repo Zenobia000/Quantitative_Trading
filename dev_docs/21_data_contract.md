@@ -1,6 +1,8 @@
 # 資料契約 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31 | **狀態：** M1 已實作四表 / M2-5 新增九表
+> **版本：** v1.0 | **更新：** 2026-05-31
+> **適用 M**：M1 既有四表 + M2-5 新增九表（共 13 表）
+> **進度**：見 [`16_wbs_development_plan.md §3.D`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** L1 資料層（對應 `05_architecture_and_design_document.md` §4）
 > **關聯文件：** `20_dashboard_specification.md`（消費端）、`23_deployment_topology.md`（DB 部署）、ADR-006（FinLab 選型）
 
