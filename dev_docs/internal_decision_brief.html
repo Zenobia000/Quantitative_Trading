@@ -1,0 +1,999 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>backtest_platform — Internal Decision Brief (PM + PjM)</title>
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --ink-mute: #4a4a4a;
+    --paper: #fafafa;
+    --line: #e5e3df;
+    --line-soft: #efeeea;
+    --accent: #cc785c;        /* Anthropic coral */
+    --accent-soft: #f5e8e2;
+    --ok: #166534;
+    --ok-bg: #dcfce7;
+    --warn: #b45309;
+    --warn-bg: #fef3c7;
+    --bad: #991b1b;
+    --bad-bg: #fee2e2;
+    --info: #1e40af;
+    --info-bg: #dbeafe;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC",
+                 "Noto Sans TC", "Microsoft JhengHei", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 32px 96px;
+  }
+  header.doc {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  header.doc .eyebrow {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  header.doc h1 {
+    margin: 0 0 12px;
+    font-size: 28px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  header.doc .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    font-size: 13px;
+    color: var(--ink-mute);
+  }
+  header.doc .meta strong { color: var(--ink); font-weight: 600; }
+  h2 {
+    margin-top: 56px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+  }
+  h2 .num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-right: 8px;
+  }
+  h3 {
+    margin-top: 32px;
+    margin-bottom: 12px;
+    font-size: 17px;
+    font-weight: 600;
+  }
+  h4 {
+    margin-top: 20px;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+  }
+  p { margin: 0 0 12px; }
+  ul, ol { margin: 0 0 12px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+  code {
+    font-family: var(--mono);
+    font-size: 0.88em;
+    background: var(--line-soft);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 16px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line-soft);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    border-bottom: 2px solid var(--ink);
+    font-weight: 600;
+    background: transparent;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-mute);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.center, th.center { text-align: center; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1.5;
+    vertical-align: baseline;
+  }
+  .badge.ok    { background: var(--ok-bg);   color: var(--ok); }
+  .badge.warn  { background: var(--warn-bg); color: var(--warn); }
+  .badge.bad   { background: var(--bad-bg);  color: var(--bad); }
+  .badge.info  { background: var(--info-bg); color: var(--info); }
+  .badge.mute  { background: var(--line-soft); color: var(--ink-mute); }
+  .badge.accent { background: var(--accent-soft); color: var(--accent); }
+
+  /* Callouts */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .callout.warn { border-color: var(--warn); background: var(--warn-bg); }
+  .callout.bad  { border-color: var(--bad);  background: var(--bad-bg); }
+  .callout.info { border-color: var(--info); background: var(--info-bg); }
+  .callout .label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Cards grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .card h4 { margin-top: 0; }
+  .card .big {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin: 4px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .card .sub {
+    font-size: 12px;
+    color: var(--ink-mute);
+    margin-top: 4px;
+  }
+
+  /* Progress bar */
+  .bar {
+    height: 8px;
+    background: var(--line-soft);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+  .bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+  }
+  .bar.green > span { background: var(--ok); }
+  .bar.amber > span { background: var(--warn); }
+
+  /* Decision block */
+  .decision {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  .decision header {
+    background: #fff;
+    border-bottom: 1px solid var(--line);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .decision header .title {
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .decision header .id {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+  .decision .body { padding: 14px 16px; background: #fff; }
+  .decision .body dl { margin: 0; }
+  .decision .body dt {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-mute);
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .decision .body dt:first-child { margin-top: 0; }
+  .decision .body dd { margin: 4px 0 0; }
+
+  /* Risk matrix */
+  .matrix { font-size: 13px; }
+  .matrix td.sev1 { background: #f0fdf4; }
+  .matrix td.sev2 { background: #fef9c3; }
+  .matrix td.sev3 { background: #fed7aa; }
+  .matrix td.sev4 { background: #fecaca; }
+
+  /* Gantt-ish */
+  .gantt { font-size: 13px; font-variant-numeric: tabular-nums; }
+  .gantt td { border-bottom: 1px solid var(--line-soft); padding: 4px 6px; }
+  .gantt th { background: transparent; }
+  .gantt .track {
+    position: relative;
+    height: 14px;
+    background: var(--line-soft);
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .gantt .track > span {
+    position: absolute;
+    height: 100%;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .gantt .seg-done { background: var(--ok); }
+  .gantt .seg-now  { background: var(--accent); }
+  .gantt .seg-plan { background: var(--ink-mute); opacity: 0.5; }
+
+  /* TOC */
+  nav.toc {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  nav.toc .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-mute);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  nav.toc ol { margin: 0; padding-left: 20px; }
+  nav.toc li { margin-bottom: 2px; }
+  nav.toc a { color: var(--ink); }
+  nav.toc a:hover { color: var(--accent); }
+
+  footer.doc {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-mute);
+  }
+
+  /* Print */
+  @media print {
+    body { background: #fff; font-size: 12px; }
+    .wrap { padding: 0; max-width: none; }
+    h2 { page-break-after: avoid; margin-top: 32px; }
+    .decision, .card, .callout { page-break-inside: avoid; }
+    a { color: var(--ink); }
+  }
+
+  @media (max-width: 720px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .wrap { padding: 24px 16px 48px; }
+    h2 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="doc">
+  <div class="eyebrow">Internal Decision Brief · PM + PjM Perspectives</div>
+  <h1>backtest_platform — M2 啟動前決策簡報</h1>
+  <div class="meta">
+    <span>日期：<strong>2026-06-01</strong></span>
+    <span>版本：<strong>v1.0</strong></span>
+    <span>分支：<strong>feat/m2-tquant-lab-integration</strong></span>
+    <span>最新 commit：<strong>ab623cc</strong></span>
+    <span>對應狀態源：<a href="./16_wbs_development_plan.md">16 WBS v2.0</a></span>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="label">Table of Contents</div>
+  <ol>
+    <li><a href="#tldr">TL;DR — 三句話 + 三個決策</a></li>
+    <li><a href="#pm">PM 視角：商業價值 · User Story · 北極星</a></li>
+    <li><a href="#pjm">PjM 視角：里程碑 · 進度 · 風險 · 資源</a></li>
+    <li><a href="#decisions">待決策事項（需 stakeholder 拍板）</a></li>
+    <li><a href="#actions">Action Items（下個 sprint）</a></li>
+    <li><a href="#appendix">附錄：文件索引 · 術語表</a></li>
+  </ol>
+</nav>
+
+<!-- =================== §1 TL;DR =================== -->
+<section id="tldr">
+<h2><span class="num">§1</span>TL;DR — 30 秒掃完</h2>
+
+<div class="callout">
+  <div class="label">當前狀態（一段話）</div>
+  <p>
+    M0/M1 完成、M2 前置作業（11 ADR、22 規格文檔、目錄重組、Discord 遷移、Sprint 0 scaffolding）皆已就緒；
+    整體進度 <strong>43%</strong>，56 個 unit test 全綠。
+    <strong>下一步是 Sprint 0 spike</strong>（6 條 1 週 gate）驗證 TQuant-Lab 整合可行性；
+    通過後啟動 M2 IS 回測。
+  </p>
+</div>
+
+<div class="grid-3">
+  <div class="card">
+    <h4>商業假設</h4>
+    <div class="big">未驗證</div>
+    <div class="sub">四層共振戰法是否有 Edge — 須過 IS+OOS+PBO 三閘門</div>
+  </div>
+  <div class="card">
+    <h4>進度</h4>
+    <div class="big">43%</div>
+    <div class="sub">448h / 1050h；M5 上線預計 2027-Q2</div>
+  </div>
+  <div class="card">
+    <h4>P0 阻擋</h4>
+    <div class="big">2</div>
+    <div class="sub">FinLab 訂閱 · Shioaji 沙箱憑證（個人作業，~1-3 工作天）</div>
+  </div>
+</div>
+
+<h3>三個下週需決策點</h3>
+<ol>
+  <li><strong>D1</strong> — Sprint 0 spike 何時啟動？（依賴 FinLab/Shioaji 憑證到位）</li>
+  <li><strong>D2</strong> — 下市股資料源解決方案：TEJ 付費（NT$3-10k/月）vs TWSE 自爬 vs 接受偏誤？</li>
+  <li><strong>D3</strong> — 是否購買 vectorbt PRO（$20/月，加速 grid/WFA 約 5-10×）？</li>
+</ol>
+
+<h3>主要紅旗</h3>
+<ul>
+  <li><span class="badge bad">致命</span> 策略本身可能無 Edge（M3 PBO 才能驗證）— 接受 → 砍策略</li>
+  <li><span class="badge warn">高</span> Sprint 0 S2 fail（M1 純函式 plug Zipline）是 deal-breaker — 強制 debug 不退場</li>
+  <li><span class="badge warn">中</span> FinLab 5GB/月流量限制（緩解：一次性回填 + 本地 cache）</li>
+</ul>
+</section>
+
+<!-- =================== §2 PM 視角 =================== -->
+<section id="pm">
+<h2><span class="num">§2</span>PM 視角 — 商業價值與使用者價值</h2>
+
+<h3>2.1 商業假設與北極星指標</h3>
+
+<p><strong>核心假設</strong>（單人研究專案，無外部客戶）：</p>
+<blockquote style="border-left:3px solid var(--line); padding:6px 14px; margin:8px 0 16px; color:var(--ink-mute);">
+  台股中小型股的短中期波段，受四種獨立力量（結構/法人方向/籌碼/動能）同時推動時，
+  會出現高機率的續漲行情，且該訊號可被程式化、可被歷史驗證、可被實盤捕捉。
+</blockquote>
+
+<table>
+  <thead>
+    <tr><th>指標</th><th>目標</th><th>當前</th><th>驗證階段</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>IS Sharpe</td><td>&gt; 1.0</td><td class="num">—</td><td>M2</td></tr>
+    <tr><td>OOS Sharpe</td><td>&gt; 0.6 × IS</td><td class="num">—</td><td>M3</td></tr>
+    <tr><td>PBO（Prob. of Backtest Overfit）</td><td>&lt; 30%</td><td class="num">—</td><td>M3</td></tr>
+    <tr><td>DSR（Deflated Sharpe Ratio）</td><td>&gt; 0.95</td><td class="num">—</td><td>M3</td></tr>
+    <tr><td>滑點 0.3% 下 Sharpe</td><td>仍 &gt; 1.0</td><td class="num">—</td><td>M4 paper</td></tr>
+    <tr><td>Paper Sharpe 退化</td><td>&lt; 30% vs IS</td><td class="num">—</td><td>M4</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <div class="label">失敗即止條件（接受退場）</div>
+  <ul>
+    <li>M2 IS 回測達不到綠燈 → 砍策略或重新設計（不重跑）</li>
+    <li>M3 PBO &gt; 50% → 策略過擬合，淘汰</li>
+    <li>M4 paper trading 滑點 &gt; 預估 2× → 重新校準成本模型</li>
+    <li>連續 3 月實盤退化 &gt; 30% → 全平 + 檢討</li>
+  </ul>
+</div>
+
+<h3>2.2 User Story 進度（PRD §3）</h3>
+
+<table>
+  <thead>
+    <tr><th>Epic</th><th>User Story</th><th>狀態</th><th>BDD</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td rowspan="2">Epic 1<br><span class="badge ok">完成</span><br>研究跑歷史回測</td>
+      <td>US-001 單檔 v2 計分+訊號 CLI</td>
+      <td><span class="badge ok">✓ 已實作</span></td>
+      <td>pipeline.feature</td>
+    </tr>
+    <tr>
+      <td>US-002 FinMind 拉取 + parquet cache</td>
+      <td><span class="badge ok">✓ 已實作</span></td>
+      <td>etl.feature</td>
+    </tr>
+    <tr>
+      <td rowspan="2">Epic 2<br><span class="badge warn">進行</span><br>驗證策略 Edge</td>
+      <td>US-003 IS portfolio 回測 + quantstats 報表</td>
+      <td><span class="badge info">M2</span></td>
+      <td>backtest_is.feature</td>
+    </tr>
+    <tr>
+      <td>US-004 OOS 一次性 + PBO/DSR</td>
+      <td><span class="badge mute">M3</span></td>
+      <td>backtest_oos.feature</td>
+    </tr>
+    <tr>
+      <td rowspan="2">Epic 3<br><span class="badge mute">待開</span><br>風控與運維</td>
+      <td>US-005 Paper trading 3 個月模擬</td>
+      <td><span class="badge mute">M4</span></td>
+      <td>paper_trade.feature</td>
+    </tr>
+    <tr>
+      <td>US-006 Grafana 即時監控 + Discord 告警</td>
+      <td><span class="badge mute">M4-M5</span></td>
+      <td>monitoring.feature</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>2.3 競爭格局與技術選型摘要</h3>
+
+<p>本次 M2 啟動前評估 4 條路線（詳見 <a href="./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md">ADR-005</a>）：</p>
+
+<table>
+  <thead>
+    <tr><th>路線</th><th>新寫 LOC</th><th>時程</th><th>廠商鎖定</th><th>採納</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Plan A：完全自寫 Adapter Framework</td><td class="num">6,000–8,000</td><td class="num">22 週</td><td>低</td><td><span class="badge mute">否</span></td></tr>
+    <tr><td>Plan B：FinLab-Native（深度綁定）</td><td class="num">1,800–2,500</td><td class="num">14 週</td><td>高</td><td><span class="badge mute">否</span></td></tr>
+    <tr><td>原計畫：rqalpha + vectorbt 雙引擎</td><td class="num">~5,000</td><td class="num">22 週</td><td>中</td><td><span class="badge bad">棄</span></td></tr>
+    <tr><td><strong>Plan TQuant-Lab：成熟主骨架 + 薄薄 adapter</strong></td><td class="num">~2,500</td><td class="num">17 週</td><td>中</td><td><span class="badge ok">採</span></td></tr>
+  </tbody>
+</table>
+
+<p>選擇理由：</p>
+<ul>
+  <li>TQuant-Lab (TEJ Zipline 台股 fork) 內建 XTAI 交易日曆 + Shioaji 整合範例（節省 ~4 週）</li>
+  <li>Zipline event-driven 天然支援 M1 既有 7 訊號優先序（vectorbt 表達困難）</li>
+  <li>三模式統一架構（backtest / paper / live）共用同一份 strategy code</li>
+  <li>vectorbt 副引擎只用於 grid/WFA 最佳化</li>
+</ul>
+
+<h3>2.4 範圍 — 做什麼、不做什麼</h3>
+
+<div class="grid-2">
+  <div class="card">
+    <h4>✓ 在範圍內</h4>
+    <ul style="margin:0;">
+      <li>台股 TSE/OTC 個股</li>
+      <li>單一四層共振策略</li>
+      <li>日線（M5 視需求加分鐘線）</li>
+      <li>長多單方向</li>
+      <li>個人研究 + 個人實盤</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h4>✗ 不做</h4>
+    <ul style="margin:0;">
+      <li>美股 / 港股 / 加密幣</li>
+      <li>多策略管理（M5 前）</li>
+      <li>期權 / 期貨</li>
+      <li>多帳戶 / 對外服務</li>
+      <li>HFT / intraday tick-level</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<!-- =================== §3 PjM 視角 =================== -->
+<section id="pjm">
+<h2><span class="num">§3</span>PjM 視角 — 進度 · 風險 · 資源</h2>
+
+<h3>3.1 里程碑時程</h3>
+
+<table class="gantt">
+  <thead>
+    <tr><th style="width:140px;">里程碑</th><th style="width:100px;">預計</th><th>時間軸（2026-05 → 2027-08）</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>M0 規格定稿</td><td>2026-05-25</td>
+      <td><div class="track"><span class="seg-done" style="left:0%;width:3%;">M0</span></div></td></tr>
+    <tr><td>M1 資料+策略</td><td>2026-05-26</td>
+      <td><div class="track"><span class="seg-done" style="left:3%;width:3%;">M1</span></div></td></tr>
+    <tr><td>M2 預備</td><td>2026-06-01</td>
+      <td><div class="track"><span class="seg-done" style="left:6%;width:3%;">預備</span></div></td></tr>
+    <tr><td>Sprint 0 Gate</td><td>2026-06-08</td>
+      <td><div class="track"><span class="seg-now" style="left:9%;width:3%;">S0</span></div></td></tr>
+    <tr><td>M2 IS 回測</td><td>2026-08</td>
+      <td><div class="track"><span class="seg-plan" style="left:12%;width:14%;">M2 TQuant-Lab</span></div></td></tr>
+    <tr><td>M3 OOS+驗證</td><td>2026-11</td>
+      <td><div class="track"><span class="seg-plan" style="left:26%;width:18%;">M3 PBO/DSR/DOE</span></div></td></tr>
+    <tr><td>M4 Paper Trading</td><td>2027-02</td>
+      <td><div class="track"><span class="seg-plan" style="left:44%;width:20%;">M4 Discord+Grafana</span></div></td></tr>
+    <tr><td>M5 小倉位實盤</td><td>2027-05</td>
+      <td><div class="track"><span class="seg-plan" style="left:64%;width:18%;">M5 Shioaji</span></div></td></tr>
+    <tr><td>全倉位</td><td>2027-08</td>
+      <td><div class="track"><span class="seg-plan" style="left:82%;width:18%;">驗證 3 月</span></div></td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:12px;color:var(--ink-mute);margin-top:4px;">
+  <span class="badge ok">✓</span> 已完成
+  <span class="badge accent">●</span> 進行中
+  <span class="badge mute">○</span> 計劃中
+</p>
+
+<h3>3.2 進度儀表板（按 WBS 模組）</h3>
+
+<table>
+  <thead>
+    <tr><th>模組</th><th class="num">工時</th><th class="num">完成</th><th>進度</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>0.0 Sprint 0</td><td class="num">30</td><td class="num">12</td>
+        <td><div class="bar"><span style="width:40%;"></span></div></td>
+        <td><span class="badge accent">scaffolding 完</span></td></tr>
+    <tr><td>1.0 專案管理</td><td class="num">50</td><td class="num">42</td>
+        <td><div class="bar green"><span style="width:84%;"></span></div></td>
+        <td>持續</td></tr>
+    <tr><td>2.0 系統架構</td><td class="num">80</td><td class="num">80</td>
+        <td><div class="bar green"><span style="width:100%;"></span></div></td>
+        <td><span class="badge ok">M1+M2 重組完</span></td></tr>
+    <tr><td>3.0 資料層</td><td class="num">120</td><td class="num">64</td>
+        <td><div class="bar amber"><span style="width:53%;"></span></div></td>
+        <td>FinLab bundle 待</td></tr>
+    <tr><td>4.0 策略層</td><td class="num">70</td><td class="num">60</td>
+        <td><div class="bar green"><span style="width:86%;"></span></div></td>
+        <td>Zipline wrapper 待 M2</td></tr>
+    <tr><td>5.0 回測引擎</td><td class="num">100</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td><span class="badge accent">M2 啟動</span></td></tr>
+    <tr><td>6.0 統計驗證</td><td class="num">180</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td>M3</td></tr>
+    <tr><td>7.0 Paper+實盤</td><td class="num">110</td><td class="num">0</td>
+        <td><div class="bar"><span style="width:0%;"></span></div></td>
+        <td>M4-M5</td></tr>
+    <tr><td>8.0 監控與儀表板</td><td class="num">80</td><td class="num">12</td>
+        <td><div class="bar amber"><span style="width:15%;"></span></div></td>
+        <td>Discord 完成</td></tr>
+    <tr><td>9.0 測試與品質</td><td class="num">80</td><td class="num">44</td>
+        <td><div class="bar amber"><span style="width:55%;"></span></div></td>
+        <td>56 tests 綠</td></tr>
+    <tr><td>10.0 文檔</td><td class="num">120</td><td class="num">110</td>
+        <td><div class="bar green"><span style="width:92%;"></span></div></td>
+        <td>持續</td></tr>
+    <tr><td>11.0 跨 milestone 維運</td><td class="num">30</td><td class="num">24</td>
+        <td><div class="bar green"><span style="width:80%;"></span></div></td>
+        <td>Discord+結構同步</td></tr>
+    <tr style="border-top:2px solid var(--ink);font-weight:600;">
+      <td>合計</td><td class="num">1,050</td><td class="num">448</td>
+      <td><div class="bar"><span style="width:43%;"></span></div></td>
+      <td><strong>43%</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.3 關鍵路徑分析</h3>
+
+<div class="callout info">
+  <div class="label">Critical Path</div>
+  <p>
+    <code>Sprint 0 spike</code> → <code>FinLab bundle adapter (3.B)</code> → <code>Zipline algorithm wrapper (4.4)</code>
+    → <code>TQuant-Lab IS 回測 (5.A)</code> → <strong>M2 Gate</strong> → M3 驗證 → M4 paper → M5 live
+  </p>
+  <p style="margin-top:8px;">
+    任一節點 fail：M2 Gate 失敗 → 回 M0 重新檢視策略（非工具問題）；
+    Sprint 0 spike fail → 按決策樹退場（詳見 <a href="./01_workflow_manual.md">01 §5.A.4</a>）
+  </p>
+</div>
+
+<h3>3.4 資源與工時</h3>
+
+<div class="grid-3">
+  <div class="card">
+    <h4>剩餘工時</h4>
+    <div class="big">602h</div>
+    <div class="sub">1,050h − 448h</div>
+  </div>
+  <div class="card">
+    <h4>兼職速率</h4>
+    <div class="big">10h / 週</div>
+    <div class="sub">週末 8h + 平日 2h</div>
+  </div>
+  <div class="card">
+    <h4>預估剩時</h4>
+    <div class="big">~60 週</div>
+    <div class="sub">含 buffer 至 2027-08 全倉</div>
+  </div>
+</div>
+
+<h3>3.5 風險登記簿</h3>
+
+<table class="matrix">
+  <thead>
+    <tr><th>風險</th><th class="center">可能</th><th class="center">影響</th><th>緩解</th><th>當前</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>策略本身無 Edge（M3 IC 紅燈）</td>
+      <td class="center sev4">高</td><td class="center sev4">致命</td>
+      <td>接受 → 砍策略 / 改 hypothesis</td>
+      <td>M3 才知</td>
+    </tr>
+    <tr>
+      <td>Sprint 0 S2 fail（M1 plug Zipline 不通）</td>
+      <td class="center sev2">低</td><td class="center sev3">高</td>
+      <td>強制 debug，不退場（is deal-breaker）</td>
+      <td>未跑</td>
+    </tr>
+    <tr>
+      <td>FinLab 5GB/月流量超限</td>
+      <td class="center sev3">中</td><td class="center sev2">中</td>
+      <td>一次性回填 + 永久本地 cache + Grafana 監控</td>
+      <td>scaffolding 完</td>
+    </tr>
+    <tr>
+      <td>下市股資料源無解 → 生存者偏誤</td>
+      <td class="center sev3">中</td><td class="center sev3">高</td>
+      <td>接受偏誤 buffer（+3% CAGR target）或 TEJ 付費</td>
+      <td>待 D2 決策</td>
+    </tr>
+    <tr>
+      <td>訊號邏輯與 XQ XScript 差異 &gt; 0.5%</td>
+      <td class="center sev3">中</td><td class="center sev3">高</td>
+      <td>100 樣本抽查、修正 _normalize</td>
+      <td>持續對拍</td>
+    </tr>
+    <tr>
+      <td>Sprint 0 S1/S3 fail（TQuant-Lab 或 FinLab bundle）</td>
+      <td class="center sev3">中</td><td class="center sev2">中</td>
+      <td>Hybrid 退場路線（zipline-reloaded + FinMind 主）</td>
+      <td>備援已記</td>
+    </tr>
+    <tr>
+      <td>FinLab 倒閉 / 漲價 / 政策變更</td>
+      <td class="center sev2">低</td><td class="center sev3">高</td>
+      <td>FinMind bundle 為 fallback（ADR-006 已備）</td>
+      <td>架構解耦</td>
+    </tr>
+    <tr>
+      <td>時間不夠（兼職 + 個人專案）</td>
+      <td class="center sev4">高</td><td class="center sev2">中</td>
+      <td>嚴格按 milestone 早期停止，不硬推</td>
+      <td>持續</td>
+    </tr>
+    <tr>
+      <td>個人興趣變動（中斷）</td>
+      <td class="center sev3">中</td><td class="center sev4">致命</td>
+      <td>文檔完整 → 隨時可重啟（22 主檔 + 11 ADR）</td>
+      <td>已備</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>3.6 依賴與外部阻擋</h3>
+
+<table>
+  <thead>
+    <tr><th>類型</th><th>項目</th><th>狀態</th><th>負責</th><th>ETA</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>外部訂閱</td><td>FinLab API token</td><td><span class="badge warn">⏳ 待購</span></td><td>Self</td><td>1 天</td></tr>
+    <tr><td>外部憑證</td><td>Shioaji 沙箱憑證（永豐金 API）</td><td><span class="badge warn">⏳ 待申請</span></td><td>Self</td><td>1-3 工作天</td></tr>
+    <tr><td>外部 repo</td><td>TQuant-Lab + TEJAPI_Python_Medium_Application clone</td><td><span class="badge info">無門檻</span></td><td>Self</td><td>5 分鐘</td></tr>
+    <tr><td>本機環境</td><td>Docker Desktop 運行</td><td><span class="badge warn">⏳ 需啟動</span></td><td>Self</td><td>1 分鐘</td></tr>
+    <tr><td>本機環境</td><td>poetry install --extras sprint0</td><td><span class="badge warn">⏳ 未跑</span></td><td>Self</td><td>10 分鐘</td></tr>
+    <tr><td>套件升級</td><td>pytest-asyncio &gt;= 0.24</td><td><span class="badge ok">✓ 完成</span></td><td>—</td><td>commit 9526869</td></tr>
+  </tbody>
+</table>
+
+<h3>3.7 技術債（M2 待處理）</h3>
+
+<ol>
+  <li>券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊 → 觸發 D2）</li>
+  <li>ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）</li>
+  <li>SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 &lt; 1% 差異）</li>
+  <li>poetry.lock 未入版控（M2 早期補）</li>
+</ol>
+
+<p style="font-size:13px;color:var(--ink-mute);">
+  <strong>已解決</strong>：pytest-asyncio 9.x 不相容 ✓、rqalpha 自寫 mod 廢止（ADR-005 superseded ADR-001）✓
+</p>
+</section>
+
+<!-- =================== §4 待決策 =================== -->
+<section id="decisions">
+<h2><span class="num">§4</span>待決策事項（需 stakeholder 拍板）</h2>
+
+<p>下列決策延後將直接影響 M2-M5 時程或品質。建議於下一個 sprint 啟動前敲定。</p>
+
+<div class="decision">
+  <header>
+    <div><span class="id">D1</span><span class="title">Sprint 0 spike 啟動時機</span></div>
+    <span class="badge warn">急 · 阻擋 M2 啟動</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>Sprint 0 是 M2 強制 gate（6 spike + 1 週）。當前 scaffolding 已完成，但需 FinLab token + Shioaji 沙箱憑證 + 本機 Docker 才能跑。</dd>
+      <dt>選項</dt>
+      <dd>
+        (A) 立即購買 FinLab + 申請 Shioaji，週末啟動 spike<br>
+        (B) 先跑無依賴的 S1/S2/S6（TQuant-Lab + M1 plug + Streamlit），S3/S4/S5 等憑證到位再跑<br>
+        (C) 延後 2 週 — 整週空出時間集中執行
+      </dd>
+      <dt>建議</dt>
+      <dd><strong>選 (B)</strong> — 先驗證最高風險的 S2（M1 plug Zipline，是 deal-breaker）；S3/S4/S5 等待時間做 S1/S6 不浪費。</dd>
+      <dt>需要回答日期</dt>
+      <dd>2026-06-04（週四前）</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="decision">
+  <header>
+    <div><span class="id">D2</span><span class="title">下市股資料源解決方案</span></div>
+    <span class="badge warn">中 · 影響 M2/M3 偏誤分析</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>FinMind 免費版無下市股清單；不處理 → 生存者偏誤；TEJ 付費 NT$3-10k/月可拿；FinLab 已付費但下市股覆蓋未確認。</dd>
+      <dt>選項</dt>
+      <dd>
+        (A) <strong>TEJ 付費</strong>：NT$3-10k/月，完整覆蓋；月支出再加 ~NT$3-10k<br>
+        (B) <strong>TWSE 自爬</strong>：8h 開發 + 16h 整合（WBS 3.5.2-3）；零成本但脆弱<br>
+        (C) <strong>FinLab 試試</strong>：Sprint 0 後實測 FinLab 是否含下市股<br>
+        (D) <strong>接受偏誤</strong>：CAGR target +3% buffer，盡早 M3 驗證偏誤大小
+      </dd>
+      <dt>建議</dt>
+      <dd><strong>選 (C) → (D) → (B)</strong> 漸進路線：Sprint 0 順手測 (C)；若不行先 (D) 接受偏誤；M3 統計顯示偏誤過大才上 (B)。**避免 (A) 因月支出累積過高**。</dd>
+      <dt>需要回答日期</dt>
+      <dd>Sprint 0 結束（2026-06-08）</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="decision">
+  <header>
+    <div><span class="id">D3</span><span class="title">vectorbt PRO 是否購買（$20/月）</span></div>
+    <span class="badge info">低急迫 · M3 才需要</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>vectorbt 開源版 v1.0.0 (2026-04) 為最終整理版；PRO ($20/月) 含原生 WFA + parallelism，grid search 5-10× 加速；M3 跑 DOE 1-10 共 ~1000 trials × 100 檔，開源版預估 ~2h、PRO 預估 ~15min。</dd>
+      <dt>選項</dt>
+      <dd>
+        (A) <strong>買 PRO</strong>：$240/年；M3 順暢、開發體驗好<br>
+        (B) <strong>用開源版 + 自寫 WFA</strong>：~150 LOC 自寫；長期省錢，但 M3 多 ~10h 開發<br>
+        (C) <strong>M3 開跑後再決定</strong>：先用開源版，若 grid 時間真的 painful 才買月費試一個月
+      </dd>
+      <dt>建議</dt>
+      <dd><strong>選 (C)</strong> — 不預先花錢；M3 真痛了再買月費試水，可隨時退訂。</dd>
+      <dt>需要回答日期</dt>
+      <dd>M3 啟動前（~2026-10）</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="decision">
+  <header>
+    <div><span class="id">D4</span><span class="title">M5 雲端部署目標（GCP vs 本機 24x7）</span></div>
+    <span class="badge mute">低急迫 · M5 才需要</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>M5 實盤需 24x7 運行；當前本機 PC 不便長期常開（電費 / 中斷風險）；GCP Compute Engine e2-small 月費 ~US$15-25。</dd>
+      <dt>選項</dt>
+      <dd>
+        (A) <strong>GCP Compute Engine</strong>：穩定但月費 ~NT$500-800<br>
+        (B) <strong>本機 PC 24x7</strong>：零月費但停電/網斷風險<br>
+        (C) <strong>Raspberry Pi 5</strong>：~NT$3,000 一次性，零月費，省電
+      </dd>
+      <dt>建議</dt>
+      <dd><strong>選 (A)</strong> — 實盤資金安全 &gt; 月費；GCP 也方便 backup → GCS。M4 paper trading 已可從本機跑驗證。</dd>
+      <dt>需要回答日期</dt>
+      <dd>M5 前（~2027-04）</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="decision">
+  <header>
+    <div><span class="id">D5</span><span class="title">是否引入第二位協作者 / Reviewer</span></div>
+    <span class="badge mute">低急迫 · 紀律問題</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>當前單人多役（PM/TL/DEV/QA 全自己）；M3 PBO 結果若邊緣，需獨立眼光防止 confirmation bias。</dd>
+      <dt>選項</dt>
+      <dd>
+        (A) <strong>找量化朋友 review M3 結果</strong>：1-2 小時即可，非協作關係<br>
+        (B) <strong>找全職協作者</strong>：升級為小團隊（觸發 01 §1 升級條件）<br>
+        (C) <strong>純 AI review</strong>：用 Claude 跑 ultraverify 對 M3 結果做 sanity check
+      </dd>
+      <dt>建議</dt>
+      <dd><strong>選 (A) + (C)</strong> 並行：(A) 防 confirmation bias、(C) 補完整性。**(B) 暫不啟動**（個人專案 + 策略未驗證階段）。</dd>
+      <dt>需要回答日期</dt>
+      <dd>M3 結束時（~2026-11）</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<!-- =================== §5 Action Items =================== -->
+<section id="actions">
+<h2><span class="num">§5</span>Action Items — 下個 Sprint</h2>
+
+<p>對應 <a href="./16_wbs_development_plan.md">16 WBS</a> 模組 0.0 + 3.B + 4.4 + 5.A：</p>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>動作</th><th>角色</th><th>工時</th><th>截止</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>1</td><td>購買 FinLab 訂閱 + 取得 API token</td><td>Self</td><td>—</td><td>2026-06-04</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>2</td><td>申請 Shioaji 沙箱憑證</td><td>Self</td><td>—</td><td>2026-06-04</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>3</td><td>啟動 Docker Desktop + <code>poetry install --extras sprint0</code></td><td>Self</td><td>1h</td><td>2026-06-05</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>4</td><td>跑 spike S1（TQuant-Lab + XTAI hello world）</td><td>DEV</td><td>4h</td><td>2026-06-06</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>5</td><td>跑 spike S2（M1 plug 進 Zipline Algorithm）</td><td>DEV</td><td>8h</td><td>2026-06-07</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>6</td><td>跑 spike S6（Streamlit + TimescaleDB equity curve）</td><td>DEV</td><td>3h</td><td>2026-06-07</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>7</td><td>FinLab/Shioaji 憑證到位後跑 S3/S4/S5</td><td>DEV</td><td>15h</td><td>2026-06-08</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>8</td><td>Gate Review + 撰寫決議書 <code>sprint_0_gate_review.md</code></td><td>PM</td><td>4h</td><td>2026-06-08</td><td><span class="badge warn">⏳</span></td></tr>
+    <tr><td>9</td><td>D2（下市股）順手測 FinLab 覆蓋度</td><td>QA</td><td>1h</td><td>2026-06-08</td><td><span class="badge warn">⏳</span></td></tr>
+  </tbody>
+</table>
+
+<p style="font-size:13px;color:var(--ink-mute);">
+  Gate 通過 → 立即啟動 M2 Sprint 1（FinLab bundle adapter + Zipline algorithm wrapper，2 週 16h）。
+</p>
+</section>
+
+<!-- =================== §6 附錄 =================== -->
+<section id="appendix">
+<h2><span class="num">§6</span>附錄</h2>
+
+<h3>6.1 文件索引（dev_docs/）</h3>
+
+<table>
+  <thead>
+    <tr><th>用途</th><th>主要文件</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>整套規劃路線</td><td><a href="./17_m2_to_m5_master_plan.md">17 M2-M5 Master Plan</a></td></tr>
+    <tr><td><strong>狀態真相源</strong></td><td><a href="./16_wbs_development_plan.md">16 WBS Development Plan v2.0</a></td></tr>
+    <tr><td>業界 7 層 reference + 30 指標</td><td><a href="./18_reference_architecture_and_metrics.md">18 Reference Architecture</a></td></tr>
+    <tr><td>產品需求</td><td><a href="./02_project_brief_and_prd.md">02 Project Brief & PRD</a></td></tr>
+    <tr><td>架構（C4 + DDD）</td><td><a href="./05_architecture_and_design_document.md">05 Architecture & Design</a></td></tr>
+    <tr><td>API + CLI</td><td><a href="./06_api_design_specification.md">06 API Spec</a></td></tr>
+    <tr><td>目錄結構（v1.1）</td><td><a href="./08_project_structure_guide.md">08 Project Structure</a></td></tr>
+    <tr><td>資料 schema (13 表)</td><td><a href="./21_data_contract.md">21 Data Contract</a></td></tr>
+    <tr><td>儀表板規格</td><td><a href="./20_dashboard_specification.md">20 Dashboard Spec</a></td></tr>
+    <tr><td>測試策略</td><td><a href="./22_test_strategy.md">22 Test Strategy</a></td></tr>
+    <tr><td>部署拓撲</td><td><a href="./23_deployment_topology.md">23 Deployment Topology</a></td></tr>
+    <tr><td>風控規範</td><td><a href="./24_risk_management_spec.md">24 Risk Management Spec</a></td></tr>
+    <tr><td>狀態同步規則</td><td><a href="./15_documentation_and_maintenance_guide.md">15 Doc & Maintenance §10</a></td></tr>
+  </tbody>
+</table>
+
+<h3>6.2 ADR 鏈（11 份）</h3>
+
+<table>
+  <thead>
+    <tr><th>ADR</th><th>主題</th><th>狀態</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><a href="./adrs/ADR-001-engine-rqalpha-plus-vectorbt.md">001</a></td><td>雙引擎 rqalpha + vectorbt</td><td><span class="badge bad">已部分廢止 by 005</span></td></tr>
+    <tr><td><a href="./adrs/ADR-002-timescaledb-for-time-series.md">002</a></td><td>TimescaleDB for time series</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-003-pure-function-strategy-layer.md">003</a></td><td>Pure function strategy layer</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-004-pydantic-frozen-config.md">004</a></td><td>Pydantic frozen config</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md">005</a></td><td>主骨架 TQuant-Lab (Zipline)</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-006-data-source-finlab-paid.md">006</a></td><td>資料源改 FinLab 付費</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-007-dual-engine-zipline-vectorbt.md">007</a></td><td>雙引擎 Zipline + vectorbt</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-008-tri-mode-shared-strategy-code.md">008</a></td><td>三模式共用 strategy code</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-009-dual-dashboard-telegram-monitoring.md">009</a></td><td>雙儀表板 + Telegram 告警</td><td><span class="badge warn">部分 by 010</span></td></tr>
+    <tr><td><a href="./adrs/ADR-010-discord-alerter-supersedes-telegram.md">010</a></td><td>Discord 取代 Telegram</td><td><span class="badge ok">有效</span></td></tr>
+    <tr><td><a href="./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md">011</a></td><td>M2 目錄結構與模組邊界</td><td><span class="badge ok">有效</span></td></tr>
+  </tbody>
+</table>
+
+<h3>6.3 術語表</h3>
+
+<table>
+  <tbody>
+    <tr><td><strong>四層共振</strong></td><td>結構 + 法人方向 + 籌碼強度 + 動能四層獨立 Edge 同時觸發</td></tr>
+    <tr><td><strong>IS / OOS</strong></td><td>In-Sample（樣本內，可反覆調參）/ Out-of-Sample（樣本外，一次性驗證）</td></tr>
+    <tr><td><strong>PBO</strong></td><td>Probability of Backtest Overfitting（López de Prado）— 過擬合機率</td></tr>
+    <tr><td><strong>DSR</strong></td><td>Deflated Sharpe Ratio — 校正多重比較後的 Sharpe</td></tr>
+    <tr><td><strong>WFA</strong></td><td>Walk-Forward Analysis — 滾動 IS/OOS 驗證</td></tr>
+    <tr><td><strong>Heat</strong></td><td>Portfolio 假設全部停損的總虧損占帳戶比例（v2.md §6 上限 6%）</td></tr>
+    <tr><td><strong>Sprint 0</strong></td><td>M1→M2 之間 1 週 gate；6 spike 驗證 TQuant-Lab/FinLab/Shioaji 可行性</td></tr>
+    <tr><td><strong>TQuant-Lab</strong></td><td>TEJ 維護的 Zipline 台股 fork（MIT，內建 XTAI 日曆）</td></tr>
+    <tr><td><strong>三模式</strong></td><td>Backtest（歷史）/ Paper（即時模擬）/ Live（實盤），共用同一份 strategy code</td></tr>
+  </tbody>
+</table>
+
+<h3>6.4 本次 session 重大變更（17 commits 自 4e38b5c）</h3>
+
+<ol>
+  <li>11 份 ADR 補完（005~011），架構決策皆有紀錄</li>
+  <li>22 份 dev_docs 主檔對齊 M2 路線</li>
+  <li>目錄重組：<code>strategy/</code> → <code>strategies/four_layer_resonance/</code>，新增 <code>adapters/</code>、<code>orchestration/</code>、<code>monitoring/</code>、<code>dashboard/</code></li>
+  <li>Discord 取代 Telegram 為告警通道</li>
+  <li>確立 16 WBS v2.0 為單一狀態真相源（15 §10 規則）</li>
+  <li>Sprint 0 scaffolding（10 檔，含 RUNBOOK + 6 spike 腳本）</li>
+</ol>
+</section>
+
+<footer class="doc">
+  <p>
+    <strong>backtest_platform — Internal Decision Brief</strong>　·
+    產出時間：2026-06-01　·
+    狀態真相源：<a href="./16_wbs_development_plan.md">16 WBS v2.0</a>　·
+    產出規則：<a href="./15_documentation_and_maintenance_guide.md">15 §10</a>
+  </p>
+  <p>
+    本簡報為**特定時點的快照**（生成於 commit <code>ab623cc</code>）。最新進度請以 16 WBS 為準；本檔不自動更新。
+  </p>
+</footer>
+
+</div>
+</body>
+</html>
