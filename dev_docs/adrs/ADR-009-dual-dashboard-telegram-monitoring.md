@@ -1,7 +1,10 @@
 # ADR-009: 雙儀表板 + Telegram 告警（L7 監控架構）
 
-> **狀態：** 已接受 | **日期：** 2026-05-31 | **決策者：** Self
-> **Related：** ADR-002（TimescaleDB 時序儲存）
+> **狀態：** 已接受（部分被取代） | **日期：** 2026-05-31 | **決策者：** Self
+> **Superseded（部分）：** § 3「Telegram 告警等級」段落與 § 5 步驟 6 之「Telegram bot」
+> 已由 [ADR-010](./ADR-010-discord-alerter-supersedes-telegram.md) 取代為 Discord bot；
+> 雙儀表板（Streamlit + Grafana）決策維持有效。
+> **Related：** ADR-002（TimescaleDB 時序儲存）、ADR-010（Discord 告警通道）
 
 ---
 
