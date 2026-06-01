@@ -1,6 +1,6 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.0 | **更新：** 2026-06-01 | **狀態：** M1 完成 + Sprint 0 scaffolding 完成 + Discord 遷移完成 / M2 主體待跑
+> **版本：** v2.1 | **更新：** 2026-06-01 | **狀態：** M1 完成 + Sprint 0 scaffolding + Discord 遷移 + 儀表板設計階段完成 / M2 主體待跑
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
@@ -18,7 +18,7 @@
 | **總工期估算** | M0-M5 約 17 週純工作量；兼職 10h/週 → 約 12 個月（含 buffer） |
 | **開始日期** | 2026-05-15（M0 開始） |
 | **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass (S1 F1 觸發 ADR-013) + Sprint 1 全段完成（Day 1-7：zipline-reloaded + bundle + Algorithm + Taiwan controls + CLI）+ PR #2 merged 進 M2 整合** |
-| **目前 git 分支** | `feat/m2-tquant-lab-integration`（M2 整合線；PR #2 已合入 `4377264`）；side branch `chore/xai-ui-clone-spec` 進行 web_design 工作 |
+| **目前 git 分支** | `main`（PR #2 M2 整合、PR #3 EOL 正規化 + 儀表板設計 docs 已合入）；`web_design/` UI 設計流水線 + clone 已進 main |
 | **最新 commit** | `5714906`（02 PRD v3.0，2026-06-01）|
 
 ### 角色（單人多役）
@@ -297,8 +297,10 @@
 
 | 編號 | 任務 | 工時 | 狀態 |
 |:--|:--|:---:|:--|
-| 8.A.1 | Streamlit MVP 面板 A+B+C (spike S6 延伸) | 16h | ⏳ M3 |
-| 8.A.2 | Streamlit 完整 D+E 面板 | 12h | ⏳ M5 |
+| 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | 12h | ✅ 2026-06-01 |
+| 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | 16h | ⏳ M3 |
+| 8.A.2 | 面板 D+E（React 版，ADR-015） | 12h | ⏳ M5 |
+| 8.A.3 | Dashboard REST API 層（FastAPI，14 端點；ADR-015 / 21_data_contract §8） | 10h | ⏳ M3 |
 | 8.B.1 | Grafana 4 個系統面板 (F-I) | 12h | ⏳ M4 |
 | 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | 4h | ⏳ M4 |
 | 8.C.1 | Discord notifier base | 4h | ✅ 2026-05-31 |
@@ -310,7 +312,7 @@
 | 8.E.2 | GCS upload script | 4h | M5 |
 | 8.F.1 | 災難恢復演練 | 8h | M5 |
 
-**模組小計**：~80h | 進度 15%（Discord 完成）
+**模組小計**：~102h | 進度 ~20%（Discord 完成 + 儀表板設計階段完成：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md)）
 
 ---
 
@@ -325,8 +327,8 @@
 | 單元測試覆蓋率 | ~85%（M1 + Discord） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 11 | 持續 |
-| 文檔完整度 | ~95%（dev_docs 階段 1-7 完整 + 對齊 M2 結構） | 100% |
+| ADR 數量 | 15（+012 uv / 013 zipline-reloaded / 014 3.1.1 升級 / 015 儀表板 React） | 持續 |
+| 文檔完整度 | ~96%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / 21 API 契約） | 100% |
 
 ### 技術債（M2 待處理）
 
@@ -436,5 +438,6 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.1 | 2026-06-01 | 模組 8.0 加 8.A.0（儀表板設計階段完成 ✅）+ 8.A.3（REST API 層）；8.A.1/A.2 標註 React 化（ADR-015）；§4 ADR 數量 11→15、文檔完整度更新 |
 | v2.0 | 2026-06-01 | 完整重寫對齊 M2 路線變更（ADR-005~011）；新增模組 0.0 (Sprint 0)、2.4（M2 重組追溯）、11.0（跨 milestone 維運）；模組 5.0/7.0/8.0 重寫；確立本檔為狀態真相源 |
 | v1.0 | 2026-05-26 | 初版（M1 完成時的 baseline） |
