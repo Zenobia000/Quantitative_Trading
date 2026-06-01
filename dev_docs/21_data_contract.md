@@ -294,6 +294,32 @@ zipline-reloaded 3.x `asset_db_writer.write()` 要求的欄位（`_build_asset_m
 | **Daily incremental** | Prefect cron（M4 規劃，14:35）| 拉當日 universe；append 為新 bundle timestamp 目錄 |
 | **Force refresh** | 手動刪 parquet cache | 下次 ingest 走 fresh API |
 
+### 3.5.1 Batch Ingest API — `ingest_universe`
+
+`finmind_bundle.py` 對外暴露的批次入口，給直接腳本與 `finmind_to_bundle` 共用：
+
+```python
+@dataclass(slots=True, frozen=True)
+class UniverseIngestResult:
+    bundles: dict[str, ETLBundle]      # 成功的 symbol → ETLBundle
+    failed_symbols: list[str]          # 失敗 symbol 清單（不阻塞整批）
+
+def ingest_universe(
+    universe: list[str] | tuple[str, ...] | None = None,
+    *,
+    start: date,
+    end: date,
+    cache_dir: Path | None = None,
+) -> UniverseIngestResult: ...
+```
+
+| 條件 | 行為 |
+| :--- | :--- |
+| `universe=None` | 使用 `DEFAULT_UNIVERSE`（10 檔 TSE 大型股）|
+| 單檔失敗（FinMind 5xx、parse 錯）| log error，加入 `failed_symbols`，繼續下檔 |
+| 全部失敗 | **raise `RuntimeError`** — 避免下游 zipline 寫入空 bundle 後混淆 |
+| `cache_dir=None` | 使用 `DEFAULT_CACHE_DIR = data/parquet`，會自動 `mkdir(parents=True)` |
+
 ### 3.6 註冊 Wiring（auto-load）
 
 ```python
