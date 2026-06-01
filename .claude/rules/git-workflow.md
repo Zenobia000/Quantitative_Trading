@@ -86,6 +86,7 @@ main ──┬── feat/xxx ──── PR ──→ main
 - [ ] 已自我 review 完整 diff：`git diff <base>...HEAD`
 - [ ] 無殘留 debug code（console.log、TODO hack、commented-out code）
 - [ ] PR 大小合理 — 超過 400 行 diff 或 10+ 檔案時，考慮拆分
+- [ ] 已對映 `code-doc-sync.md` 觸發表，確認受影響 dev_docs 全部更新（含 16 WBS 進度）
 
 ### 品質標準
 

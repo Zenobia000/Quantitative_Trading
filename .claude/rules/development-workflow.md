@@ -104,6 +104,11 @@ git tag -a backup/<branch>-<YYYY-MM-DD> -m '安全快照, tip <oid>'
 - 寫完程式碼後載入 sunnydata-code-review skill
 - 處理 CRITICAL 和 HIGH 問題
 
+### 3.5 文件同步（強制）
+- 依 `code-doc-sync.md` 觸發對映表盤點受影響 dev_docs
+- 此步驟與 code 屬同一 commit / 同一 PR，禁止「以後再補」
+- 16 WBS（單一狀態真相源）永遠要更新進度欄
+
 ### 4. 提交
 - 遵循 git-workflow.md 的 WHY/WHAT/IMPACT 標準
 - 一個 commit 做一件事
