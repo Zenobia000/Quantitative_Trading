@@ -521,7 +521,7 @@ def test_m1_pipeline_2330_unchanged():
 
 | Spike | Test 檔 | Pass 標準 |
 | :--- | :--- | :--- |
-| S1 zipline-reloaded（原 TQuant-Lab）| `tests/spike/test_s1_zipline_xtai.py` | `zipline ingest -b finmind` + `zipline run` 回傳 0（ADR-013 改 bundle，原 `tquant` bundle 不再使用）|
+| ~~S1 TQuant-Lab + XTAI hello world~~ → S1' zipline-reloaded + XTAI | `tests/spike/test_s1_zipline_xtai.py` | **S1 (原規劃)：❌ FAIL** — zipline-tej import 階段強綁 TEJ key（見 [sprint_0_gate_review.md](./sprint_0_gate_review.md) F1 + [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)）。S1' 改驗 `zipline ingest -b finmind` + `zipline run` 回傳 0（zipline-reloaded 主線，原 `tquant` bundle 不再使用）|
 | S2 M1 plug | `tests/spike/test_s2_m1_in_zipline.py` | 2330 1 年 action sequence 與 M1 pipeline 一致 |
 | S3 FinLab bundle | `tests/spike/test_s3_finlab_bundle.py` | 10 檔 1 年 ingest + zipline run 不 raise |
 | S4 Shioaji sandbox | `tests/spike/test_s4_shioaji.py` | 模擬下一筆 MOC 單成功 |
@@ -529,6 +529,7 @@ def test_m1_pipeline_2330_unchanged():
 | S6 Streamlit DB | `tests/spike/test_s6_streamlit.py` | 開頁 < 2 秒 + equity curve 顯示 |
 
 **任一 spike 失敗 → Sprint 0 fail → 退回 Plan B（自寫 adapter）**
+**實際結果（2026-06-01）**：S1 fail 觸發 ADR-013 pivot（zipline-tej → zipline-reloaded），其餘 spike 重新規劃為 S1'/S2'…；詳見 [sprint_0_gate_review.md](./sprint_0_gate_review.md)。
 
 ---
 
