@@ -14,7 +14,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 
 | 變更 | 從 → 到 | 正式文檔 |
 | :--- | :--- | :--- |
-| **回測引擎主骨架** | rqalpha → **TQuant-Lab (Zipline 台股 fork)** | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) |
+| **回測引擎主骨架** | rqalpha → ~~TQuant-Lab (Zipline 台股 fork)~~ → **zipline-reloaded 3.0.4** | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)（已 superseded）+ [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) |
 | **資料源** | FinMind 免費版 → **付費 FinLab** + FinMind fallback | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
 | **引擎策略** | 單引擎 → **雙引擎**（Zipline event + vectorbt vector） | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) |
 | **系統定位** | 回測平台 → **完整交易系統**（backtest / paper / live 三模式） | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
@@ -132,11 +132,11 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 - 券商分點資料可透過 TWSE 公開資訊補爬
 - 個人 PC 算力足夠跑 100 檔 × 10 年回測
 
-**依賴**：
-- FinMind API（資料源）
+**依賴**（v1.0 baseline；M2+ 實際依賴見 v2.0 banner + ADR-013）：
+- FinMind API（資料源；M2+ 主要為 FinLab，FinMind 為 fallback — ADR-006）
 - TimescaleDB（儲存）
-- rqalpha（回測引擎主）
-- vectorbt（回測引擎副，參數網格）
+- ~~rqalpha~~ → ~~zipline-tej~~ → **zipline-reloaded==3.0.4**（回測引擎主，ADR-013；3.1.1 升級為 ADR-014）
+- vectorbt（回測引擎副，參數網格；M3 啟用）
 - Shioaji（永豐金證券下單 API，M5）
 
 ---
@@ -153,6 +153,8 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | D-002 | 採用 MVP 工作流模式 | 已決定 | 見 01_workflow_manual.md |
 | D-003 | 使用 Public GitHub repo（Zenobia000） | 已決定 | 2026-05-26 上線 |
 | D-004 | risk_pct 從 1% → 0.5% 對齊 Heat 6% | 已決定（v2.1） | v2.md changelog |
+| D-013 | 主骨架 zipline-tej → **zipline-reloaded 3.0.4** | 已決定（2026-06-01） | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) — Sprint 0 S1 揭露 zipline-tej import 強綁 TEJ key |
+| D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
 
 ---
 
