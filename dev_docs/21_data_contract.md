@@ -660,8 +660,142 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 
 ---
 
-## 8. 變更紀錄
+## 8. Dashboard REST API 契約（ADR-015）
+
+> **背景**：[ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) 將策略績效層（面板 A–E）由 Streamlit 直連 SQL 升級為 React。React 不能直連 TimescaleDB，故需一層唯讀 REST API 將 §4 各表轉為 JSON 供前端消費。
+> **範圍**：僅面板 A–E（策略績效層）。Grafana（F–I）走 InfluxQL，Discord 走規則引擎，皆**不經本 API**。
+> **實作**：FastAPI（或既有後端擴充），唯讀（GET）；讀 TimescaleDB（ADR-002）。對應前端規格見 `web_design/pages/02_panel_{a-e}.md` 的 `[DATA & API]`。
+
+### 8.1 通用約定
+
+- **Base path**：`/api/dashboard`
+- **方法**：全部 `GET`（唯讀；儀表板不寫資料）。
+- **認證**：Bearer token（單人部署可為靜態 token / 反向代理 basic auth）；缺 token → `401`。
+- **共用 query 參數**：`strategy_id`（必填，多數端點）、`run_id`（選填，預設最新 run）、`start` / `end`（ISO8601 date，預設 `[end-1y, end]`）、`mode`（`backtest|paper|live`，預設 `live`）。
+- **時區**：所有時間 ISO8601 帶 offset（`+08:00` TWT）；數值以 string 或 number 回傳，前端用 Geist Mono tabular 呈現。
+- **快取**：回應帶 `Cache-Control: max-age=<TTL>` 與 `ETag`；TTL 對齊面板規格（見 §8.7）。
+- **分頁**：列表型端點支援 `limit`（預設 100，上限 500）+ `cursor`（keyset，依時間 DESC）。
+
+### 8.2 回應信封（對齊 `.claude/rules/patterns.md` API 格式）
+
+```jsonc
+{
+  "success": true,
+  "data": { /* 或 [] */ },
+  "error": null,           // 失敗時 { "code": "...", "message": "...", "detail": {...} }
+  "meta": {                // 列表型才有
+    "total": 187, "limit": 100, "cursor": "2026-05-30T09:01:23+08:00", "ttl": 300
+  }
+}
+```
+
+錯誤碼：`UNAUTHORIZED(401)` / `INVALID_PARAM(400)` / `STRATEGY_NOT_FOUND(404)` / `QUERY_TIMEOUT(504)` / `INTERNAL(500)`。錯誤訊息先述發生什麼再給建議（對齊 Design System 文案規則）。
+
+### 8.3 面板 A — 績效總覽
+
+| Endpoint | 來源表 | 關鍵欄位 / 計算 |
+| :--- | :--- | :--- |
+| `GET /performance/kpis` | `equity_snapshots` | quantstats 計算 total_return / cagr / sharpe / mdd / win_rate / trades |
+| `GET /performance/equity` | `equity_snapshots` + `daily_bars(0050)` | `equity`,`cash`；benchmark normalize 同起點 |
+| `GET /performance/drawdown` | `equity_snapshots` | `drawdown`（已預算） |
+| `GET /performance/rolling-sharpe?window=60` | `equity_snapshots` | `equity` rolling sharpe（window∈{30,60,90}） |
+| `GET /performance/monthly-returns` | `equity_snapshots` | resample monthly pct_change |
+
+```jsonc
+// GET /api/dashboard/performance/kpis?strategy_id=four_layer_resonance&start=2025-06-01&end=2026-05-31
+{ "success": true, "data": {
+  "total_return": 0.472, "cagr": 0.183, "sharpe": 1.62,
+  "mdd": -0.124, "win_rate": 0.583, "trades": 243,
+  "prev_period": { "total_return": 0.41, "sharpe": 1.55 }  // hover 同期變化
+}, "error": null }
+
+// GET /performance/equity → data: { "strategy": [{t,equity}], "benchmark": [{t,value}] }
+```
+
+### 8.4 面板 B — 部位狀態
+
+| Endpoint | 來源表 | 計算 |
+| :--- | :--- | :--- |
+| `GET /positions` | `positions`(status=OPEN) + `universe`(industry) + `daily_bars`(current_price) | `pnl_pct=(current-entry)/entry`；HHI=Σ(mv_i/total)² |
+
+```jsonc
+// GET /api/dashboard/positions?strategy_id=...&run_id=latest
+{ "success": true, "data": {
+  "as_of": "2026-05-30T13:30:00+08:00",
+  "kpi": { "heat": 0.042, "heat_limit": 0.06, "cash": 1250000, "cash_pct": 0.125,
+           "open": 12, "max_open": 15, "equity": 10420000 },
+  "positions": [
+    { "stock_id":"2330","industry":"Semi","quantity":1000,"entry_price":542,
+      "current_price":578,"pnl_pct":0.066,"days_held":12,"stop_loss":520 }
+  ],
+  "industry_allocation": [ {"industry":"Semi","pct":0.42,"market_value":4380000} ],
+  "concentration": { "top1":0.18,"top3":0.47,"top5":0.68,"hhi":0.18 }
+}, "error": null, "meta": { "total": 12, "ttl": 60 } }
+```
+
+### 8.5 面板 C — 訊號日誌
+
+| Endpoint | 來源表 | 備註 |
+| :--- | :--- | :--- |
+| `GET /signals?date&action` | `signals` | action∈{all,buy,add,reduce,exit,stoploss}；`reason_json` 隨列回傳供展開 |
+| `GET /signals/timeline?days=30` | `signals` | 多軌散點（依 action 分軌） |
+| `GET /signals/fill-rate?days=30` | `signals` + `fills` | funnel：generated→submitted→filled + 平均 latency |
+
+```jsonc
+// GET /signals/fill-rate?strategy_id=...&days=30
+{ "success": true, "data": {
+  "generated": 187, "submitted": 184, "filled": 176,
+  "submit_rate": 0.984, "fill_rate": 0.941,
+  "avg_latency_sec": { "signal_to_submit": 0.8, "submit_to_fill": 2.3 }
+}, "error": null }
+// latency = fills.fill_time - signals.signal_time（join on signal_id；fills 經 orders.signal_id 關聯）
+```
+
+### 8.6 面板 D / E — 風控 + 統計驗證
+
+| Endpoint | 來源表 | 備註 |
+| :--- | :--- | :--- |
+| `GET /risk/current` | `risk_metrics`(latest) | status 由 `event_type` 推導：NULL→NORMAL / HEAT_WARN,CONCENT→WARN / L*_*→CRITICAL |
+| `GET /risk/mdd-trend?days=90` | `risk_metrics` | `current_dd` 序列 + 熔斷線 L1 -10%/L2 -15%/L3 -20% |
+| `GET /risk/events?days=7` | `risk_metrics` where `event_type IS NOT NULL` | `event_type`,`event_context` |
+| `GET /validation/wfa` | `validation_runs` where `method='WFA'` | `result_json` → IS/OOS sharpe 散點 |
+| `GET /validation/summary` | `validation_runs` where `method IN('PBO','DSR')` latest | `summary_metric`,`pass_threshold` |
+| `GET /validation/rolling?days=30` | `validation_runs` | rolling PBO/DSR |
+
+```jsonc
+// GET /risk/current?strategy_id=...
+{ "success": true, "data": {
+  "status": "NORMAL",
+  "water_levels": [
+    { "name":"current_dd","value":-0.032,"limit":-0.15,"pct":0.21 },
+    { "name":"daily_pnl_var","value":-0.008,"var_95":-0.021,"pct":0.38 },
+    { "name":"heat","value":0.042,"limit":0.06,"pct":0.70 }
+  ]
+}, "error": null }
+```
+
+### 8.7 快取 TTL 對照（對齊面板刷新節奏）
+
+| 面板 / 端點 | TTL | 理由 |
+| :--- | :--- | :--- |
+| A 績效（kpis/equity/drawdown/rolling/monthly） | 300s | 日線級，5 分鐘快取 |
+| B 部位 `/positions` | 60s | 部位變化頻繁 |
+| C 即時 `/signals`（當日） | 30s | 盤中訊號 |
+| C 歷史 `/signals/timeline`,`/fill-rate` | 300s | 30 日彙總 |
+| D 風控 `/risk/*` | 60s | 風險水位需較即時 |
+| E 統計 `/validation/*` | 300s | 驗證跑批，低頻 |
+
+### 8.8 ACL 與一致性
+
+- 本 API 為 §5 之外的**唯讀投影層**，不引入新寫入路徑；所有數值以 TimescaleDB 為單一真相。
+- 計算型欄位（pnl_pct / HHI / latency / quantstats KPI）在 API 層即時計算，**不落庫**，避免與 §4 原始表產生第二真相。
+- 即時性需求（部位 live mode）未來可加 WebSocket/SSE（見 ADR-015 §4 重新評估觸發），本契約先定義 pull 端點。
+
+---
+
+## 9. 變更紀錄
 
 | 版本 | 日期 | 變更 |
 | :--- | :--- | :--- |
 | v1.0 | 2026-05-31 | 初版（對應 plan v1.0 §3/§5；M1 4 表 + 新增 9 表 DDL） |
+| v1.1 | 2026-06-01 | 新增 §8 Dashboard REST API 契約（ADR-015：策略績效層 A–E React 化需唯讀 API 層；定義 14 個 GET 端點、回應信封、TTL 對照、唯讀投影 ACL） |
