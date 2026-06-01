@@ -102,6 +102,21 @@ Body 結構（每個區段必填）：
 
 ### 提交步驟
 
+**鐵律：commit → push → 開 PR 視為單一連貫操作**
+
+當使用者要求「commit」、「提交」、「PR 這個」、「推上去」或表達「這段工作做完」時，預設執行下列步驟 1-3 為一氣呵成的流程，**不在中間插入「要不要 push？」「要不要開 PR？」這類詢問**，避免切碎決策成本。
+
+| 行為 | 規則 |
+| :--- | :--- |
+| commit 完不問 push | 直接 push（步驟 1 → 2 連貫）|
+| push 完不問 PR | 直接 `gh pr create`（步驟 2 → 3 連貫）|
+| PR 完才停 | 等使用者決定 review / merge 時機 |
+| 例外 1：明示中斷 | 使用者明說「先 commit 不要 push」或「push 但暫不開 PR」才中斷 |
+| 例外 2：merge 必停 | merge 屬共享分支寫入，必須讓使用者確認時機（CLAUDE.md「Executing actions with care」原則）|
+| 例外 3：destructive | 偵測到 force-push、push 到保護分支等，必停詢問 |
+
+完整步驟：
+
 1. 確認前置條件全部滿足
 2. `git push -u origin <branch>`
 3. `gh pr create`（使用上述 Body 結構）
