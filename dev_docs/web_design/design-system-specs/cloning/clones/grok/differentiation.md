@@ -1,41 +1,47 @@
-# Differentiation — grok
+# Differentiation — grok（忠實還原 → backtest_platform 儀表板）
 
-> 來源：https://x.ai/grok ｜ 我方產品：backtest_platform 功能介紹頁 / 上手引導頁
-> Token 層 OVERRIDE 與 xai 共用，見 [`../xai/differentiation.md`](../xai/differentiation.md)。本檔聚焦**產品頁模板**的差異化。
+> 來源：`https://grok.com`（Grok app，單色 dark 極簡）｜ 我方：量化監控儀表板（data-dense）
+> 方向（使用者確認 2026-06-02）：**採用 Grok 單色 dark 骨架，保留漲跌紅綠**為唯一功能性彩色。
 
 ---
 
-## 來源定位
-- 受眾：AI 產品潛在使用者（廣）
-- 風格：能力分區堆疊 + 密集 feature grid + 三路徑上手，促轉換
-- 強項：用統一的能力區塊節奏 + 三路徑降低啟動門檻
+## 來源定位（Grok app）
+- 受眾：一般 AI 對話使用者
+- 風格：單色（黑/白/灰）、dark-first、極簡、對話中心、大圓角輸入框、大量留白
+- 強項：零彩色噪音、極低認知負擔、聚焦內容
 
-## 我方產品定位
-- 受眾：量化策略開發者（評估「這個回測平台能做什麼」）
-- 差異點：能力 = 回測引擎 / 數據接入 / 風險分析 / 視覺化儀表板；上手 = 自託管 / Docker / CLI
+## 我方定位（backtest 監控儀表板）
+- 受眾：量化策略研究者（盯績效/部位/訊號/風控）
+- 差異點：**資料密集**——同畫面要塞大量數值與圖表；漲跌方向是核心語意
 
-## ✅ KEEP
-| 設計決策 | 如何納入 |
+## ✅ 值得保留（KEEP）
+| Grok 決策 | 如何納入 |
 |----------|----------|
-| Capability Stack（能力分區統一結構） | 我方功能頁用同一節奏列 4 大能力 |
-| Three-path Onboarding | 改為「自託管 / Docker / 試用 Demo」3 路徑 |
-| Feature Grid 密集長尾 | 列出指標/資料源/匯出格式等長尾能力 |
-| Closing CTA Band（深色反差） | 收尾導向「閱讀文件 / 開始回測」 |
+| **單色 dark 基調**（近黑底、白/灰文字、無彩色品牌色） | 直接採用；主色不用 teal/任何彩色，改 Grok 式單色（白 pill 主按鈕） |
+| **大圓角**（輸入框/卡片/按鈕） | 卡片 ~16px、輸入 ~12px、按鈕 pill/12px |
+| **細淡 1px 邊框 + 明度階分層**（無重投影） | 儀表板卡片沿用，flat |
+| **極簡、克制** | UI chrome 降噪，焦點留給數據 |
+| dark-first | 盯盤久、降眩光，與 Grok 一致 |
 
-## ⚠️ DROP
-| 元素 | 為什麼 |
-|------|--------|
-| 「Try Grok / SuperGrok」訂閱式 CTA | 我方為自託管工具，無訂閱層級；改「Get Started / Docs」 |
-| 大量留白的能力區塊 | 工具受眾要更快看到實質；收緊間距 |
+## ⚠️ 不適合（DROP）
+| Grok 元素 | 為什麼 |
+|----------|--------|
+| 巨型置中單一輸入框 + 大量留白 | 儀表板要資訊密度，留白收斂為 16–24px |
+| 對話中心單欄佈局 | 改多區塊儀表板（KPI 列 + 圖表 + 表格） |
+| 「幾乎零彩色」 | 交易介面**必須**有漲跌色（見 OVERRIDE/ADD） |
 
-## 🎨 OVERRIDE
-- 共用 xai 的色彩/字型/radius OVERRIDE（teal 主色、Inter/Geist、8px radius、dark-first）。
-- 雙色 hero 標題：保留結構，但 muted 次行改用達標的 `text.secondary(.65)` 而非來源 .45。
+## 🎨 OVERRIDE（相對 Grok）
+| Grok | 我方 | 理由 |
+|------|------|------|
+| 單色、無功能性彩色 | **保留單色基調，但加入 `gain`/`loss` 紅綠** | 漲跌方向是交易語意剛需，無法用單色明度可靠表達 |
+| 字型 TBD（grotesk） | `Inter` / `Geist Mono`（開源；數值 tabular mono） | 可商用 + 數值對齊 |
+
+> **不做的 OVERRIDE**：不引入 teal 或任何品牌彩色（這正是 v1 的錯）。主色維持 Grok 式單色。
 
 ## 💡 IMPROVE
-1. **能力區塊可達性**：每個 capability section 給語意 `<section aria-labelledby>`，check 列表用真 `<ul>`。
-2. **三路徑卡鍵盤可達**：整卡可 focus + Enter 觸發主 CTA。
-3. **對比修正**：hero 次行、feature grid 說明文字一律 ≥ AA（來源 muted 偏淺）。
+1. **對比**：單色 dark 下文字 ≥ AA、KPI 數值 ≥ AAA（已驗：text `#F5F5F5` 17.6:1、gain `#22C55E` 7.6:1、loss `#FCA5A5` 9.2:1）。
+2. **色盲友善**：漲跌除紅綠外，加 `↑/↓` 符號 + 正負號雙編碼（Grok 本就無彩色，我方加色須配符號）。
+3. **資料密度**：新增 Grok 沒有的 table→card 響應、虛擬滾動、即時數值無動畫。
 
 ## 結論
-> 借 Grok 產品頁的**資訊組織骨架**（能力分區 + 密集網格 + 三路徑上手 + 深色收尾），套上 xai clone 已定義的 teal/dark-first token，產出我方「回測平台功能頁」模板。
+> 借 Grok 的**單色 dark 極簡 + 大圓角 + 細邊框 + 克制**，套到 data-dense 儀表板：拿掉 v1 的 teal，主色回歸 Grok 式單色（白 pill / 近黑底）；唯一保留的彩色是交易剛需的 `gain/loss` 紅綠（且配符號雙編碼）。
