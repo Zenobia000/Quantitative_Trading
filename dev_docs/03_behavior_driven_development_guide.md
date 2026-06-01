@@ -280,3 +280,49 @@ Feature: 端到端 Pipeline
 | F5 端到端 | `backtest_platform/docs/M1_setup.md` 端到端驗證段落（手動） |
 
 當前 BDD scenarios 為**文檔**形式（給人讀），未自動化執行。若需引入 `behave` / `pytest-bdd` 把 .feature 自動跑起來，列入 M3 待補事項。
+
+---
+
+## 6. 測試金字塔（總覽，詳見 22 號文件）
+
+> **2026-05-31 增補**：本章節為 22 號文件的高層摘要，**完整測試規範詳見 [22_test_strategy.md](./22_test_strategy.md)**。
+
+### 6.1 測試金字塔比例
+
+```
+           ┌──────────────────┐
+           │   E2E  (10%)     │  pytest + zipline run + docker
+           │  ~30 scenarios   │  smoke test per mode
+           ├──────────────────┤
+           │ Integration (20%)│  pytest + docker-compose
+           │  ~80 tests       │  DB / API sandbox / 對拍
+           ├──────────────────┤
+           │   Unit  (70%)    │  pytest + hypothesis
+           │  ~280 tests      │  pure functions / adapters
+           └──────────────────┘
+```
+
+| 層 | 比例 | 跑時 | 失敗影響 |
+| :--- | :---: | :--- | :--- |
+| Unit | 70% | < 30s | block PR |
+| Integration | 20% | < 5min | block PR |
+| E2E | 10% | < 30min | block release |
+| 對拍 (Recon) | 跨層 | < 10min | block milestone |
+| Performance | 跨層 | < 2h | warn only |
+
+### 6.2 對拍測試矩陣（M2-5 必過）
+
+| ID | 對拍對 | 容忍 | M | 失敗動作 |
+| :--- | :--- | :--- | :---: | :--- |
+| R-001 | Zipline vs vectorbt | < 0.5% | M3 | 找撮合假設差異 |
+| R-002 | VectorBtEngine vs M1 pipeline.py | < 0.1% | M2 | regression test 必過 |
+| R-003 | FinLab vs FinMind OHLCV | < 1% | M2 | log + 採 FinLab |
+| R-004 | 自寫 PBO vs pypbo | < 1e-4 | M3 | 數學 bug |
+| R-005 | EventDriven vs Vectorized paper | < 0.5% | M4 | 模擬精度問題 |
+
+### 6.3 BDD 與測試金字塔的關係
+
+BDD scenarios（本文 §1-5）對應 unit + integration + E2E 三層的 **行為敘述**；22 號文件補完 **比例、工具、執行策略、CI/CD 整合**。兩者互補：
+- 寫 BDD scenario → 產出 pytest test 案例
+- 22 號 §1 金字塔比例 → 約束各層 test 數量配比
+- 22 號 §3 對拍矩陣 → 跨引擎一致性閘門

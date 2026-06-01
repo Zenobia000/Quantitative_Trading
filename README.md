@@ -47,19 +47,22 @@
 
 ## 當前狀態
 
-| 階段 | 狀態 | 文件 |
-| :--- | :---: | :--- |
-| 策略規格 | ✅ v2.1.0 | `strategy/v2.md` |
-| 蘇格拉底盲點審查 | ✅ | `strategy/v2.md` Part 6.3 changelog |
-| BUG 修復 + PASS 區套用 | ✅ | v2.1.0 changelog |
-| IC 測試計畫 | ✅ | `strategy/research/v2.2_ic_test_plan.md` |
-| DOE 完整模板 | ✅ | `strategy/research/doe_research_template.md` |
-| FinMind 資料源驗證 | ✅ | 基礎可用、券商分點待付費 |
-| **下市股資料源** | ⚠️ P0 | FinMind 免費版有部分覆蓋 |
-| **回測引擎** | 🚧 建置中 | `backtest_platform/` |
-| 單因子 IC 測試 | ⏳ 待跑 | DOE-1 |
-| Paper Trading | ⏳ | — |
-| 實盤 | ⏳ | — |
+> **狀態真相源**：[`dev_docs/16_wbs_development_plan.md`](dev_docs/16_wbs_development_plan.md)
+>
+> 本 README 不再重複寫 milestone 進度，避免不一致。WBS 為單一狀態源，每週更新一次。
+
+快覽（詳細見上方連結）：
+
+| 階段 | 狀態 |
+| :--- | :--- |
+| M0 策略規格 | ✅ v2.1.0 |
+| M1 資料 + 策略骨架 | ✅ 完成 (44 unit tests 全綠) |
+| M2 預備 (Sprint 0 scaffolding + 結構重組 + Discord) | ✅ 完成 |
+| M2 Sprint 0 spike 執行 | ⏳ 待跑 |
+| M2 IS 回測 | ⏳ |
+| M3 OOS + 統計驗證 | ⏳ |
+| M4 Paper Trading | ⏳ |
+| M5 實盤 | ⏳ |
 
 ---
 

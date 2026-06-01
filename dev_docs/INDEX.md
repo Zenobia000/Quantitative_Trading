@@ -2,6 +2,7 @@
 
 > 依 `VibeCoding_Workflow_Templates` v3.0 模板產出，對應實際 `backtest_platform/` 程式碼狀態。
 > **產出日期**：2026-05-26 | **對應版本**：backtest_platform 0.1.0 (M1)
+> **2026-06-01 更新**：階段 7 完整定版（11 份 ADR + 7 份規格文檔 17/18/20-24，原 19 已併入 01 §5.A）；16 WBS 升 v2.0 為單一狀態真相源（見 15 §10 規則）
 
 ---
 
@@ -24,7 +25,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（4 份 ADR） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**13 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012/013） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -58,6 +59,50 @@
 | :---: | :--- | :--- |
 | 15 | [documentation_and_maintenance_guide.md](./15_documentation_and_maintenance_guide.md) | 文檔維護 |
 | 16 | [wbs_development_plan.md](./16_wbs_development_plan.md) | WBS 開發計劃 |
+
+### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
+
+> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab → zipline-reloaded（ADR-013）、FinMind → FinLab、新增三模式+雙儀表板）
+> **2026-05-31 整併**：原 19 號 sprint_0_design 已合併入 01 §5.A 並撤回；21/22/23/24 為既有 05/03/14/13 的**擴充版** source of truth
+
+| # | 檔名 | 用途 | 與既有檔關係 |
+| :---: | :--- | :--- | :--- |
+| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線、17 週時程、Verification） | 獨立（02/16 已加 v2.0 banner 指向）|
+| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy | 獨立（M3 指標實作時 single source of truth）|
+| ~~19~~ | ~~sprint_0_design.md~~ | ~~Sprint 0 spike 細部規格~~ | **已合併入 [01 §5.A](./01_workflow_manual.md)，本檔撤回** |
+| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Discord 告警 spec（原 Telegram 已 superseded by ADR-010） | 獨立（UI 詳設）|
+| 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB 13 表 DDL | **擴充** [05 §4](./05_architecture_and_design_document.md)（05 為 M1 baseline，21 為 M2+ 完整版）|
+| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 + CI/CD YAML 草案 | **擴充** [03](./03_behavior_driven_development_guide.md)（03 §6 加金字塔摘要 + 指向 22）|
+| 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 + docker-compose | **擴充** [14 §1](./14_deployment_and_operations_guide.md)（14 為 SOP，23 為拓撲設計）|
+| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 12 條 ex-ante 規則 + 3 級熔斷狀態機 + SOP | **擴充** [13 §J](./13_security_and_readiness_checklists.md)（13 §J 為摘要 + 指向 24）|
+| — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） | 獨立 |
+
+#### 階段 7 新增 ADR
+
+| ADR | 主題 | Supersedes |
+| :---: | :--- | :--- |
+| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | ~~主骨架選定 TQuant-Lab（Zipline 台股 fork）~~ — 已 superseded by ADR-013 | **ADR-001** |
+| [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
+| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized（vectorbt 半邊 pending，見 ADR-013） | — |
+| [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
+| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ 告警（Telegram 路線，已部分 superseded） | 被 ADR-010 部分取代 |
+| [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) | Discord 取代 Telegram 為告警通道 | 部分 supersede **ADR-009** |
+| [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
+| [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
+| [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005** |
+
+---
+
+### 階段 8：UI / 設計系統參考（2026-06-01 新增）
+
+> 與核心 dev_docs 並行的設計系統工作區。M3 Streamlit 面板 + M5 React 前端的視覺基礎；目前內容以「AI 網頁開發流水線」為框架，含 design-system specs + 既有 UI clone 分析（x.ai、Grok）。
+
+| 路徑 | 用途 | 對應 |
+| :--- | :--- | :--- |
+| [web_design/README.md](./web_design/README.md) | 模組化 AI 網頁開發流水線總覽 | 獨立 |
+| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai 完整 UI 5 層分析（L0-L4 + extracted CSS vars / DOM / fonts） | 設計參考 |
+| [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
+| web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
 
 ---
 

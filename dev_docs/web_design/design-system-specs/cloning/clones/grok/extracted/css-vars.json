@@ -1,0 +1,463 @@
+{
+  "brand_named_tokens": [
+    {
+      "token": "--border",
+      "hsl": "222 19% 86%"
+    },
+    {
+      "token": "--card",
+      "hsl": "40 18% 97%"
+    },
+    {
+      "token": "--accent",
+      "hsl": "22 100% 51.6%"
+    },
+    {
+      "token": "--color-ink",
+      "hsl": "213 11% 16%"
+    },
+    {
+      "token": "--color-nimbus",
+      "hsl": "228 21.74% 95.49%"
+    },
+    {
+      "token": "--color-breeze",
+      "hsl": "214 48.9% 73.9%"
+    },
+    {
+      "token": "--color-steel",
+      "hsl": "216 4% 22%"
+    },
+    {
+      "token": "--success",
+      "hsl": "142 71% 45%"
+    },
+    {
+      "token": "--color-ivory",
+      "hsl": "40 18% 97%"
+    },
+    {
+      "token": "--color-codeblock",
+      "hsl": "0 0% 7%"
+    },
+    {
+      "token": "--background",
+      "hsl": "0 0% 100%"
+    },
+    {
+      "token": "--color-twilight",
+      "hsl": "255 92% 76%"
+    },
+    {
+      "token": "--color-sunset",
+      "hsl": "22 100% 51.6%"
+    },
+    {
+      "token": "--error",
+      "hsl": "0 84% 60%"
+    },
+    {
+      "token": "--color-evenfall",
+      "hsl": "214 16.1% 28%"
+    },
+    {
+      "token": "--color-midnight",
+      "hsl": "214 58.3% 9.4%"
+    },
+    {
+      "token": "--warning",
+      "hsl": "45 93% 47%"
+    },
+    {
+      "token": "--info",
+      "hsl": "214 48.9% 73.9%"
+    },
+    {
+      "token": "--color-white",
+      "hsl": "0 0% 100%"
+    },
+    {
+      "token": "--color-pewter",
+      "hsl": "213 12% 70%"
+    },
+    {
+      "token": "--color-jet",
+      "hsl": "0 0% 4%"
+    },
+    {
+      "token": "--color-dusk",
+      "hsl": "263 70% 50.4%"
+    },
+    {
+      "token": "--color-fog",
+      "hsl": "216 4% 51%"
+    },
+    {
+      "token": "--color-ash",
+      "hsl": "216 5% 19"
+    },
+    {
+      "token": "--color-dawn",
+      "hsl": "37 100% 76%"
+    },
+    {
+      "token": "--color-umbra",
+      "hsl": "221 12% 14%"
+    },
+    {
+      "token": "--color-dove",
+      "hsl": "222 19% 86%"
+    },
+    {
+      "token": "--color-charcoal",
+      "hsl": "0 0% 10%"
+    }
+  ],
+  "colors": [
+    {
+      "value": "rgb(10, 10, 10)",
+      "frequency": 26,
+      "usage": [
+        "button",
+        "a",
+        "h1",
+        "h2",
+        "h3",
+        "[class*=\"btn\"]"
+      ]
+    },
+    {
+      "value": "rgba(10, 10, 10, 0.5)",
+      "frequency": 10,
+      "usage": [
+        "a",
+        "p"
+      ]
+    },
+    {
+      "value": "rgb(255, 255, 255)",
+      "frequency": 6,
+      "usage": [
+        "button",
+        "[class*=\"btn\"]"
+      ]
+    },
+    {
+      "value": "rgba(0, 0, 0, 0.6)",
+      "frequency": 5,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "rgba(10, 10, 10, 0.4)",
+      "frequency": 2,
+      "usage": [
+        "p"
+      ]
+    },
+    {
+      "value": "rgba(10, 10, 10, 0.3)",
+      "frequency": 1,
+      "usage": [
+        "p"
+      ]
+    }
+  ],
+  "font-sizes": [
+    {
+      "value": "14px",
+      "frequency": 17,
+      "usage": [
+        "button",
+        "a",
+        "[class*=\"btn\"]",
+        "p"
+      ]
+    },
+    {
+      "value": "16px",
+      "frequency": 9,
+      "usage": [
+        "button",
+        "a",
+        "p",
+        "nav",
+        "header",
+        "footer"
+      ]
+    },
+    {
+      "value": "30px",
+      "frequency": 5,
+      "usage": [
+        "h2",
+        "h3"
+      ]
+    },
+    {
+      "value": "13px",
+      "frequency": 4,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "12px",
+      "frequency": 4,
+      "usage": [
+        "button",
+        "p"
+      ]
+    },
+    {
+      "value": "20px",
+      "frequency": 3,
+      "usage": [
+        "h3"
+      ]
+    },
+    {
+      "value": "36px",
+      "frequency": 2,
+      "usage": [
+        "h2"
+      ]
+    },
+    {
+      "value": "60px",
+      "frequency": 1,
+      "usage": [
+        "h1"
+      ]
+    },
+    {
+      "value": "18px",
+      "frequency": 1,
+      "usage": [
+        "p"
+      ]
+    }
+  ],
+  "font-weights": [
+    {
+      "value": "400",
+      "frequency": 28,
+      "usage": [
+        "button",
+        "a",
+        "h2",
+        "h3",
+        "p",
+        "nav"
+      ]
+    },
+    {
+      "value": "500",
+      "frequency": 18,
+      "usage": [
+        "button",
+        "a",
+        "h1",
+        "[class*=\"btn\"]",
+        "p"
+      ]
+    }
+  ],
+  "line-heights": [
+    {
+      "value": "20px",
+      "frequency": 17,
+      "usage": [
+        "button",
+        "a",
+        "[class*=\"btn\"]",
+        "p"
+      ]
+    },
+    {
+      "value": "24px",
+      "frequency": 5,
+      "usage": [
+        "button",
+        "a",
+        "nav",
+        "header",
+        "footer"
+      ]
+    },
+    {
+      "value": "36px",
+      "frequency": 5,
+      "usage": [
+        "h2",
+        "h3"
+      ]
+    },
+    {
+      "value": "19.5px",
+      "frequency": 4,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "26px",
+      "frequency": 4,
+      "usage": [
+        "p"
+      ]
+    },
+    {
+      "value": "28px",
+      "frequency": 3,
+      "usage": [
+        "h3"
+      ]
+    },
+    {
+      "value": "18px",
+      "frequency": 2,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "40px",
+      "frequency": 2,
+      "usage": [
+        "h2"
+      ]
+    },
+    {
+      "value": "16px",
+      "frequency": 2,
+      "usage": [
+        "p"
+      ]
+    },
+    {
+      "value": "60px",
+      "frequency": 1,
+      "usage": [
+        "h1"
+      ]
+    },
+    {
+      "value": "29.25px",
+      "frequency": 1,
+      "usage": [
+        "p"
+      ]
+    }
+  ],
+  "radii": [
+    {
+      "value": "0px",
+      "frequency": 29,
+      "usage": [
+        "a",
+        "h1",
+        "h2",
+        "h3",
+        "p",
+        "nav"
+      ]
+    },
+    {
+      "value": "9999px",
+      "frequency": 16,
+      "usage": [
+        "button",
+        "a",
+        "[class*=\"btn\"]"
+      ]
+    },
+    {
+      "value": "0px 9999px 9999px 0px",
+      "frequency": 1,
+      "usage": [
+        "button"
+      ]
+    }
+  ],
+  "shadows": [
+    {
+      "value": "rgb(255, 255, 255) 0px 0px 0px 0px, rgba(10, 10, 10, 0.15) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+      "frequency": 6,
+      "usage": [
+        "button",
+        "a",
+        "[class*=\"btn\"]"
+      ]
+    }
+  ],
+  "spacings": [
+    {
+      "value": "6px 12px",
+      "frequency": 6,
+      "usage": [
+        "a"
+      ]
+    },
+    {
+      "value": "8px 16px",
+      "frequency": 5,
+      "usage": [
+        "button",
+        "a",
+        "[class*=\"btn\"]"
+      ]
+    },
+    {
+      "value": "16px 0px 0px",
+      "frequency": 5,
+      "usage": [
+        "h1",
+        "p"
+      ]
+    },
+    {
+      "value": "12px 20px",
+      "frequency": 5,
+      "usage": [
+        "[class*=\"btn\"]"
+      ]
+    },
+    {
+      "value": "12px 0px 0px",
+      "frequency": 3,
+      "usage": [
+        "h3"
+      ]
+    },
+    {
+      "value": "4px 8px",
+      "frequency": 2,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "0px 12px 0px 8px",
+      "frequency": 1,
+      "usage": [
+        "button"
+      ]
+    },
+    {
+      "value": "24px 96px 0px",
+      "frequency": 1,
+      "usage": [
+        "p"
+      ]
+    },
+    {
+      "value": "16px 0px",
+      "frequency": 1,
+      "usage": [
+        "nav"
+      ]
+    }
+  ]
+}

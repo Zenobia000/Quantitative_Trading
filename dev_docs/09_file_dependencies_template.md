@@ -1,7 +1,29 @@
 # 模組依賴關係分析 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 已實作  
+> **版本：** v1.1 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / M2 重組已完成
 > **與 C4 的關係**：本檔為 **Clean Architecture 分層依賴**（模組 import），不是 C4 Container 圖。部署 / runtime 邊界見 `05_architecture_and_design_document.md` §1.1（C4 嚴格版）。
+>
+> **v1.1 註記（2026-05-31）**：本檔下方圖表多處以 `strategy/`、`engines/` 等 M1 名稱呈現概念依賴關係。實際 M2 重組後（commit `ae869f5`）對應如下，請讀者自行 substitute：
+>
+> | 本檔提及 (M1 概念) | M2 實際路徑 |
+> | :--- | :--- |
+> | `strategy/` | `strategies/four_layer_resonance/`（多策略 namespace，ADR-008）|
+> | `engines/rqalpha_runner` | 廢止（ADR-001 superseded by ADR-005）|
+> | `engines/vectorbt_runner` | `engines/vectorbt_adapter.py`（M3）|
+> | `live/paper_trader` | `adapters/brokers/paper_broker.py` |
+> | `live/shioaji_executor` | `adapters/brokers/shioaji_broker.py` |
+> | （新增）`adapters/` | data_bundle / data_feed / brokers — 視為 Infrastructure 層 |
+> | （新增）`orchestration/` | 視為 Application 層（取代 pipeline.py 為 M2+ 主入口）|
+> | （新增）`monitoring/`、`dashboard/` | 側邊掛接 read-only 消費者，不被上游 import |
+>
+> **新層依賴規則**：
+> - `adapters/` 依賴 `config/` + `strategies/`（為使其可注入）；不依賴 `data/`（FinMind ETL 是 fallback adapter 之一）
+> - `orchestration/` 可 import 任何下層
+> - `monitoring/` / `dashboard/` 只 read TimescaleDB / InfluxDB，不被任何業務模組 import
+>
+> 完整目錄結構詳見 [08_project_structure_guide.md](./08_project_structure_guide.md) v1.1。
+>
+> 待完整重寫的依賴圖排程：M2 Sprint 1 結束後（屆時 `adapters/`、`engines/` 有實際程式碼可畫）。
 
 ---
 
@@ -200,7 +222,7 @@ graph LR
 
 - **每月**：`pip list --outdated` 檢查
 - **變更前**：跑完整 test suite
-- **重大變更**：M3 引入 lock file（poetry / uv）
+- **重大變更**：M2 引入 lock file `uv.lock`（ADR-012）
 
 ---
 
@@ -209,20 +231,33 @@ graph LR
 ### 允許的 import 方向
 
 ```python
-# pipeline.py（最上層）可 import 所有東西
+# orchestration/cli.py 或 pipeline.py（最上層）可 import 所有東西
 from backtest_platform.data import ...
-from backtest_platform.strategy import ...
+from backtest_platform.strategies.four_layer_resonance import ...
+from backtest_platform.adapters.data_bundle.finlab_bundle import ...
 from backtest_platform.config import ...
 
-# strategy/signals.py 可 import
+# strategies/four_layer_resonance/signals.py 可 import（intra-package 用 relative）
 from backtest_platform.config import ...
-from backtest_platform.strategy.scoring import ...
-from backtest_platform.strategy.indicators import ...
+from .scoring import ...
+from .indicators import ...
 
 # 嚴禁
-# strategy/scoring.py 不可
+# strategies/four_layer_resonance/scoring.py 不可
 # from backtest_platform.data import ...  ❌ Domain 不依賴 Infrastructure
+# from backtest_platform.adapters import ...  ❌ Domain 不依賴 Adapter
+
+# 嚴禁
+# adapters/data_bundle/finlab_bundle.py 不可
+# from backtest_platform.adapters.brokers import ...  ❌ Adapter 互不依賴
 ```
+
+**M2 重組後（2026-05-31）import path 變更**：
+| 舊 (M1) | 新 (M2+) |
+| :--- | :--- |
+| `backtest_platform.strategy.scoring` | `backtest_platform.strategies.four_layer_resonance.scoring` |
+| `backtest_platform.strategy.signals` | `backtest_platform.strategies.four_layer_resonance.signals` |
+| `backtest_platform.strategy.indicators` | `backtest_platform.strategies.four_layer_resonance.indicators` |
 
 ### Lazy import（延遲載入）
 

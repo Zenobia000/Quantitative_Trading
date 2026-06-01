@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>待決策事項 — backtest_platform Decision Brief</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <header>
+    <span class="brand">backtest_platform</span>
+    <span class="sub">Decision Brief</span>
+  </header>
+  <nav>
+    <a href="index.html"><span class="num">★</span>Dashboard</a>
+    <a href="01_executive_summary.html"><span class="num">1</span>Executive Summary</a>
+    <a href="02_pm_perspective.html"><span class="num">2</span>PM 視角</a>
+    <a href="03_pjm_perspective.html"><span class="num">3</span>PjM 視角</a>
+    <a href="04_decisions.html" class="active"><span class="num">4</span>待決策<span class="star">★</span></a>
+    <a href="05_risks.html"><span class="num">5</span>風險登記簿</a>
+    <a href="06_action_items.html"><span class="num">6</span>Action Items</a>
+    <a href="07_appendix.html"><span class="num">7</span>附錄</a>
+  </nav>
+  <footer>2026-06-01<br>commit ab623cc</footer>
+</aside>
+
+<main>
+<div class="breadcrumb"><a href="index.html">Brief</a> / 4. 待決策 ★</div>
+
+<h1>待決策事項</h1>
+<div class="page-meta">
+  <span>需 stakeholder 拍板</span>
+  <span>每個決策含：背景 / 選項 / 推薦 / 影響 / 截止</span>
+</div>
+
+<section>
+<h2>4.0 決策矩陣總覽</h2>
+<p>下列 5 個決策延後將直接影響 M2-M5 時程或品質。建議於下一個 sprint 啟動前敲定。</p>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>主題</th><th>急迫</th><th>影響</th><th>建議</th><th>截止</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#d1"><strong>D1</strong></a></td>
+      <td>Sprint 0 spike 啟動時機</td>
+      <td><span class="badge warn">急</span></td>
+      <td>阻擋 M2 啟動</td>
+      <td>選 (B)</td>
+      <td>2026-06-04</td>
+    </tr>
+    <tr>
+      <td><a href="#d2"><strong>D2</strong></a></td>
+      <td>下市股資料源</td>
+      <td><span class="badge info">中</span></td>
+      <td>M2/M3 偏誤分析</td>
+      <td>(C)→(D)→(B)</td>
+      <td>Sprint 0 結束</td>
+    </tr>
+    <tr>
+      <td><a href="#d3"><strong>D3</strong></a></td>
+      <td>vectorbt PRO 是否購買</td>
+      <td><span class="badge mute">低</span></td>
+      <td>M3 grid 速度</td>
+      <td>選 (C)</td>
+      <td>M3 啟動前 (~2026-10)</td>
+    </tr>
+    <tr>
+      <td><a href="#d4"><strong>D4</strong></a></td>
+      <td>M5 雲端 GCP vs 本機</td>
+      <td><span class="badge mute">低</span></td>
+      <td>實盤穩定度</td>
+      <td>選 (A) GCP</td>
+      <td>M5 前 (~2027-04)</td>
+    </tr>
+    <tr>
+      <td><a href="#d5"><strong>D5</strong></a></td>
+      <td>引入第二位 reviewer</td>
+      <td><span class="badge mute">低</span></td>
+      <td>防 confirmation bias</td>
+      <td>選 (A)+(C)</td>
+      <td>M3 結束 (~2026-11)</td>
+    </tr>
+  </tbody>
+</table>
+</section>
+
+<section id="d1">
+<h2>D1 — Sprint 0 spike 啟動時機</h2>
+<div class="decision rec-highlight">
+  <header>
+    <div><span class="id">D1</span><span class="title">Sprint 0 spike 啟動時機</span></div>
+    <span class="badge warn">急 · 阻擋 M2 啟動</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>Sprint 0 是 M2 強制 gate（6 spike + 1 週）。當前 scaffolding 已完成（10 檔 + RUNBOOK），但需 FinLab token + Shioaji 沙箱憑證 + 本機 Docker 才能跑全 6 spike。</dd>
+
+      <dt>選項</dt>
+      <dd>
+        <ul style="margin:6px 0 0;">
+          <li><strong>(A)</strong> 立即購買 FinLab + 申請 Shioaji，週末啟動全 6 spike — 等 1-3 天</li>
+          <li><strong>(B)</strong> 先跑無依賴的 S1/S2/S6（TQuant-Lab + M1 plug + Streamlit），S3/S4/S5 等憑證再跑 — 並行</li>
+          <li><strong>(C)</strong> 延後 2 週 — 整週空出時間集中執行</li>
+        </ul>
+      </dd>
+
+      <dt>推薦</dt>
+      <dd class="rec">
+        <strong>選 (B)</strong> — 先驗證最高風險的 <strong>S2（M1 plug Zipline，是 deal-breaker）</strong>；
+        S3/S4/S5 等待時間做 S1/S6 不浪費；憑證到位即補跑。
+      </dd>
+
+      <dt>影響</dt>
+      <dd>(B) 全綠 → M2 Sprint 1 立即啟動（6/9）；S2 紅 → 強制 debug；S1/S3 紅 → Hybrid 退場（+1 週）</dd>
+
+      <dt>截止</dt>
+      <dd>2026-06-04（週四前決定，避免週末浪費）</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<section id="d2">
+<h2>D2 — 下市股資料源解決方案</h2>
+<div class="decision rec-highlight">
+  <header>
+    <div><span class="id">D2</span><span class="title">下市股資料源</span></div>
+    <span class="badge info">中 · 影響 M2/M3 偏誤分析</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>FinMind 免費版無下市股清單 → 不處理會產生「生存者偏誤」（survivorship bias）→ IS 結果樂觀偏誤；TEJ 付費 NT$3-10k/月有完整覆蓋；FinLab 已付費但下市股覆蓋情形未確認。</dd>
+
+      <dt>選項</dt>
+      <dd>
+        <ul style="margin:6px 0 0;">
+          <li><strong>(A) TEJ 付費</strong>：NT$3-10k/月，完整覆蓋；總月支出再增 NT$3-10k</li>
+          <li><strong>(B) TWSE 自爬</strong>：~24h 開發（WBS 3.5.2-3）；零成本但脆弱（HTML 改版會壞）</li>
+          <li><strong>(C) FinLab 試試</strong>：Sprint 0 順手測 FinLab 是否含下市股</li>
+          <li><strong>(D) 接受偏誤</strong>：CAGR target +3% buffer；M3 量化偏誤大小</li>
+        </ul>
+      </dd>
+
+      <dt>推薦</dt>
+      <dd class="rec">
+        <strong>漸進路線 (C) → (D) → (B)</strong>：Sprint 0 順手測 (C)；若不含先用 (D) 接受偏誤；
+        M3 統計顯示偏誤過大才啟動 (B)。<strong>避免 (A) — 月支出累積過高、暫不必要</strong>。
+      </dd>
+
+      <dt>影響</dt>
+      <dd>(C) OK → 省 24h 開發 + 永久解決；(D) → M3 統計可能高估 Sharpe ~5-15%；(B) → 額外 24h + 維護成本</dd>
+
+      <dt>截止</dt>
+      <dd>Sprint 0 結束（2026-06-08）— (C) 測試結果出來即可定</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<section id="d3">
+<h2>D3 — vectorbt PRO 是否購買（$20/月）</h2>
+<div class="decision rec-highlight">
+  <header>
+    <div><span class="id">D3</span><span class="title">vectorbt PRO 訂閱</span></div>
+    <span class="badge mute">低急迫 · M3 才需要</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>vectorbt 開源版 v1.0.0 (2026-04) 為最終整理版；PRO ($20/月) 含原生 WFA + parallelism，grid search 5-10× 加速；M3 跑 DOE 1-10 約 1000 trials × 100 檔，開源版預估 ~2h、PRO 預估 ~15min。</dd>
+
+      <dt>選項</dt>
+      <dd>
+        <ul style="margin:6px 0 0;">
+          <li><strong>(A) 買 PRO</strong>：$240/年；M3 順暢、開發體驗好</li>
+          <li><strong>(B) 開源版 + 自寫 WFA</strong>：~150 LOC 自寫；長期省錢、多 ~10h 開發</li>
+          <li><strong>(C) 先用開源、痛了再買</strong>：M3 開跑後若 grid 時間 painful 才買月費試一個月，可隨時退訂</li>
+        </ul>
+      </dd>
+
+      <dt>推薦</dt>
+      <dd class="rec">
+        <strong>選 (C)</strong> — 不預先花錢；M3 真痛了再買月費。
+        對單人專案 $20/月不算 painful，但「先驗證痛點再付費」是良好紀律。
+      </dd>
+
+      <dt>影響</dt>
+      <dd>低 — 即便 (A) 月費 $20 × 12 = $240，相較策略潛在回報 negligible</dd>
+
+      <dt>截止</dt>
+      <dd>M3 啟動前（~2026-10）</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<section id="d4">
+<h2>D4 — M5 雲端部署 GCP vs 本機 24x7</h2>
+<div class="decision rec-highlight">
+  <header>
+    <div><span class="id">D4</span><span class="title">M5 雲端部署目標</span></div>
+    <span class="badge mute">低急迫 · M5 才需要</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>M5 實盤需 24x7 運行；當前本機 PC 不便長期常開（電費 / 中斷風險）；GCP Compute Engine e2-small 月費 ~US$15-25。</dd>
+
+      <dt>選項</dt>
+      <dd>
+        <ul style="margin:6px 0 0;">
+          <li><strong>(A) GCP Compute Engine</strong>：穩定但月費 ~NT$500-800；雲端 backup → GCS 順</li>
+          <li><strong>(B) 本機 PC 24x7</strong>：零月費但停電/網斷風險</li>
+          <li><strong>(C) Raspberry Pi 5</strong>：一次性 ~NT$3,000，零月費、省電、可放角落</li>
+        </ul>
+      </dd>
+
+      <dt>推薦</dt>
+      <dd class="rec">
+        <strong>選 (A) GCP</strong> — 實盤資金安全 &gt; 月費。GCP 也方便 backup → GCS、可遠端維運。
+        M4 paper trading 階段仍可從本機跑驗證。
+      </dd>
+
+      <dt>影響</dt>
+      <dd>實盤穩定度 → 影響真錢；本機如斷電/網斷可能在錯時點無法執行訊號</dd>
+
+      <dt>截止</dt>
+      <dd>M5 前（~2027-04）</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<section id="d5">
+<h2>D5 — 是否引入第二位 reviewer / 協作者</h2>
+<div class="decision rec-highlight">
+  <header>
+    <div><span class="id">D5</span><span class="title">引入外部 reviewer</span></div>
+    <span class="badge mute">低急迫 · 紀律問題</span>
+  </header>
+  <div class="body">
+    <dl>
+      <dt>背景</dt>
+      <dd>當前單人多役（PM/TL/DEV/QA 全 self）；M3 PBO 結果若邊緣（如 PBO 25-35%），需獨立眼光防止 confirmation bias 把邊緣紅燈視為綠燈。</dd>
+
+      <dt>選項</dt>
+      <dd>
+        <ul style="margin:6px 0 0;">
+          <li><strong>(A) 量化朋友 review M3 結果</strong>：1-2 小時，非協作關係</li>
+          <li><strong>(B) 找全職協作者</strong>：升級為小團隊（觸發 01 §1 升級條件）</li>
+          <li><strong>(C) 純 AI review</strong>：用 Claude ultraverify / 跑 sanity check 對 M3 結果</li>
+        </ul>
+      </dd>
+
+      <dt>推薦</dt>
+      <dd class="rec">
+        <strong>選 (A) + (C) 並行</strong>：(A) 防 confirmation bias；(C) 補完整性。
+        <strong>(B) 暫不啟動</strong> — 個人專案 + 策略未驗證階段，引人成本/協調 &gt; 收益。
+      </dd>
+
+      <dt>影響</dt>
+      <dd>M3 結果若被 self-deception 蒙混 → M4 paper trading 才會敗露，多燒 3 個月時間</dd>
+
+      <dt>截止</dt>
+      <dd>M3 結束時（~2026-11）</dd>
+    </dl>
+  </div>
+</div>
+</section>
+
+<nav class="page-nav">
+  <a class="prev" href="03_pjm_perspective.html"><span class="dir">← 上一頁</span>3. PjM 視角</a>
+  <a class="next" href="05_risks.html"><span class="dir">下一頁 →</span>5. 風險登記簿</a>
+</nav>
+
+</main>
+</div>
+</body>
+</html>
