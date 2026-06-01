@@ -104,6 +104,18 @@ pytest -m e2e                           # release gate
 
 **鐵律**：搬到 `strategies/four_layer_resonance/` 後測試 import path 更新即可，**0 邏輯變動**。
 
+### 2.1.1 M2 Mainframe 模組測試（Stream D Wave 2 2026-06-02）
+
+| 模組 | 新增測試檔 | 覆蓋率 | 重點 |
+| :--- | :--- | :--- | :--- |
+| `engines/zipline_adapter/algorithms/four_layer_resonance.py` | `tests/engines/zipline_adapter/algorithms/test_four_layer_resonance.py`（29 個）| 0% → 97% | initialize / evaluate_and_trade 用 mock zipline.api，evaluate_bar wrapper, _execute_action priority, _portfolio_state / _current_weight |
+| `engines/zipline_adapter/cli.py` | `tests/engines/zipline_adapter/test_cli.py`（18 個）| 0% → 95% | _ensure_bundle_registered、_resolve_zipline_root（explicit>env>default）、_format_perf_summary 邊界（empty/1bar/zero-std）、_maybe_write_tearsheet ImportError 退化、_maybe_notify_discord token 缺/錯誤吞噬、Click `backtest-run` / `list-bundles` 整合 |
+| `pipeline.py` | `tests/test_pipeline.py`（10 個）| 0% → 100% | run_pipeline mock fetch/score/signal 三組依賴、signal_calendar 欄位切片、summary_stats 空 vs 有資料、run_cmd Click 寫 CSV 與 console |
+| `data/schemas.py` | `tests/data/test_schemas.py`（16 個）| 已 98% → 維持 | Pydantic ValidationError 邊界（empty stock_id、price ≤ 0、volume 負、adj_factor 0）、ETLBundle.merged() NaN 補零、排序 |
+| `data/finmind_etl.py` | `tests/data/test_finmind_etl.py`（既有 4 + 新增 11） | 75% → 98% | 空 loader、dividend fetch 失敗吞噬、apply_adjustment=False short-circuit、`_normalize_*` empty 路徑、`_build_loader` token / no-token、CLI dry-run + parquet 路徑 |
+
+**整體覆蓋率**：Stream D Wave 1 baseline 66% → Wave 2 後 **93.74%**（pyproject.toml `--cov-fail-under` 80）。
+
 ### 2.2 Adapter 單元測試（M2+）
 
 每個 adapter 必須：

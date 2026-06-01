@@ -110,18 +110,19 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-ra --strict-markers --cov=backtest_platform --cov-report=term-missing --cov-fail-under=65"
+addopts = "-ra --strict-markers --cov=backtest_platform --cov-report=term-missing --cov-fail-under=80"
 asyncio_mode = "strict"
 markers = [
     "integration: requires external services (DB, FinMind API)",
     "slow: takes more than 5 seconds",
 ]
 
-# Coverage gate — transitional baseline (Stream D Wave 1).
-# Target: 80% (ADR 2026-06-02 workflow plan, Q4 decision).
-# Current: ~69% after adjustment.py 29%→100%; ratchet up to 80
-# as Stream D remainder lands TEST-002 (algorithms), TEST-003 (cli),
-# TEST-005 (pipeline) which are currently 0% covered.
+# Coverage gate — Stream D Wave 2 ratchet (2026-06-02).
+# Wave 1 baseline (PR #12): 65% (transitional).
+# Wave 2: TEST-002 (algorithms 0→97%), TEST-003 (cli 0→95%),
+# TEST-004 (schemas), TEST-005 (pipeline 0→100%), TEST-006 (finmind_etl 75→98%).
+# Achieved: ~93%; gate locked at 80% to give breathing room for future refactors
+# while staying above ADR-016 KPI of 80%.
 [tool.coverage.run]
 source = ["src/backtest_platform"]
 branch = true
