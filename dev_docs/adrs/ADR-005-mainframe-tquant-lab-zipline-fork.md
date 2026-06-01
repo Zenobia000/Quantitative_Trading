@@ -1,6 +1,11 @@
 # ADR-005: 主骨架選定 TQuant-Lab（Zipline 台股 fork）
 
-> **狀態：** 已接受 | **日期：** 2026-05-31 | **決策者：** Self
+> **狀態：** 已 superseded | **日期：** 2026-05-31 | **決策者：** Self
+> **Superseded by：** [ADR-013](./ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)
+> — Sprint 0 S1 spike 揭露 zipline-tej import 階段 hard-code TEJ API call，
+> 違反 ADR-005 § 1「免 TEJ key 仍可開發」隱含假設。改採 `zipline-reloaded`
+> 主線 fork（0 商業綁定），ADR-005 所有 Zipline 生態技術理由（XTAI calendar、
+> event-driven、bundle 機制、Shioaji 介接路徑）於 ADR-013 完全保留。
 > **Supersedes：** ADR-001（rqalpha 主引擎角色廢止）
 
 ---

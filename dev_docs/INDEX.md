@@ -81,14 +81,15 @@
 
 | ADR | 主題 | Supersedes |
 | :---: | :--- | :--- |
-| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | 主骨架選定 TQuant-Lab（Zipline 台股 fork） | **ADR-001** |
+| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | ~~主骨架選定 TQuant-Lab（Zipline 台股 fork）~~ — 已 superseded by ADR-013 | **ADR-001** |
 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
-| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized | — |
+| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized（vectorbt 半邊 pending，見 ADR-013） | — |
 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ 告警（Telegram 路線，已部分 superseded） | 被 ADR-010 部分取代 |
 | [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) | Discord 取代 Telegram 為告警通道 | 部分 supersede **ADR-009** |
 | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
 | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
+| [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005** |
 
 ---
 
