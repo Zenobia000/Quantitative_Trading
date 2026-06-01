@@ -1,9 +1,10 @@
 # Brand System: backtest_platform 監控儀表板
 
 > 本專案的 Global Design System（玩具城規則書）。
-> **設計來源**：差異化自 [`design-system-specs/cloning/clones/xai/spec/inspired-design-system.md`](../design-system-specs/cloning/clones/xai/spec/inspired-design-system.md)（inspired by x.ai）。
+> **設計來源**：**Grok 單色 dark 設計語言**（忠實還原自 `cloning/clones/grok`，目標 grok.com）。v1 曾誤用 x.ai 行銷頁 + teal 差異化，已修正為 Grok 單色。
 > **對齊**：`BASE_DESIGN_SYSTEM.md` 分層 + `dev_docs/20_dashboard_specification.md`（面板 A–E 規格）+ `dev_docs/21_data_contract.md`（資料 schema）。
-> **設計更新動機**：把現行 Streamlit `primaryColor #00d4ff` 的臨時主題，升級為一致、達 WCAG、dark-first 的 token 化設計系統，供 Lovable 產出 React 版監控儀表板。
+> **設計更新動機**：把現行 Streamlit `primaryColor #00d4ff` 的臨時主題，升級為 Grok 式單色 dark、達 WCAG、token 化的設計系統，供 Lovable 產出 React 版監控儀表板。
+> **註**：Grok 精確 token（hex/字型）為路徑 2 重建近似值（grok.com 受 CF 擋無法擷取），待 DevTools 手動擷取補正；設計語言（單色 dark / 大圓角 / flat / 極簡）為 high 信心。
 
 ---
 
@@ -53,34 +54,39 @@
 
 ## [VISUAL DESIGN SYSTEM LAYER]
 
-### Color Tokens（dark-first；已過 WCAG 驗算，見 clone validation）
+### Color Tokens（**Grok 單色 dark**；已過 WCAG 驗算）
+
+> **設計語言：Grok 式單色（monochrome）**——近黑底 + 白/灰文字，**無彩色品牌色**。
+> 唯一的功能性彩色是交易剛需的 `gain`/`loss` 漲跌（且配 `↑/↓` 符號雙編碼）。
+> 來源：`clones/grok`（忠實還原 grok.com，路徑 2 重建；精確值待擷取補正）。
 
 | Token | 色值 | 用途 | 來源 |
 |-------|------|------|------|
-| Primary | `#0E7490` | 主行動、選中、品牌（teal） | [override] xai #0A0A0A→teal |
-| Primary Hover | `#0C6173` | 主色 hover | [original] |
-| Accent (data) | `#22D3EE` | 資料視覺主線 / focus ring（亮 cyan-teal，銜接舊 #00d4ff 意圖） | [override] 銜接 Streamlit cyan |
-| Warning Accent | `#F59E0B` | 警示（amber，非品牌色） | [override] |
-| **BG Base** | `#0B1220` | 頁面底（近黑藍灰，非純黑） | [override] |
-| **BG Surface** | `#131C2B` | 卡片/面板底 | [original] |
-| BG Code | `#0D1117` | 程式碼/JSON/終端 | [inspired by: xai] |
-| Border | `#243044` | 1px 分隔（取代陰影分層） | [inspired by: xai] |
-| Text Primary | `#E6EDF5` | 主文字（15.9:1 AAA） | [override] |
-| Text Secondary | `rgba(230,237,245,.65)` | 次文字（7.1:1 AAA） | [inspired by: xai] |
-| Text Muted | `rgba(230,237,245,.55)` | 標註/時間戳（5.4:1 AA） | [override .45→.55 修正對比] |
-| **Gain** | `#22C55E` | 上漲/獲利（7.5:1 on surface, AAA） | [original] |
-| **Loss** | `#F87171` | 下跌/虧損（6.2:1 AA） | [original] |
-| Loss AAA | `#FCA5A5` | loss 需 AAA 的關鍵數值（9.0:1） | [original] |
-| Success | `#22C55E` | 成功/正常狀態 | [inspired by: xai] |
-| Warning | `#E9A60C` | 警告水位 | [inspired by: xai] |
-| Error/Critical | `#EF4444` | 錯誤/熔斷 | [inspired by: xai] |
-| Info | `#60A5FA` | 資訊提示（7.4:1 AAA） | [override] |
+| **Primary** | `#F5F5F5` | 主行動（**白底 pill 按鈕**，text 用 base 深色）、選中 | [inspired by: grok] 單色主按鈕 |
+| Primary Hover | `#E2E2E2` | 主按鈕 hover（白稍降明度） | [inspired by: grok] |
+| **無彩色 accent** | — | 不設彩色品牌色；focus/互動以白灰明度 + 邊框區分 | [inspired by: grok] |
+| Focus Ring | `rgba(245,245,245,.7)` | focus-visible（單色白環，非彩色） | [override] 取代 teal/cyan |
+| **BG Base** | `#0F0F0F` | 頁面底（近黑，非純黑） | [inspired by: grok] |
+| **BG Surface** | `#1A1A1A` | sidebar / 卡片 / 面板底 | [inspired by: grok] |
+| BG Input/Elevated | `#1E1E1E` | 輸入框 / 浮起層 | [inspired by: grok] |
+| BG Code | `#161616` | 程式碼/JSON/終端 | [inspired by: grok] |
+| Border | `#2A2A2A`（≈ rgba(255,255,255,.10)） | 1px 細淡分隔（取代陰影分層） | [inspired by: grok] |
+| Text Primary | `#F5F5F5` | 主文字（17.6:1 AAA） | [inspired by: grok] |
+| Text Secondary | `rgba(255,255,255,.70)` | 次文字（9.6:1 AAA） | [inspired by: grok] |
+| Text Muted | `rgba(255,255,255,.60)` | 標註/時間戳/placeholder（7.2:1 AAA） | [inspired by: grok] |
+| **Gain** | `#22C55E` | 上漲/獲利（7.6:1 on surface, AAA；**配 ↑**） | [original] 交易剛需 |
+| **Loss** | `#F87171` | 下跌/虧損（6.3:1 AA；**配 ↓**） | [original] 交易剛需 |
+| Loss AAA | `#FCA5A5` | loss 需 AAA 的關鍵數值（9.2:1） | [original] |
+| Success | `#F5F5F5` + ✓ | 正常狀態（單色 + 符號，不用綠以免與 gain 混） | [override] |
+| Warning | `#E9A60C` | 風險警示水位（功能性，克制） | [original] |
+| Error/Critical | `#EF4444` | 錯誤/熔斷（功能性） | [original] |
 
-> Light mode 備援：`BG Base #F8FAFC` / `Text #0B1220`（盤中或列印用）。預設 dark。
+> Light mode 備援：`BG Base #FAFAFA` / `Text #0F0F0F`（盤中或列印用）。**預設 dark**。
 
 #### Data-viz 序列色盤（圖表線/標記用，dark 底）
-`#22D3EE`(主) · `#A78BFA`(紫) · `#F59E0B`(琥珀) · `#34D399`(綠) · `#F472B6`(粉) · benchmark 用 `rgba(230,237,245,.45)` 虛線。
-- 規則：strategy 線用 Accent；benchmark 用 muted 虛線；漲跌區域填色用 Gain/Loss 加透明度。
+**單色優先**：strategy 線用 `#F5F5F5`（白實線）；benchmark 用 `rgba(255,255,255,.40)`（灰虛線）。
+多序列需區分時：以**白→灰明度階 + 線型（實/虛/點）**為主，避免彩色噪音；漲跌區域填色才用 `gain`/`loss` 加透明度。
+（若多策略疊圖實在需要色相區分，最多引入低飽和灰調，不引入鮮豔彩色——維持 Grok 單色基調。）
 
 ### Typography
 
@@ -94,21 +100,22 @@
 | Caption | 12px | 1.3 | 500 | 時間戳/註腳 |
 | **Metric** | 20–32px | 1.1 | 600 | KPI 數值（**Geist Mono + tabular-nums**） |
 
-- UI/中文：`Inter` / `Noto Sans TC`（開源，取代 xai 專有 universalSans）。
+- UI/中文：`Inter` / `Noto Sans TC`（開源；Grok 字型 TBD，以 Inter 近似 grotesk）。
 - 數值/程式碼：`Geist Mono`（tabular-nums，價格/績效對齊）。
 - 字重僅 400/500/600 三級。
 
-### 元件風格
+### 元件風格（**Grok 大圓角 + flat 單色**）
 
 | Token | 值 | 用途 |
 |-------|-----|------|
-| Radius SM | 4px | Tag, Badge |
-| Radius MD | 8px | 按鈕、輸入框、KPI 卡（pill 收斂為 8px） |
-| Radius LG | 12px | 面板容器 |
-| Shadow | **無**（flat） | 一律 1px border + 底色分層 |
-| Border | `1px solid #243044` | 預設邊框 |
-| Button Primary | bg Primary / text #fff / radius 8px / 8px 16px / 14px 500 | 主行動 |
-| Button Secondary | 透明 / 1px ring Border / text Primary | 次行動（ring 非實線） |
+| Radius SM | 8px | Tag, Badge |
+| Radius MD | 12px | 按鈕、輸入框 |
+| Radius LG | 16px | 卡片 / 面板容器（Grok 大圓角） |
+| Radius Input | 12–16px / pill | 輸入框（Grok 招牌大圓角） |
+| Shadow | **無**（flat） | 一律 1px border + 底色明度階分層 |
+| Border | `1px solid #2A2A2A`（細淡） | 預設邊框 |
+| Button Primary | **白底 pill**：bg `#F5F5F5` / text `#0F0F0F` / radius 12px-pill / 8px 16px / 14px 500 | 主行動（Grok 式單色） |
+| Button Secondary | 透明 / 1px ring `#2A2A2A` / text Primary | 次行動（ring 非實線） |
 | Button Ghost | 透明 / text Muted | 低層級（filter/icon） |
 
 ### RWD / Grid
@@ -145,7 +152,7 @@
 
 | 元件 | Variants | States |
 |------|----------|--------|
-| Button | Primary(Teal) / Secondary(Ring) / Ghost / Danger | Default / Hover / Active / Disabled / Loading |
+| Button | Primary(白 pill) / Secondary(Ring) / Ghost / Danger | Default / Hover / Active / Disabled / Loading |
 | KPI Card | Default / Trend(↑↓ gain/loss) / Threshold(進度條) | Default / Hover(tooltip) / Loading(skeleton) |
 | DataTable | Default / Sortable / Drill-row | Default / Hover(row) / Selected / Empty / Loading |
 | Status Badge | Normal / Warn / Critical | 色+文字雙編碼 |
@@ -159,8 +166,8 @@
 - **色盲友善**：漲跌/狀態一律「顏色 + 文字/符號」雙重編碼，不單靠顏色。
 - **Dark/Light**：dark 為預設一等公民；light 為備援，token 用 CSS variables 切換。
 - **Motion**：完整 `prefers-reduced-motion`；**即時數據更新預設無進場動畫**（避免抖動/分心），動效僅用於導覽轉場。
-- **鍵盤**：所有互動元件 keyboard-operable + `focus-visible` ring（用 Accent `#22D3EE`，對比達標）；表格列可 focus + Enter drill-down。
-- Hover：按鈕加深、卡片邊框轉 Accent（不位移、不加陰影）。
+- **鍵盤**：所有互動元件 keyboard-operable + `focus-visible` ring（**單色白環** `rgba(245,245,245,.7)`，非彩色；對比達標）；表格列可 focus + Enter drill-down。
+- Hover：按鈕明度微調、卡片邊框提亮（`#2A2A2A`→`#3A3A3A`）；不位移、不加陰影、不引入彩色。
 
 ---
 
@@ -182,36 +189,36 @@
 - 百分比：一位小數（`+47.2%`）；正負加號 + Gain/Loss 上色。
 - 金額：`NT$` + 千分位。
 - 比率指標：Sharpe/PBO/DSR 兩位小數；MDD/Heat 一位小數 %。
-- 大數字 KPI：即時切換不滾動動畫（取代 xai 的 number-flow）。
+- 大數字 KPI：即時切換不滾動動畫。
 
 ---
 
 ## [壓縮版 Global Tokens]（給 assembly Master Prompt 直接嵌入，≤50 行）
 
 ```
-# backtest_platform Design System — Compressed Tokens (dark-first)
-COLORS
-  primary #0E7490  primary-hover #0C6173  accent #22D3EE
-  bg-base #0B1220  bg-surface #131C2B  bg-code #0D1117  border #243044
-  text #E6EDF5  text-secondary rgba(230,237,245,.65)  text-muted rgba(230,237,245,.55)
-  gain #22C55E  loss #F87171  loss-aaa #FCA5A5
-  success #22C55E  warning #E9A60C  error #EF4444  info #60A5FA
-  dataviz: #22D3EE #A78BFA #F59E0B #34D399 #F472B6 ; benchmark rgba(230,237,245,.45) dashed
+# backtest_platform Design System — Compressed Tokens (Grok 單色 dark)
+COLORS (monochrome — 無彩色品牌色)
+  primary #F5F5F5 (白底 pill 按鈕, text #0F0F0F)  primary-hover #E2E2E2
+  bg-base #0F0F0F  bg-surface #1A1A1A  bg-input #1E1E1E  bg-code #161616  border #2A2A2A
+  text #F5F5F5  text-secondary rgba(255,255,255,.70)  text-muted rgba(255,255,255,.60)
+  focus-ring rgba(245,245,245,.7) (單色白環)
+  gain #22C55E (配↑)  loss #F87171 (配↓)  loss-aaa #FCA5A5  warning #E9A60C  error #EF4444
+  dataviz: 單色優先 — strategy #F5F5F5 實線 / benchmark rgba(255,255,255,.40) 虛線 ; 多序列用明度+線型, 不用鮮豔彩色
 TYPE
   H1 28/600  H2 22/600  H3 18/600  Body 14/400  Label 13/500  Caption 12/500
   Metric 20-32/600 Geist-Mono tabular-nums
   font UI: Inter / Noto Sans TC ; mono: Geist Mono
-SHAPE
-  radius sm4 md8 lg12 ; NO shadow (use 1px border #243044) ; button pill→8px
+SHAPE (Grok 大圓角)
+  radius sm8 md12 lg16 input12-16 ; NO shadow (1px border #2A2A2A + 底色明度階) ; button 白 pill
 GRID
   fluid 100% ; breakpoints sm640 md768 lg1024 xl1280 ; section-gap 16-24px
   table→card @<1024px ; sidebar→drawer @<1024px
 RULES
-  dark-first ; 文字 AA / KPI 數值 AAA ; 漲跌=色+文字雙編碼
-  即時數據無進場動畫 ; flat 分層 ; focus-visible ring accent
+  Grok 單色 dark-first ; 無彩色品牌色 ; 文字 AA / KPI 數值 AAA
+  漲跌=紅綠+↑↓符號雙編碼（唯一彩色）; 即時數據無進場動畫 ; flat 分層 ; focus-visible 單色白環
 ```
 
 ---
 
-**版本**：v1.0 ｜ **套用對象**：backtest_platform 監控儀表板 React 版 ｜ **最後更新**：2026-06-01
-**衍生自**：x.ai design clone（`cloning/clones/xai/`）
+**版本**：v2.0（Grok 單色 dark，取代 v1 teal）｜ **套用對象**：backtest_platform 監控儀表板 React 版 ｜ **最後更新**：2026-06-02
+**衍生自**：Grok design clone（`cloning/clones/grok/`，忠實還原 grok.com）

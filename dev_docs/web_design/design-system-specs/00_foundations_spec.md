@@ -81,15 +81,19 @@
 
 ## 2. Color System
 
-### 2.1 Brand Colors
+> **Provenance（Grok 單色 dark）**：本專案採 **Grok 式單色（monochrome）dark-first** 設計語言（忠實還原自 `cloning/clones/grok`，目標 grok.com）——**無彩色品牌色**，主按鈕為白底 pill。
+> **權威 token 真相源：[`global/02_backtest_platform_brand_system.md`](../global/02_backtest_platform_brand_system.md)**（本檔與之對齊；如有歧異以 global/02 為準）。
+> 唯一功能性彩色：`gain`/`loss` 漲跌（配 `↑/↓` 符號雙編碼）。精確 hex 為路徑 2 重建近似值，待 DevTools 擷取補正。
 
-| Token | 色值 | 用途 | 對比規則 |
+### 2.1 Brand Colors（單色 — 無彩色品牌色）
+
+| Token | 色值（dark） | 用途 | 對比規則 |
 |-------|------|------|---------|
-| `color.brand.primary` | #______ | 主要品牌色、CTA | 與白底對比 >= 4.5:1 |
-| `color.brand.primary.hover` | #______ | 主色 hover（加深 10%） | |
-| `color.brand.primary.active` | #______ | 主色 active（加深 15%） | |
-| `color.brand.secondary` | #______ | 輔助色、次要元素 | |
-| `color.brand.accent` | #______ | 強調色、徽章、標籤 | |
+| `color.brand.primary` | `#F5F5F5`（白 pill，text `#0F0F0F`） | 主行動 / 選中 | text on white >= AAA |
+| `color.brand.primary.hover` | `#E2E2E2` | 主按鈕 hover | |
+| `color.brand.primary.active` | `#D4D4D4` | 主按鈕 active | |
+| `color.brand.secondary` | 透明 + 1px ring `#2A2A2A` | 次要元素 | |
+| `color.brand.accent` | **無彩色** — focus/互動以白灰明度 + `rgba(245,245,245,.7)` 白環 | 強調 / focus | ring 對比達標 |
 
 ### 2.2 Semantic Colors
 

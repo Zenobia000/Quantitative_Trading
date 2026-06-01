@@ -74,7 +74,7 @@ Templates（模板）
 | State | 視覺變化 | 觸發方式 |
 |-------|---------|---------|
 | Default | 基準樣式 | 初始 |
-| Hover | 背景加深 / 陰影增加 | 滑鼠移入 |
+| Hover | 背景明度微調 / 邊框提亮（**flat：不加陰影**） | 滑鼠移入 |
 | Active/Pressed | 背景再加深 / 輕微縮小 | 滑鼠按下 |
 | Focus | Focus ring (2px outline) | Tab 鍵 |
 | Disabled | 降低 opacity 0.5 + cursor not-allowed | disabled=true |
@@ -102,6 +102,8 @@ Templates（模板）
 
 ## 3. P0 元件清單與規格
 
+> **Provenance（Grok 單色 dark）**：所有元件採 **flat（無 drop shadow，用 1px border `#2A2A2A` + bg 明度階分層）+ Grok 大圓角（md 12 / lg 16）+ 單色**。主按鈕為**白底 pill**（`#F5F5F5` / text `#0F0F0F`）。color/radius/shadow 權威 token 真相源：[`global/02_backtest_platform_brand_system.md`](../global/02_backtest_platform_brand_system.md) 與 [`00_foundations_spec.md`](./00_foundations_spec.md)。漲跌 `gain/loss` 為唯一功能性彩色（配 ↑↓）。
+
 ### 3.1 Button（按鈕）
 
 | 維度 | 規格 |
@@ -111,7 +113,7 @@ Templates（模板）
 | States | default / hover / active / focus / disabled / loading |
 | Content | text-only / icon-left / icon-right / icon-only |
 | Padding | sm: `px-3 py-1.5` / md: `px-4 py-2` / lg: `px-5 py-2.5` |
-| Radius | `radius.md` (6px) |
+| Radius | `radius.md` (12px，Grok 大圓角) |
 | Font | `text.body.sm` (14px, 500) |
 | Min Width | 64px（防止太窄） |
 | Loading | Spinner 替換 leading icon，文字保留，disabled interaction |
@@ -125,7 +127,7 @@ Templates（模板）
 | States | default / hover / focus / error / disabled / readonly |
 | Anatomy | `Label` + `Input Container` + `Helper Text / Error Message` |
 | Padding | `px-3 py-2` |
-| Radius | `radius.md` (6px) |
+| Radius | `radius.md` (12px，Grok 大圓角) |
 | Border | default: `border.default` / focus: `border.focus` (2px) / error: `border.error` |
 | Prefix/Suffix | 支援 icon / text / select（如幣別選擇） |
 | Placeholder | `color.text.tertiary` |
@@ -138,7 +140,7 @@ Templates（模板）
 | Types | `single-select` / `multi-select` / `combobox`（可搜尋） |
 | Sizes | sm / md / lg（同 Input） |
 | States | default / hover / focus / open / disabled / error |
-| Dropdown | shadow.lg, radius.lg, max-height 240px, overflow scroll |
+| Dropdown | **flat：1px border `#2A2A2A` + bg.elevated（無陰影）**, radius.lg (16px), max-height 240px, overflow scroll |
 | Options | text / icon+text / description / group header / divider |
 | Selected | Checkmark icon 在右側 |
 | Empty | 「無選項」或「無搜尋結果」文案 |
@@ -148,14 +150,14 @@ Templates（模板）
 
 | 維度 | 規格 |
 |------|------|
-| Variants | `default` / `outlined` / `elevated` / `clickable` |
+| Variants | `default` / `outlined` / `clickable`（**移除 `elevated`：Grok flat 無浮起陰影**） |
 | Padding | `space.4` (16px) 或 `space.6` (24px) |
-| Radius | `radius.lg` (8px) |
-| Shadow | default: `shadow.sm` / hover (clickable): `shadow.md` |
-| Border | outlined: `border.default` |
+| Radius | `radius.lg` (16px，Grok 大圓角) |
+| Shadow | **無（flat）** — 以 `bg.surface` 明度階 + 1px border `#2A2A2A` 分層 |
+| Border | default/outlined: 1px `#2A2A2A` |
 | Anatomy | `Header` (optional) + `Body` (required) + `Footer` (optional) |
 | Header | Title + Subtitle + Action (icon button / menu) |
-| Clickable | 整張卡片可點擊，hover 有 shadow + cursor pointer |
+| Clickable | 整張卡片可點擊，hover **邊框提亮 `#2A2A2A`→`#3A3A3A`**（不加陰影） + cursor pointer |
 
 ### 3.5 Modal / Dialog
 

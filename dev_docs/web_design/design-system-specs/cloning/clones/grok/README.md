@@ -1,6 +1,7 @@
-# Clone Target: grok
+# Clone Target: grok（忠實還原 — v2 重建）
 
-> Grok 產品頁複製。**與 `../xai/` 共用同一套 xAI 設計系統**，本 clone 聚焦產品頁特有的 Template / Sitemap 差異，foundations/components/patterns 指向 xai。
+> **目標**：`https://grok.com`（真正的 Grok web app：深色、單色、極簡 chat 介面）。
+> **狀態**：**v2 重建**，取代 v1。v1 誤用 `x.ai/grok`（淺色行銷頁）當代理，與真實 Grok app 不符。
 
 ---
 
@@ -9,38 +10,35 @@
 | 欄位 | 值 |
 |------|-----|
 | Slug | `grok` |
-| Target URL | `https://x.ai/grok`（Grok 產品行銷頁） |
-| 擷取日期 | 2026-06-01 |
-| 操作者 | Claude Code（Playwright headless） |
-| 法律檢查 | [x] robots.txt（允許 `/grok`）/ [x] 僅公開頁面 |
+| Target | `https://grok.com`（Grok app 本體） |
+| 擷取方式 | **路徑 2：公開知識重建**（reconstructed from public knowledge） |
+| 重建日期 | 2026-06-02 |
+| 法律檢查 | [x] 僅依公開可見之 app 外觀；無登入後內容、無資產下載 |
 
-> ⚠️ **原定目標 `grok.com`（Grok app 本體）受 Cloudflare managed challenge 保護，headless 無法通過**（三斷點皆卡 "Just a moment..."，見 `raw/`-曾擷取後改用 x.ai/grok）。故以 xAI 官方 Grok 產品頁作為「Grok 產品視覺語言」代理素材。app 內真實對話介面（訊息泡泡、串流、empty/loading）為 `TBD`。
-> ⚠️ 內容信號同 xai（`ai-input=no`）；僅結構化啟發、不複製資產。
+## ⚠️ 為何是「重建」而非「擷取」
 
-## 為什麼複製這個
+- `grok.com` 受 **Cloudflare managed challenge** 保護；headless（Playwright chromium + persistent context + stealth + 久候）三斷點皆卡 `"Just a moment..."`，**無法擷取**。環境無系統 Chrome、無 browser MCP。
+- v1 退而用 `x.ai/grok` 行銷頁當代理 → **錯誤**：那是 xAI 淺色行銷頁（白底、大標排版），不是 Grok app。
+- 本版依**公開知識**重建 Grok app 的視覺語言。**精確 token（hex / 字型名）標 `TBD`，不瞎掰**；確切值需日後用 DevTools 手動擷取（見 `prompts/01_capture.md` 手動路徑）補正。
 
-- 看上它什麼？**產品頁如何用「能力分區（Chat/Multi-agent/Search/Imagine）+ feature grid + 三路徑 Get started」組織一個 AI 產品的賣點。**
-- 想學的核心：**Template（產品能力頁骨架）+ Sitemap（產品 IA 分區）**
-- 對應到我哪個產品？**backtest_platform 的「功能介紹頁 / 上手引導頁」**
+## 重建素材（公開）
 
-## 預設輸出範圍
+- Grok app 公開外觀：dark-first、單色（黑/白/灰）、置中大圓角輸入框、左側可收合 sidebar。
+- xAI/Grok 單色品牌識別。
+- 公開設計編目（dark mode、sidebar 桌機 / drawer 手機、light+dark 雙模式）。
+- **排除**：第三方「Grok 風」教學的 purple/gradient 變體（非官方）。
 
-- [ ] L0 Foundations → 見 [`../xai/analysis/L0_foundations.md`](../xai/analysis/L0_foundations.md)（共用）
-- [ ] L1 Components → 見 [`../xai/analysis/L1_components.md`](../xai/analysis/L1_components.md)（共用）
-- [ ] L2 Patterns → 見 [`../xai/analysis/L2_patterns.md`](../xai/analysis/L2_patterns.md)（共用）
-- [x] L3 Templates（產品頁，本 clone 特有）
-- [x] L4 Sitemap（Grok 產品 IA，本 clone 特有）
+## 輸出範圍
 
-## 進度追蹤
+- [x] L0 Foundations（重建，monochrome dark）
+- [ ] L1–L4：待精確 token 補正後再展開（不在不確定基礎上堆細節）
 
-| 階段 | 狀態 | 完成日 | 備註 |
-|------|------|--------|------|
-| 1. Capture | ✅ | 2026-06-01 | x.ai/grok 3 斷點 + DOM(171KB) + 97 CSS vars（grok.com 本體 CF 擋下） |
-| 2. Extract | ✅ | 2026-06-01 | dom-tree / css-vars / media-queries / assets-inventory |
-| 3. Analyze | ✅ | 2026-06-01 | L0–L2 共用 xai；L3/L4 本 clone 產出 |
-| 4. Differentiate | ✅ | 2026-06-01 | 產品頁特有 delta（共用 xai 的 token OVERRIDE） |
-| 5. Specify | ✅ | 2026-06-01 | 共用 [`../xai/spec/inspired-design-system.md`](../xai/spec/inspired-design-system.md) + 本檔 template 延伸 |
-| 6. Validate | ✅ | 2026-06-01 | 見 validation.md |
+## 信心度總表
 
-## 必避開的設計
-- app 內部介面臆測（未擷取到，標 TBD，不瞎掰）
+| 面向 | 信心度 |
+|------|--------|
+| dark-first / 單色基調 | high |
+| 版面（sidebar / 置中輸入框 / 極簡頂列） | high |
+| 大圓角 / 細邊框 / 留白 | med–high |
+| 精確 hex token | **TBD（需手動擷取補正）** |
+| 字型家族 | **TBD** |
