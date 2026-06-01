@@ -5,6 +5,19 @@
 
 ---
 
+## 來源與差異化（Provenance）
+
+> §1–§10 為 backtest_platform 儀表板自有的 data-app patterns（資料密集場景，比 x.ai 行銷站更貼合）。§11 為 `cloning/clones/xai` 萃取的**版面 patterns**（行銷/產品頁用，餵 [`03_templates`](./03_templates_spec.md)）。Token 見 [`00_foundations`](./00_foundations_spec.md)。
+
+**IMPROVE（凌駕 x.ai，全域適用）**：
+1. **Sticky header 改實心/加深底色**（不沿用 x.ai 85% 毛玻璃低對比），其上文字達 WCAG AA。
+2. **Table → Card 響應式轉換**（x.ai 無此需求）：desktop 橫向表格 → <1024px 轉 card list（見 §2）。
+3. **即時數值無動畫**：取代 x.ai number-flow 滾動，高頻更新直接切換，避免抖動。
+4. **長列表虛擬滾動**：大量列（部位/成交）用 virtual scroll。
+5. **全互動元件 keyboard-operable + focus-visible ring**（沿用 x.ai ring 並確保對比）。
+
+---
+
 ## 目錄
 
 1. [Form Patterns](#1-form-patterns)
@@ -17,6 +30,7 @@
 8. [Content Display Patterns](#8-content-display-patterns)
 9. [Action Patterns](#9-action-patterns)
 10. [Permission / Access Patterns](#10-permission--access-patterns)
+11. [來源萃取版面 Patterns（xai，行銷/產品頁）](#11-來源萃取版面-patternsxai行銷產品頁)
 
 ---
 
@@ -608,6 +622,25 @@ Hover 顯示：
 
 ---
 
+## 11. 來源萃取版面 Patterns（xai，行銷/產品頁）
+
+> 來源：`cloning/clones/xai/analysis/L2_patterns.md`（8 patterns）。用於官網/功能介紹/上手頁，非儀表板。套 differentiation：收緊留白、實心 header、即時數值無動畫。
+
+| # | Pattern | 結構摘要 | 來源 / 差異 |
+|---|---------|----------|------------|
+| P1 | **Typography-led Hero** | 置中、無大圖、大 display 標題 + 一行 muted 副標 + 一對 CTA | `[inspired by: xai]`；display 不用 60px（DROP），副標對比 ≥ AA `[override]` |
+| P2 | **Alternating Feature §** | 左文字（icon+標題+說明+check list）／右視覺，逐段左右對調；<1024px stack | `[inspired by: xai]` |
+| P3 | **Stat Band** | 3 欄量級數字 + caption | `[inspired by: xai]`；數字用 mono tabular、**無 number-flow 動畫** `[override]` |
+| P4 | **Card Grid** | 等寬卡橫排（desktop 3–4 → mobile 1–2），全卡可點 | `[inspired by: xai]`；flat、hover 邊框加深非投影 |
+| P5 | **Dual / Tri Gateway CTA** | 並排路徑卡（自助 feature check + CTA vs 找業務）；本專案改三路徑（自託管/Docker/Demo） | `[override]` |
+| P6 | **Sticky Glass Header + Mega Menu** | sticky header + hover 多欄 mega-menu；<1024px hamburger drawer | `[inspired by: xai]`；**改實心/加深底色達 AA**（非 85% 毛玻璃）`[override]` |
+| P7 | **Comprehensive Footer** | 5 欄連結群 + 底部 logo/版權/社群 | `[inspired by: xai]` |
+| P8 | **Code / Terminal Showcase** | 深色 codeblock（`color.surface.code`）+ `Geist Mono` + 語法高亮 + tab（Python/CLI） | `[inspired by: xai]`；對開發者展示 CLI 真實樣貌 |
+
+> Feedback / Empty / Loading 完整系統見 §5–§6（x.ai 行銷站未展示，本專案自有）。
+
+---
+
 ## Figma 結構建議
 
 ```
@@ -649,6 +682,7 @@ Hover 顯示：
 
 ---
 
-**版本**：v1.0
-**最後更新**：2026-03-17
+**版本**：v2.0（2026-06-02：新增 §11 xai 萃取版面 patterns + 全域 IMPROVE override）
+**最後更新**：2026-06-02
+**來源**：`cloning/clones/xai/analysis/L2_patterns.md` + `cloning/clones/xai/differentiation.md`
 **相關文件**：`01_components_spec.md`（元件清單）、`MODULE_REGISTRY.md`（模組對應）

@@ -5,6 +5,17 @@
 
 ---
 
+## 來源與差異化（Provenance）
+
+> §2–§7 為 backtest_platform 自有的後台/行銷模板。**§8 Product Capability Page 萃取自 `cloning/clones/grok`（x.ai/grok 產品頁）**——grok 與 xai 共用 foundations/components/patterns（見 [`00`](./00_foundations_spec.md)/[`01`](./01_components_spec.md)/[`02`](./02_patterns_spec.md)），僅貢獻此產品頁 Template + Sitemap。
+>
+> grok 差異化（`clones/grok/differentiation.md`）：借其**資訊組織骨架**（能力分區 + 密集 feature grid + 三路徑上手 + 深色收尾），套 xai 已定的 teal/dark-first token。
+> - **KEEP**：Capability Stack（統一節奏列能力）、Three-path Onboarding、Feature Grid 密集長尾、Closing CTA Band。
+> - **DROP** `[override]`：訂閱式 CTA（Try Grok / SuperGrok）→ 改 `Get Started / Docs`；大量留白 → 收緊間距（工具受眾要密度）。
+> - **IMPROVE**：每 capability section 語意 `<section aria-labelledby>`、check 列表用真 `<ul>`、三路徑卡整卡可 focus + Enter。
+
+---
+
 ## 目錄
 
 1. [模板使用原則](#1-模板使用原則)
@@ -14,9 +25,10 @@
 5. [Settings Page Template](#5-settings-page-template)
 6. [Form / Wizard Template](#6-form--wizard-template)
 7. [Landing Page Template](#7-landing-page-template)
-8. [Auth Page Template](#8-auth-page-template)
-9. [Error Page Template](#9-error-page-template)
-10. [Template Selection Guide](#10-template-selection-guide)
+8. [Product Capability Page Template（產品能力頁，grok 萃取）](#8-product-capability-page-template產品能力頁grok-萃取)
+9. [Auth Page Template](#9-auth-page-template)
+10. [Error Page Template](#10-error-page-template)
+11. [Template Selection Guide](#11-template-selection-guide)
 
 ---
 
@@ -373,7 +385,70 @@ Full Width (no sidebar)：
 
 ---
 
-## 8. Auth Page Template
+## 8. Product Capability Page Template（產品能力頁，grok 萃取）
+
+> 來源：`cloning/clones/grok/analysis/L3_templates.md` + `L4_sitemap.md`。對應原型「AI Product Capability Page」。
+> 用途：backtest_platform 的**功能介紹頁 / 上手引導頁**——用能力分區 + 密集網格 + 三路徑上手，向量化開發者展示「這個回測平台能做什麼」並促轉換。
+> 與 §7 Landing 的差異：Landing 賣「廣度」（公司、多區塊交替）；本模板賣「深度」（單一產品能力堆疊 + 轉換）。
+
+### Layout（區塊堆疊順序）
+
+```mermaid
+flowchart TD
+    H["Sticky Header（實心，達 AA；共用 02-P6）"] --> HERO["Hero<br/>雙色標題（primary + text.secondary 次行）<br/>CTA: Get Started · Read Docs（非訂閱式）"]
+    HERO --> C1["Capability §1: 回測引擎<br/>icon + 說明 + check list(ul) + 視覺 mock"]
+    C1 --> C2["Capability §2: 數據接入"]
+    C2 --> C3["Capability §3: 風險分析"]
+    C3 --> C4["Capability §4: 視覺化儀表板"]
+    C4 --> GRID["Feature Grid<br/>'And much more' 3 欄密集（指標/資料源/匯出格式長尾）"]
+    GRID --> GS["Get started<br/>3 路徑卡: 自託管 | Docker | 試用 Demo"]
+    GS --> BAND["Closing CTA Band<br/>深色圓角反差: '開始回測' + 閱讀文件"]
+    BAND --> FOOT["Comprehensive Footer（共用 02-P7）"]
+```
+
+### Section 規格
+
+| 區塊 | Pattern 引用 | 規則 | 來源 / 差異 |
+|------|--------------|------|------------|
+| Header | 02-P6 Sticky Glass | **實心/加深底色達 AA**（非毛玻璃） | `[override]` |
+| Hero | 02-P1 Typography-led | 雙色標題：主行 `color.text.primary` + 次行 `color.text.secondary`（≥ AA，**非 x.ai .45 淺灰**）；CTA 一對 8px-radius 按鈕 | `[override]` |
+| Capability ×4 | 02-P2 Alternating Feature | 統一結構：line icon + h3 + 說明 + `<ul>` check list + 右側視覺；逐段左右對調；每段 `<section aria-labelledby>` | `[inspired by: grok]` + IMPROVE |
+| Feature Grid | 02-P4 Card Grid 變體 | 3 欄密集（icon + 短標 + 說明），flat 卡、hover 邊框加深 | `[inspired by: grok]` |
+| Get started | 三路徑 Gateway（02-P5 變體） | 3 卡：**自託管 / Docker / 試用 Demo**（取代 grok 的 Open Grok/Sign in/Start chatting）；整卡可 focus + Enter 觸發主 CTA | `[override]` + IMPROVE |
+| Closing CTA Band | grok CTA Band | 深色圓角反差條，收尾導向「開始回測 / 閱讀文件」 | `[inspired by: grok]` |
+| Footer | 02-P7 | 共用 | `[inspired by: xai]` |
+
+### 內容映射（grok → backtest_platform）
+
+| grok 能力分區 | 我方對應能力 |
+|---------------|-------------|
+| Chat | 回測引擎（zipline event + vectorbt vector） |
+| Multi-agent | 數據接入（FinLab / FinMind bundle） |
+| Search | 風險分析（PBO / DSR / WFA 統計驗證） |
+| Imagine | 視覺化儀表板（Streamlit + Grafana 面板 A–E） |
+
+### RWD
+
+```
+Capability section：desktop 左右兩欄 → <1024px stack（視覺在上或下）
+Feature grid：3 → 2 → 1 欄
+Get started：3 → 1 欄堆疊
+留白：section 間距採 data-dense 48px（非 grok/xai 的 96–128px）[override]
+```
+
+### 對應 Sitemap（L4）
+
+```
+/features（產品總覽）
+  ├── 能力分區 ×4（錨點 in-page）
+  ├── Feature grid
+  └── Get started（自託管 / Docker / Demo）
+開發者出口 → /docs（Read Docs）、CLI 範例
+```
+
+---
+
+## 9. Auth Page Template
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -395,7 +470,7 @@ Mobile：隱藏 Brand Visual，只顯示 Logo + Form
 
 ---
 
-## 9. Error Page Template
+## 10. Error Page Template
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -430,7 +505,7 @@ Mobile：隱藏 Brand Visual，只顯示 Logo + Form
 
 ---
 
-## 10. Template Selection Guide
+## 11. Template Selection Guide
 
 **白話版：你要做什麼頁面 → 用什麼模板**
 
@@ -443,6 +518,7 @@ Mobile：隱藏 Brand Visual，只顯示 Logo + Form
 | 新增項目 / 編輯項目 | Form | Single/Multi Column Form |
 | 多步驟流程（註冊、結帳） | Wizard | Stepper Form |
 | 產品首頁 / 行銷頁 | Landing Page | Hero + Features + Pricing + CTA |
+| **功能介紹頁 / 上手引導頁** | **Product Capability Page** | Capability Stack + Feature Grid + 三路徑 Onboarding + Closing CTA |
 | 登入 / 註冊 / 忘記密碼 | Auth Page | Auth Form Pattern |
 | 404 / 500 / 維護中 | Error Page | Error State Pattern |
 
@@ -478,6 +554,7 @@ Mobile：隱藏 Brand Visual，只顯示 Logo + Form
 
 ---
 
-**版本**：v1.0
-**最後更新**：2026-03-17
+**版本**：v2.0（2026-06-02：新增 §8 Product Capability Page Template，萃取自 grok clone）
+**最後更新**：2026-06-02
+**來源**：`cloning/clones/grok/analysis/L3_templates.md` + `L4_sitemap.md` + `clones/grok/differentiation.md`
 **相關文件**：`02_patterns_spec.md`（Pattern 引用）、`pages/page_template.md`（Page Spec 模板）

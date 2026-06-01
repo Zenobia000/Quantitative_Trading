@@ -5,6 +5,20 @@
 
 ---
 
+## 來源與差異化（Provenance）
+
+> 元件決策學自 `cloning/clones/xai`（x.ai 萃取），套 `clones/xai/differentiation.md` 的 KEEP/DROP/OVERRIDE。Token 命名與值見 [`00_foundations_spec.md`](./00_foundations_spec.md)。
+
+**從 x.ai 保留（KEEP）**：
+- **Pill 主按鈕 + 1px ring 次按鈕**（視覺輕、層級清楚、無投影負擔）`[inspired by: xai]`——但**圓角收斂為 8px**（見 00 §5.2 `radius.button`）`[override]`。
+- **字重僅 400 / 550 兩級**（克制、降載入）`[inspired by: xai]`。
+- **Flat 卡片**：1px border + 底色分層，**不用 drop shadow** `[inspired by: xai]`（見 00 §6）。
+- 語意色 token + 擴充 `gain/loss` `[original]`；數值欄位 `Geist Mono` tabular。
+
+**DROP**：number-flow 滾動大數字（即時數值改無動畫切換）、純裝飾漸層卡。
+
+---
+
 ## 目錄
 
 1. [元件分級架構](#1-元件分級架構)
@@ -104,15 +118,17 @@ Templates（模板）
 
 ### 3.1 Button（按鈕）
 
+> `[override]` 圓角 pill→8px；`primary` 實心 teal、`secondary` 透明 + 1px ring（非實線 border）`[inspired by: xai]`。
+
 | 維度 | 規格 |
 |------|------|
-| Variants | `primary` / `secondary` / `ghost` / `danger` / `link` |
+| Variants | `primary`（實心 `color.brand.primary` teal）/ `secondary`（透明 + `shadow.ring`）/ `ghost`（透明、muted 文字、nav 用）/ `danger`（`color.error`）/ `link` |
 | Sizes | `sm` (32px h) / `md` (36px h) / `lg` (40px h) |
-| States | default / hover / active / focus / disabled / loading |
+| States | default / hover / active / focus-visible（ring）/ disabled / loading |
 | Content | text-only / icon-left / icon-right / icon-only |
-| Padding | sm: `px-3 py-1.5` / md: `px-4 py-2` / lg: `px-5 py-2.5` |
-| Radius | `radius.md` (6px) |
-| Font | `text.body.sm` (14px, 500) |
+| Padding | sm: `px-3 py-1.5` / md: `px-4 py-2` / lg: `px-5 py-2.5`（x.ai 主力 8/16）|
+| Radius | `radius.button` (8px) ← 取代 x.ai pill 9999px `[override]` |
+| Font | `text.body.sm` (14px, 500) — x.ai 最高頻 UI 字 `[inspired by: xai]` |
 | Min Width | 64px（防止太窄） |
 | Loading | Spinner 替換 leading icon，文字保留，disabled interaction |
 
@@ -146,16 +162,18 @@ Templates（模板）
 
 ### 3.4 Card（卡片）
 
+> `[override]` **Flat**：預設無投影，靠 `color.bg.surface` + 1px border 分層（資料密集介面投影易雜亂）。
+
 | 維度 | 規格 |
 |------|------|
-| Variants | `default` / `outlined` / `elevated` / `clickable` |
+| Variants | `default`（1px border）/ `outlined` / `clickable`（移除 `elevated`——本系統不靠投影抬升） |
 | Padding | `space.4` (16px) 或 `space.6` (24px) |
 | Radius | `radius.lg` (8px) |
-| Shadow | default: `shadow.sm` / hover (clickable): `shadow.md` |
-| Border | outlined: `border.default` |
+| Shadow | **`shadow.none`（一律 flat）** / clickable hover: `border.hover` 加深 + 可選 `shadow.sm` 微抬 `[override]` |
+| Border | 一律 1px `border.default` + `color.bg.surface` 分層 |
 | Anatomy | `Header` (optional) + `Body` (required) + `Footer` (optional) |
 | Header | Title + Subtitle + Action (icon button / menu) |
-| Clickable | 整張卡片可點擊，hover 有 shadow + cursor pointer |
+| Clickable | 整張卡片可點擊，hover 邊框加深 + cursor pointer（不用大投影） |
 
 ### 3.5 Modal / Dialog
 
@@ -423,6 +441,7 @@ Templates（模板）
 
 ---
 
-**版本**：v1.0
-**最後更新**：2026-03-17
+**版本**：v2.0（2026-06-02：套入 xai clone——pill→8px、ring 次按鈕、flat 卡片、2 級字重）
+**最後更新**：2026-06-02
+**來源**：`cloning/clones/xai/analysis/L1_components.md` + `cloning/clones/xai/differentiation.md`
 **相關文件**：`SYSTEM_DOCUMENT_SPEC.md` → B3、`BASE_DESIGN_SYSTEM.md` → UX Pattern Layer

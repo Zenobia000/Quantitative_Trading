@@ -5,6 +5,39 @@
 
 ---
 
+## 來源與差異化（Provenance）
+
+> 本規格依 cloning 工作流 `05_specify` 產出：以 `cloning/clones/xai`（x.ai 萃取）為 foundations/components/patterns 結構來源，套上 `cloning/clones/xai/differentiation.md` 的品牌 OVERRIDE，產出 backtest_platform 的 dark-first / data-dense / 金融語境設計系統。
+
+**Token 來源標註**：
+
+| 標記 | 意義 |
+|------|------|
+| `[inspired by: xai]` | 結構/決策學自 x.ai 萃取，值未改（如 Tailwind 斷點、單色+透明度文字系統、flat 分層、1px ring） |
+| `[override]` | x.ai 有此 token 但我方改值（品牌色、字型、按鈕圓角、surface） |
+| `[original]` | x.ai 無、我方因金融/工具場景新增（`color.gain` / `color.loss`、即時數值無動畫） |
+
+**核心 OVERRIDE 摘要**（完整見 `clones/xai/differentiation.md`）：
+
+| 來源（x.ai） | 我方值 | 理由 |
+|--------------|--------|------|
+| brand `#0A0A0A` jet | `color.brand.primary = #0E7490` teal-700 | 金融工具用沉穩 teal 建立信任，與「橘色 AI」區隔 |
+| accent `#FF6A0A` 橘 | `color.brand.accent = #F59E0B` amber（僅警示） | 橘留給警示，不當品牌色 |
+| 自託管專有字型 | `Inter` / `Geist Mono`（開源可商用） | 避免專有字型授權 |
+| light-only 暖白 `#F9F8F4` | dark-first：`#0B1220`（dark）/ `#F8FAFC`（light） | 盯盤久、降眩光，dark 為一等公民 |
+| 按鈕 `radius.full 9999px` | `radius.button = 8px` | pill 在密集表格旁太搶眼，收斂 |
+| section gap 96–128px | 24–48px（data-dense） | 工具受眾要資訊密度，砍留白 |
+
+**強化規範（IMPROVE，凌駕來源）**：
+1. 所有文字對比 ≥ WCAG AA（4.5:1）；**關鍵數值（價格/績效）≥ AAA（7:1）**。半透明 header 改實心或加深底色達標。
+2. **dark-first**：雙模式皆完整定義 token。
+3. 即時數值更新**預設無動畫**（取代 x.ai number-flow），避免抖動分心。
+4. 所有互動元件 keyboard-operable + focus-visible ring。
+
+**DROP（不納入本系統）**：60px 超大 display、96–128px 大留白、漸層裝飾、number-flow 滾動、大面積純黑 `#0A0A0A`。
+
+---
+
 ## 目錄
 
 1. [Grid & Layout System](#1-grid--layout-system)
@@ -83,13 +116,19 @@
 
 ### 2.1 Brand Colors
 
-| Token | 色值 | 用途 | 對比規則 |
-|-------|------|------|---------|
-| `color.brand.primary` | #______ | 主要品牌色、CTA | 與白底對比 >= 4.5:1 |
-| `color.brand.primary.hover` | #______ | 主色 hover（加深 10%） | |
-| `color.brand.primary.active` | #______ | 主色 active（加深 15%） | |
-| `color.brand.secondary` | #______ | 輔助色、次要元素 | |
-| `color.brand.accent` | #______ | 強調色、徽章、標籤 | |
+> 主色 teal `[override]`；橘色降為警示用 amber `[override]`；`gain/loss` 為金融場景新增 `[original]`。
+
+| Token | 色值 | 用途 | 對比規則 | 來源 |
+|-------|------|------|---------|------|
+| `color.brand.primary` | #0E7490 | 主要品牌色、主 CTA（teal-700） | dark 底對比 >= 4.5:1 | `[override]` |
+| `color.brand.primary.hover` | #0C6378 | 主色 hover（加深 ~10%） | | `[override]` |
+| `color.brand.primary.active` | #115E6E | 主色 active（加深 ~15%） | | `[override]` |
+| `color.brand.secondary` | #334155 | 輔助色、次要元素（slate-700） | | `[override]` |
+| `color.brand.accent` | #F59E0B | 強調 / 警示（amber，**僅警示**不當品牌色） | | `[override]` |
+| `color.gain` | #16A34A | 上漲 / 獲利（金融專屬） | 數值 ≥ AAA(7:1) | `[original]` |
+| `color.loss` | #DC2626 | 下跌 / 虧損（金融專屬） | 數值 ≥ AAA(7:1) | `[original]` |
+
+> 數值欄位（價格/績效）一律 `Geist Mono` tabular，配 `color.gain` / `color.loss`。
 
 ### 2.2 Semantic Colors
 
@@ -106,13 +145,15 @@
 
 ### 2.3 Surface Colors
 
-| Token | Light | Dark | 用途 |
-|-------|-------|------|------|
-| `color.bg.page` | #FFFFFF | #0A0A0A | 頁面底色 |
-| `color.bg.surface` | #F9FAFB | #18181B | 卡片/容器底色 |
-| `color.bg.elevated` | #FFFFFF | #27272A | 浮層/Modal 底色 |
-| `color.bg.muted` | #F3F4F6 | #27272A | 低調背景（disabled 區） |
-| `color.bg.overlay` | rgba(0,0,0,0.5) | rgba(0,0,0,0.7) | 遮罩層 |
+> **dark-first** `[override]`：Dark 為一等公民、預設模式；大面積避免純黑 `#0A0A0A`（對比過硬），改近黑藍灰 `#0B1220`。
+
+| Token | Light | Dark（預設） | 用途 | 來源 |
+|-------|-------|------|------|------|
+| `color.bg.page` | #F8FAFC | #0B1220 | 頁面底色 | `[override]` |
+| `color.bg.surface` | #FFFFFF | #111A2E | 卡片/容器底色（1px border 分層，非投影） | `[override]` |
+| `color.bg.elevated` | #FFFFFF | #16213B | 浮層/Modal 底色 | `[override]` |
+| `color.bg.muted` | #F1F5F9 | #0E1729 | 低調背景（disabled 區） | `[override]` |
+| `color.bg.overlay` | rgba(2,6,23,0.5) | rgba(2,6,23,0.7) | 遮罩層 | `[inspired by: xai]` |
 
 ### 2.4 Text Colors
 
@@ -138,11 +179,13 @@
 ### 2.6 對比度規則
 
 ```
-必須遵守 WCAG 2.1 AA 標準：
+必須遵守 WCAG 2.1 AA 標準（IMPROVE：凌駕 x.ai——其 muted 文字 rgba(10,10,10,.45) 僅 ~4.0:1 未達標）：
 - 一般文字（< 18px）：對比度 >= 4.5:1
 - 大文字（>= 18px bold 或 >= 24px）：對比度 >= 3:1
 - UI 元件（按鈕邊框、輸入框邊框）：對比度 >= 3:1
 - Focus indicator：對比度 >= 3:1（相對於背景）
+- ★ 關鍵數值（價格 / 績效 / gain / loss）：對比度 >= 7:1（AAA）
+- ★ 半透明 sticky header：改實心或加深底色，確保其上文字達 AA（不沿用 x.ai 的 85% 毛玻璃低對比）
 
 工具：
 - Figma 插件：Contrast Checker
@@ -155,11 +198,13 @@
 
 ### 3.1 字體堆疊
 
-| 用途 | 字體 | Fallback |
-|------|------|----------|
-| 英文 | `Inter` | `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` |
-| 中文 | `Noto Sans TC` | `'PingFang TC', 'Microsoft JhengHei', sans-serif` |
-| 程式碼 | `JetBrains Mono` | `'Fira Code', 'SF Mono', Consolas, monospace` |
+> 字重克制在 **400 / 550** 兩級 `[inspired by: xai]`；英文標題與 mono 改用開源字型 `[override]`（避 x.ai 自託管專有字型）。數值欄位一律 mono tabular。
+
+| 用途 | 字體 | Fallback | 來源 |
+|------|------|----------|------|
+| 英文 | `Inter`（或 `Geist Sans`） | `-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif` | `[override]` |
+| 中文 | `Noto Sans TC` | `'PingFang TC', 'Microsoft JhengHei', sans-serif` | `[original]` |
+| 程式碼 / 數值 | `Geist Mono` | `'JetBrains Mono', 'SF Mono', Consolas, monospace` | `[override]` |
 
 ### 3.2 字級階梯
 
@@ -266,15 +311,17 @@
 
 ### 5.2 Border Radius
 
-| Token | 值 | 用途 |
-|-------|-----|------|
-| `radius.none` | 0px | 無圓角 |
-| `radius.sm` | 4px | 小元素（Tag, Badge, Tooltip） |
-| `radius.md` | 6px | 按鈕、輸入框 |
-| `radius.lg` | 8px | 卡片、容器 |
-| `radius.xl` | 12px | Modal、大容器 |
-| `radius.2xl` | 16px | 大圓角卡片 |
-| `radius.full` | 9999px | 圓形（Avatar, Pill Badge） |
+> **radius 雙極化** `[inspired by: xai]`：x.ai 不是直角就是全圓 pill。我方**收斂按鈕為 8px** `[override]`——pill 在密集表格旁太搶眼；`radius.full` 僅留給 Avatar / 圓形狀態點 / 小 Badge。
+
+| Token | 值 | 用途 | 來源 |
+|-------|-----|------|------|
+| `radius.none` | 0px | 無圓角（區塊、表格） | `[inspired by: xai]` |
+| `radius.sm` | 4px | 小元素（Tag, Tooltip） | |
+| `radius.button` | 8px | **按鈕、輸入框**（取代 x.ai 9999px pill） | `[override]` |
+| `radius.lg` | 8px | 卡片、容器 | |
+| `radius.xl` | 12px | Modal、大容器 | |
+| `radius.2xl` | 16px | 大圓角卡片 | |
+| `radius.full` | 9999px | 僅 Avatar / 圓形狀態點 / 小 Badge | `[inspired by: xai]` |
 
 ### 5.3 Radius 使用規則
 
@@ -289,15 +336,19 @@
 
 ## 6. Elevation & Shadow System
 
-| Token | 值 | 用途 | Z-Index |
-|-------|-----|------|---------|
-| `shadow.none` | none | 平面元素 | 0 |
-| `shadow.xs` | `0 1px 2px rgba(0,0,0,0.05)` | 輕微浮起（Input focus） | — |
-| `shadow.sm` | `0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)` | 卡片預設 | 1 |
-| `shadow.md` | `0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)` | 懸浮卡片、hover | 2 |
-| `shadow.lg` | `0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)` | Dropdown、Popover | 3 |
-| `shadow.xl` | `0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04)` | Modal、Dialog | 4 |
-| `shadow.2xl` | `0 25px 50px rgba(0,0,0,0.25)` | Toast、最高層 | 5 |
+> **Flat design** `[override]`：x.ai 刻意避免 drop shadow，用 **1px border + 底色階層**分層——資料密集介面投影易雜亂。本系統承襲此決策並強化：
+> - **平面內容（卡片、表格、面板）一律無投影**，靠 `color.bg.surface` + 1px border 分層。
+> - `shadow.ring` 取代實線 border 作次要按鈕/focus 描邊 `[inspired by: xai]`。
+> - **重投影（md 以上）僅限真正浮層**（Dropdown / Modal / Toast），平面內容禁用。
+
+| Token | 值 | 用途 | Z-Index | 來源 |
+|-------|-----|------|---------|------|
+| `shadow.none` | none | **平面元素預設**（卡片/表格/面板） | 0 | `[override]` |
+| `shadow.ring` | `0 0 0 1px rgba(2,6,23,.15)`（dark: `rgba(255,255,255,.12)`） | 次要按鈕 / focus 描邊 | — | `[inspired by: xai]` |
+| `shadow.sm` | `0 1px 2px rgba(2,6,23,0.06)` | 僅 hover 微抬（謹慎） | 1 | |
+| `shadow.md` | `0 4px 6px rgba(2,6,23,0.12)` | Dropdown / Popover（浮層才用） | 2 | |
+| `shadow.lg` | `0 10px 15px rgba(2,6,23,0.18)` | Modal / Dialog | 4 | |
+| `shadow.xl` | `0 20px 25px rgba(2,6,23,0.22)` | Toast / 最高層 | 5 | |
 
 ### Z-Index 規則
 
@@ -378,8 +429,12 @@
   - 不要讓使用者等動畫跑完
 
 規則 3：減少動態偏好
-  - 遵守 prefers-reduced-motion
+  - 遵守 prefers-reduced-motion（完整支援，沿用 x.ai 好習慣）
   - 替代方案：用 opacity fade 取代 slide/scale
+
+規則 3.5：即時數值無動畫 [override]
+  - 價格/績效/部位等即時更新數值「直接切換」，不做 number-flow 滾動動畫
+  - 理由：高頻更新時滾動動畫造成抖動/分心；動效僅保留給導覽轉場
 
 規則 4：常見模式
   - Fade in/out：opacity 0→1 / 1→0
@@ -555,6 +610,7 @@ Figma Modes:
 
 ---
 
-**版本**：v1.0
-**最後更新**：2026-03-17
+**版本**：v2.0（2026-06-02：套入 xai clone + differentiation，dark-first / teal / flat / data-dense 落定）
+**最後更新**：2026-06-02
+**來源**：`cloning/clones/xai/analysis/L0_foundations.md` + `cloning/clones/xai/differentiation.md`
 **相關文件**：`SYSTEM_DOCUMENT_SPEC.md` → B1 Design Tokens、`BASE_DESIGN_SYSTEM.md` → Visual Design System Layer
