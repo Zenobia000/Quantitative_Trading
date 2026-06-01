@@ -1,9 +1,18 @@
 """Four-Layer Resonance zipline Algorithm (ADR-013, plan v3.0 §4.2).
 
-Wraps M1 pure functions (`compute_scores` + `compute_signals`) as a
-zipline TradingAlgorithm. The algorithm is mode-agnostic: same code runs
-under `zipline run -b finmind` (backtest) and future paper/live modes
-(ADR-008 three-mode shared strategy code).
+Wraps M1 pure functions (`compute_scores` + `evaluate_bar`) as a zipline
+TradingAlgorithm. The algorithm is mode-agnostic: same code runs under
+`zipline run -b finmind` (backtest) and future paper/live modes (ADR-008
+three-mode shared strategy code).
+
+Evaluation contract (Sprint 2 fix 2026-06-01):
+    Per-bar evaluation uses M1's `evaluate_bar(EvaluateBar, config)` with
+    position state read from `context.portfolio.positions[asset]` — the
+    canonical event-driven path. Earlier Sprint 1 wrapper used
+    `compute_signals(window).iloc[-1]` which restarts the M1 walk-loop
+    state machine from window-start every bar (position=0), causing
+    actions to diverge from real portfolio state. Regression test
+    (validation/regression_vs_m1) catches such divergences.
 
 CLI usage:
     uv run zipline run -f \
@@ -20,6 +29,7 @@ from __future__ import annotations
 
 import os
 
+import pandas as pd
 from loguru import logger
 from zipline.api import (
     order_target_percent,
@@ -41,7 +51,12 @@ from backtest_platform.engines.zipline_adapter.controls.taiwan_stock_rules impor
     apply_taiwan_stock_rules,
 )
 from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores
-from backtest_platform.strategies.four_layer_resonance.signals import compute_signals
+from backtest_platform.strategies.four_layer_resonance.signals import (
+    EvaluateBar,
+    SignalName,
+    compute_signals,
+    evaluate_bar,
+)
 
 # How many bars to feed compute_scores each evaluation — enough for
 # box_period warmup + indicator lookbacks (KD/MACD).
@@ -94,12 +109,13 @@ def initialize(context):
 
 
 def evaluate_and_trade(context, data):
-    """Daily evaluation: compute scores+signals per stock, emit orders.
+    """Daily evaluation: per-stock event-driven `evaluate_bar` + emit orders.
 
-    Reuses M1 vectorized `compute_signals` (calls `compute_scores`
-    internally via REQUIRED_COLUMNS). The last row's `action` column is
-    the realized signal for today, with priority resolution already done
-    inside compute_signals.
+    Uses M1's per-bar `evaluate_bar(EvaluateBar, config)` with position
+    state read from zipline's portfolio (the engine's source of truth).
+    This is the canonical live-mode path; do NOT use compute_signals'
+    terminal walk-loop output here — that re-walks state from window-start
+    and ignores actual portfolio state (see Sprint 2 regression bug fix).
     """
     as_of = context.get_datetime()
     n_eval = 0
@@ -110,23 +126,20 @@ def evaluate_and_trade(context, data):
         if merged is None:
             continue
 
-        history = get_history_window(merged, as_of, _HISTORY_BARS)
-        if len(history) < context.config.box_period + 5:
+        window = get_history_window(merged, as_of, _HISTORY_BARS)
+        if len(window) < context.config.box_period + 5:
             # Not enough warmup yet
             continue
 
-        # M1 functions expect trade_date column, not index
-        history = history.reset_index().rename(columns={"trade_date": "trade_date"})
-        history["trade_date"] = history["trade_date"].dt.date
-
+        in_position, entry_cost = _portfolio_state(context, asset)
         try:
-            scored = compute_scores(history, context.config)
-            signaled = compute_signals(scored, context.config)
+            action = evaluate_window_with_state(
+                window, context.config, in_position, entry_cost
+            )
         except Exception as exc:  # noqa: BLE001 — single-symbol error must not abort whole backtest
-            logger.error("scoring failed for {} on {}: {}", sym_str, as_of.date(), exc)
+            logger.error("evaluate failed for {} on {}: {}", sym_str, as_of.date(), exc)
             continue
 
-        action = signaled["action"].iloc[-1]
         actions_summary[action] = actions_summary.get(action, 0) + 1
         n_eval += 1
 
@@ -134,6 +147,99 @@ def evaluate_and_trade(context, data):
 
     # Daily recorder for performance tearsheet
     record(n_evaluated=n_eval, **{f"action_{k}": v for k, v in actions_summary.items()})
+
+
+def _portfolio_state(context, asset) -> tuple[int, float]:
+    """Read (in_position, entry_cost_price) from zipline portfolio.
+
+    zipline's Position.cost_basis includes commissions paid on entry, so
+    it already matches M1's convention of cost-adjusted entry price.
+    """
+    pos = context.portfolio.positions.get(asset)
+    if pos is None or pos.amount == 0:
+        return 0, 0.0
+    return 1, float(pos.cost_basis)
+
+
+def _build_evaluate_bar(
+    last: pd.Series,
+    prev: pd.Series,
+    in_position: int,
+    entry_cost_price: float,
+) -> EvaluateBar:
+    """Construct EvaluateBar from the last two rows of prepared columns.
+
+    `prepared` is the output of `compute_signals` — we use it only as a
+    column-preparation pass (it computes risk_swing_low/avg_volume_5/
+    candle_body_size/upper_shadow/volatility_rate plus compute_states
+    columns). Its terminal walk-loop action is discarded; the caller
+    supplies the real position state.
+    """
+    def _f(val, default: float = 0.0) -> float:
+        return float(val) if pd.notna(val) else default
+
+    return EvaluateBar(
+        in_position=in_position,
+        entry_cost_price=entry_cost_price,
+        close=_f(last["close"]),
+        high=_f(last["high"]),
+        open=_f(last["open"]),
+        box_lower=_f(last.get("box_lower")),
+        risk_swing_low=_f(last.get("risk_swing_low")),
+        volume=_f(last["volume"]),
+        avg_volume_5=_f(last.get("avg_volume_5")),
+        body_high=_f(max(last["close"], last["open"])),
+        body_low=_f(min(last["close"], last["open"])),
+        upper_shadow=_f(last.get("upper_shadow")),
+        candle_body_size=_f(last.get("candle_body_size")),
+        structure_score=int(last.get("structure_score", 0) or 0),
+        direction_score=int(last.get("direction_score", 0) or 0),
+        chip_score=int(last.get("chip_score", 0) or 0),
+        momentum_score=int(last.get("momentum_score", 0) or 0),
+        total_score=int(last.get("total_score", 0) or 0),
+        prev_total_score=_f(prev.get("total_score")),
+        prev_momentum_score=_f(prev.get("momentum_score")),
+        prev_high=_f(prev.get("high")),
+        state_flameout=int(last.get("state_flameout", 0) or 0),
+        state_strong_buy=int(last.get("state_strong_buy", 0) or 0),
+        state_hold=int(last.get("state_hold", 0) or 0),
+        state_warning=int(last.get("state_warning", 0) or 0),
+        volatility_rate=_f(last.get("volatility_rate")),
+    )
+
+
+def evaluate_window_with_state(
+    window: pd.DataFrame,
+    config: StrategyConfig,
+    in_position: int,
+    entry_cost_price: float,
+) -> SignalName:
+    """Score + prepare a history window, then evaluate the last bar with
+    caller-owned position state.
+
+    This is the canonical event-driven evaluation. Both the live algorithm
+    (reading from `context.portfolio.positions`) and the regression
+    harness (maintaining its own sequential state) call this helper, so
+    they share identical evaluation logic.
+    """
+    if len(window) < 2:
+        return "none"
+
+    history = window.reset_index().rename(columns={"trade_date": "trade_date"})
+    if not pd.api.types.is_datetime64_any_dtype(history["trade_date"]):
+        history["trade_date"] = pd.to_datetime(history["trade_date"])
+    history["trade_date"] = history["trade_date"].dt.date
+
+    scored = compute_scores(history, config)
+    prepared = compute_signals(scored, config)  # column-prep pass; .action ignored
+
+    if len(prepared) < 2:
+        return "none"
+
+    last = prepared.iloc[-1]
+    prev = prepared.iloc[-2]
+    eb = _build_evaluate_bar(last, prev, in_position, entry_cost_price)
+    return evaluate_bar(eb, config)
 
 
 def _execute_action(context, asset, action: str):
