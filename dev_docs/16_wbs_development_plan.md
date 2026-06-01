@@ -244,9 +244,9 @@
 | 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | 🚧 | — |
 | 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ⏳ | — |
 | 5.A.6 | Portfolio (100 檔) IS 回測 | DEV | 8h | ⏳ | — |
-| 5.B.1 | ~~vectorbt adapter~~ | DEV | 12h | 🚫 M3 暫停 | — | ADR-013 註記：pandas<2 與 vectorbt 不相容 |
+| 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ⏳ M3 | — | 2026-06-01 ADR-014 升級恢復排程；validation/cross_check_vectorbt.py 已 smoke-tested |
 | 5.B.2 | WFA splitter 自寫 | DEV | 8h | M3 | — |
-| 5.B.3 | ~~vectorbt vs Zipline 對拍~~ | QA | 8h | 🚫 M3 暫停 | 同 5.B.1 |
+| 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ⏳ M3 | — | 2026-06-01 ADR-014 升級恢復排程 |
 | 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ | — |
 | 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
 

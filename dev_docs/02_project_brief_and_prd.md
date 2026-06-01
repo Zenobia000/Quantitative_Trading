@@ -17,7 +17,7 @@
 | :--- | :--- | :--- | :--- |
 | **回測引擎主骨架** | **zipline-reloaded**（社群版，免商業綁定） | rqalpha → TQuant-Lab/zipline-tej → zipline-reloaded | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)（supersedes [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)、[ADR-001](./adrs/ADR-001-engine-rqalpha-plus-vectorbt.md)）|
 | **資料源** | **付費 FinLab** 為主 + FinMind 免費版 fallback | FinMind 免費版 + sponsor → 付費 FinLab | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
-| **引擎策略** | **雙引擎**（Zipline event 主 + vectorbt vector，vector 半邊暫停） | 單引擎 → 雙引擎 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md)（受 ADR-013 影響）|
+| **引擎策略** | **雙引擎**（Zipline event 主 + vectorbt vector） | 單引擎 → 雙引擎 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md)（vector 半邊隨 [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) 恢復）|
 | **系統定位** | **完整交易系統**（backtest / paper / live 三模式共用 strategy code） | 純回測平台 → 三模式 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
 | **監控架構** | **Streamlit + Grafana + Discord** 三層 | Grafana 單一 → 三層（Telegram → Discord）| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) |
 | **套件管理** | **uv** | poetry → uv | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) |
@@ -123,7 +123,7 @@
 - FinLab API（主資料源，付費）+ FinMind API（fallback）— ADR-006
 - TimescaleDB（儲存 / bundle cache）
 - zipline-reloaded（回測引擎主骨架）— ADR-013
-- vectorbt（回測引擎副，參數網格；vector 半邊暫停）— ADR-007
+- vectorbt 1.0+（回測引擎副，參數網格；ADR-014 升級後恢復可用）— ADR-007
 - Streamlit + Grafana + Discord（監控告警三層）— ADR-009 / ADR-010
 - uv（套件管理）— ADR-012
 - Shioaji（永豐金證券下單 API，M5）
@@ -144,7 +144,7 @@
 | D-004 | risk_pct 從 1% → 0.5% 對齊 Heat 6% | 已決定（v2.1） | v2.md changelog |
 | D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）|
 | D-006 | 主資料源採付費 FinLab + FinMind fallback | 已決定 | ADR-006 |
-| D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊暫停，受 ADR-013 影響）|
+| D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊隨 ADR-014 升級恢復）|
 | D-008 | 系統定位升級為三模式（backtest/paper/live） | 已決定 | ADR-008 |
 | D-009 | 監控三層 Streamlit + Grafana + Discord | 已決定 | ADR-009 / ADR-010（Discord 取代 Telegram）|
 | D-010 | 套件管理採 uv | 已決定 | ADR-012 |
