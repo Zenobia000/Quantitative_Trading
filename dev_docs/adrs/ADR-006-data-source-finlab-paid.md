@@ -112,7 +112,7 @@
 4. **M2 W3**：一次性歷史回填 2015-2024 全市場日線資料寫入 Zipline bundle
 5. **M2 W4**：撰寫 `adapters/data_bundle/finmind_bundle.py` 包裝 M1 ETL 為 fallback bundle
 6. **M3 W1**：`adapters/data_feed/finlab_live.py` 即時資料 polling 接入 paper broker
-7. **M4 W1**：Grafana 面板 G（API quota 監控）上線，FinLab 流量低於 500MB/月剩餘時 Telegram High 告警
+7. **M4 W1**：Grafana 面板 G（API quota 監控）上線，FinLab 流量低於 500MB/月剩餘時 Discord High 告警（見 ADR-010）
 8. **PRD 同步**：`dev_docs/02_project_brief_and_prd.md` 資料源章節由 FinMind 改為 FinLab（FinMind 標 fallback）
 
 ---

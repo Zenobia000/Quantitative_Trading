@@ -18,7 +18,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | **資料源** | FinMind 免費版 → **付費 FinLab** + FinMind fallback | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
 | **引擎策略** | 單引擎 → **雙引擎**（Zipline event + vectorbt vector） | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) |
 | **系統定位** | 回測平台 → **完整交易系統**（backtest / paper / live 三模式） | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
-| **監控架構** | Grafana 單一 → **Streamlit + Grafana + Telegram** 三層 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) |
+| **監控架構** | Grafana 單一 → **Streamlit + Grafana + Discord** 三層 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) |
 | **完整 M2-M5 規劃** | — | [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) |
 
 ### 過時段落明確標示
@@ -87,7 +87,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | ID | 描述 | 允收標準 | BDD |
 | :--- | :--- | :--- | :--- |
 | US-005 | As a 策略研究者, I want to 跑 paper trading 3 個月模擬, so that 驗證實盤滑點與回測假設一致 | 1. 每日訊號生成<br>2. 對比實際開盤價 vs 假設進場價<br>3. 滑點 < 預估 1.5x 才晉升 | `paper_trade.feature` (M4) |
-| US-006 | As a 策略研究者, I want to 看 Grafana 即時監控策略健康度, so that 退化時能及早發現 | 1. 30D 滾動 Sharpe、PF<br>2. 退化告警經 Telegram 發送<br>3. 熔斷規則自動執行 | `monitoring.feature` (M5) |
+| US-006 | As a 策略研究者, I want to 看 Grafana 即時監控策略健康度, so that 退化時能及早發現 | 1. 30D 滾動 Sharpe、PF<br>2. 退化告警經 Discord 發送（ADR-010）<br>3. 熔斷規則自動執行 | `monitoring.feature` (M5) |
 
 ---
 
@@ -103,7 +103,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | 統計驗證 | — | — | PBO/DSR/MC | — | — |
 | 紙上交易 | — | — | — | ✅ | — |
 | 實盤下單 | — | — | — | — | Shioaji |
-| 監控告警 | — | — | — | Grafana | + Telegram |
+| 監控告警 | — | — | — | Grafana | + Discord |
 | 前端 UI | — | — | — | Streamlit | React |
 
 ### 非功能需求

@@ -95,7 +95,7 @@
 | **定義** | Ex-ante 限額、ex-post 監控、熔斷機制 |
 | **職責** | 部位限額、產業集中度、leverage cap、VaR/CVaR、drawdown 熔斷 |
 | **典型實作** | LEAN `Risk/`、Nautilus `RiskEngine`、Zipline `set_max_position_size` |
-| **本專案對應** | 自寫 risk gates + Zipline order hook（M4）；Telegram Critical 告警（M5） |
+| **本專案對應** | 自寫 risk gates + Zipline order hook（M4）；Discord Critical 告警（M5，見 ADR-010） |
 | **業界參考** | LEAN `Risk/MaximumDrawdownPercentPortfolio.cs`、Nautilus `model/risk/` |
 
 ### L6 — Execution / OMS
@@ -114,8 +114,8 @@
 | :--- | :--- |
 | **定義** | 即時績效監控、儀表板、告警、績效歸因 |
 | **職責** | 策略績效 dashboard、系統健康 dashboard、主動告警、Brinson/Fama-French attribution |
-| **典型實作** | quantstats（報表）、Grafana（時序儀表板）、pyfolio（歸因）、Telegram bot（告警） |
-| **本專案對應** | Streamlit（策略 5 面板）+ Grafana（系統 4 面板）+ Telegram Bot（3 級告警）— 詳見 plan §4 |
+| **典型實作** | quantstats（報表）、Grafana（時序儀表板）、pyfolio（歸因）、Discord/Slack bot（告警） |
+| **本專案對應** | Streamlit（策略 5 面板）+ Grafana（系統 4 面板）+ Discord Bot（3 級告警，見 ADR-010）— 詳見 plan §4 |
 | **業界參考** | quantstats、Grafana TimescaleDB datasource、Prometheus client |
 
 ---

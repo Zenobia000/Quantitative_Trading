@@ -15,7 +15,7 @@
 | # | 原規劃（02 PRD §4） | 新決策 | 衝擊 |
 | :---: | :--- | :--- | :--- |
 | **D1** | 資料源：FinMind 免費版 + sponsor + TWSE 補爬 | **付費 FinLab**（年費 ~9–10k TWD） | M1 `data/finmind_etl.py` 改為 fallback；不再自 maintain ETL |
-| **D2** | 系統定位：純回測平台（M1–M3）→ paper（M4）→ live（M5） | **完整交易系統**：backtest + paper + live 三模式 + 雙儀表板從 M3 啟動 | L7 監控提前 2 個 milestone，新增 Streamlit/Grafana/Telegram 三層 |
+| **D2** | 系統定位：純回測平台（M1–M3）→ paper（M4）→ live（M5） | **完整交易系統**：backtest + paper + live 三模式 + 雙儀表板從 M3 啟動 | L7 監控提前 2 個 milestone，新增 Streamlit/Grafana/Discord 三層 |
 | **D3** | 工程哲學：截長補短，自寫 framework，rqalpha 為主回測引擎 | **不自建 framework**，以 **TQuant-Lab (Zipline 台股 fork)** 為主骨架，自寫薄 adapter | 砍 rqalpha；引入 Zipline event-driven；vectorbt 降為副引擎 |
 
 ### 1.2 現狀問題
@@ -85,7 +85,7 @@
 | **L4** | Portfolio Construction | Position sizing、權重、再平衡 | Zipline `Pipeline` + 自寫 allocator | **M3** |
 | **L5** | Risk Management | Ex-ante limits、熔斷、集中度 | 自寫 risk gates + Zipline order hook | **M4/M5** |
 | **L6** | Execution / OMS | 訂單路由、滑點、實盤接口 | Zipline `Blotter` + Paper / Shioaji broker | **M4/M5** |
-| **L7** | Monitor & Attribution | 即時儀表板、告警、績效歸因 | Streamlit + Grafana + Telegram | **M3–M5** |
+| **L7** | Monitor & Attribution | 即時儀表板、告警、績效歸因 | Streamlit + Grafana + Discord | **M3–M5** |
 
 ---
 
@@ -162,7 +162,7 @@ backtest_platform/src/backtest_platform/
 │
 ├── monitoring/                              # ★ 新增
 │   ├── metrics_emitter.py                   # ~80 LOC（Algorithm hook 寫 metrics）
-│   └── alerter.py                           # ~100 LOC（Telegram + 規則引擎）
+│   └── alerter.py                           # ~100 LOC（Discord 規則引擎，底層 notifier 已 M2 落地）
 │
 ├── dashboard/                               # ★ 新增
 │   ├── streamlit_app.py                     # ~400 LOC（5 個策略面板）
@@ -218,7 +218,7 @@ backtest_platform/src/backtest_platform/
 | **Sprint 0** | 1 | 1 | 6 個 spike 全綠（gate） | — | — |
 | **M2** | 4 | 5 | TQuant-Lab 跑通 + M1 plug 為 Algorithm + FinLab bundle ingester + Backtest 模式端到端 | L1, L2, L3 (event) | ✅ 虛擬交易 (backtest) |
 | **M3** | 4 | 9 | vectorbt 副引擎 + Grid + WFA + PBO/DSR 自寫 + Streamlit 面板 A+B+C | L3 (vector), L4, L7 v1 | ✅ 監控儀表板 v1 |
-| **M4** | 5 | 14 | PaperBroker + Live data feed + daily_flow 排程 + Grafana + Telegram + 3 個月 paper 跑 | L5, L6 (paper), L7 完整 | ✅ 虛擬交易 (live paper) + 監控完整 |
+| **M4** | 5 | 14 | PaperBroker + Live data feed + daily_flow 排程 + Grafana + Discord + 3 個月 paper 跑 | L5, L6 (paper), L7 完整 | ✅ 虛擬交易 (live paper) + 監控完整 |
 | **M5** | 4 | 18 | ShioajiBroker 切換 + 實盤小倉位（5%）+ Streamlit 面板 D+E + 熔斷規則 | L5 完整, L6 (live) | ✅ 實際交易 |
 | **Buffer** | 2 | 17* | bug fix、性能調整、文件 | — | — |
 | **合計** | **17 週** | | | | |
@@ -257,7 +257,7 @@ backtest_platform/src/backtest_platform/
 | `validation/dsr.py` | ~80 | Bailey-López de Prado |
 | `validation/wfa.py` | ~100 | Walk-forward splitter |
 | `engines/vectorbt_adapter.py` | ~150 | grid/WFA 副引擎 |
-| `monitoring/alerter.py` | ~100 | Telegram bot + 規則引擎 |
+| `monitoring/alerter.py` | ~100 | Discord bot + 規則引擎 |
 | `dashboard/streamlit_app.py` | ~400 | 5 個面板 |
 | `dashboard/db_schema.sql` | ~150 | TimescaleDB tables |
 
@@ -326,8 +326,8 @@ streamlit run dashboard/streamlit_app.py
 | :--- | :--- |
 | Paper trading 連續性 | 3 個月每日成功 emit 訊號 + 模擬下單 |
 | Grafana | 4 個系統面板可開 |
-| Telegram | ETL 失敗時收到告警 |
-| 三層監控聯動 | Streamlit + Grafana + Telegram 端到端測試通過 |
+| Discord | ETL 失敗時收到告警 |
+| 三層監控聯動 | Streamlit + Grafana + Discord 端到端測試通過 |
 
 ### 9.5 M5 驗收（第 17 週末）
 
@@ -352,7 +352,7 @@ streamlit run dashboard/streamlit_app.py
 | Zipline API 學習曲線 | L | 1–2 週可掌握；Quantopian 教材豐富 |
 | Shioaji SDK API 變更 | M | Broker 邏輯隔離在 `shioaji_broker.py`，升級時只動該檔 |
 | 7 訊號優先序在 Zipline | — | Event-driven 天然支援，比 vectorized 更好 |
-| Paper / Live 即時資料中斷 | **H** | 雙資料源（FinLab + Shioaji quote）互為備援；中斷觸發 Telegram Critical |
+| Paper / Live 即時資料中斷 | **H** | 雙資料源（FinLab + Shioaji quote）互為備援；中斷觸發 Discord Critical |
 | 統計驗證自寫 PBO/DSR 出錯 | M | 對 Bailey 論文表格範例做 unit test；pypbo 結果作 reference（不依賴只比對） |
 | 單人開發節奏失控 | **H** | 每個 milestone 不通過 acceptance 不晉升；Buffer 2 週 |
 
@@ -392,7 +392,7 @@ streamlit run dashboard/streamlit_app.py
 | ADR-005（新增） | Engine：TQuant-Lab 主 + vectorbt 副，取代 ADR-001 | 待新增 |
 | ADR-006（新增） | Data source：FinLab 主 + FinMind fallback | 待新增 |
 | ADR-007（新增） | Three modes：backtest/paper/live 共用 strategy | 待新增 |
-| ADR-008（新增） | Monitoring：Streamlit + Grafana + Telegram 三層 | 待新增 |
+| ADR-008（新增） | Monitoring：Streamlit + Grafana + Discord 三層 | 待新增 |
 | ADR-009（新增） | Statistical validation：自寫 PBO/DSR/CPCV 避 AGPL | 待新增 |
 | [18_reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 本文件 §3 的詳細展開 | 同步建立 |
 | [01_workflow_manual.md §5.A](./01_workflow_manual.md) | 本文件 §7.2 的詳細展開 | 同步建立 |

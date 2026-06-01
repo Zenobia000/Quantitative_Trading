@@ -523,12 +523,12 @@ CREATE TABLE alerts (
     title            TEXT NOT NULL,
     message          TEXT NOT NULL,
     context_json     JSONB,
-    sent_to_telegram BOOLEAN DEFAULT FALSE,
+    sent_to_discord BOOLEAN DEFAULT FALSE,
     sent_at          TIMESTAMPTZ,
     PRIMARY KEY (alert_time, alert_id)
 );
 SELECT create_hypertable('alerts', 'alert_time', chunk_time_interval => INTERVAL '7 days');
-CREATE INDEX ON alerts (sent_to_telegram, alert_time DESC) WHERE sent_to_telegram = FALSE;
+CREATE INDEX ON alerts (sent_to_discord, alert_time DESC) WHERE sent_to_discord = FALSE;
 CREATE INDEX ON alerts (rule_id, alert_time DESC);
 ```
 
@@ -542,7 +542,7 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | :--- | :--- | :--- | :--- |
 | **FinLab → Zipline bundle** | `finlab_bundle.py` `_normalize_*()` | 寬表轉長表、欄位 rename、補 timezone | log + skip bad rows，總 skip > 1% → fail bundle |
 | **Live feed → TimescaleDB** | `data_feed/finlab_live.py` `_validate_tick()` | Pydantic schema 驗證、reject out-of-hours | drop + write data_quality_log |
-| **Shioaji → fills** | `brokers/shioaji_broker.py` `_normalize_fill()` | 統一 trade_id、translate status enum | 拒寫 fills 表、Telegram CRITICAL |
+| **Shioaji → fills** | `brokers/shioaji_broker.py` `_normalize_fill()` | 統一 trade_id、translate status enum | 拒寫 fills 表、Discord CRITICAL |
 
 ### 5.2 強一致 vs 最終一致
 
@@ -562,7 +562,7 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | OHLCV 對拍 | FinLab | FinMind | < 1% | log + warn |
 | 法人金額 | FinLab | FinMind aggregated | < 5% | log（資料來源差異） |
 | Live close vs daily close | Shioaji 收盤 tick | FinLab daily close | < 0.5% | data_quality_log |
-| 持倉 reconciliation | TimescaleDB `positions` | Shioaji `list_positions()` | 0（精確） | Telegram CRITICAL + 暫停下單 |
+| 持倉 reconciliation | TimescaleDB `positions` | Shioaji `list_positions()` | 0（精確） | Discord CRITICAL + 暫停下單 |
 
 ---
 
@@ -580,7 +580,7 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | `DQ-006` | stale | 最新 trade_date < today - 2 trading days | error | alert |
 | `DQ-007` | cross-source | FinLab vs FinMind close diff > 1% | warn | log，採 FinLab |
 | `DQ-008` | live | tick 時間戳 < now - 5min（live mode） | error | 切備援 feed |
-| `DQ-009` | reconciliation | positions count != Shioaji list | error | Telegram CRITICAL |
+| `DQ-009` | reconciliation | positions count != Shioaji list | error | Discord CRITICAL |
 | `DQ-010` | adjustment | 同股 close 前後日 diff > 30% 無對應 split/dividend | error | 暫停該股訊號 |
 
 ### 6.2 執行頻率
