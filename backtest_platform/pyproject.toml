@@ -7,20 +7,20 @@ name = "backtest_platform"
 version = "0.1.0"
 description = "Four-Layer Resonance Strategy Backtest Platform for Taiwan Stocks"
 readme = "README.md"
-requires-python = ">=3.10,<3.12"  # zipline-tej 上界 3.11；Spike S1 fixed (ADR-005)
+requires-python = ">=3.10,<3.12"  # zipline-reloaded 3.0.4 上界 3.11（ADR-013）
 license = { text = "Proprietary" }
 authors = [{ name = "Self" }]
 
 dependencies = [
     # Data
-    "pandas>=2.2",
-    "numpy>=1.26",
+    # pandas <2 (zipline-reloaded 3.0.4 上界；M1 ETL 純 numpy/pandas 操作向後相容)
+    "pandas>=1.5,<2",
+    "numpy>=1.26,<2",
     "pyarrow>=15.0",
     "duckdb>=1.0",
     "psycopg2-binary>=2.9",
-    # SQLAlchemy 1.4 (zipline-tej 上界 <2; M1 db_writer 用 psycopg2 直連，S6 streamlit
-    # 用 create_engine 1.4 API 相容)
-    "sqlalchemy>=1.4,<2",
+    # SQLAlchemy 升回 2.x（zipline-reloaded 3.0.4 支援，比 zipline-tej 進步）
+    "sqlalchemy>=2.0",
     "FinMind>=1.7",
     # Strategy / Math
     "scipy>=1.12",
@@ -37,14 +37,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# M2 mainframe: TQuant-Lab (TEJ Zipline 台股 fork) — see ADR-005
+# M2 mainframe: zipline-reloaded (社群維護 zipline 主線，0 商業綁定) — ADR-013 supersedes ADR-005
 mainframe = [
-    "zipline-tej>=2.0",
+    "zipline-reloaded==3.0.4",
     "exchange-calendars>=4.5",
 ]
 # Vector engine for grid/WFA optimization — see ADR-007
+# Note: vectorbt 與 zipline-reloaded 3.0.4 (pandas<2) 不相容；M3 grid/WFA 啟用時
+# 評估改 vectorbt PRO 或 PyAlgoTrade。M2 不裝。
 engines = [
-    "vectorbt>=0.26",
+    # "vectorbt>=0.26",  # disabled: see comment above (ADR-013)
 ]
 # Paid data source — see ADR-006 (Note: requires FINLAB_API_TOKEN)
 data_paid = [
@@ -85,12 +87,11 @@ dev = [
     "ruff>=0.3",
     "mypy>=1.9",
 ]
-# Convenience: install all M2 sprint 0 spike requirements at once
-sprint0 = [
-    "zipline-tej>=2.0",
+# Convenience: install M2 Sprint 1 requirements
+sprint1 = [
+    "zipline-reloaded==3.0.4",
     "exchange-calendars>=4.5",
     "finlab>=1.2",
-    "vectorbt>=0.26",
     "streamlit>=1.32",
     "plotly>=5.20",
     "shioaji>=1.2",
