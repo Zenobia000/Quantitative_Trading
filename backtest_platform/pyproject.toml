@@ -7,15 +7,15 @@ name = "backtest_platform"
 version = "0.1.0"
 description = "Four-Layer Resonance Strategy Backtest Platform for Taiwan Stocks"
 readme = "README.md"
-requires-python = ">=3.10,<3.12"  # zipline-reloaded 3.0.4 上界 3.11（ADR-013）
+requires-python = ">=3.10,<3.13"  # zipline-reloaded 3.1.1 支援 3.10-3.12（ADR-013 upgrade 2026-06-01）
 license = { text = "Proprietary" }
 authors = [{ name = "Self" }]
 
 dependencies = [
     # Data
-    # pandas <2 (zipline-reloaded 3.0.4 上界；M1 ETL 純 numpy/pandas 操作向後相容)
-    "pandas>=1.5,<2",
-    "numpy>=1.26,<2",
+    # pandas 2.x + numpy 2.x (zipline-reloaded 3.1.1 直接相容；2026-06-01 升級開放 vectorbt)
+    "pandas>=2.0,<3",
+    "numpy>=2.0,<3",
     "pyarrow>=15.0",
     "duckdb>=1.0",
     "psycopg2-binary>=2.9",
@@ -39,14 +39,13 @@ dependencies = [
 [project.optional-dependencies]
 # M2 mainframe: zipline-reloaded (社群維護 zipline 主線，0 商業綁定) — ADR-013 supersedes ADR-005
 mainframe = [
-    "zipline-reloaded==3.0.4",
+    "zipline-reloaded==3.1.1",
     "exchange-calendars>=4.5",
 ]
 # Vector engine for grid/WFA optimization — see ADR-007
-# Note: vectorbt 與 zipline-reloaded 3.0.4 (pandas<2) 不相容；M3 grid/WFA 啟用時
-# 評估改 vectorbt PRO 或 PyAlgoTrade。M2 不裝。
+# 2026-06-01 起與 zipline-reloaded 3.1.1 / pandas 2 同棧相容（ADR-013 升級）
 engines = [
-    # "vectorbt>=0.26",  # disabled: see comment above (ADR-013)
+    "vectorbt>=1.0",
 ]
 # Paid data source — see ADR-006 (Note: requires FINLAB_API_TOKEN)
 data_paid = [
@@ -89,7 +88,7 @@ dev = [
 ]
 # Convenience: install M2 Sprint 1 requirements
 sprint1 = [
-    "zipline-reloaded==3.0.4",
+    "zipline-reloaded==3.1.1",
     "exchange-calendars>=4.5",
     "finlab>=1.2",
     "streamlit>=1.32",
@@ -98,6 +97,11 @@ sprint1 = [
     # monitoring required for Discord notifier tests
     "prometheus-client>=0.20",
     "httpx>=0.27",
+    # Sprint 2: tearsheet (CLI --tearsheet) + validation comparison
+    "quantstats>=0.0.62",
+    "empyrical-reloaded>=0.5.10",
+    # Sprint 2 cross-check (pandas 2 + zipline 3.1.1 stack 2026-06-01)
+    "vectorbt>=1.0",
 ]
 
 [tool.setuptools.packages.find]
