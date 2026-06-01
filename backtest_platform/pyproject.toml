@@ -110,11 +110,41 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers --cov=backtest_platform --cov-report=term-missing --cov-fail-under=65"
 asyncio_mode = "strict"
 markers = [
     "integration: requires external services (DB, FinMind API)",
     "slow: takes more than 5 seconds",
+]
+
+# Coverage gate — transitional baseline (Stream D Wave 1).
+# Target: 80% (ADR 2026-06-02 workflow plan, Q4 decision).
+# Current: ~69% after adjustment.py 29%→100%; ratchet up to 80
+# as Stream D remainder lands TEST-002 (algorithms), TEST-003 (cli),
+# TEST-005 (pipeline) which are currently 0% covered.
+[tool.coverage.run]
+source = ["src/backtest_platform"]
+branch = true
+omit = [
+    # Skeleton modules with no production code (per Q4 decision)
+    "src/backtest_platform/adapters/__init__.py",
+    "src/backtest_platform/adapters/*/__init__.py",
+    "src/backtest_platform/dashboard/__init__.py",
+    "src/backtest_platform/orchestration/__init__.py",
+    "src/backtest_platform/strategies/__init__.py",
+    # Validation harnesses (covered by integration tests, not unit)
+    "src/backtest_platform/engines/zipline_adapter/validation/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.$",
 ]
 
 [tool.ruff]

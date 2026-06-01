@@ -128,7 +128,7 @@
 | 6.0 統計驗證 | 180h | 0h | 0% | M3 |
 | 7.0 Paper+實盤 | 110h | 0h | 0% | M4-M5 |
 | 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) + 設計階段 (ADR-015) |
-| 9.0 測試品質 | 80h | 56h | 70% | 持續（44 M1 unit + 12 Discord + 8 validation + 8 cross-check = 112 pass）|
+| 9.0 測試品質 | 80h | 56h | 72% | 持續（44 M1 unit + 12 Discord + 8 validation + 8 cross-check + 15 adjustment = 127 pass；pytest-cov gate 啟用 2026-06-02，Stream D Wave 1）|
 | 10.0 文檔 | 120h | 110h | 92% | 持續 |
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
 | **合計** | **1050h** | **500h** | **48%** | M1 ✅ + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅ |

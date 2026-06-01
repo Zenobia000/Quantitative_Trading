@@ -376,24 +376,47 @@ def test_100_stocks_10_years_backtest_under_30min(benchmark):
 | `monitoring/alerter.py` | 90% | 同上 |
 | `dashboard/` | 50%（UI 寬鬆） | 同上 |
 
-### 7.2 排除清單
+### 7.2 排除清單與 gate 設定
+
+實際 `pyproject.toml`（Stream D Wave 1 baseline，2026-06-02）：
 
 ```toml
-# pyproject.toml
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --cov=backtest_platform --cov-report=term-missing --cov-fail-under=65"
+
 [tool.coverage.run]
+source = ["src/backtest_platform"]
+branch = true
 omit = [
-    "*/migrations/*",
-    "*/dashboard/grafana_dashboards.json",
-    "*/__main__.py",
+    # Skeleton modules with no production code (per Q4 workflow decision)
+    "src/backtest_platform/adapters/__init__.py",
+    "src/backtest_platform/adapters/*/__init__.py",
+    "src/backtest_platform/dashboard/__init__.py",
+    "src/backtest_platform/orchestration/__init__.py",
+    "src/backtest_platform/strategies/__init__.py",
+    # Validation harnesses (covered by integration tests, not unit)
+    "src/backtest_platform/engines/zipline_adapter/validation/*",
 ]
 
 [tool.coverage.report]
+show_missing = true
+skip_covered = false
 exclude_lines = [
     "pragma: no cover",
-    "if TYPE_CHECKING:",
     "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.$",
 ]
 ```
+
+**Gate ratchet 計畫**：
+
+| 階段 | fail_under | 觸發條件 |
+|:--|:--:|:--|
+| Wave 1 baseline | 65 | adjustment.py 100% 後總覆蓋 ~68% |
+| Wave 2 中段 | 75 | Stream A FinMind bundle 補測 + Stream D TEST-002/003/005 |
+| Wave 2 結尾 | 80 | Stream D 全 TEST-* 完成（algorithms / cli / pipeline 從 0% 補滿） |
 
 ---
 
