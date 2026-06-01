@@ -17,9 +17,9 @@
 | **技術主導** | Self |
 | **總工期估算** | M0-M5 約 17 週純工作量；兼職 10h/週 → 約 12 個月（含 buffer） |
 | **開始日期** | 2026-05-15（M0 開始） |
-| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass (S1 F1 觸發 ADR-013) + Sprint 1 Day 1-5 完成（zipline-reloaded 切換 + FinMind bundle + Algorithm 落地）** |
-| **目前 git 分支** | `feat/m2-zipline-reloaded-engine`（原 `feat/m2-tquant-lab-integration` 已於 ADR-013 後改名） |
-| **最新 commit** | `a653cad`（21 §3 對齊 finmind_bundle 實作，2026-06-01）|
+| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass (S1 F1 觸發 ADR-013) + Sprint 1 全段完成（Day 1-7：zipline-reloaded + bundle + Algorithm + Taiwan controls + CLI）+ PR #2 merged 進 M2 整合** |
+| **目前 git 分支** | `feat/m2-tquant-lab-integration`（M2 整合線；PR #2 已合入 `4377264`）；side branch `chore/xai-ui-clone-spec` 進行 web_design 工作 |
+| **最新 commit** | `5714906`（02 PRD v3.0，2026-06-01）|
 
 ### 角色（單人多役）
 
@@ -124,7 +124,7 @@
 | 2.0 系統架構 | 80h | 80h | 100% | ✅ M1 完成 + M2 重組完成 |
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 60h | 86% | M1 完成；Zipline wrapper 待 M2 |
-| 5.0 回測引擎 | 100h | 26h | 26% | 🚧 Sprint 1 Day 1-5 完成（zipline-reloaded swap + finmind bundle + Algorithm + Taiwan controls）|
+| 5.0 回測引擎 | 100h | 30h | 30% | 🚧 Sprint 1 完成（Day 1-7：zipline-reloaded swap + finmind bundle + Algorithm + Taiwan controls + CLI）|
 | 6.0 統計驗證 | 180h | 0h | 0% | M3 |
 | 7.0 Paper+實盤 | 110h | 0h | 0% | M4-M5 |
 | 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) |
@@ -248,9 +248,9 @@
 | 5.B.2 | WFA splitter 自寫 | DEV | 8h | M3 | — |
 | 5.B.3 | ~~vectorbt vs Zipline 對拍~~ | QA | 8h | 🚫 M3 暫停 | 同 5.B.1 |
 | 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ | — |
-| 5.D.1 | engines/ Click CLI | DEV | 4h | ⏳ | — |
+| 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
 
-**模組小計**：~100h | Sprint 1 Day 1-5 完成 ~26h（26%）— 主骨架切換 + bundle + Algorithm + Taiwan controls；FourLayerResonance Algorithm 完整實作為下一步
+**模組小計**：~100h | Sprint 1 全段（Day 1-7）完成 ~30h（30%）— 主骨架切換 + bundle + Algorithm + Taiwan controls + CLI；FourLayerResonance Algorithm 完整實作（5.A.4）為 Sprint 2 起點
 
 ---
 

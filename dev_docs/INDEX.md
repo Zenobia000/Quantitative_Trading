@@ -25,7 +25,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**12 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**13 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012/013） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -90,6 +90,19 @@
 | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
 | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
 | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005** |
+
+---
+
+### 階段 8：UI / 設計系統參考（2026-06-01 新增）
+
+> 與核心 dev_docs 並行的設計系統工作區。M3 Streamlit 面板 + M5 React 前端的視覺基礎；目前內容以「AI 網頁開發流水線」為框架，含 design-system specs + 既有 UI clone 分析（x.ai、Grok）。
+
+| 路徑 | 用途 | 對應 |
+| :--- | :--- | :--- |
+| [web_design/README.md](./web_design/README.md) | 模組化 AI 網頁開發流水線總覽 | 獨立 |
+| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai 完整 UI 5 層分析（L0-L4 + extracted CSS vars / DOM / fonts） | 設計參考 |
+| [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
+| web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
 
 ---
 
