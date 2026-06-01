@@ -1,0 +1,118 @@
+[
+  {
+    "condition": "(forced-colors: active)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(forced-colors: active)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(forced-colors: active)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(hover: hover)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 640px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(min-width: 768px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(min-width: 1024px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(min-width: 1280px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(min-width: 1536px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(min-height: 1000px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(prefers-reduced-motion: reduce)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 640px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 1024px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 640px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 1024px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(prefers-reduced-motion: no-preference)",
+    "rule_count": 8
+  },
+  {
+    "condition": "not all and (min-width: 1024px)",
+    "rule_count": 3
+  },
+  {
+    "condition": "(min-width: 640px)",
+    "rule_count": 169
+  },
+  {
+    "condition": "(min-width: 768px)",
+    "rule_count": 86
+  },
+  {
+    "condition": "(min-width: 1024px)",
+    "rule_count": 181
+  },
+  {
+    "condition": "(min-width: 1280px)",
+    "rule_count": 27
+  },
+  {
+    "condition": "(min-width: 1536px)",
+    "rule_count": 5
+  },
+  {
+    "condition": "(min-width: 2000px)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(min-width: 640px)",
+    "rule_count": 3
+  },
+  {
+    "condition": "(min-width: 1280px)",
+    "rule_count": 2
+  },
+  {
+    "condition": "(pointer: fine)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(hover: none) and (pointer: coarse)",
+    "rule_count": 1
+  },
+  {
+    "condition": "(max-width: 600px)",
+    "rule_count": 7
+  },
+  {
+    "condition": "(prefers-reduced-motion)",
+    "rule_count": 1
+  }
+]

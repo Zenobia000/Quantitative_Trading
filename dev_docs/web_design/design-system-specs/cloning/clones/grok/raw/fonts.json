@@ -1,0 +1,57 @@
+[
+  {
+    "family": "GeistMono",
+    "weight": "100 900",
+    "style": "normal"
+  },
+  {
+    "family": "universalSans",
+    "weight": "400",
+    "style": "normal"
+  },
+  {
+    "family": "universalSans",
+    "weight": "400",
+    "style": "italic"
+  },
+  {
+    "family": "universalSans",
+    "weight": "550",
+    "style": "normal"
+  },
+  {
+    "family": "universalSans",
+    "weight": "550",
+    "style": "italic"
+  },
+  {
+    "family": "universalSans Fallback",
+    "weight": "normal",
+    "style": "normal"
+  },
+  {
+    "family": "universalSansDisplay",
+    "weight": "400",
+    "style": "normal"
+  },
+  {
+    "family": "universalSansDisplay",
+    "weight": "400",
+    "style": "italic"
+  },
+  {
+    "family": "universalSansDisplay",
+    "weight": "550",
+    "style": "normal"
+  },
+  {
+    "family": "universalSansDisplay",
+    "weight": "550",
+    "style": "italic"
+  },
+  {
+    "family": "universalSansDisplay Fallback",
+    "weight": "normal",
+    "style": "normal"
+  }
+]

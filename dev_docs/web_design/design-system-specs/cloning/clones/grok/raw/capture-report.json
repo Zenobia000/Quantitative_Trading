@@ -1,0 +1,18 @@
+{
+  "url": "https://x.ai/grok",
+  "ts": "2026-06-01T13:55:00.751Z",
+  "breakpoints": {
+    "mobile": {
+      "ok": true
+    },
+    "tablet": {
+      "ok": true
+    },
+    "desktop": {
+      "ok": true
+    }
+  },
+  "challenge": null,
+  "errors": [],
+  "domExtracted": true
+}

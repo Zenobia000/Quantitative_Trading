@@ -1,6 +1,8 @@
 # ADR-001: 雙回測引擎：rqalpha（主）+ vectorbt（副）
 
-> **狀態：** 已接受 | **日期：** 2026-05-26 | **決策者：** Self
+> **狀態：** 已部分廢止 (Superseded in part) | **日期：** 2026-05-26 | **決策者：** Self
+> **Superseded by：** [ADR-005](./ADR-005-mainframe-tquant-lab-zipline-fork.md)（rqalpha 主引擎角色廢止，改 TQuant-Lab）+ [ADR-007](./ADR-007-dual-engine-zipline-vectorbt.md)（vectorbt 副引擎角色延續）
+> **廢止日期：** 2026-05-31 | **原因：** rqalpha 無台股 mod、無 Shioaji broker，整合成本高於從零自建；改採 TQuant-Lab（Zipline 台股 fork）為主骨架。本文正文保留作歷史脈絡參考。
 
 ---
 

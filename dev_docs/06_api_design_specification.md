@@ -182,10 +182,12 @@ counts = upsert_bundle(bundle, cfg)
 # counts: {"daily_bars": 250, "institutional_flows": 250, "broker_chips": 250}
 ```
 
-### 4.6 `strategy.scoring`
+### 4.6 `strategies.four_layer_resonance.scoring`
+
+> **2026-05-31 import path 變更**：原 `backtest_platform.strategy.scoring` 已搬到 `backtest_platform.strategies.four_layer_resonance.scoring`（見 ADR-008 多策略 namespace、`08_project_structure_guide.md` v1.1）。
 
 ```python
-from backtest_platform.strategy.scoring import compute_scores, REQUIRED_COLUMNS
+from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores, REQUIRED_COLUMNS
 
 scored = compute_scores(merged_df, config)
 # scored 新增欄位：
@@ -203,10 +205,10 @@ scored = compute_scores(merged_df, config)
 - 暖機期（前 `box_period` 列）的 scores 為 NaN
 - 所有 score 欄位落在文件範圍內（0–2 / -1 ~ 2）
 
-### 4.7 `strategy.signals`
+### 4.7 `strategies.four_layer_resonance.signals`
 
 ```python
-from backtest_platform.strategy.signals import (
+from backtest_platform.strategies.four_layer_resonance.signals import (
     compute_states, compute_signals, evaluate_bar, EvaluateBar, SIGNAL_PRIORITY
 )
 
