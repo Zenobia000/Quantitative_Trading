@@ -62,7 +62,7 @@
 
 ### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
 
-> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab、FinMind → FinLab、新增三模式+雙儀表板）
+> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab → zipline-reloaded（ADR-013）、FinMind → FinLab、新增三模式+雙儀表板）
 > **2026-05-31 整併**：原 19 號 sprint_0_design 已合併入 01 §5.A 並撤回；21/22/23/24 為既有 05/03/14/13 的**擴充版** source of truth
 
 | # | 檔名 | 用途 | 與既有檔關係 |
@@ -70,7 +70,7 @@
 | 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線、17 週時程、Verification） | 獨立（02/16 已加 v2.0 banner 指向）|
 | 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy | 獨立（M3 指標實作時 single source of truth）|
 | ~~19~~ | ~~sprint_0_design.md~~ | ~~Sprint 0 spike 細部規格~~ | **已合併入 [01 §5.A](./01_workflow_manual.md)，本檔撤回** |
-| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Telegram/Discord 告警 spec | 獨立（UI 詳設）|
+| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Discord 告警 spec（原 Telegram 已 superseded by ADR-010） | 獨立（UI 詳設）|
 | 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB 13 表 DDL | **擴充** [05 §4](./05_architecture_and_design_document.md)（05 為 M1 baseline，21 為 M2+ 完整版）|
 | 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 + CI/CD YAML 草案 | **擴充** [03](./03_behavior_driven_development_guide.md)（03 §6 加金字塔摘要 + 指向 22）|
 | 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 + docker-compose | **擴充** [14 §1](./14_deployment_and_operations_guide.md)（14 為 SOP，23 為拓撲設計）|
@@ -81,14 +81,15 @@
 
 | ADR | 主題 | Supersedes |
 | :---: | :--- | :--- |
-| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | 主骨架選定 TQuant-Lab（Zipline 台股 fork） | **ADR-001** |
+| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | ~~主骨架選定 TQuant-Lab（Zipline 台股 fork）~~ — 已 superseded by ADR-013 | **ADR-001** |
 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
-| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized | — |
+| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized（vectorbt 半邊 pending，見 ADR-013） | — |
 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ 告警（Telegram 路線，已部分 superseded） | 被 ADR-010 部分取代 |
 | [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) | Discord 取代 Telegram 為告警通道 | 部分 supersede **ADR-009** |
 | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
 | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
+| [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005** |
 
 ---
 

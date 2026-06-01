@@ -26,13 +26,13 @@
 | 配置 | Dev | Staging | Production |
 | :--- | :--- | :--- | :--- |
 | TimescaleDB | local docker | local docker | dedicated container + WAL backup |
-| Telegram bot | optional | enabled (test chat) | enabled (prod chat) |
+| Discord bot | optional | enabled (test chat) | enabled (prod chat) |
 | Grafana auth | none | basic auth | OAuth + IP allowlist |
 | Streamlit port | 8501 open | 8501 + basic auth | reverse proxy + TLS |
 | Secrets | `.env` | `.env` + git-crypt | GCP Secret Manager |
 | 24x7 運行 | no | yes | yes |
 | Backup | none | weekly local | daily → GCS |
-| 監控告警 | manual | Telegram critical only | full 3-level |
+| 監控告警 | manual | Discord critical only | full 3-level |
 
 ---
 
@@ -64,7 +64,7 @@ flowchart TB
 
     finlab[("FinLab API")]
     shioaji_sandbox[("Shioaji Sandbox")]
-    telegram_test[("Telegram test bot")]
+    discord_test[("Discord test bot")]
 
     app -->|"libpq"| tsdb
     app -->|"file I/O"| parquet
@@ -72,7 +72,7 @@ flowchart TB
     app -->|"HTTPS"| finlab
     app -.->|"WS"| shioaji_sandbox
     alerter -.->|"poll"| tsdb
-    alerter -.->|"HTTPS"| telegram_test
+    alerter -.->|"HTTPS"| discord_test
     streamlit -->|"libpq"| tsdb
     grafana -.->|"InfluxQL"| influx
     grafana -.->|"SQL"| tsdb
@@ -135,7 +135,7 @@ flowchart TB
     end
 
     finlab[("FinLab live API")]
-    telegram_staging[("Telegram staging chat")]
+    discord_staging[("Discord staging channel")]
 
     live_feed -->|"poll 5s"| finlab
     live_feed -->|"INSERT"| tsdb_st
@@ -145,7 +145,7 @@ flowchart TB
     app_st -->|"UDP"| influx_st
     alerter_st -->|"poll/threshold"| tsdb_st
     alerter_st -->|"poll/threshold"| influx_st
-    alerter_st -->|"HTTPS"| telegram_staging
+    alerter_st -->|"HTTPS"| discord_staging
     grafana_st --> influx_st
     grafana_st --> tsdb_st
     streamlit_st --> tsdb_st
@@ -172,7 +172,7 @@ sequenceDiagram
     participant TSDB as TimescaleDB
     participant Paper as PaperBroker
     participant Alert as Alerter
-    participant TG as Telegram
+    participant DC as Discord
 
     Note over Cron: 08:30 盤前
     Cron->>App: daily_pre_open_flow
@@ -233,7 +233,7 @@ flowchart TB
     finlab[("FinLab live API")]
     twse[("TWSE")]
     shioaji[("Shioaji API")]
-    telegram[("Telegram Bot API")]
+    discord[("Discord Bot API")]
     gcs[("GCS Bucket<br/>quant-backup-prod")]
     gcp_sm[("GCP Secret Manager")]
 
@@ -256,7 +256,7 @@ flowchart TB
 
     alerter5 --> tsdb5
     alerter5 --> influx5
-    alerter5 -->|"HTTPS"| telegram
+    alerter5 -->|"HTTPS"| discord
 
     cron5 -->|"gsutil cp"| gcs
     app5 -.->|"read secrets"| gcp_sm
@@ -298,8 +298,8 @@ x-common-env: &common-env
   DATABASE_URL: postgresql://quant:${DB_PASSWORD}@timescaledb:5432/quant_trading
   INFLUX_URL: http://influxdb:8086
   INFLUX_TOKEN: ${INFLUX_TOKEN}
-  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-  TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+  DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+  DISCORD_CHANNEL_ID: ${DISCORD_CHANNEL_ID}
   FINLAB_TOKEN: ${FINLAB_TOKEN}
   SHIOAJI_API_KEY: ${SHIOAJI_API_KEY}
   SHIOAJI_API_SECRET: ${SHIOAJI_API_SECRET}
@@ -479,7 +479,7 @@ gantt
     Submit orders            :14:20, 5m
     Reconciliation           :14:25, 5m
     Equity snapshot          :14:30, 2m
-    Telegram digest          :14:35, 3m
+    Discord digest          :14:35, 3m
     Backup                   :02:00, 30m
 ```
 
@@ -514,7 +514,7 @@ def post_close_flow():
 
 @flow(name="daily_digest")
 def digest_flow():
-    send_telegram_digest()
+    send_discord_digest()
 
 # deployment
 pre_open_flow.serve(name="prod", schedule=CronSchedule(cron="30 8 * * 1-5", timezone="Asia/Taipei"))
@@ -543,8 +543,8 @@ digest_flow.serve(name="prod", schedule=CronSchedule(cron="35 14 * * 1-5", timez
 | `GRAFANA_PASSWORD` | Grafana admin | 季度 |
 | `FINLAB_TOKEN` | FinLab API | 年度（伴隨 sponsor 續費） |
 | `SHIOAJI_API_KEY` / `SHIOAJI_API_SECRET` | 實盤下單 | 半年 |
-| `TELEGRAM_BOT_TOKEN` | Bot API | 變更時 |
-| `TELEGRAM_CHAT_ID` | 接收 chat | 固定 |
+| `DISCORD_BOT_TOKEN` | Bot API | 變更時 |
+| `DISCORD_CHANNEL_ID` | 接收 chat | 固定 |
 
 ### 7.3 production 啟動 secret 注入
 
@@ -557,8 +557,8 @@ export DB_PASSWORD=$(gcloud secrets versions access latest --secret=db-password)
 export FINLAB_TOKEN=$(gcloud secrets versions access latest --secret=finlab-token)
 export SHIOAJI_API_KEY=$(gcloud secrets versions access latest --secret=shioaji-key)
 export SHIOAJI_API_SECRET=$(gcloud secrets versions access latest --secret=shioaji-secret)
-export TELEGRAM_BOT_TOKEN=$(gcloud secrets versions access latest --secret=telegram-token)
-export TELEGRAM_CHAT_ID=$(gcloud secrets versions access latest --secret=telegram-chat-id)
+export DISCORD_BOT_TOKEN=$(gcloud secrets versions access latest --secret=discord-token)
+export DISCORD_CHANNEL_ID=$(gcloud secrets versions access latest --secret=discord-channel-id)
 
 docker compose -f docker-compose.prod.yml up -d
 ```
@@ -567,7 +567,7 @@ docker compose -f docker-compose.prod.yml up -d
 
 - 禁止 secret 進 git（pre-commit hook 用 `detect-secrets`）
 - 禁止 secret 進 log（Loguru filter）
-- 禁止 secret 在 Telegram 訊息出現
+- 禁止 secret 在 Discord 訊息出現
 - 容器以非 root 執行（M5 P2 行動項）
 
 ---
@@ -583,7 +583,7 @@ docker compose -f docker-compose.prod.yml up -d
 | Shioaji broker | 暫停下單（不切回 paper） | submit error 連 3 次 | CRIT 自動暫停 |
 | TimescaleDB | 無 fallback，停 algo | health check fail | CRIT + 全停 |
 | InfluxDB | 降級（metrics 不寫，algo 照跑） | health check fail | HIGH |
-| Telegram | 寫 local log + email backup | send_message exception | system log |
+| Discord | 寫 local log + email backup | send_message exception | system log |
 
 ### 8.2 RPO / RTO 目標
 
@@ -614,7 +614,7 @@ docker compose -f docker-compose.prod.yml up -d
 | node_exporter | `node_exporter` | 9100 | M4（host metrics） |
 | cAdvisor | `cadvisor` | 8080 | M4（container metrics） |
 | pg_exporter | `pg_exporter` | 9187 | M5 |
-| Telegram bot | `alerter` | — | M4 |
+| Discord bot | `alerter` | — | M4 |
 
 ### 9.2 Grafana data source 設定
 
@@ -705,7 +705,7 @@ jobs:
 - [ ] `docker compose ps` 全部 healthy
 - [ ] Streamlit 可開（through Caddy）
 - [ ] Grafana 可開
-- [ ] Telegram 收到「deploy complete」訊息
+- [ ] Discord 收到「deploy complete」訊息
 
 部署後：
 - [ ] 隔日盤後 smoke test 通過
@@ -723,7 +723,7 @@ jobs:
 | 主機 | 0（本機） | 0-500 | 800-1500 |
 | FinLab 訂閱 | 0 | 0 | 800-900（年費攤月） |
 | GCS backup | 0 | 0 | 30-50 |
-| Telegram | 0 | 0 | 0 |
+| Discord | 0 | 0 | 0 |
 | 證券手續費 | 0 | 0 | 浮動 |
 | **小計** | **0** | **0-500** | **1630-2450** |
 

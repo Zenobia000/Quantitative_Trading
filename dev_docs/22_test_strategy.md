@@ -330,7 +330,7 @@ def test_backtest_mode_end_to_end(docker_compose_services):
 | 模式 | E2E 步驟 | 預期 |
 | :--- | :--- | :--- |
 | **Backtest** | ingest → run → DB write → Streamlit render | equity_snapshots 有資料、頁面 < 2s |
-| **Paper** | live_feed 啟動 → algo 觸發 → PaperBroker 模擬 fill → fills 表寫入 → Telegram digest | fill 表有當日 5+ 筆、digest 14:35 收到 |
+| **Paper** | live_feed 啟動 → algo 觸發 → PaperBroker 模擬 fill → fills 表寫入 → Discord digest | fill 表有當日 5+ 筆、digest 14:35 收到 |
 | **Live** | 連 Shioaji sandbox → algo 觸發 → ShioajiBroker submit → 收到 fill → reconciliation pass | Shioaji `list_positions()` == DB `positions` |
 
 ---
@@ -344,7 +344,7 @@ def test_backtest_mode_end_to_end(docker_compose_services):
 | 100 檔 × 10 年 backtest | < 30 分鐘 | pytest-benchmark |
 | 1000 trials grid search (vectorbt) | < 2 小時 | pytest -m slow |
 | Streamlit 首頁載入 | < 2 秒 | locust |
-| Telegram alert 端到端延遲 | < 5 秒 | manual stopwatch |
+| Discord alert 端到端延遲 | < 5 秒 | manual stopwatch |
 | TimescaleDB query `equity_snapshots` 1 年 | < 200ms | EXPLAIN ANALYZE |
 
 ### 6.2 範例
@@ -521,7 +521,7 @@ def test_m1_pipeline_2330_unchanged():
 
 | Spike | Test 檔 | Pass 標準 |
 | :--- | :--- | :--- |
-| S1 TQuant-Lab | `tests/spike/test_s1_zipline_xtai.py` | `zipline ingest -b tquant` + `zipline run` 回傳 0 |
+| S1 zipline-reloaded（原 TQuant-Lab）| `tests/spike/test_s1_zipline_xtai.py` | `zipline ingest -b finmind` + `zipline run` 回傳 0（ADR-013 改 bundle，原 `tquant` bundle 不再使用）|
 | S2 M1 plug | `tests/spike/test_s2_m1_in_zipline.py` | 2330 1 年 action sequence 與 M1 pipeline 一致 |
 | S3 FinLab bundle | `tests/spike/test_s3_finlab_bundle.py` | 10 檔 1 年 ingest + zipline run 不 raise |
 | S4 Shioaji sandbox | `tests/spike/test_s4_shioaji.py` | 模擬下一筆 MOC 單成功 |
@@ -572,7 +572,7 @@ def test_m1_pipeline_2330_unchanged():
 - [ ] R-005 對拍 < 0.5%
 - [ ] R-006 對拍 < 0.3%/day
 - [ ] paper E2E 連跑 3 個月無失敗
-- [ ] Telegram alert 端到端 < 5 秒
+- [ ] Discord alert 端到端 < 5 秒
 
 ### M5
 

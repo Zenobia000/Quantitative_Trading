@@ -31,7 +31,7 @@ flowchart LR
 
     signal --> gate1
     gate1 -->|"pass"| broker
-    gate1 -.->|"reject"| reject_log["data_quality_log<br/>+ Telegram"]
+    gate1 -.->|"reject"| reject_log["data_quality_log<br/>+ Discord"]
     broker --> fill["成交"]
     fill --> monitor
     monitor --> breaker
@@ -40,8 +40,8 @@ flowchart LR
 
 | 階段 | 何時執行 | 失敗動作 |
 | :--- | :--- | :--- |
-| **Ex-ante** | 訊號 → broker submit 之前 | reject 訂單、寫 `data_quality_log`、Telegram HIGH |
-| **Ex-post** | 每筆 fill 後 + 每 5 分鐘 + 收盤 | 觸發熔斷 L1/L2/L3、Telegram CRITICAL |
+| **Ex-ante** | 訊號 → broker submit 之前 | reject 訂單、寫 `data_quality_log`、Discord HIGH |
+| **Ex-post** | 每筆 fill 後 + 每 5 分鐘 + 收盤 | 觸發熔斷 L1/L2/L3、Discord CRITICAL |
 
 ### 1.2 設計鐵律
 
@@ -165,9 +165,9 @@ stateDiagram-v2
 
 | 等級 | 觸發條件 | 自動動作 | 通知 | 恢復條件 |
 | :--- | :--- | :--- | :--- | :--- |
-| **L1 PAUSE** | DD ≥ 限額 × 1.0（DD 15%） | 暫停新加碼（buy/add reject）；既有 reduce/exit/stoploss 照常 | Telegram CRIT-003 (L1) | DD < 限額 × 0.7 持續 3 trading day |
-| **L2 CUT** | DD ≥ 限額 × 1.5（DD 22.5%） | 強制減半所有持倉（送 reduce 訂單）+ L1 限制 | Telegram CRIT-003 (L2) | DD < 限額 × 1.0 持續 5 trading day |
-| **L3 HALT** | DD ≥ 限額 × 2.0（DD 30%） | 全部出場 + 停止所有 algo + 鎖定 risk_gate | Telegram CRIT-003 (L3) + email | **人工 reset only**（檢討會 → 改 config → 重啟） |
+| **L1 PAUSE** | DD ≥ 限額 × 1.0（DD 15%） | 暫停新加碼（buy/add reject）；既有 reduce/exit/stoploss 照常 | Discord CRIT-003 (L1) | DD < 限額 × 0.7 持續 3 trading day |
+| **L2 CUT** | DD ≥ 限額 × 1.5（DD 22.5%） | 強制減半所有持倉（送 reduce 訂單）+ L1 限制 | Discord CRIT-003 (L2) | DD < 限額 × 1.0 持續 5 trading day |
+| **L3 HALT** | DD ≥ 限額 × 2.0（DD 30%） | 全部出場 + 停止所有 algo + 鎖定 risk_gate | Discord CRIT-003 (L3) + email | **人工 reset only**（檢討會 → 改 config → 重啟） |
 
 ### 4.3 額外觸發條件（與 DD 並列任一觸發）
 
@@ -308,7 +308,7 @@ def handle_data(context, data):
 | :--- | :--- |
 | DQ-001 missing daily_bars | block 該股當日所有訊號 |
 | DQ-005 adj_factor 跳變 | 暫停該股 1 day，人工確認 |
-| DQ-006 stale data | block 全部訊號 + Telegram |
+| DQ-006 stale data | block 全部訊號 + Discord |
 | DQ-008 tick stale (live) | 切備援 feed + 不下新單 |
 | DQ-009 reconciliation 失敗 | L3 HALT |
 | DQ-010 close 跳變 30% 無 split | 暫停該股，加入觀察 |
@@ -377,7 +377,7 @@ flowchart LR
 
 ```
 觸發：CRIT-002（持續 60s）
-1. 自動：alerter 推 Telegram CRIT
+1. 自動：alerter 推 Discord CRIT
 2. 自動：app 停止 submit 新單（既有持倉照常）
 3. 自動：切備援 shioaji_quote → 收 quote 不下單
 4. 人工 (5min 內)：
@@ -413,7 +413,7 @@ flowchart LR
 ```
 觸發：L2_CUT 自動執行
 1. 自動：強制減半所有持倉（reduce orders）
-2. 自動：Telegram CRIT 推送
+2. 自動：Discord CRIT 推送
 3. 人工 (30 min 內)：
    - 開 Streamlit 面板 D 看 dd trend + risk events
    - 排查原因：策略失效 / 市場異常 / bug / 資料錯
@@ -527,7 +527,7 @@ class RiskConfig(BaseModel, frozen=True):
 
 - [ ] EX-001 ~ EX-012 全部規則上線
 - [ ] L3 HALT 模擬測試（手動 DD = 30%）
-- [ ] Telegram CRIT-003 三級訊息可正確發送
+- [ ] Discord CRIT-003 三級訊息可正確發送
 - [ ] kill_switch.sh 演練通過
 
 ### M5 實盤前

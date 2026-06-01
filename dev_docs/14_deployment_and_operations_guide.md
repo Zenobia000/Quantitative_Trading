@@ -25,7 +25,7 @@
 ```
 本機 PC（持續開機 / 同上）
     ├── Prefect schedule（每日 17:00 ETL + 18:00 訊號生成）
-    └── Grafana + Telegram bot
+    └── Grafana + Discord bot
 ```
 
 ### M5 階段（小倉位實盤）
@@ -34,7 +34,7 @@
 雲端 VPS（推薦 GCP Compute Engine e2-small）
     ├── Docker Compose（同上 + Shioaji 容器）
     ├── Prefect schedule
-    ├── Grafana + Telegram bot
+    ├── Grafana + Discord bot
     └── 自動備份 → GCS / S3
 ```
 
@@ -46,7 +46,7 @@
 | 資料庫 | TimescaleDB | timescale/timescaledb:2.14.2-pg16 |
 | 排程 | Prefect Server 2.x | prefecthq/prefect:2.19 |
 | 監控 | Grafana | grafana/grafana:10.4.2 |
-| 告警 | Telegram Bot | python-telegram-bot |
+| 告警 | Discord Bot | httpx (REST direct，ADR-010) |
 | 雲端（M5） | GCP Compute Engine | e2-small / e2-medium |
 | 備份（M5） | GCS / S3 | gsutil / aws s3 |
 
@@ -117,7 +117,7 @@ jobs:
 - [ ] Shioaji TLS、auth 測試通過
 - [ ] backup 演練：刪 1 day 資料 → restore 成功
 - [ ] 緊急停機腳本準備好（`kill_switch.sh`）
-- [ ] Telegram bot 告警測試通過
+- [ ] Discord bot 告警測試通過
 - [ ] Runbook 完成（H 章）
 - [ ] 設定停損上限：DD 25% 自動全平
 - [ ] 設定資金上限：1/4 倉位
@@ -187,14 +187,14 @@ jobs:
 
 | 名稱 | 條件 | 嚴重程度 | 通知 |
 | :--- | :--- | :--- | :--- |
-| 連虧 5 筆 | streak_loss >= 5 | Critical | Telegram + Email |
-| 單日 DD > 5% | daily_pnl < -0.05 × equity | Warning | Telegram |
-| 單日 DD > 10% | daily_pnl < -0.10 × equity | Critical | Telegram + Email |
-| Heat 超標 | heat > 0.06 | Warning | Telegram |
-| 資料延遲 | etl_done_time > 18:00 | Warning | Telegram |
-| 資料缺失 | row_count != expected | Critical | Telegram |
-| Container down | docker container status != running | Critical | Telegram + Email |
-| Shioaji 異常 | shioaji response error | Critical | Telegram + 自動停止下單 |
+| 連虧 5 筆 | streak_loss >= 5 | Critical | Discord + Email |
+| 單日 DD > 5% | daily_pnl < -0.05 × equity | Warning | Discord |
+| 單日 DD > 10% | daily_pnl < -0.10 × equity | Critical | Discord + Email |
+| Heat 超標 | heat > 0.06 | Warning | Discord |
+| 資料延遲 | etl_done_time > 18:00 | Warning | Discord |
+| 資料缺失 | row_count != expected | Critical | Discord |
+| Container down | docker container status != running | Critical | Discord + Email |
+| Shioaji 異常 | shioaji response error | Critical | Discord + 自動停止下單 |
 
 ---
 
@@ -219,7 +219,7 @@ jobs:
 4. 驗證：
    - `docker compose ps` 全部 healthy
    - `pipeline run` smoke test 通過
-   - Telegram 收到 "rollback complete" 訊息
+   - Discord 收到 "rollback complete" 訊息
 5. 監控應用健康 24 小時
 
 ### 部位處理

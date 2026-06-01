@@ -43,7 +43,7 @@
 
 ### 選項三：TEJ API
 - **描述**：採購 TEJ 官方 API（學術 / 商用版）
-- **優點**：資料品質最高、與 TQuant-Lab 同源
+- **優點**：資料品質最高、與 TQuant-Lab 同源（註：ADR-013 已棄用 TQuant-Lab）
 - **缺點**：
   - 個人版年費 > 30k TWD，超出預算
   - SDK 相對封閉，社群範例少
@@ -56,7 +56,7 @@
   - 5GB/月流量足夠日增量 + 一次性歷史回填
   - **原生整合 Shioaji**（FinLab SDK 已有 broker 接口範例）
   - 資料涵蓋：三大法人、券商分點、籌碼分布、財報、技術指標、即時 quote
-  - 與 TQuant-Lab Zipline bundle 機制相容
+  - 與 Zipline bundle 機制相容（zipline-reloaded 同樣支援，ADR-013）
   - 預算 ~9-10k TWD 內
   - 缺欄位可用 FinMind 補齊（雙源互補）
 - **缺點**：
@@ -112,7 +112,7 @@
 4. **M2 W3**：一次性歷史回填 2015-2024 全市場日線資料寫入 Zipline bundle
 5. **M2 W4**：撰寫 `adapters/data_bundle/finmind_bundle.py` 包裝 M1 ETL 為 fallback bundle
 6. **M3 W1**：`adapters/data_feed/finlab_live.py` 即時資料 polling 接入 paper broker
-7. **M4 W1**：Grafana 面板 G（API quota 監控）上線，FinLab 流量低於 500MB/月剩餘時 Telegram High 告警
+7. **M4 W1**：Grafana 面板 G（API quota 監控）上線，FinLab 流量低於 500MB/月剩餘時 Discord High 告警（見 ADR-010）
 8. **PRD 同步**：`dev_docs/02_project_brief_and_prd.md` 資料源章節由 FinMind 改為 FinLab（FinMind 標 fallback）
 
 ---

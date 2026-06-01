@@ -36,6 +36,7 @@ env/
 data/raw/
 data/parquet/
 data/cache/
+data/zipline/
 *.parquet
 *.duckdb
 *.sqlite

@@ -18,11 +18,11 @@ L7 監控由三個獨立元件組成，各自負責不同時間尺度與使用�
 | :--- | :--- | :--- | :--- | :--- |
 | **策略績效層** | Streamlit | 日/週/月 | 「我這支策略賺不賺？」 — 互動式深度分析 | `Streamlit UI` |
 | **系統健康層** | Grafana + InfluxDB | 秒/分鐘 | 「系統現在活著嗎？」 — 即時 metrics 巡檢 | `Grafana` |
-| **主動告警層** | Telegram Bot | 即時 | 「出事了快通知我」 — 推播而非拉取 | `Telegram Bot` |
+| **主動告警層** | Discord Bot | 即時 | 「出事了快通知我」 — 推播而非拉取 | `Discord Bot` |
 
 ### 1.2 為什麼這樣分
 
-| 維度 | Streamlit | Grafana | Telegram |
+| 維度 | Streamlit | Grafana | Discord |
 | :--- | :--- | :--- | :--- |
 | **資料源類型** | TimescaleDB（OLTP + 時序） | InfluxDB / Prometheus（純時序 metrics） | 兩者皆讀（規則引擎觸發） |
 | **資料粒度** | 日線 / 訊號 / 部位 | 秒級系統 metrics | 事件級（trigger-based） |
@@ -53,7 +53,7 @@ flowchart LR
     subgraph monitor["Monitor Layer (L7)"]
         st["Streamlit UI<br/>5 個策略面板"]
         gf["Grafana<br/>4 個系統面板"]
-        tg["Telegram Bot<br/>3 級告警"]
+        tg["Discord Bot<br/>3 級告警"]
     end
 
     user1["策略研究者"]
@@ -423,7 +423,7 @@ page = st.sidebar.selectbox("Panel", ["A. 績效總覽", "B. 部位狀態", ...]
 | Dashboard | Grafana 10.4 | 業界標準、Plugin 生態完整 |
 | Metrics DB | **InfluxDB 2.7**（首選） | Line protocol UDP 寫入低延遲 |
 | 備選 | Prometheus 2.51 + `node_exporter` | 若已有 pull 模型偏好 |
-| Alert routing | Grafana Unified Alerting → webhook → Telegram | 集中告警規則 |
+| Alert routing | Grafana Unified Alerting → webhook → Discord | 集中告警規則 |
 
 **為何 InfluxDB 而非 Prometheus**：應用內 emit metrics 為 push 模型，InfluxDB UDP 寫入比 Prometheus pull 更貼合 Algorithm 事件節奏；TimescaleDB 已扛 OLTP/時序，加 Prometheus 等於再養一套 time-series 重複。
 
@@ -488,7 +488,7 @@ dashboard/grafana_dashboards/
 
 ---
 
-## 4. Telegram Bot 告警規格
+## 4. Discord Bot 告警規格
 
 ### 4.1 等級定義
 
@@ -587,30 +587,27 @@ dashboard/grafana_dashboards/
 
 | 項目 | 選用 | 理由 |
 | :--- | :--- | :--- |
-| Bot 框架 | `python-telegram-bot 21.x` | 官方推薦、async 支援 |
+| Bot 框架 | `httpx` direct REST（ADR-010） | 純發訊不需要 event loop；可在 Prefect sync task 直呼 |
 | 規則引擎 | 自寫（~150 LOC） | 規則少於 30 條，無需 Drools |
-| 訊息格式 | MarkdownV2 | 排版彈性高 |
-| 加密 | HTTPS（Bot API 強制） | — |
+| 訊息格式 | Discord Embed（顏色 + 欄位 + 時戳） | 結構化警報視覺穩定，避免 MarkdownV2 跳脫 |
+| 加密 | HTTPS（Discord API 強制） | — |
 
 ```python
-# monitoring/alerter.py 骨架
-from telegram import Bot
-from telegram.constants import ParseMode
+# monitoring/alerter.py 骨架（M4 W3 實作；底層 notifier 已在 M2 落地）
+from datetime import datetime, UTC
+from backtest_platform.monitoring import DiscordNotifier, DiscordEmbed
 
 class AlertRouter:
-    def __init__(self, bot_token: str, chat_id: str):
-        self.bot = Bot(bot_token)
-        self.chat_id = chat_id
+    def __init__(self) -> None:
+        self.notifier = DiscordNotifier()  # 讀 DISCORD_* env
         self.dedupe: dict[str, datetime] = {}
 
-    async def fire(self, rule_id: str, level: str, message: str) -> None:
+    def fire(self, rule_id: str, level: str, title: str, message: str) -> None:
         if self._is_duplicated(rule_id):
             return
-        await self.bot.send_message(
-            chat_id=self.chat_id,
-            text=message,
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
+        color = {"CRITICAL": 0xB71C1C, "HIGH": 0xFFA000, "INFO": 0x1976D2}[level]
+        embed = DiscordEmbed(title=f"[{level}] {title}", description=message, color=color)
+        self.notifier.send(embed=embed)
         self.dedupe[rule_id] = datetime.now(UTC)
 ```
 
@@ -642,7 +639,7 @@ flowchart TB
         st["Streamlit<br/>(A/B/C/D/E)"]
         gf["Grafana<br/>(F/G/H/I)"]
         alerter["alerter.py<br/>規則引擎"]
-        tg["Telegram Bot"]
+        tg["Discord Bot"]
     end
 
     user1["策略研究者"]
@@ -678,11 +675,11 @@ flowchart TB
 
 ## 6. MVP vs 完整版交付計畫
 
-| Milestone | Streamlit | Grafana | Telegram | 驗收 |
+| Milestone | Streamlit | Grafana | Discord | 驗收 |
 | :--- | :--- | :--- | :--- | :--- |
 | **M3** | A/B/C（MVP） | — | — | 本機 `streamlit run` 開頁 < 2s、3 個面板可互動 |
-| **M4** | A/B/C 穩定 | F/G/H/I 全建 | 3 級告警全部接通 | 模擬 ETL 失敗 → Telegram 收到 HIGH；ShioajiSandbox 斷線 → Critical |
-| **M5** | + D/E | + 熔斷面板 | + 熔斷推播 | DD 模擬觸發 L2/L3，Telegram 收到 CRIT-003 |
+| **M4** | A/B/C 穩定 | F/G/H/I 全建 | 3 級告警全部接通 | 模擬 ETL 失敗 → Discord 收到 HIGH；ShioajiSandbox 斷線 → Critical |
+| **M5** | + D/E | + 熔斷面板 | + 熔斷推播 | DD 模擬觸發 L2/L3，Discord 收到 CRIT-003 |
 
 ---
 
@@ -702,15 +699,15 @@ flowchart TB
 - [ ] InfluxDB 寫入正常（`influx query` 驗證）
 - [ ] Grafana 4 個 dashboard 全部 import 成功
 - [ ] Prefect daily_flow 觸發 → Grafana H 面板顯示 run record
-- [ ] 模擬 FinLab 429 → Telegram 收到 HIGH-001
-- [ ] 手動斷 Shioaji → Telegram 收到 CRIT-002
+- [ ] 模擬 FinLab 429 → Discord 收到 HIGH-001
+- [ ] 手動斷 Shioaji → Discord 收到 CRIT-002
 - [ ] 每日 14:35 digest 自動發送
 
 ### M5 完整版
 
 - [ ] 面板 D：risk_metrics 即時顯示，熔斷三層 hline 可見
 - [ ] 面板 E：WFA scatter + PBO/DSR rolling
-- [ ] 手動模擬 DD = 16%（限額 15%）→ Telegram 收到 CRIT-003
+- [ ] 手動模擬 DD = 16%（限額 15%）→ Discord 收到 CRIT-003
 - [ ] 完整 24h soak test 無漏告警
 
 ---

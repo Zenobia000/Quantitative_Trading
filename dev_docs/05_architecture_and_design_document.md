@@ -1,7 +1,8 @@
 # 架構與設計文件 — backtest_platform
 
 > **版本：** v1.4 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / **M2+ 路線變更**
-> **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
+> **v1.5 變更 (2026-06-01)**：主骨架再從 `TQuant-Lab (zipline-tej)` 切到 `zipline-reloaded`（Sprint 0 S1 spike 揭露 zipline-tej import 階段強制要 TEJ API key）。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。
+> **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架（**已於 v1.5 再次取代為 zipline-reloaded**）；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
 > **v1.3 修正**：補齊 partial disclosure（Telegram / TWSE / UI / live container）、L3-A 補 live+engines 子模組、新增 M5 Target State、L3-B 改寫、補 Sequence Diagram、箭頭加 protocol、DDD 戰術 + 限界上下文 Strategic Relationship、§5.1 重畫成 C4 Deployment
 
 ---
@@ -16,7 +17,7 @@
 | §1.4 技術選型表（回測主 rqalpha） | ⚠️ 過時 | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) |
 | §3.3 元件職責（缺 adapters/validation/orchestration/monitoring/dashboard） | ⚠️ 缺新模組 | [17 §5](./17_m2_to_m5_master_plan.md) |
 | §4.1 ER 圖（6 表） | ⚠️ 缺 6 張新表 | [21 data_contract §4](./21_data_contract.md) |
-| §5.1 Deployment Diagram | ⚠️ M5 需加 Streamlit/InfluxDB/Telegram bot | [23 deployment_topology](./23_deployment_topology.md) |
+| §5.1 Deployment Diagram | ⚠️ M5 需加 Streamlit/InfluxDB/Discord bot（見 ADR-010） | [23 deployment_topology](./23_deployment_topology.md) |
 | §6.1 可觀測性 | ⚠️ 過於簡略 | [20 dashboard_specification](./20_dashboard_specification.md) |
 | §7.2 演進路線（Phase 2-5 寫 rqalpha） | ⚠️ 過時 | [17 §7 M2-M5 排程](./17_m2_to_m5_master_plan.md) |
 | §1.1 C4 規則、§1.2 DDD、§1.3 分層 | ✅ 仍有效 | — |
@@ -26,13 +27,13 @@
 
 | 容器 / 模組 | 啟用 M | 用途 |
 | :--- | :---: | :--- |
-| TQuant-Lab (Zipline) | M2 | 主骨架，取代 rqalpha |
+| zipline-reloaded 3.0.4 | M2 | 主骨架，取代 rqalpha（原規劃 TQuant-Lab，ADR-013 改採 zipline-reloaded，0 商業綁定）|
 | `adapters/data_bundle/` | M2 | FinLab/FinMind → Zipline bundle ingester |
 | `adapters/data_feed/` | M4 | 即時資料 polling |
 | `adapters/brokers/` | M4/M5 | PaperBroker + ShioajiBroker |
 | `validation/` | M3 | PBO/DSR/WFA/metrics |
 | `orchestration/` | M4 | 每日排程 daily_flow |
-| `monitoring/` | M4 | metrics emitter + Telegram alerter |
+| `monitoring/` | M4 | metrics emitter + Discord alerter（M2 已實作，ADR-010） |
 | `dashboard/` | M3/M5 | Streamlit 5 面板 + Grafana 4 面板 |
 | InfluxDB / Prometheus | M4 | 系統 metric 時序儲存 |
 | Streamlit Container | M3 | 策略績效 dashboard |
@@ -81,7 +82,7 @@
 | **Streamlit UI** | UI Phase 1 | `streamlit` | M4+（虛線） | M4 補 |
 | **Prefect Worker** | 排程 | Docker Prefect 2.x | M4+（虛線） | M4 補 |
 | **Grafana** | 監控 UI | Docker Grafana | M4+（虛線） | M4 補 |
-| **Telegram Bot** | 告警通道 | `python-telegram-bot` 服務 | M4+（虛線） | M4 補 |
+| **Discord Bot** | 告警通道 | `httpx (REST direct, ADR-010)` 服務 | M4+（虛線） | M4 補 |
 | **Shioaji Executor** | 下單 wrapper | Docker（Shioaji SDK + risk wrapper） | M5（虛線） | M5 補 |
 | **FastAPI** | HTTP API | `uvicorn` | M5（虛線） | M5 補 |
 | **React Frontend** | UI Phase 2 | Node + Vite | M6+（虛線） | M6 補 |
@@ -91,7 +92,7 @@
   - 資料源：FinMind API、TWSE 公開資訊（下市股 / 券商分點 backup）、TEJ（M3 評估）
   - 交易：Shioaji API（M5）
   - 對照：XQ 終端（人工抽查）
-  - 推送：Telegram API（M4+ 告警接收方）
+  - 推送：Discord API（M4+ 告警接收方）
   - 備份：GCS / S3（M5 災難恢復）
   - 雲端：GCP Compute Engine（M5 託管平台）
 
@@ -110,7 +111,7 @@ flowchart TB
     tej[("TEJ<br/>M3 評估")]
     xq["XQ 終端<br/>人工抽查"]
     shioaji[("Shioaji API<br/>M5")]
-    telegram[("Telegram API<br/>M4+ 告警")]
+    discord[("Discord API<br/>M4+ 告警")]
     gcs[("GCS / S3<br/>M5 備份")]
     gcp["GCP Compute Engine<br/>M5 託管"]
 
@@ -119,7 +120,7 @@ flowchart TB
     sys -.->|"HTTPS 爬下市清單 (M2+)"| twse
     sys -.->|"HTTPS 拉資料 (M3 if needed)"| tej
     sys -.->|"WebSocket/HTTPS 下單 (M5)"| shioaji
-    sys -.->|"HTTPS Bot API (M4+)"| telegram
+    sys -.->|"HTTPS Bot API (M4+)"| discord
     sys -.->|"gsutil/aws s3 backup (M5)"| gcs
     sys -.->|"deploy on (M5)"| gcp
     user -.->|"視覺對照訊號"| xq
@@ -146,7 +147,7 @@ flowchart TB
         ui["Streamlit UI<br/>M4+"]
         prefect["Prefect Worker<br/>M4+"]
         grafana["Grafana<br/>M4+"]
-        tgbot["Telegram Bot<br/>M4+"]
+        dcbot["Discord Bot<br/>M4+"]
         shio_exec["Shioaji Executor<br/>M5"]
         api["FastAPI<br/>M5"]
     end
@@ -154,7 +155,7 @@ flowchart TB
     finmind[("FinMind API")]
     twse[("TWSE 公開資訊")]
     shioaji[("Shioaji API")]
-    telegram[("Telegram API")]
+    discord[("Discord API")]
     gcs[("GCS / S3")]
 
     user -->|"shell"| app
@@ -166,8 +167,8 @@ flowchart TB
     app -.->|"HTTPS / scrape (M2+)"| twse
     prefect -.->|"trigger CLI"| app
     grafana -.->|"SQL via TCP 5432"| tsdb
-    tgbot -.->|"poll alerts table"| tsdb
-    tgbot -.->|"HTTPS Bot API"| telegram
+    dcbot -.->|"poll alerts table"| tsdb
+    dcbot -.->|"HTTPS Bot API"| discord
     app -.->|"in-proc call (M5)"| shio_exec
     shio_exec -.->|"WebSocket"| shioaji
     api -.->|"HTTP wrap (M5)"| app
@@ -182,7 +183,7 @@ flowchart TB
 | **Streamlit UI** | `streamlit run` | M4+ | Phase 1 視覺化 |
 | **Prefect Worker** | Docker | M4+ | 排程 ETL / 訊號 |
 | **Grafana** | Docker | M4+ | 監控儀表板 |
-| **Telegram Bot** | Python 常駐 | M4+ | 告警推送 |
+| **Discord Bot** | Python 常駐 | M4+ | 告警推送 |
 | **Shioaji Executor** | Docker | M5 | 含風控 wrapper |
 | **FastAPI** | `uvicorn` | M5 | HTTP API |
 
@@ -202,7 +203,7 @@ flowchart TB
             ui["Streamlit UI"]
             prefect["Prefect Worker"]
             grafana["Grafana"]
-            tgbot["Telegram Bot"]
+            dcbot["Discord Bot"]
             shio_exec["Shioaji Executor"]
             api["FastAPI"]
             react["React Frontend<br/>M6+"]
@@ -212,7 +213,7 @@ flowchart TB
     finmind[("FinMind API")]
     twse[("TWSE 公開資訊")]
     shioaji[("Shioaji API")]
-    telegram[("Telegram API")]
+    discord[("Discord API")]
     gcs[("GCS / S3")]
 
     user -->|"HTTPS"| react
@@ -228,8 +229,8 @@ flowchart TB
     shio_exec -->|"WebSocket"| shioaji
     prefect -->|"trigger"| app
     grafana -->|"SQL"| tsdb
-    tgbot -->|"poll"| tsdb
-    tgbot -->|"HTTPS Bot API"| telegram
+    dcbot -->|"poll"| tsdb
+    dcbot -->|"HTTPS Bot API"| discord
     app -->|"backup nightly"| gcs
 ```
 
@@ -826,7 +827,7 @@ flowchart TB
             tsdb5["《container》<br/>TimescaleDB<br/>port 5432 (internal only)"]
             prefect5["《container》<br/>Prefect Worker"]
             grafana5["《container》<br/>Grafana<br/>port 3000 (behind reverse proxy)"]
-            tgbot5["《container》<br/>Telegram Bot"]
+            dcbot5["《container》<br/>Discord Bot"]
             shio5["《container》<br/>Shioaji Executor"]
         end
         cron["systemd timer:<br/>pg_dump nightly → GCS"]
@@ -839,7 +840,7 @@ flowchart TB
     finmind[("FinMind API")]
     twse[("TWSE")]
     shioaji[("Shioaji API")]
-    telegram[("Telegram API")]
+    discord[("Discord API")]
     gcs[("GCS Bucket")]
 
     browser -->|"HTTPS"| ui5
@@ -852,8 +853,8 @@ flowchart TB
     shio5 -->|"WebSocket TLS"| shioaji
     prefect5 -->|"trigger CLI"| app5
     grafana5 -->|"SQL"| tsdb5
-    tgbot5 -->|"SQL poll"| tsdb5
-    tgbot5 -->|"HTTPS"| telegram
+    dcbot5 -->|"SQL poll"| tsdb5
+    dcbot5 -->|"HTTPS"| discord
     cron -->|"gsutil cp"| gcs
 ```
 
@@ -862,7 +863,7 @@ flowchart TB
 | Deployment 模式 | 單 VM（M6+ 評估 K8s） |
 | Backup | 每日 pg_dump → GCS（保留 30 天） |
 | RPO / RTO | 24h / 1h |
-| 監控 | Grafana + Telegram |
+| 監控 | Grafana + Discord |
 | TLS | reverse proxy（Caddy / Nginx）終止 TLS |
 
 #### 5.1.3 環境策略
@@ -912,7 +913,7 @@ flowchart TB
 | 日誌 | Loguru → stdout / 檔案 | ✅ |
 | 指標（M4+） | Grafana → TimescaleDB | 規劃中 |
 | 追蹤 | — | 不適用（無 distributed call） |
-| 告警（M5） | Telegram bot | 規劃中 |
+| 告警（M5） | Discord bot | 規劃中（M2 已實作 notifier，見 ADR-010） |
 
 ### 6.2 安全性
 
