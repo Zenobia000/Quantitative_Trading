@@ -1,6 +1,6 @@
 # 資料契約 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-31
+> **版本：** v1.2 | **更新：** 2026-06-02
 > **適用 M**：M1 既有四表 + M2-5 新增九表（共 13 表）
 > **進度**：見 [`16_wbs_development_plan.md §3.D`](./16_wbs_development_plan.md)（單一狀態真相源）
 > **適用範圍：** L1 資料層（對應 `05_architecture_and_design_document.md` §4）
@@ -519,6 +519,8 @@ CREATE INDEX ON validation_runs USING GIN (result_json);
 
 ### 4.10 新增表 — data_quality_log（M1 既有結構增強）
 
+> **遷移注意**：M1 原 schema 為 `PRIMARY KEY (check_time, check_name)` + `(check_name, target_date, passed, detail)`。M2 改為 `BIGSERIAL` PK + 新增 `source / check_type / stock_id / trade_date / severity / resolved / resolved_at` 欄位。fresh install（含 `init.sql` 改寫）直接套新 schema；既有 M1 部署需執行 migration（建議新表 + backfill + rename，保留 audit）。
+
 ```sql
 CREATE TABLE data_quality_log (
     check_id         BIGSERIAL PRIMARY KEY,
@@ -799,3 +801,4 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | :--- | :--- | :--- |
 | v1.0 | 2026-05-31 | 初版（對應 plan v1.0 §3/§5；M1 4 表 + 新增 9 表 DDL） |
 | v1.1 | 2026-06-01 | 新增 §8 Dashboard REST API 契約（ADR-015：策略績效層 A–E React 化需唯讀 API 層；定義 14 個 GET 端點、回應信封、TTL 對照、唯讀投影 ACL） |
+| v1.2 | 2026-06-02 | §4.10 補 M1→M2 migration note（WBS 3.D.4 落地：`init.sql` 改寫含全部 13 表；`db_writer.upsert_positions` 實作；signals/orders/fills writer stub for M4） |
