@@ -86,6 +86,7 @@ main ──┬── feat/xxx ──── PR ──→ main
 - [ ] 已自我 review 完整 diff：`git diff <base>...HEAD`
 - [ ] 無殘留 debug code（console.log、TODO hack、commented-out code）
 - [ ] PR 大小合理 — 超過 400 行 diff 或 10+ 檔案時，考慮拆分
+- [ ] 已對映 `code-doc-sync.md` 觸發表，確認受影響 dev_docs 全部更新（含 16 WBS 進度）
 
 ### 品質標準
 
@@ -101,6 +102,21 @@ Body 結構（每個區段必填）：
 | **Test Plan** | 具體驗證步驟 checklist |
 
 ### 提交步驟
+
+**鐵律：commit → push → 開 PR 視為單一連貫操作**
+
+當使用者要求「commit」、「提交」、「PR 這個」、「推上去」或表達「這段工作做完」時，預設執行下列步驟 1-3 為一氣呵成的流程，**不在中間插入「要不要 push？」「要不要開 PR？」這類詢問**，避免切碎決策成本。
+
+| 行為 | 規則 |
+| :--- | :--- |
+| commit 完不問 push | 直接 push（步驟 1 → 2 連貫）|
+| push 完不問 PR | 直接 `gh pr create`（步驟 2 → 3 連貫）|
+| PR 完才停 | 等使用者決定 review / merge 時機 |
+| 例外 1：明示中斷 | 使用者明說「先 commit 不要 push」或「push 但暫不開 PR」才中斷 |
+| 例外 2：merge 必停 | merge 屬共享分支寫入，必須讓使用者確認時機（CLAUDE.md「Executing actions with care」原則）|
+| 例外 3：destructive | 偵測到 force-push、push 到保護分支等，必停詢問 |
+
+完整步驟：
 
 1. 確認前置條件全部滿足
 2. `git push -u origin <branch>`
