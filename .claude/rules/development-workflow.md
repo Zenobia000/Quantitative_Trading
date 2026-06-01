@@ -25,6 +25,46 @@ git status
 - 禁止在一個功能分支上混做不相關的任務
 - 禁止跳過分支直接開始寫程式碼
 
+### 多 session 並行協調（2026-06-01 教訓）
+
+使用者可能同時跑多個 Claude Code session 在同一個 repo。**任何 git 寫操作前，必須驗證 ref 沒被別處推進**，否則會產生 duplicate cherry-pick、stale branch、ahead-of-origin main 等問題（曾累積 39 commits ahead 才被發現）。
+
+執行 commit / branch / merge / rebase / cherry-pick / push 前：
+
+```bash
+git branch --show-current             # 確認分支沒換
+git log --oneline -3                  # 確認 tip 沒移動
+git status                            # 確認工作樹預期狀態
+ps aux | grep [g]it                   # 是否有別的 git process 在跑
+```
+
+警示訊號（出現任一就 STOP 並詢問使用者）：
+- 工作樹有不認得的 modified / untracked 檔
+- 看到 duplicate commit subject 不同 SHA（cherry-pick 跨 session 殘留）
+- 分支 tip 跟你上次看到的不同
+- 出現未追蹤的 backup tag 或 sibling branch
+- HEAD 指向不認得的 commit
+
+### Destructive 操作必先 backup tag
+
+執行 `reset --hard`、`push --force`、`branch -D` 前必須先：
+
+```bash
+git tag -a backup/<branch>-<YYYY-MM-DD> -m '安全快照, tip <oid>'
+```
+
+恢復路徑：`git reset --hard backup/<branch>-<YYYY-MM-DD>`。
+
+### Tangled history 恢復策略
+
+當 local main 已大幅領先 origin 且包含散落的工作：
+
+| 場景 | 推薦策略 |
+| :--- | :--- |
+| 單人專案、無 review 需求 | 把 local main 整批包成「wrapper PR」推上 origin/main（含 `.gitattributes` 標準化等收尾改動）|
+| 多人協作或需 review | Tag backup → reset main → cherry-pick 工作到 feature branch → stacked PR |
+| 行尾飄移造成假 diff | 先 `git diff --ignore-all-space --stat` 驗證；若全是 EOL，加 `.gitattributes` 一次解決 |
+
 ### 詢問模板
 
 當使用者要求修改但未指定分支時：
