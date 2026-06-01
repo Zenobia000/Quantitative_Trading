@@ -1,0 +1,42 @@
+[
+  {
+    "breakpoint": "600px",
+    "direction": "max-width",
+    "rule_count": 7
+  },
+  {
+    "breakpoint": "640px",
+    "direction": "min-width",
+    "rule_count": 176
+  },
+  {
+    "breakpoint": "768px",
+    "direction": "min-width",
+    "rule_count": 88
+  },
+  {
+    "breakpoint": "1024px",
+    "direction": "min-width",
+    "rule_count": 185
+  },
+  {
+    "breakpoint": "1024px",
+    "direction": "min-width",
+    "rule_count": 3
+  },
+  {
+    "breakpoint": "1280px",
+    "direction": "min-width",
+    "rule_count": 31
+  },
+  {
+    "breakpoint": "1536px",
+    "direction": "min-width",
+    "rule_count": 7
+  },
+  {
+    "breakpoint": "2000px",
+    "direction": "min-width",
+    "rule_count": 1
+  }
+]
