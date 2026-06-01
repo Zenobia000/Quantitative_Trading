@@ -1,7 +1,8 @@
 # 架構與設計文件 — backtest_platform
 
 > **版本：** v1.4 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / **M2+ 路線變更**
-> **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
+> **v1.5 變更 (2026-06-01)**：主骨架再從 `TQuant-Lab (zipline-tej)` 切到 `zipline-reloaded`（Sprint 0 S1 spike 揭露 zipline-tej import 階段強制要 TEJ API key）。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。
+> **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架（**已於 v1.5 再次取代為 zipline-reloaded**）；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
 > **v1.3 修正**：補齊 partial disclosure（Telegram / TWSE / UI / live container）、L3-A 補 live+engines 子模組、新增 M5 Target State、L3-B 改寫、補 Sequence Diagram、箭頭加 protocol、DDD 戰術 + 限界上下文 Strategic Relationship、§5.1 重畫成 C4 Deployment
 
 ---
@@ -26,7 +27,7 @@
 
 | 容器 / 模組 | 啟用 M | 用途 |
 | :--- | :---: | :--- |
-| TQuant-Lab (Zipline) | M2 | 主骨架，取代 rqalpha |
+| zipline-reloaded 3.0.4 | M2 | 主骨架，取代 rqalpha（原規劃 TQuant-Lab，ADR-013 改採 zipline-reloaded，0 商業綁定）|
 | `adapters/data_bundle/` | M2 | FinLab/FinMind → Zipline bundle ingester |
 | `adapters/data_feed/` | M4 | 即時資料 polling |
 | `adapters/brokers/` | M4/M5 | PaperBroker + ShioajiBroker |

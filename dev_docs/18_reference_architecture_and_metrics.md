@@ -75,7 +75,7 @@
 | **定義** | 將訊號 + 撮合規則 + 滑點 + 手續費組合，產出 trade log + equity curve |
 | **職責** | 兩種範式：(a) Event-driven（精確、單次） (b) Vectorized（快速、grid） |
 | **典型實作** | Event-driven: Zipline / LEAN / Nautilus / rqalpha；Vectorized: vectorbt / bt |
-| **本專案對應** | 主：TQuant-Lab (Zipline event-driven)；副：`engines/vectorbt_adapter.py` (vectorized for grid/WFA) |
+| **本專案對應** | 主：zipline-reloaded 3.0.4 (event-driven，ADR-013)；副：`engines/vectorbt_adapter.py` (vectorized for grid/WFA — 暫停，pandas<2 不相容) |
 | **業界參考** | Zipline `algorithm.py`、vectorbt `Portfolio.from_signals`、LEAN `Engine/Algorithm/` |
 
 ### L4 — Portfolio Construction
@@ -251,11 +251,11 @@ METRIC_REGISTRY: dict[MetricID, MetricSpec] = { ... }
 
 | 框架 | L1 Data | L2 Signal | L3 BT Event | L3 BT Vector | L4 Portfolio | L5 Risk | L6 OMS | L7 Monitor | 對標部分 |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **TQuant-Lab** ✅ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | — | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ (含 Shioaji 範例) | ⭐⭐ | **本專案主骨架（L1, L2, L3-event, L6）** |
-| **vectorbt** | ⭐⭐ | ⭐⭐⭐⭐ | — | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | — | ⭐⭐⭐ | **本專案副引擎（L3-vector for grid/WFA）** |
+| **zipline-reloaded** ✅ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | — | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | **本專案主骨架（L1, L2, L3-event；L6 自寫 broker adapter，ADR-013）** |
+| **vectorbt** | ⭐⭐ | ⭐⭐⭐⭐ | — | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | — | ⭐⭐⭐ | 原規劃副引擎（L3-vector for grid/WFA）— ADR-013 暫停，pandas<2 不相容 |
 | **LEAN** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | — | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | L4/L5 設計思想參考 |
 | **Nautilus Trader** | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | — | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | L5/L6 機構級設計 |
-| **Zipline-reloaded** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | — | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐ | TQuant-Lab 的本體 |
+| ~~TQuant-Lab~~ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | — | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐⭐ (含 Shioaji 範例) | ⭐⭐ | 原規劃主骨架（ADR-005，已 superseded by ADR-013：zipline-tej 強綁 TEJ key） |
 | **Microsoft Qlib** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ (Alpha158/360) | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ | — | ⭐⭐⭐ | L2 Alpha factor 設計 |
 | **quantstats** | — | — | — | — | — | — | — | ⭐⭐⭐⭐⭐ | L7 報表 |
 | **pyfolio-reloaded** | — | — | — | — | — | — | — | ⭐⭐⭐⭐ | L7 歸因 |

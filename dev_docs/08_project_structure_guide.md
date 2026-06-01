@@ -283,7 +283,7 @@ dev_docs/                         # 工程文件（架構/規格/ADR/計劃）
 | 類別 | 變數 | M | 來源 |
 | :--- | :--- | :---: | :--- |
 | 資料源（主） | `FINLAB_API_TOKEN` | M2 | https://ai.finlab.tw |
-| 資料源（M2 副，TEJ）| `TEJAPI_KEY` | M2 | https://tquant.tejwin.com |
+| 資料源（M2 副，TEJ）| `TEJAPI_KEY` | M2 | https://tquant.tejwin.com（ADR-013 後降為可選；主路徑已不依賴 TEJ）|
 | 資料源（fallback） | `FINMIND_TOKEN` | M1 | https://finmindtrade.com |
 | Broker（M4 paper / M5 live） | `SHIOAJI_*` | M4 | 永豐金 API 中心 |
 | 儲存 | `POSTGRES_*` | M1 | docker-compose |

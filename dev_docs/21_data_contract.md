@@ -22,7 +22,7 @@ flowchart LR
     end
 
     subgraph cache["快取與 Bundle"]
-        bundle["Zipline data bundle<br/>tquant/finlab"]
+        bundle["Zipline data bundle<br/>finmind/finlab"]
         parquet["Parquet Cache<br/>data/parquet/"]
     end
 
@@ -251,7 +251,7 @@ flowchart LR
 | :--- | :--- |
 | 寫入函式 | `adapters/data_bundle/finlab_bundle.py:register_finlab_bundle()` |
 | 註冊 entry | `zipline_extension.py`（`~/.zipline/extension.py`） |
-| Calendar | `XTAI`（TQuant-Lab 內建台股交易日） |
+| Calendar | `XTAI`（`exchange-calendars` 套件提供，zipline-reloaded 引用；見 ADR-013）|
 | Frequency | `daily`（M2-M4）/ `minute`（M5 視需要） |
 | Asset universe | 一次性回填 = 上市/上櫃全部活躍標的；日增量 = 當日 universe.py 篩選結果 |
 | 漲跌停 | 不在 bundle，於 broker 模組處理（`PaperBroker._apply_price_limit()`）|

@@ -124,7 +124,7 @@
 | 2.0 系統架構 | 80h | 80h | 100% | ✅ M1 完成 + M2 重組完成 |
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 60h | 86% | M1 完成；Zipline wrapper 待 M2 |
-| 5.0 回測引擎 | 100h | 0h | 0% | 🚧 M2 啟動（TQuant-Lab 為主骨架）|
+| 5.0 回測引擎 | 100h | 0h | 0% | 🚧 M2 啟動（zipline-reloaded 為主骨架，ADR-013）|
 | 6.0 統計驗證 | 180h | 0h | 0% | M3 |
 | 7.0 Paper+實盤 | 110h | 0h | 0% | M4-M5 |
 | 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) |
@@ -231,7 +231,7 @@
 
 ---
 
-### 模組 5.0 回測引擎（M2 重點，TQuant-Lab）
+### 模組 5.0 回測引擎（M2 重點，zipline-reloaded — 原 TQuant-Lab，ADR-013）
 
 | 編號 | 任務 | 角色 | 工時 | 狀態 |
 |:--|:--|:--|:---:|:--|
@@ -346,7 +346,7 @@
 | FinLab 5GB/月流量限制 | 中 | 中 | 一次性歷史回填 → Zipline bundle 永久本地 | Self |
 | FinLab 倒閉 / 漲價 | 低 | 高 | FinMind bundle 為 fallback（ADR-006 已備）| Self |
 | FinLab 引擎精度爭議 | — | — | 不用 finlab.sim，只用其資料 | — |
-| TQuant-Lab 84 stars 社群小 | 中 | 中 | Zipline 主體 17k stars 穩定；fork 自有 repo | Self |
+| ~~TQuant-Lab 84 stars 社群小~~ | — | — | ADR-013 已切到 zipline-reloaded 主線（社群活躍），此風險解除 | — |
 | Sprint 0 S2 fail（M1 plug Zipline 不通）| 低 | 高 | 強制 debug，不退場（is deal-breaker） | Self |
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
@@ -365,7 +365,7 @@
 | **M1** 資料+策略骨架 | 2026-05-26 | 44 tests 全綠 + 端到端跑通 | ✅ |
 | **M2 預備** Sprint 0 scaffolding + 結構重組 + Discord | 2026-06-01 | scaffolding/docs/結構/Discord 全綠 + 11 ADR | ✅ |
 | **Sprint 0 Gate** 6 spike 跑通 | 2026-06-08（暫定） | 6 spike PASS + gate_review.md | ⏳ |
-| **M2** TQuant-Lab IS 回測通過 | 2026-08（暫定） | Zipline portfolio backtest + 綠燈 | ⏳ |
+| **M2** zipline-reloaded IS 回測通過 | 2026-08（暫定） | Zipline portfolio backtest + 綠燈（ADR-013）| ⏳ |
 | **M3** OOS+統計驗證 | 2026-11 | PBO < 30% + DOE 完整 + Streamlit MVP | ⏳ |
 | **M4** Paper trading + 監控 | 2027-02 | 3 個月模擬報告 + Discord + Grafana | ⏳ |
 | **M5** 小倉位實盤 | 2027-05 | Shioaji + 完整 dashboard + 1/4 倉位 | ⏳ |
@@ -392,7 +392,7 @@
 | ✅ Sprint 0b | 5/31-6/1 | M2 重組 + scaffolding + ADR + Discord | 2.4 + 0.1 + 8.C |
 | ⏳ Sprint 0c | 6/2-6/8 | Sprint 0 spike 執行 + Gate | 0.2 + 0.3 + 0.4 |
 | Sprint 1 | 6/9-6/22 | FinLab bundle adapter + Zipline wrapper | 3.B + 4.4 + 5.A |
-| Sprint 2 | 6/23-7/6 | TQuant-Lab IS 回測 2330 對拍 | 5.A.4 + 5.A.5 |
+| Sprint 2 | 6/23-7/6 | zipline-reloaded IS 回測 2330 對拍（ADR-013）| 5.A.4 + 5.A.5 |
 | Sprint 3 | 7/7-7/20 | Portfolio 100 檔 IS 回測 | 5.A.6 + 3.D.4 |
 | Sprint 4 | 7/21-8/3 | M2 acceptance + M2_backtest_report | M2 結尾 |
 | Sprint 5-8 | 8/4-9/28 | M3 統計驗證 + vectorbt + DOE | 5.B + 6.* |

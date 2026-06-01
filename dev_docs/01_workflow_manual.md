@@ -102,7 +102,7 @@ graph LR
 
 | 風險 | 不做 Sprint 0 的後果 |
 | :--- | :--- |
-| TQuant-Lab 安裝 / XTAI 日曆不通 | M2 第 1 週才發現，整個技術線失敗 |
+| TQuant-Lab 安裝 / XTAI 日曆不通 | M2 第 1 週才發現，整個技術線失敗（**此風險於 Sprint 0 S1 實際觸發 → ADR-013 切換到 zipline-reloaded**） |
 | M1 純函式 plug 進 Zipline Algorithm 不順 | M2 第 2-3 週才發現，需重設計 wrapper |
 | FinLab bundle ingester 跑不出來 | M3 才發現，被迫切回 FinMind fallback |
 | Shioaji 沙箱範例跑不通 | M5 才發現，實盤路徑失敗 |
@@ -115,7 +115,7 @@ graph LR
 
 | Spike | 主題 | 估時 | 並行 | Pass 標準 |
 | :---: | :--- | :---: | :---: | :--- |
-| S1 | TQuant-Lab + XTAI 安裝 | 4h | + S5 | `zipline ingest` + `zipline run` hello world 跑通；XTAI 2024 sessions ≈ 245 |
+| S1 | TQuant-Lab + XTAI 安裝（**實際結果：F1 fail → ADR-013 改 zipline-reloaded**）| 4h | + S5 | `zipline ingest` + `zipline run` hello world 跑通；XTAI 2024 sessions ≈ 245 |
 | S2 | M1 純函式 plug 進 Zipline Algorithm | 8h | — | 對 2330 一年資料，action 序列與 M1 `pipeline.py` 差異 < 0.1% |
 | S3 | FinLab Bundle Ingester POC | 8h | — | 3 檔 × 1 年 ingest 成功，價格欄位與 FinLab raw 100% 一致 |
 | S4 | Shioaji 沙箱範例 | 4h | + S6 | 沙箱登入 + 下單 + callback 收到 fill 事件 |

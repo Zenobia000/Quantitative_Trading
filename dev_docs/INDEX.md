@@ -62,7 +62,7 @@
 
 ### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
 
-> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab、FinMind → FinLab、新增三模式+雙儀表板）
+> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab → zipline-reloaded（ADR-013）、FinMind → FinLab、新增三模式+雙儀表板）
 > **2026-05-31 整併**：原 19 號 sprint_0_design 已合併入 01 §5.A 並撤回；21/22/23/24 為既有 05/03/14/13 的**擴充版** source of truth
 
 | # | 檔名 | 用途 | 與既有檔關係 |

@@ -521,7 +521,7 @@ def test_m1_pipeline_2330_unchanged():
 
 | Spike | Test 檔 | Pass 標準 |
 | :--- | :--- | :--- |
-| S1 TQuant-Lab | `tests/spike/test_s1_zipline_xtai.py` | `zipline ingest -b tquant` + `zipline run` 回傳 0 |
+| S1 zipline-reloaded（原 TQuant-Lab）| `tests/spike/test_s1_zipline_xtai.py` | `zipline ingest -b finmind` + `zipline run` 回傳 0（ADR-013 改 bundle，原 `tquant` bundle 不再使用）|
 | S2 M1 plug | `tests/spike/test_s2_m1_in_zipline.py` | 2330 1 年 action sequence 與 M1 pipeline 一致 |
 | S3 FinLab bundle | `tests/spike/test_s3_finlab_bundle.py` | 10 檔 1 年 ingest + zipline run 不 raise |
 | S4 Shioaji sandbox | `tests/spike/test_s4_shioaji.py` | 模擬下一筆 MOC 單成功 |

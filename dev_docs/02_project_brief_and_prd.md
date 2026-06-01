@@ -27,8 +27,8 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | :--- | :--- | :--- |
 | §4 功能範圍表（M2-M5 列） | ⚠️ 過時 | [17 master plan §7](./17_m2_to_m5_master_plan.md) |
 | §4 假設（「FinMind 免費版 + sponsor」） | ⚠️ 過時 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
-| §4 依賴（缺 FinLab/TQuant-Lab/Zipline/Streamlit） | ⚠️ 過時 | [17 master plan §5](./17_m2_to_m5_master_plan.md) |
-| §5 Q-004（rqalpha 自訂 mod） | ✅ 已關閉 | 廢止，改 TQuant-Lab |
+| §4 依賴（缺 FinLab/zipline-reloaded/Streamlit） | ⚠️ 過時 | [17 master plan §5](./17_m2_to_m5_master_plan.md)（注意：ADR-013 已將 TQuant-Lab 改為 zipline-reloaded）|
+| §5 Q-004（rqalpha 自訂 mod） | ✅ 已關閉 | 廢止，改 zipline-reloaded（ADR-013，原 ADR-005 TQuant-Lab 已 superseded）|
 | §3 Epic 1-3 user stories | ✅ 仍適用 | implementation 路線改新 plan |
 | §1-§2 商業目標、§6 成功判斷 | ✅ 仍適用 | — |
 

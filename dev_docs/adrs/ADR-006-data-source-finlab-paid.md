@@ -43,7 +43,7 @@
 
 ### 選項三：TEJ API
 - **描述**：採購 TEJ 官方 API（學術 / 商用版）
-- **優點**：資料品質最高、與 TQuant-Lab 同源
+- **優點**：資料品質最高、與 TQuant-Lab 同源（註：ADR-013 已棄用 TQuant-Lab）
 - **缺點**：
   - 個人版年費 > 30k TWD，超出預算
   - SDK 相對封閉，社群範例少
@@ -56,7 +56,7 @@
   - 5GB/月流量足夠日增量 + 一次性歷史回填
   - **原生整合 Shioaji**（FinLab SDK 已有 broker 接口範例）
   - 資料涵蓋：三大法人、券商分點、籌碼分布、財報、技術指標、即時 quote
-  - 與 TQuant-Lab Zipline bundle 機制相容
+  - 與 Zipline bundle 機制相容（zipline-reloaded 同樣支援，ADR-013）
   - 預算 ~9-10k TWD 內
   - 缺欄位可用 FinMind 補齊（雙源互補）
 - **缺點**：
