@@ -5,6 +5,8 @@
 > **2026-06-01 更新**：階段 7 完整定版（11 份 ADR + 7 份規格文檔 17/18/20-24，原 19 已併入 01 §5.A）；16 WBS 升 v2.0 為單一狀態真相源（見 15 §10 規則）
 >
 > **2026-06-02 更新**：universe ingest（`ingest` CLI）完成、R14 關閉；**M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**；ADR 數量 16→17；16 WBS 升 v2.5
+>
+> **2026-06-02 更新（二）**：大廠 UI/UX deep-research 對標完成 → **監控優先 → 研究迴圈優先 pivot（ADR-018）**：Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate 工作流；新增 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 平台對標 + 10 維度差距 + 7 流程圖 + roadmap）；ADR 數量 17→18；16 WBS 升 v2.6（§8.G 研究迴圈 UX）
 
 ---
 
@@ -27,7 +29,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**16 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012/013/014/015/016） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**18 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011~016 + 2026-06-02 新增 017/018） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -96,6 +98,7 @@
 | [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) | 儀表板設計系統 + React 升級（5 面板規格 + Assembly + REST API 契約） | — |
 | [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) | M2 acceptance KPI 凍結（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健性）— 彙整 01/02/v2.md 既有數字 | — |
 | [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設進場假設；附帶修 `_format_perf_summary` ffill metric bug | 記錄 ADR-016 gate 的執行結果 |
+| [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) | 監控優先 → 研究迴圈優先：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | **重定位** ADR-009/ADR-015 產物（不取代分層/設計系統）；UX 化 ADR-017 |
 
 ---
 
@@ -109,6 +112,7 @@
 | [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai 完整 UI 5 層分析（L0-L4 + extracted CSS vars / DOM / fonts） | 設計參考 |
 | [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
 | web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
+| [web_design/03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md) | **大廠量化/回測平台 UI/UX deep-research 對標**（10 平台）+ 10 維度差距分析 + 7 張 Mermaid 使用者旅程/流程圖 + 補強 roadmap（ADR-018 證據包） | ADR-018 / ADR-015 / 20 |
 
 ---
 

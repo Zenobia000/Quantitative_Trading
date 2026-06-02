@@ -1,6 +1,7 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.5 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
+> **版本：** v2.6 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
+> **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
@@ -318,6 +319,26 @@
 
 ---
 
+### 模組 8.G 研究迴圈 UX 與 Run 物件化（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)，最高槓桿補強）— 新增
+
+> 大廠 UI/UX deep-research 對標（`web_design/03_uiux_benchmark_and_reinforcement_plan.md`）：現行 A–E 全是 live 監控，缺研究迭代迴圈 UX。**鐵律：補齊研究迴圈前不再擴張監控 panel（Panel D / Panel B live WS 凍結至 M5）**。後端契約先行（純 Python/CLI 可 TDD），最薄前端隨 ADR-015 React 化批次補。
+
+| 編號 | 任務 | 工時 | 狀態 | 里程碑 |
+|:--|:--|:---:|:--|:--|
+| 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | 8h | ✅ 2026-06-02 | — |
+| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | 6h | ⏳ | M0/M2 |
+| 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | 6h | ⏳ | M0/M2 |
+| 8.G.3 | `validation/gate_state.py`：IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict（ADR-016 K1/K2/K3） | 8h | ⏳ | M0 |
+| 8.G.4 | 試驗次數計數 → DSR deflate（trials_count + dsr.py 接 n_trials） | 4h | ⏳ | M0/M3 |
+| 8.G.5 | CLI 擴充：run-new / run-list / sweep / compare / validate is·wfa·oos / promote check（06 + README 同步） | 8h | ⏳ | M2 |
+| 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | 6h | ⏳ | M0/M2 |
+| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | 20h | ⏳ | M3 |
+| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | 10h | ⏳ | M5 |
+
+**模組小計**：~76h | 進度 ~10%（對標證據包完成；後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）
+
+---
+
 ## 4. 進度摘要
 
 | 項目 | 當前值 | 目標值 |
@@ -462,6 +483,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.6 | 2026-06-02 | **監控優先 → 研究迴圈優先 pivot（ADR-018）**：大廠 UI/UX deep-research 對標（10 平台：QuantConnect/BRAIN/Numerai/Bloomberg/W&B/MLflow/OSS 報表/機構平台/開發者工具/防過擬合）→ 證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 維度差距、8 CRITICAL、7 張 Mermaid 流程圖、補強 roadmap）；§2/§3 新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（runs 主表 / RunConfig schema / gate_state.py IS→WFA→OOS + OOS sealed vault / trials→DSR deflate / CLI 擴充 / 研究級元件 / 前端 research 工作區）；A–E 監控重定位為 live 子視圖（Panel E 改隸屬 Validate gate）、Panel D / Panel B live WS 凍結至 M5；ADR 數量 17→18；§1 banner 加 v2.6 pivot 說明 |
 | v2.5 | 2026-06-02 | **M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**：5.A.6 portfolio IS 雙窗口執行（2020-2024 −1.75% / 2015-2020 −4.94%），對 ADR-016 K1/K2/K3 全 FAIL；根因＝進場過嚴（2330 5 年 14 次進場、勝率 50%），參數探針證實非出場非 bug；§1 banner / §6 M2 milestone ❌ / §5 R9 標已部分實現 / §7 Sprint 4 重定義為 M0 進場重設 / ADR 數量 16→17 / 技術債加 `_format_perf_summary` ffill bug（已修）；M0 證據包見 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` |
 | v2.4 | 2026-06-02 | **5.A.7.b 完成 + R14 關閉**：新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/m2_universe_ingest_runbook.md`）+ 06/README 同步；live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt）解 skip 並通過 → 252 pass / 4 skip、coverage 95.22%；模組 5.0 64%→66%；§5 R14 標 ✅ 關閉；§7 Sprint 3 更新；剩 5.A.6 portfolio |
 | v2.3 | 2026-06-02 | **6/2 PR 批次同步 + R14 真相校正**：§1 banner/git 分支/最新 commit 更新至 `a75c0af`（PR #15/16/17/18 已合入）；**5.A.7 拆為 5.A.7.a helper ✅（PR #15）/ 5.A.7.b live ingest ⏳（R14 仍開放，repo 內無 parquet cache）**；模組 5.0 60%→64%；§4 整體進度統一為 48%（修 43/48 內部打架）、覆蓋率更新為 93.74%（gate→80，PR #17）；§5 R14 改寫為「部分緩解」+ cache runbook 不入版控策略；§7 Sprint 3 列已完成 PR 與剩餘關鍵路徑 |

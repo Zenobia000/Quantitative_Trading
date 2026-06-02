@@ -150,6 +150,7 @@
 | D-010 | 套件管理採 uv | 已決定 | ADR-012 |
 | D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
 | D-015 | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設**進場**假設 | 已決定（2026-06-02） | ADR-017 — 記錄 ADR-016 gate 執行結果；參數探針定位約束在進場非出場 |
+| D-016 | **監控優先 → 研究迴圈優先**：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | 已決定（2026-06-02） | ADR-018 — 大廠 UI/UX deep-research 對標（10 平台）；重定位 ADR-009/015 產物、UX 化 ADR-017；證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md` |
 
 ---
 
