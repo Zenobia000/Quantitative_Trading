@@ -73,6 +73,27 @@ uv run python sprint_0_spikes/s1_tquant_hello_world.py
 # ...詳見 sprint_0_spikes/RUNBOOK.md
 ```
 
+## CLI（zipline_adapter）
+
+```bash
+# 抓 universe 進 parquet cache（FinMind → data/parquet/）
+uv run --extra sprint1 --extra dev python -m \
+    backtest_platform.engines.zipline_adapter.cli ingest \
+    --start 2020-01-01 --end 2024-12-31          # 預設 DEFAULT_UNIVERSE 10 檔；--dry-run 先預覽
+
+# 回測
+uv run --extra sprint1 --extra dev python -m \
+    backtest_platform.engines.zipline_adapter.cli backtest-run \
+    --stocks 2330 --start 2024-01-15 --end 2024-02-29
+
+# 列出已註冊 bundle
+uv run --extra sprint1 --extra dev python -m \
+    backtest_platform.engines.zipline_adapter.cli list-bundles
+```
+
+> universe ingest 完整流程（token 設定 / 驗證 / troubleshoot）見
+> [dev_docs/runbooks/m2_universe_ingest_runbook.md](../dev_docs/runbooks/m2_universe_ingest_runbook.md)。
+
 ## 里程碑
 
 進度詳見 [`../dev_docs/16_wbs_development_plan.md §6`](../dev_docs/16_wbs_development_plan.md)。
