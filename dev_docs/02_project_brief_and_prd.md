@@ -151,6 +151,7 @@
 | D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
 | D-015 | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設**進場**假設 | 已決定（2026-06-02） | ADR-017 — 記錄 ADR-016 gate 執行結果；參數探針定位約束在進場非出場 |
 | D-016 | **監控優先 → 研究迴圈優先**：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | 已決定（2026-06-02） | ADR-018 — 大廠 UI/UX deep-research 對標（10 平台）；重定位 ADR-009/015 產物、UX 化 ADR-017；證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md` |
+| D-017 | **v3 進場重設**：四層共振進場參數化分級放寬（必含層+可選層，非純 N-of-4）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline | 已決定（2026-06-02） | ADR-019 — 四交易視角壓測收斂；L2⊂L3（chip 含 foreign+trust）→ dir/chip=機構共識；反過擬合硬約束（v0.1 不 sweep、進場數非 edge、雙窗 IS 非 OOS） |
 
 ---
 

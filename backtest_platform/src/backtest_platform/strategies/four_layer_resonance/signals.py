@@ -102,15 +102,18 @@ def compute_signals(df_scored: pd.DataFrame, config: StrategyConfig) -> pd.DataF
     cost_price = 0.0
     prev_total = np.nan
     prev_momentum = np.nan
+    consec_structure = 0          # consecutive bars with structure_score >= 1
+    bars_since_exit = 10**9       # cooldown counter; large = no prior exit
 
     rows = df.reset_index(drop=True)
 
     for i in range(n):
         row = rows.iloc[i]
         prev_high = rows["high"].iloc[i - 1] if i > 0 else np.nan
-        prev_box_lower = rows["box_lower"].iloc[i - 1] if i > 0 else np.nan
         prev_total_score = rows["total_score"].iloc[i - 1] if i > 0 else np.nan
         prev_total_warning = rows["total_score"].iloc[i - 1] if i > 0 else np.nan
+        prev_box_upper = rows["box_upper"].iloc[i - 1] if i > 0 else np.nan
+        consec_structure = consec_structure + 1 if bool(row["structure_score"] >= 1) else 0
 
         # Cost-adjusted exit price and net profit (only meaningful when in position).
         net_profit_rate = (
@@ -128,6 +131,9 @@ def compute_signals(df_scored: pd.DataFrame, config: StrategyConfig) -> pd.DataF
             prev_total_for_warning=prev_total_warning,
             prev_momentum=prev_momentum if pd.notna(prev_momentum) else 0,
             net_profit_rate=net_profit_rate,
+            consec_structure_bars=consec_structure,
+            bars_since_exit=bars_since_exit,
+            prev_box_upper=prev_box_upper,
         )
 
         action = next((name for name in SIGNAL_PRIORITY if signals[name]), "none")
@@ -142,6 +148,8 @@ def compute_signals(df_scored: pd.DataFrame, config: StrategyConfig) -> pd.DataF
         elif pos == 1 and action in ("stoploss", "exit"):
             pos = 0
             cost_price = 0.0
+
+        bars_since_exit = 0 if action in ("stoploss", "exit") else bars_since_exit + 1
 
         in_position[i] = pos
         entry_cost[i] = cost_price
@@ -190,6 +198,10 @@ class EvaluateBar:
     state_hold: int
     state_warning: int
     volatility_rate: float
+    # v3 entry state (engine tracks these; defaults reproduce v2 behavior).
+    consec_structure_bars: int = 1
+    bars_since_exit: int = 10**9
+    prev_box_upper: float = float("nan")
 
 
 SignalName = Literal["stoploss", "exit", "takeprofit", "reduce", "add", "buy", "hold", "none"]
@@ -234,6 +246,9 @@ def evaluate_bar(bar: EvaluateBar, config: StrategyConfig) -> SignalName:
         prev_total_for_warning=bar.prev_total_score,
         prev_momentum=bar.prev_momentum_score,
         net_profit_rate=net_profit_rate,
+        consec_structure_bars=bar.consec_structure_bars,
+        bars_since_exit=bar.bars_since_exit,
+        prev_box_upper=bar.prev_box_upper,
     )
     for name in SIGNAL_PRIORITY:
         if signals[name]:
@@ -250,11 +265,17 @@ def _evaluate_priority(
     prev_total_for_warning: float,
     prev_momentum: float,
     net_profit_rate: float,
+    consec_structure_bars: int = 1,
+    bars_since_exit: int = 10**9,
+    prev_box_upper: float = float("nan"),
 ) -> dict[str, bool]:
     """Compute boolean firing for each signal type. Caller picks by priority.
 
-    All conditions follow v2.md 2.4.2 exactly. Stoploss and exit ignore the
-    cost filter per 2.5.3 — risk signals cannot be blocked by economic gating.
+    Entry/exit follow the v3 redesign spec
+    (docs/superpowers/specs/2026-06-02-m0-v3-entry-redesign-design.md); the
+    StrategyConfig v3 fields default to values that reproduce the v2 baseline.
+    Stoploss and exit ignore the cost filter per 2.5.3 — risk signals cannot be
+    blocked by economic gating.
     """
     in_pos = in_position == 1
 
@@ -262,7 +283,13 @@ def _evaluate_priority(
         row["close"] < row["box_lower"] or row["close"] < row["risk_swing_low"]
     )
 
-    flameout = bool(row["state_flameout"])
+    # flameout exit: box_lower break is immediate; the momentum trigger needs
+    # `exit_flameout_confirm_bars` consecutive bars (v2=1 reproduces single-bar
+    # behavior). Computed inline so state_flameout (used by `warning`) is untouched.
+    mom_flameout = row["momentum_score"] == -1
+    if config.exit_flameout_confirm_bars >= 2:
+        mom_flameout = mom_flameout and (prev_momentum == -1)
+    flameout = mom_flameout or (row["close"] < row["box_lower"])
     two_warnings = (
         row["total_score"] <= config.warning_threshold
         and pd.notna(prev_total_for_warning)
@@ -303,12 +330,41 @@ def _evaluate_priority(
         and net_profit_rate >= config.cost_round_rate + config.min_edge_rate
     )
 
+    # --- v3 parameterized entry gate (v2 defaults reproduce baseline) ---
+    layers_hit = sum(
+        s >= 1
+        for s in (
+            row["structure_score"], row["direction_score"],
+            row["chip_score"], row["momentum_score"],
+        )
+    )
+    mandatory_layers = (
+        row["momentum_score"] >= 1                      # 動能強制守門 (不豁免)
+        and row["structure_score"] >= 1                 # 結構必含
+        and (row["direction_score"] >= 1 or row["chip_score"] >= 1)  # 機構共識至少一邊
+    )
+    negative_veto = row["direction_score"] == -1 or row["chip_score"] == -1
+    first_cross_ok = (
+        not config.entry_first_cross_only
+        or (pd.notna(prev_total) and prev_total < config.strong_buy_threshold)
+    )
+    confirm_ok = consec_structure_bars >= config.entry_confirm_days
+    breakout_exempt = (
+        row["structure_score"] == 2
+        and pd.notna(prev_box_upper)
+        and row["close"] > prev_box_upper
+    )
+    cooldown_ok = bars_since_exit >= config.entry_cooldown_bars or breakout_exempt
     buy_sig = (
         not in_pos
-        and bool(row.get("state_strong_buy", 0))
-        and row["structure_score"] == 2
-        and pd.notna(prev_total)
-        and prev_total < config.strong_buy_threshold
+        and cooldown_ok
+        and mandatory_layers
+        and not negative_veto
+        and layers_hit >= config.entry_min_layers
+        and row["structure_score"] >= config.entry_min_structure
+        and row["total_score"] >= config.strong_buy_threshold
+        and first_cross_ok
+        and confirm_ok
         and bool(row.get("edge_ok", 0))
     )
 

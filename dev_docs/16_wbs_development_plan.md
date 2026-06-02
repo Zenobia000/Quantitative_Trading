@@ -1,6 +1,6 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.7 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
+> **版本：** v2.8 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
 > **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
 > **v2.7 新增（2026-06-02）**：反發散切版 — §6 新增**版本 Roadmap**（v0.1 essential MVP〔M0 v3 進場 + IS gate as code 最小後端〕→ v0.2 OOS/WFA/PBO/DSR → v0.3 研究後端 → v0.4 研究前端 → v0.5 paper → v1.0 live）；§7 Sprint 4-12 對齊版本展開（`scrum_board.json` 真相源同步、`sync_wbs.py` 重生）；**鐵律：v3 edge 未證實前不做前端/重功能**。
 >
@@ -382,7 +382,7 @@
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
 | 訊號邏輯與 XQ 差異 > 0.5% | 中 | 高 | 100 樣本抽查、修正 _normalize | Self |
-| **R9 策略本身無 Edge** | 高 | 致命 | 🔴 **已於 IS 部分實現**（2026-06-02，ADR-017）：portfolio 雙窗口 IS 無 edge（進場 ~14 次/5 年、勝率 50%）。**處置**：回 M0 重設**進場**假設（v3）；非砍策略，先重訂進場 edge 再重跑 ADR-016 gate。若 v3 仍無 edge → 才評估砍策略 | Self |
+| **R9 策略本身無 Edge** | 高 | 致命 | 🟠 **緩解中（v3 進場重設 v0.1）**（2026-06-02）：原 IS 無 edge（~14 次/5 年、勝率 50%，ADR-017）→ **v3 進場參數化放寬（必含層+可選）+ flameout 最小搭配已定稿並實作（ADR-019；16 synthetic 測試、signals.py 100%、suite 271 pass、v2 baseline regression 釘死）**。**待驗**：Sprint 6 雙窗口 IS 人工讀（cache-gated；2330+中小型成分股）跨窗符號一致+操盤手體檢，綠燈≠有 edge。若 v3 仍無一致正期望 → 回 M0 換 edge 來源（候選 D），不續鬆閘自欺 | Self |
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
 | ~~**R14** DEFAULT_UNIVERSE live ingest 尚未執行~~ | — | — | ✅ **已關閉**（2026-06-02）：`ingest` CLI 子命令 + runbook 落地，live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試解 skip 並通過。剩 5.A.6 portfolio 回測（與 R14 無關）| Self |
@@ -541,6 +541,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.8 | 2026-06-02 | **v3 進場重設 v0.1 實作（ADR-019）**：四交易視角壓測收斂的 v3 進場設計（必含層+可選層，非純 N-of-4 — 實證 L2⊂L3 相關 0.615；6 參數 v2 預設重現 baseline）+ flameout 最小 exit 搭配落地。config +6 欄位 + `DEFAULT_CONFIG_V3`；signals.py `_evaluate_priority`/`compute_signals`/`EvaluateBar` 參數化；16 synthetic 測試（不依賴 cache）、signals.py 100% 覆蓋、suite 271 pass / 4 skip、v2 全路徑 regression 釘死。校正 doc/code 成本 drift（code cost_round 0.671%/edge 1.271% vs v2.md 1.07%/1.3%）。§5 R9 轉「🟠 緩解中」；待 Sprint 6 雙窗口 IS 人工讀（cache-gated，綠燈≠有 edge）。ADR 數量 18→19 | Self |
 | v2.7 | 2026-06-02 | **反發散版本切版 + Sprint 對齊（承 ADR-018）**：§6 新增「版本 Roadmap」——essential MVP（v0.1）= M0 v3 進場重設 + 讓迭代客觀可守門的最小後端（8.G.3-min IS gate as code + 8.G.1/8.G.2/8.G.5 最小版），明確不含前端/sweep/compare/Cmd-K/promotion UI/OOS sealed vault；後續 v0.2 OOS+統計 → v0.3 研究後端 → v0.4 研究前端 MVP → v0.5 M4 paper → v1.0 M5 live → v1.x roadmap 層，每版綁可客觀驗收 exit gate。§7 Sprint 表經 `tools/scrum_board`（`scrum_board.json` 真相源 + `sync_wbs.py` 重生）展開為 Sprint 4-12 對齊版本（Sprint 4-6=v0.1、7-8=v0.2、9-10=v0.3、11-12=v0.4）+ Sprint 13-15/16+ 外推 rollup；鐵律：v3 edge 未證前不推進前端/重功能。 |
 | v2.6 | 2026-06-02 | **監控優先 → 研究迴圈優先 pivot（ADR-018）**：大廠 UI/UX deep-research 對標（10 平台：QuantConnect/BRAIN/Numerai/Bloomberg/W&B/MLflow/OSS 報表/機構平台/開發者工具/防過擬合）→ 證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 維度差距、8 CRITICAL、7 張 Mermaid 流程圖、補強 roadmap）；§2/§3 新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（runs 主表 / RunConfig schema / gate_state.py IS→WFA→OOS + OOS sealed vault / trials→DSR deflate / CLI 擴充 / 研究級元件 / 前端 research 工作區）；A–E 監控重定位為 live 子視圖（Panel E 改隸屬 Validate gate）、Panel D / Panel B live WS 凍結至 M5；ADR 數量 17→18；§1 banner 加 v2.6 pivot 說明 |
 | v2.5 | 2026-06-02 | **M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**：5.A.6 portfolio IS 雙窗口執行（2020-2024 −1.75% / 2015-2020 −4.94%），對 ADR-016 K1/K2/K3 全 FAIL；根因＝進場過嚴（2330 5 年 14 次進場、勝率 50%），參數探針證實非出場非 bug；§1 banner / §6 M2 milestone ❌ / §5 R9 標已部分實現 / §7 Sprint 4 重定義為 M0 進場重設 / ADR 數量 16→17 / 技術債加 `_format_perf_summary` ffill bug（已修）；M0 證據包見 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` |

@@ -42,6 +42,27 @@ class StrategyConfig(BaseModel):
     min_edge_rate: float = Field(0.006, ge=0, le=0.1, description="最低交易優勢")
     tp_min_net_rate: float = Field(0.015, ge=0, le=1.0, description="停利最低淨利")
 
+    # --- v3 entry gate (M0 v3 redesign; defaults reproduce v2 baseline) ---
+    # See docs/superpowers/specs/2026-06-02-m0-v3-entry-redesign-design.md
+    entry_min_layers: int = Field(
+        4, ge=1, le=4, description="N-of-4 冗餘計數上限門 (v2=4 全AND, v3=3)"
+    )
+    entry_min_structure: int = Field(
+        2, ge=0, le=2, description="進場最低結構分 (v2=2 箱型突破, v3=1 站上箱中)"
+    )
+    entry_first_cross_only: bool = Field(
+        True, description="僅單日首次站上進場 (v2=True, v3=False 放行持續站上)"
+    )
+    entry_confirm_days: int = Field(
+        1, ge=1, le=10, description="structure 持續站穩確認天數 (v2=1, v3=2)"
+    )
+    entry_cooldown_bars: int = Field(
+        0, ge=0, le=20, description="出場後 re-entry 冷卻 bar (v2=0, v3=3)"
+    )
+    exit_flameout_confirm_bars: int = Field(
+        1, ge=1, le=5, description="flameout momentum 觸發確認 bar (v2=1, v3=2)"
+    )
+
     # --- Derived cost rates (computed, not configurable) ---
     @property
     def cost_buy_rate(self) -> float:
@@ -65,3 +86,15 @@ class StrategyConfig(BaseModel):
 
 
 DEFAULT_CONFIG = StrategyConfig()
+
+# v3 entry-redesign preset (M0 v0.1). Relaxes the four over-tight entry gates
+# per the trader-pressure-tested design spec. Use explicitly; DEFAULT_CONFIG
+# (v2) remains the baseline-reproducing default.
+DEFAULT_CONFIG_V3 = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=1,
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
+)
