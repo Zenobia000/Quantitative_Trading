@@ -99,11 +99,27 @@ DEFAULT_CONFIG_V3 = StrategyConfig(
     exit_flameout_confirm_bars=2,
 )
 
-# Named presets for engine/CLI config injection (e.g. STRATEGY_PRESET env var,
-# `backtest-run --config v3`). Lets the zipline algorithm run v3 without
-# hardcoding StrategyConfig() — required to calibrate the v3 verdict against
-# the offline sim on the real event-driven engine.
-PRESETS: dict[str, StrategyConfig] = {"v2": DEFAULT_CONFIG, "v3": DEFAULT_CONFIG_V3}
+# v3 IS gate FAIL smoking gun: min_structure=1 floods structure==1 mid-box entries
+# (72-76%). Direction B (ADR-019 §4) — keep structure==2 strict, relax ONLY the
+# transition gates. Minimal causal-isolation: was the over-tight *transition*, not
+# the structure, the constraint? IS result: dirB beats both v2 and v3 in both
+# windows with structure1%=0 (gate review §7).
+DEFAULT_CONFIG_V3_1B = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=2,           # <-- kept strict (breakout only), unlike v3
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
+)
+
+# Named presets for engine/CLI config injection (STRATEGY_PRESET env / `backtest-run
+# --config` / research `run-is --preset`).
+PRESETS: dict[str, StrategyConfig] = {
+    "v2": DEFAULT_CONFIG,
+    "v3": DEFAULT_CONFIG_V3,
+    "v3.1b": DEFAULT_CONFIG_V3_1B,
+}
 
 
 def get_preset(name: str) -> StrategyConfig:

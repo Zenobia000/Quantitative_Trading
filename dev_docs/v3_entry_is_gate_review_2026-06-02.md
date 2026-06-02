@@ -70,3 +70,25 @@ v3 進場「機制」實作正確（已測、v2 可重現、exit 搭配有效）
 3. **冒煙槍引擎側確認**：v3 交易 466 round-trips vs v2 103（4.5×）→ 放寬進場灌入大量低品質進場，與 sim structure1%=76% 同源。
 
 **收斂**：M0 重設靶心（`min_structure=1` 是禍首）為真、非 sim artifact；後續 harness 可放心建在 sim 上。照計畫 Step 2（gate_state）→ Step 3（harness）→ Step 4（結構競賽 方向 B/A），認賠線不變。
+
+---
+
+## 7. 結構 hypothesis 競賽（Step 4，方向 B）— 用 `run-is` 跑出
+
+第一場結構競賽，用 Step 3 的 harness（`run-is --preset ...`）跑。**方向 B = 保 `structure==2` 嚴格、只解 transition 過嚴**（`first_cross=False` + N-of-4=3 + confirm=2），最小因果隔離：禍首是 transition 還是 structure？
+
+| 窗口 | v2 | v3（放鬆全部） | **v3.1b（方向 B，保 structure==2）** |
+|:--|:--|:--|:--|
+| 2015-2020 | -1.08% / -0.64 | -4.48% / -0.99 | **-0.72% / -0.25** |
+| 2020-2024 | +0.44% / +0.21 | -2.38% / -0.44 | **+1.23% / +0.41** |
+| structure1% | 0% | **76%** | **0%** |
+| churn% | 25 / 33 | 25 / 27 | 15 / 25 |
+| 平均持有 | 4.7 / 4.1 | 6.1 / 5.5 | 6.8 / 5.4 |
+
+**正面（假設證實）**：dirB **在兩窗都優於 v2 與 v3**；structure1% 從 v3 的 76% 回到 **0%**（健檢全綠）；churn/持有也改善。**證實「transition 過嚴是真約束、結構不可放鬆」**——v3 的錯在放鬆結構，方向 B 放對了地方。
+
+**但（誠實）**：dirB **仍未過 ADR-016 edge gate**（K1 CAGR>18% / K2 Sharpe>1.0 差很遠；最佳僅 2020-2024 +1.23%/Sharpe 0.41）；2015-2020 仍微負（-0.72%）。gate 判定：兩窗皆 **FAIL**（健檢全 PASS，但 edge 不足）。
+
+**認賠線進度（A+B 兩發）**：`struct1<30%` ✅ + `邊際單不劣於 v2` ✅ + `同號為正` ❌（2015-2020 仍負）= **2/3**。**還剩方向 A 一發**（突破 OR 箱頂回測，保結構品質再增參與度，需新 code：`entry_retest_band` 進場 mode）。若方向 A 後三條件仍非同時成立 → 判四層假設在此 universe 無強 edge → escalate（換 universe 候選 D 或砍）。
+
+> **harness 價值已兌現**：方向 B 從「手寫 script + 人腦判 ADR」變成 `run-is --preset v3.1b --hypothesis ... → gate 逐條綠紅 + 落 ledger` 一行；ledger 留 lineage。

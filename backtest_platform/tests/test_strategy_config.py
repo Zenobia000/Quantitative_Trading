@@ -98,3 +98,14 @@ def test_get_preset_rejects_unknown() -> None:
 
     with pytest.raises(ValueError, match="unknown strategy preset"):
         get_preset("bogus")
+
+
+def test_v3_1b_preset_keeps_structure_strict() -> None:
+    """Direction B: structure==2 kept strict (unlike v3), only transition relaxed."""
+    from backtest_platform.config.strategy_config import get_preset
+
+    b = get_preset("v3.1b")
+    assert b.entry_min_structure == 2          # strict, unlike v3's 1
+    assert b.entry_first_cross_only is False    # transition relaxed
+    assert b.entry_min_layers == 3
+    assert b.entry_confirm_days == 2
