@@ -1,6 +1,6 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.2 | **更新：** 2026-06-01 | **狀態：** M1 完成 + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅（wrapper bug fix + validation 三件套 + ADR-014 pandas 2 升級）/ Sprint 3 active：portfolio + universe ingest
+> **版本：** v2.3 | **更新：** 2026-06-02 | **狀態：** M1 完成 + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅（wrapper bug fix + validation 三件套 + ADR-014 pandas 2 升級）/ Sprint 3 active：universe ingest **helper 已 merge（PR #15）/ live 9 檔 ingest 尚未執行（R14 仍開放）** + portfolio 回測
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
@@ -17,9 +17,9 @@
 | **技術主導** | Self |
 | **總工期估算** | M0-M5 約 17 週純工作量；兼職 10h/週 → 約 12 個月（含 buffer） |
 | **開始日期** | 2026-05-15（M0 開始） |
-| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass + Sprint 1 完成 + Sprint 2 完成（pandas 2 升級 ADR-014、wrapper bug fix `evaluate_bar`、validation 三件套 regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）/ Sprint 3 active：portfolio aggregator + universe ingest** |
-| **目前 git 分支** | `main`（PR #2/#3/#5 已合入；Sprint 2 commits `b8dc5a9` / `b5c97de` / `c3bddc1` 經 merge `f5f4613` 進 main）；本次 doc audit 走 `docs/wbs-status-audit-2026-06-01` |
-| **最新 commit** | `c3bddc1`（web_design clone spec system，Sprint 2 同 PR；後續 main HEAD 隨 merge commit 推進）|
+| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass + Sprint 1 完成 + Sprint 2 完成（pandas 2 升級 ADR-014、wrapper bug fix `evaluate_bar`、validation 三件套 regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）/ Sprint 3 active：universe ingest helper（PR #15）+ M2+ DB schema（PR #16）+ coverage 93.74% gate→80（PR #17）+ R-15 doc sweep（PR #18）已合入；live 9 檔 ingest + portfolio 回測為剩餘關鍵路徑** |
+| **目前 git 分支** | `main`（6/1–6/2 PR #2/#3/#5/#10/#12/#15/#16/#17/#18 全數合入）；本次 WBS 同步走 `docs/wbs-sync-2026-06-02` |
+| **最新 commit** | `a75c0af`（Merge PR #15 data-universe-ingest；後續 main HEAD 隨 merge commit 推進）|
 
 ### 角色（單人多役）
 
@@ -243,15 +243,16 @@
 | **5.A.3''** | **Taiwan Stock Controls（漲跌停 / 整股 / 手續費 / 證交稅）** | DEV | 6h | ✅ | 2026-06-01（commit 8b6563b）|
 | 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | ✅ | 2026-06-01（commit 8b6563b → Sprint 2 `b5c97de` `evaluate_bar` 校正）|
 | 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ✅ | 2026-06-01（Sprint 2 `validation/regression_vs_m1.py`，2330 2024 全年 **100.00% match**，commit `b5c97de`）|
-| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | 🚧 Sprint 3 | — — 待 5.A.7 完成 |
-| **5.A.7** | **DEFAULT_UNIVERSE 9 檔 FinMind ingest（2317/2454/1101/3008/2882/1303/2412/2308/2891）** | DEV | 4h | ⏳ Sprint 3 Day 1 | — — 解 R14；目前僅 2330 有 parquet cache |
+| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | 🚧 Sprint 3 | — — 待 5.A.7.b live ingest 完成（aggregator + 回測流程） |
+| **5.A.7.a** | **`ingest_universe` 批次 helper（per-symbol isolation + all-fail raise）** | DEV | 4h | ✅ Wave 2 | 2026-06-02（commit `90bdfe9` / PR #15；含 mock/stub unit tests，error isolation 單一來源化） |
+| **5.A.7.b** | **DEFAULT_UNIVERSE live 9 檔 FinMind ingest → parquet（2317/2454/1101/3008/2882/1303/2412/2308/2891）** | DEV | 2h | ⏳ Wave 3 | — — **R14 仍開放**；helper 已就緒但 live ingest 尚未執行，目前 repo 內無任何 parquet cache（連 2330 都缺）；KPI test 為 skipped placeholder。cache 落地策略：寫 ingest runbook 不入版控，CI 維持 mock |
 | 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
 | 5.B.2 | WFA splitter 自寫 | DEV | 8h | ⏳ M3 | — |
 | 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01（兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠）|
 | 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ M3 | — — vectorbt cross-check 完成後可抽象 |
 | 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
 
-**模組小計**：~100h | Sprint 1 完成 ~30h + Sprint 2 完成 ~30h = 60h（60%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）+ ADR-014 pandas 2 升級；Sprint 3 起點為 5.A.7 universe ingest 解鎖 5.A.6 portfolio 回測
+**模組小計**：~100h | Sprint 1 完成 ~30h + Sprint 2 完成 ~30h + Sprint 3 5.A.7.a helper 4h = 64h（64%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）+ ADR-014 pandas 2 升級 + `ingest_universe` helper（PR #15）；**剩餘關鍵路徑：5.A.7.b live 9 檔 ingest（R14）→ 解鎖 5.A.6 portfolio 回測**
 
 ---
 
@@ -321,11 +322,11 @@
 
 | 項目 | 當前值 | 目標值 |
 |:--|:---:|:---:|
-| 整體進度 | **43%** | 100% |
+| 整體進度 | **48%**（與 §2 工作包統計合計一致） | 100% |
 | M1 完成度 | 100% | 100% |
 | Sprint 0 scaffolding | 100% | — |
 | Discord 遷移 | 100% | — |
-| 單元測試覆蓋率 | ~85%（M1 + Discord） | 80%+ |
+| 單元測試覆蓋率 | **93.74%**（Stream D Wave 2，PR #17；`--cov-fail-under` ratchet 65→80） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
 | ADR 數量 | 16（+012 uv / 013 zipline-reloaded / 014 3.1.1 升級 / 015 儀表板 React / 016 M2 KPI 凍結） | 持續 |
@@ -361,7 +362,7 @@
 | 策略本身無 Edge（IC 測試紅燈）| 高 | 致命 | 接受 → 砍策略 / 改 hypothesis | Self |
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
-| **R14** DEFAULT_UNIVERSE 10 檔僅 ingest 2330 | 高 | **致命**（M2 acceptance 若靠單股將有 TSMC 偏誤）| Sprint 3 Day 1 ingest 其餘 9 檔（5.A.7）；regression tests 解 skip | Self |
+| **R14** DEFAULT_UNIVERSE live ingest 尚未執行（repo 內無任何 parquet cache）| 高 | **致命**（M2 acceptance 若靠單股將有 TSMC 偏誤）| 🚧 **部分緩解**（2026-06-02）：`ingest_universe` helper 已 merge（5.A.7.a / PR #15），但 live 9 檔 ingest（5.A.7.b）尚未執行；KPI test 仍 skip。**剩餘動作**：跑 live ingest 產 parquet + 寫 ingest runbook（不入版控）→ 解 portfolio / cross_check skip | Self |
 
 ---
 
@@ -411,7 +412,7 @@
 | ✅ Sprint 0c | 6/1（提前完成）| Sprint 0 spike 執行 + Gate Conditional Pass + ADR-013 pivot | 0.2 + 0.3 + 0.4 |
 | ✅ Sprint 1 | 6/1（提前完成）| zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
 | ✅ Sprint 2 | 6/1（單日壓縮）| pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）| 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
-| 🚧 Sprint 3 | 6/2-6/15 | DEFAULT_UNIVERSE 9 檔 ingest + Portfolio 10 檔 IS 回測 + multi-stock aggregator + ADR-013 doc sweep | 5.A.7 + 5.A.6 + 3.D.4 |
+| 🚧 Sprint 3 | 6/2-6/15 | ✅ 已完成：`ingest_universe` helper（PR #15）+ 9 張 M2+ DB 表（PR #16）+ coverage 93.74% gate→80（PR #17）+ R-15 doc sweep（PR #18）。**剩餘關鍵路徑**：live 9 檔 ingest（5.A.7.b / R14）→ multi-stock aggregator → Portfolio 10 檔 IS 回測 | 5.A.7.a ✅ + 5.A.7.b + 5.A.6 + 3.D.4 ✅ |
 | Sprint 4 | 6/16-6/29 | M2 acceptance（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健，見 ADR-016）+ FinLab bundle（M3 規劃） | M2 結尾 |
 | Sprint 5-8 | 6/30-8/24 | M3 統計驗證 + WFA + PBO/DSR + DOE | 5.B.2 + 6.* |
 | ... | ... | 後續 sprint 待近期規劃 | |
@@ -451,6 +452,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.3 | 2026-06-02 | **6/2 PR 批次同步 + R14 真相校正**：§1 banner/git 分支/最新 commit 更新至 `a75c0af`（PR #15/16/17/18 已合入）；**5.A.7 拆為 5.A.7.a helper ✅（PR #15）/ 5.A.7.b live ingest ⏳（R14 仍開放，repo 內無 parquet cache）**；模組 5.0 60%→64%；§4 整體進度統一為 48%（修 43/48 內部打架）、覆蓋率更新為 93.74%（gate→80，PR #17）；§5 R14 改寫為「部分緩解」+ cache runbook 不入版控策略；§7 Sprint 3 列已完成 PR 與剩餘關鍵路徑 |
 | v2.2 | 2026-06-01 | **WBS status audit sync**：Sprint 1/2 標 ✅；模組 4.0 100%、5.0 60%、9.0 70%；§3 5.A.4 ~ 5.A.7 / 5.B.1 / 5.B.3 落地紀錄；§5 風險表新增 R14（universe ingest 9 檔缺）/ R15（doc sweep）；§6 加 M2 acceptance KPI 子節（CAGR>18% / Sharpe>1.0，凍結於 ADR-016）；§7 Sprint 表 1/2/3 更新；總進度 43%→48% |
 | v2.1 | 2026-06-01 | 模組 8.0 加 8.A.0（儀表板設計階段完成 ✅）+ 8.A.3（REST API 層）；8.A.1/A.2 標註 React 化（ADR-015）；§4 ADR 數量 11→15、文檔完整度更新 |
 | v2.0 | 2026-06-01 | 完整重寫對齊 M2 路線變更（ADR-005~011）；新增模組 0.0 (Sprint 0)、2.4（M2 重組追溯）、11.0（跨 milestone 維運）；模組 5.0/7.0/8.0 重寫；確立本檔為狀態真相源 |
