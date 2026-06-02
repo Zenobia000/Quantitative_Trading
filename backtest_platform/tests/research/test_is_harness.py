@@ -7,7 +7,12 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from backtest_platform.research.is_harness import run_and_judge, run_is
+from backtest_platform.research.is_harness import (
+    run_and_judge,
+    run_and_judge_with_returns,
+    run_is,
+    run_is_returns,
+)
 from backtest_platform.research.run_config import RunConfig
 
 
@@ -59,3 +64,33 @@ def test_run_is_empty_when_no_window_data() -> None:
     # window entirely before any data → no bars
     m = run_is(_cfg(is_start=date(2010, 1, 1), is_end=date(2010, 6, 1)), loader=_synthetic_loader)
     assert m["trades"] == 0
+
+
+def test_run_is_returns_series_aligns_with_metrics() -> None:
+    cfg = _cfg()
+    returns = run_is_returns(cfg, loader=_synthetic_loader)
+    metrics = run_is(cfg, loader=_synthetic_loader)
+    assert isinstance(returns, pd.Series)
+    assert len(returns) > 0
+    # the returns series is exactly the one the metrics are derived from
+    assert len(returns) == metrics["bars"]
+
+
+def test_run_is_returns_empty_when_no_window_data() -> None:
+    returns = run_is_returns(
+        _cfg(is_start=date(2010, 1, 1), is_end=date(2010, 6, 1)), loader=_synthetic_loader
+    )
+    assert isinstance(returns, pd.Series)
+    assert returns.empty
+
+
+def test_run_and_judge_with_returns_single_pass() -> None:
+    cfg = _cfg(hypothesis="one pass")
+    rec, returns = run_and_judge_with_returns(cfg, loader=_synthetic_loader)
+    # record identical in shape to run_and_judge
+    plain = run_and_judge(cfg, loader=_synthetic_loader)
+    assert rec["run_id"] == plain["run_id"] == cfg.run_id
+    assert rec["gate_status"] == plain["gate_status"]
+    # returns aligns with the record's bar count
+    assert isinstance(returns, pd.Series)
+    assert len(returns) == rec["metrics"]["bars"]

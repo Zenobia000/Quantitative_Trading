@@ -70,7 +70,7 @@
 
 三種介面，完整規範見 [`dev_docs/06_api_design_specification.md`](dev_docs/06_api_design_specification.md)：
 
-- **CLI（Click）** — ETL / 回測 / 研究迴圈（`run-is` / `runs` / `sweep` / `compare`）
+- **CLI（Click）** — ETL / 回測 / 研究迴圈（`run-is`〔+`--tearsheet`〕/ `runs` / `sweep` / `compare` / `validate`）
 - **Python API** — pure functions + Pydantic models（程式內呼叫）
 - **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影：
 
