@@ -26,6 +26,7 @@ subsequent ingests with cache are <30 seconds.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
@@ -38,6 +39,19 @@ from backtest_platform.engines.zipline_adapter.bundles.parquet_cache import (
     ParquetCache,
     cached_or_fetch,
 )
+
+
+@dataclass(slots=True, frozen=True)
+class UniverseIngestResult:
+    """Outcome of a batch ingest run.
+
+    ``bundles`` keeps successful symbols only; failing symbols are recorded
+    in ``failed_symbols`` so the caller can decide whether to retry, log, or
+    fall through to a partial-universe backtest.
+    """
+
+    bundles: dict[str, ETLBundle] = field(default_factory=dict)
+    failed_symbols: list[str] = field(default_factory=list)
 
 # Default M2 development universe — small enough to backfill in minutes,
 # representative of TSE large/mid caps. Override with UNIVERSE_FINMIND env.
@@ -74,6 +88,50 @@ def _resolve_cache_dir(environ: dict) -> Path:
     if "FINMIND_PARQUET_CACHE" in environ:
         return Path(environ["FINMIND_PARQUET_CACHE"])
     return DEFAULT_CACHE_DIR
+
+
+def ingest_universe(
+    universe: list[str] | tuple[str, ...] | None = None,
+    *,
+    start: date,
+    end: date,
+    cache_dir: Path | None = None,
+) -> UniverseIngestResult:
+    """Batch-ingest a universe of symbols, isolating per-symbol failures.
+
+    Used by ``finmind_to_bundle`` (zipline callback) and by direct scripts
+    that need ETLBundle dicts without going through the zipline writer
+    pipeline. The single-stock failure path is the critical contract: one
+    bad symbol must not abort the whole batch (FinMind transient 5xx is
+    common).
+
+    Raises ``RuntimeError`` only when *every* symbol fails — silently
+    returning an empty result is worse, because downstream zipline would
+    write an empty bundle file that confuses later runs.
+    """
+    symbols = list(universe) if universe is not None else list(DEFAULT_UNIVERSE)
+    cache_root = Path(cache_dir) if cache_dir is not None else DEFAULT_CACHE_DIR
+    cache_root.mkdir(parents=True, exist_ok=True)
+    cache = ParquetCache(root=cache_root)
+
+    bundles: dict[str, ETLBundle] = {}
+    failed: list[str] = []
+    for symbol in symbols:
+        try:
+            bundles[symbol] = cached_or_fetch(symbol, start, end, cache)
+        except Exception as exc:  # noqa: BLE001 — per-symbol isolation is the point
+            logger.error("ingest failed stock={} error={}", symbol, exc)
+            failed.append(symbol)
+
+    if not bundles:
+        raise RuntimeError(
+            f"no stocks ingested — every symbol in universe failed (failed={failed})"
+        )
+
+    logger.info(
+        "universe ingest done: ok={} failed={}", len(bundles), len(failed)
+    )
+    return UniverseIngestResult(bundles=bundles, failed_symbols=failed)
 
 
 def _to_zipline_daily_frame(bundle: ETLBundle, calendar) -> pd.DataFrame:
@@ -192,8 +250,6 @@ def finmind_to_bundle(
     """
     universe = _resolve_universe(environ)
     cache_dir = _resolve_cache_dir(environ)
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    parquet_cache = ParquetCache(root=cache_dir)
 
     # zipline passes pandas-friendly date objects; M1 ETL wants `datetime.date`.
     start_date = start_session.date() if hasattr(start_session, "date") else date.fromisoformat(
@@ -210,17 +266,17 @@ def finmind_to_bundle(
         end_date,
     )
 
-    # Phase 1 — fetch (or read from cache) every stock's bundle
-    bundles: dict[str, ETLBundle] = {}
-    for symbol in universe:
-        try:
-            bundles[symbol] = cached_or_fetch(symbol, start_date, end_date, parquet_cache)
-        except Exception as exc:  # noqa: BLE001 — single-stock failure shouldn't abort whole ingest
-            logger.error("skipping {}: {}", symbol, exc)
-
-    if not bundles:
-        raise RuntimeError(
-            "no stocks ingested — check FINMIND_TOKEN and universe configuration"
+    # Phase 1 — fetch (or read from cache) every stock's bundle; delegate
+    # to ingest_universe so error-isolation logic stays single-sourced.
+    result = ingest_universe(
+        universe, start=start_date, end=end_date, cache_dir=cache_dir
+    )
+    bundles = result.bundles
+    if result.failed_symbols:
+        logger.warning(
+            "bundle ingest skipped {} symbol(s): {}",
+            len(result.failed_symbols),
+            result.failed_symbols,
         )
 
     # Phase 2 — normalize to zipline daily-bar format

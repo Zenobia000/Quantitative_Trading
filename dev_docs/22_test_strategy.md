@@ -143,6 +143,35 @@ def test_finlab_bundle_normalizes_to_long_table(fake_finlab_response):
     assert result["stock_id"].nunique() == 1
 ```
 
+**Mock pattern for `ingest_universe`（5.A.7 Wave 2）**：
+
+批次 ingest 測試 **絕不打真實 FinMind API**。Patch `cached_or_fetch` 模組級函式，注入 per-symbol 的成功 / 失敗 closure，覆蓋 happy path + partial failure + all-fail 三個案例：
+
+```python
+# tests/engines/zipline_adapter/bundles/test_universe_ingest.py
+from unittest.mock import patch
+
+def test_ingest_universe_continues_on_single_stock_failure(tmp_path):
+    def fake(symbol, start, end, cache, fetch_fn=None):
+        if symbol == "BADSTOCK":
+            raise RuntimeError("FinMind 404")
+        return _stub_bundle(symbol)
+
+    with patch(
+        "backtest_platform.engines.zipline_adapter.bundles.finmind_bundle.cached_or_fetch",
+        side_effect=fake,
+    ):
+        result = ingest_universe(
+            ["2330", "BADSTOCK", "2317"],
+            start=date(2024, 1, 2), end=date(2024, 1, 5), cache_dir=tmp_path,
+        )
+
+    assert set(result.bundles) == {"2330", "2317"}
+    assert result.failed_symbols == ["BADSTOCK"]
+```
+
+Wave 3 acceptance（9-stock 7-year ingest）測試以 `@pytest.mark.skip(reason="Wave 3: requires ...")` 佔位，使用者本機跑完整 `zipline ingest -b finmind` 後再啟用。
+
 ### 2.3 Validator 數學正確性（M3）
 
 對 Bailey-López de Prado 論文範例做 unit test：

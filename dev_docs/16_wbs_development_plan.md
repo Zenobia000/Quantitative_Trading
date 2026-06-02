@@ -124,7 +124,7 @@
 | 2.0 系統架構 | 80h | 80h | 100% | ✅ M1 完成 + M2 重組完成 |
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
-| 5.0 回測引擎 | 100h | 60h | 60% | 🚧 Sprint 1 ✅（zipline-reloaded swap + bundle + Algorithm + Taiwan controls + CLI）+ Sprint 2 ✅（wrapper bug fix `evaluate_bar` + validation 三件套 + ADR-014）|
+| 5.0 回測引擎 | 100h | 64h | 64% | 🚧 Sprint 1 ✅（zipline-reloaded swap + bundle + Algorithm + Taiwan controls + CLI）+ Sprint 2 ✅（wrapper bug fix `evaluate_bar` + validation 三件套 + ADR-014）+ Sprint 3 5.A.7 Wave 2（`ingest_universe` 批次 helper + mock test）|
 | 6.0 統計驗證 | 180h | 0h | 0% | M3 |
 | 7.0 Paper+實盤 | 110h | 0h | 0% | M4-M5 |
 | 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) + 設計階段 (ADR-015) |
