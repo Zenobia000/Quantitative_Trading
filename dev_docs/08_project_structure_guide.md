@@ -31,7 +31,7 @@ backtest_platform/
 ├── tests/                        # pytest（見下）
 ├── sprint_0_spikes/              # M2 啟動前 6 spike + RUNBOOK（gate 通過後可刪）
 │   ├── RUNBOOK.md
-│   ├── s1_tquant_hello_world.py
+│   ├── s1_tquant_hello_world.py    # ❌ FAIL → ADR-013 切到 zipline-reloaded（spike 結果保留）
 │   ├── s2_m1_plug_zipline.py
 │   ├── s3_finlab_bundle_poc.py
 │   ├── s3_verify_bundle.py
@@ -283,7 +283,7 @@ dev_docs/                         # 工程文件（架構/規格/ADR/計劃）
 | 類別 | 變數 | M | 來源 |
 | :--- | :--- | :---: | :--- |
 | 資料源（主） | `FINLAB_API_TOKEN` | M2 | https://ai.finlab.tw |
-| 資料源（M2 副，TEJ）| `TEJAPI_KEY` | M2 | https://tquant.tejwin.com（ADR-013 後降為可選；主路徑已不依賴 TEJ）|
+| ~~資料源（TEJ）~~ | ~~`TEJAPI_KEY`~~ | — | ADR-013 已棄用 TEJ 路徑；主路徑（zipline-reloaded + FinLab/FinMind bundle）不依賴 TEJ |
 | 資料源（fallback） | `FINMIND_TOKEN` | M1 | https://finmindtrade.com |
 | Broker（M4 paper / M5 live） | `SHIOAJI_*` | M4 | 永豐金 API 中心 |
 | 儲存 | `POSTGRES_*` | M1 | docker-compose |

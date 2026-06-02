@@ -1,10 +1,10 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.0 | **更新：** 2026-06-01 | **狀態：** M1 完成 + Sprint 0 scaffolding 完成 + Discord 遷移完成 / M2 主體待跑
+> **版本：** v2.2 | **更新：** 2026-06-01 | **狀態：** M1 完成 + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅（wrapper bug fix + validation 三件套 + ADR-014 pandas 2 升級）/ Sprint 3 active：portfolio + universe ingest
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
-> **v2.0 變更**：完整重寫對齊 M2 路線變更（ADR-005~011）— rqalpha → TQuant-Lab、FinMind → FinLab 主、新增 adapters/orchestration/monitoring/dashboard 模組、Discord 取代 Telegram、Sprint 0 spike 工項加入。
+> **v2.0 變更**：完整重寫對齊 M2 路線變更（ADR-005~013）— rqalpha → ~~TQuant-Lab~~ → zipline-reloaded（ADR-013 supersede ADR-005）、FinMind → FinLab 主、新增 adapters/orchestration/monitoring/dashboard 模組、Discord 取代 Telegram、Sprint 0 spike 工項加入。
 
 ---
 
@@ -17,9 +17,9 @@
 | **技術主導** | Self |
 | **總工期估算** | M0-M5 約 17 週純工作量；兼職 10h/週 → 約 12 個月（含 buffer） |
 | **開始日期** | 2026-05-15（M0 開始） |
-| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass (S1 F1 觸發 ADR-013) + Sprint 1 Day 1-5 完成（zipline-reloaded 切換 + FinMind bundle + Algorithm 落地）** |
-| **目前 git 分支** | `feat/m2-zipline-reloaded-engine`（原 `feat/m2-tquant-lab-integration` 已於 ADR-013 後改名） |
-| **最新 commit** | `a653cad`（21 §3 對齊 finmind_bundle 實作，2026-06-01）|
+| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass + Sprint 1 完成 + Sprint 2 完成（pandas 2 升級 ADR-014、wrapper bug fix `evaluate_bar`、validation 三件套 regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）/ Sprint 3 active：portfolio aggregator + universe ingest** |
+| **目前 git 分支** | `main`（PR #2/#3/#5 已合入；Sprint 2 commits `b8dc5a9` / `b5c97de` / `c3bddc1` 經 merge `f5f4613` 進 main）；本次 doc audit 走 `docs/wbs-status-audit-2026-06-01` |
+| **最新 commit** | `c3bddc1`（web_design clone spec system，Sprint 2 同 PR；後續 main HEAD 隨 merge commit 推進）|
 
 ### 角色（單人多役）
 
@@ -70,7 +70,7 @@
 └── 4.4 Zipline algorithm wrapper (M2)              ← 新增
 
 5.0 回測引擎
-├── 5.A TQuant-Lab (Zipline) 主骨架 (M2)            ← 重寫 (ADR-005)
+├── 5.A zipline-reloaded 主骨架 (M2，原 TQuant-Lab) ← 重寫 (ADR-005 → superseded by ADR-013)
 ├── 5.B vectorbt 副引擎 (M3)                        ← 重寫 (ADR-007)
 ├── 5.C 雙引擎對齊測試
 └── 5.D engines/ CLI
@@ -123,15 +123,15 @@
 | 1.0 專案管理 | 50h | 42h | 84% | 持續 |
 | 2.0 系統架構 | 80h | 80h | 100% | ✅ M1 完成 + M2 重組完成 |
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
-| 4.0 策略層 | 70h | 60h | 86% | M1 完成；Zipline wrapper 待 M2 |
-| 5.0 回測引擎 | 100h | 30h | 30% | 🚧 Sprint 1 Day 1-5 完成（zipline-reloaded swap + finmind bundle + Algorithm + Taiwan controls）；5.A.7 Wave 2 完成（`ingest_universe` 批次 + mock test，無 live FinMind 呼叫）|
+| 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
+| 5.0 回測引擎 | 100h | 64h | 64% | 🚧 Sprint 1 ✅（zipline-reloaded swap + bundle + Algorithm + Taiwan controls + CLI）+ Sprint 2 ✅（wrapper bug fix `evaluate_bar` + validation 三件套 + ADR-014）+ Sprint 3 5.A.7 Wave 2（`ingest_universe` 批次 helper + mock test）|
 | 6.0 統計驗證 | 180h | 0h | 0% | M3 |
 | 7.0 Paper+實盤 | 110h | 0h | 0% | M4-M5 |
-| 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) |
-| 9.0 測試品質 | 80h | 44h | 55% | 持續（44 unit + 12 Discord） |
+| 8.0 監控與儀表板 | 80h | 12h | 15% | Discord notifier 完成 (ADR-010) + 設計階段 (ADR-015) |
+| 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 110h | 92% | 持續 |
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
-| **合計** | **1050h** | **448h** | **43%** | M1 完成 + Sprint 0 scaffolding |
+| **合計** | **1050h** | **500h** | **48%** | M1 ✅ + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅ |
 
 兼職（10h/週）→ 預估剩 60 週（約 14 個月）完成 M5；含 buffer 預計 2027-08 全倉上線。
 
@@ -201,12 +201,12 @@
 | 3.D.1 | DBConfig + 連線 context manager | DEV | 3h | ✅ | 2026-05-25 | — |
 | 3.D.2 | upsert_frame | DEV | 5h | ✅ | 2026-05-25 | 3.D.1 |
 | 3.D.3 | Integration test 跑真實 DB | QA | 4h | ✅ | 2026-05-25 | 3.D.2 |
-| 3.D.4 | 新增 9 張 M2+ 表 (見 21 §4) | DEV | 8h | ⏳ | — | M2 啟動 |
+| 3.D.4 | 新增 9 張 M2+ 表 (見 21 §4) + db_writer.upsert_positions | DEV | 8h | ✅ | 2026-06-02 | M2 啟動 |
 | 3.E.1 | FinLab live polling adapter | DEV | 8h | ⏳ | — | 0.3.5 |
 | 3.E.2 | Shioaji quote adapter (備援) | DEV | 6h | ⏳ | — | 0.3.4 |
 | 3.E.3 | Live feed → TimescaleDB writer | DEV | 6h | ⏳ | — | 3.E.1 |
 
-**模組小計**：120h | 進度 53%
+**模組小計**：120h | 進度 60%（含 3.D.4 完成）
 
 ---
 
@@ -224,10 +224,10 @@
 | 4.3.2 | _evaluate_priority 7 訊號 + 優先序 | DEV | 10h | ✅ | 2026-05 |
 | 4.3.3 | compute_signals walk-loop | DEV | 6h | ✅ | 2026-05 |
 | 4.3.4 | evaluate_bar dataclass + 函式 | DEV | 5h | ✅ | 2026-05 |
-| 4.4.1 | Zipline algorithm wrapper skeleton | DEV | 4h | ⏳ | — |
-| 4.4.2 | initialize/handle_data 整合 M1 純函式 | DEV | 6h | ⏳ | — |
+| 4.4.1 | Zipline algorithm wrapper skeleton | DEV | 4h | ✅ | 2026-06-01 — `four_layer_resonance.py` initialize / schedule_function |
+| 4.4.2 | initialize/handle_data 整合 M1 純函式 | DEV | 6h | ✅ | 2026-06-01 — Sprint 2 改為 `evaluate_bar` 事件驅動評估（取代原 `compute_signals.iloc[-1]` walk-loop wrapper bug） |
 
-**模組小計**：70h | 進度 86%（M1 完成；M2 wrapper 待）
+**模組小計**：70h | 進度 100% ✅（M1 完成；M2 wrapper Sprint 1-2 落地）
 
 ---
 
@@ -241,16 +241,17 @@
 | 5.A.3 | Algorithm + Order routing 學習 | DEV | 8h | ✅ | 2026-06-01（Day 4-5，commit 8b6563b）|
 | **5.A.3'** | **FinMind bundle ingester + parquet cache（Sprint 1 Day 2-3）** | DEV | 12h | ✅ | 2026-06-01（commit ed3a987，~360 LOC + 11 tests）|
 | **5.A.3''** | **Taiwan Stock Controls（漲跌停 / 整股 / 手續費 / 證交稅）** | DEV | 6h | ✅ | 2026-06-01（commit 8b6563b）|
-| 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | 🚧 | — |
-| 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ⏳ | — |
-| 5.A.6 | Portfolio (100 檔) IS 回測 | DEV | 8h | ⏳ | — |
-| 5.B.1 | ~~vectorbt adapter~~ | DEV | 12h | 🚫 M3 暫停 | — | ADR-013 註記：pandas<2 與 vectorbt 不相容 |
-| 5.B.2 | WFA splitter 自寫 | DEV | 8h | M3 | — |
-| 5.B.3 | ~~vectorbt vs Zipline 對拍~~ | QA | 8h | 🚫 M3 暫停 | 同 5.B.1 |
-| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ | — |
-| 5.D.1 | engines/ Click CLI | DEV | 4h | ⏳ | — |
+| 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | ✅ | 2026-06-01（commit 8b6563b → Sprint 2 `b5c97de` `evaluate_bar` 校正）|
+| 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ✅ | 2026-06-01（Sprint 2 `validation/regression_vs_m1.py`，2330 2024 全年 **100.00% match**，commit `b5c97de`）|
+| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | 🚧 Sprint 3 | — — 待 5.A.7 完成 |
+| **5.A.7** | **DEFAULT_UNIVERSE 9 檔 FinMind ingest（2317/2454/1101/3008/2882/1303/2412/2308/2891）** | DEV | 4h | ⏳ Sprint 3 Day 1 | — — 解 R14；目前僅 2330 有 parquet cache |
+| 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
+| 5.B.2 | WFA splitter 自寫 | DEV | 8h | ⏳ M3 | — |
+| 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01（兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠）|
+| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ M3 | — — vectorbt cross-check 完成後可抽象 |
+| 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
 
-**模組小計**：~100h | Sprint 1 Day 1-5 完成 ~26h（26%）— 主骨架切換 + bundle + Algorithm + Taiwan controls；FourLayerResonance Algorithm 完整實作為下一步
+**模組小計**：~100h | Sprint 1 完成 ~30h + Sprint 2 完成 ~30h = 60h（60%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）+ ADR-014 pandas 2 升級；Sprint 3 起點為 5.A.7 universe ingest 解鎖 5.A.6 portfolio 回測
 
 ---
 
@@ -297,8 +298,10 @@
 
 | 編號 | 任務 | 工時 | 狀態 |
 |:--|:--|:---:|:--|
-| 8.A.1 | Streamlit MVP 面板 A+B+C (spike S6 延伸) | 16h | ⏳ M3 |
-| 8.A.2 | Streamlit 完整 D+E 面板 | 12h | ⏳ M5 |
+| 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | 12h | ✅ 2026-06-01 |
+| 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | 16h | ⏳ M3 |
+| 8.A.2 | 面板 D+E（React 版，ADR-015） | 12h | ⏳ M5 |
+| 8.A.3 | Dashboard REST API 層（FastAPI，14 端點；ADR-015 / 21_data_contract §8） | 10h | ⏳ M3 |
 | 8.B.1 | Grafana 4 個系統面板 (F-I) | 12h | ⏳ M4 |
 | 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | 4h | ⏳ M4 |
 | 8.C.1 | Discord notifier base | 4h | ✅ 2026-05-31 |
@@ -310,7 +313,7 @@
 | 8.E.2 | GCS upload script | 4h | M5 |
 | 8.F.1 | 災難恢復演練 | 8h | M5 |
 
-**模組小計**：~80h | 進度 15%（Discord 完成）
+**模組小計**：~102h | 進度 ~20%（Discord 完成 + 儀表板設計階段完成：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md)）
 
 ---
 
@@ -325,8 +328,8 @@
 | 單元測試覆蓋率 | ~85%（M1 + Discord） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 11 | 持續 |
-| 文檔完整度 | ~95%（dev_docs 階段 1-7 完整 + 對齊 M2 結構） | 100% |
+| ADR 數量 | 16（+012 uv / 013 zipline-reloaded / 014 3.1.1 升級 / 015 儀表板 React / 016 M2 KPI 凍結） | 持續 |
+| 文檔完整度 | ~96%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / 21 API 契約） | 100% |
 
 ### 技術債（M2 待處理）
 
@@ -338,7 +341,7 @@
 ### 已解決的技術債（v1.0 列為待解，現已 fix）
 
 - ~~pytest-asyncio 9.x 不相容~~ → 已 bump to >=0.24（commit `2936119`，2026-06-01）
-- ~~rqalpha 自訂 mod 是否值得寫~~ → 廢止；改 TQuant-Lab（ADR-005）
+- ~~rqalpha 自訂 mod 是否值得寫~~ → 廢止；改 zipline-reloaded（ADR-005 → ADR-013）
 
 ---
 
@@ -350,6 +353,7 @@
 | FinLab 倒閉 / 漲價 | 低 | 高 | FinMind bundle 為 fallback（ADR-006 已備）| Self |
 | FinLab 引擎精度爭議 | — | — | 不用 finlab.sim，只用其資料 | — |
 | ~~TQuant-Lab 84 stars 社群小~~ | — | — | ADR-013 已切到 zipline-reloaded 主線（社群活躍），此風險解除 | — |
+| **R-15 dev_docs 散落 TQuant-Lab 引用** | — | — | ✅ **Complete** (2026-06-02) — 8 份 docs（INDEX/02/05/08/17/18/22/16）已 sweep 至 ADR-013/014 路線 | Self |
 | Sprint 0 S2 fail（M1 plug Zipline 不通）| 低 | 高 | 強制 debug，不退場（is deal-breaker） | Self |
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
@@ -357,6 +361,7 @@
 | 策略本身無 Edge（IC 測試紅燈）| 高 | 致命 | 接受 → 砍策略 / 改 hypothesis | Self |
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
+| **R14** DEFAULT_UNIVERSE 10 檔僅 ingest 2330 | 高 | **致命**（M2 acceptance 若靠單股將有 TSMC 偏誤）| Sprint 3 Day 1 ingest 其餘 9 檔（5.A.7）；regression tests 解 skip | Self |
 
 ---
 
@@ -377,6 +382,16 @@
 **M2 退場條件**：若 IS 跑不到綠燈 → 回 M0 重新檢視策略
 **Sprint 0 退場條件**：見 `01_workflow_manual.md §5.A.4` 決策樹
 
+### M2 acceptance「綠燈」門檻（凍結於 [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md)）
+
+| 指標 | M2 IS 門檻 | 來源 |
+|:--|:--:|:--|
+| **CAGR** | **> 18%**（含生存者偏誤 buffer） | `01_workflow_manual.md` §6 + `strategy/v2.md` §4.3.1 |
+| **Sharpe** | **> 1.0** | `02_project_brief_and_prd.md` §成功指標 |
+| **滑點 0.3% 下 Sharpe** | **> 1.0**（穩健性測試） | `02_project_brief_and_prd.md` §成功指標 |
+
+任一項不達標 → 觸發退場條件回 M0。M3 OOS 門檻（OOS Sharpe > 0.6 × IS、PBO < 30%、DSR > 0.95）見 `01_workflow_manual.md` §6。
+
 ---
 
 ## 7. 開發節奏建議
@@ -394,11 +409,11 @@
 | ✅ Sprint 0a | 5/26-5/30 | M1 完成（資料+策略+pipeline）| 3.A + 4.0 + 9.1 |
 | ✅ Sprint 0b | 5/31-6/1 | M2 重組 + scaffolding + ADR + Discord | 2.4 + 0.1 + 8.C |
 | ✅ Sprint 0c | 6/1（提前完成）| Sprint 0 spike 執行 + Gate Conditional Pass + ADR-013 pivot | 0.2 + 0.3 + 0.4 |
-| 🚧 Sprint 1 | 6/1-6/22 | zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + IS 回測 | 5.A.1' + 5.A.3' + 5.A.4 |
-| Sprint 2 | 6/23-7/6 | 2330 IS 回測對齊 M1 pipeline.py + DiscordNotifier 端到端整合 | 5.A.4 + 5.A.5 |
-| Sprint 3 | 7/7-7/20 | Portfolio 100 檔 IS 回測 + M2 acceptance prep | 5.A.6 + 3.D.4 |
-| Sprint 4 | 7/21-8/3 | M2 acceptance + M2_backtest_report + FinLab bundle (M3 規劃) | M2 結尾 |
-| Sprint 5-8 | 8/4-9/28 | M3 統計驗證 + vectorbt + DOE | 5.B + 6.* |
+| ✅ Sprint 1 | 6/1（提前完成）| zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
+| ✅ Sprint 2 | 6/1（單日壓縮）| pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）| 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
+| 🚧 Sprint 3 | 6/2-6/15 | DEFAULT_UNIVERSE 9 檔 ingest + Portfolio 10 檔 IS 回測 + multi-stock aggregator + ADR-013 doc sweep | 5.A.7 + 5.A.6 + 3.D.4 |
+| Sprint 4 | 6/16-6/29 | M2 acceptance（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健，見 ADR-016）+ FinLab bundle（M3 規劃） | M2 結尾 |
+| Sprint 5-8 | 6/30-8/24 | M3 統計驗證 + WFA + PBO/DSR + DOE | 5.B.2 + 6.* |
 | ... | ... | 後續 sprint 待近期規劃 | |
 
 ### 早期停止 Gate
@@ -436,5 +451,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.2 | 2026-06-01 | **WBS status audit sync**：Sprint 1/2 標 ✅；模組 4.0 100%、5.0 60%、9.0 70%；§3 5.A.4 ~ 5.A.7 / 5.B.1 / 5.B.3 落地紀錄；§5 風險表新增 R14（universe ingest 9 檔缺）/ R15（doc sweep）；§6 加 M2 acceptance KPI 子節（CAGR>18% / Sharpe>1.0，凍結於 ADR-016）；§7 Sprint 表 1/2/3 更新；總進度 43%→48% |
+| v2.1 | 2026-06-01 | 模組 8.0 加 8.A.0（儀表板設計階段完成 ✅）+ 8.A.3（REST API 層）；8.A.1/A.2 標註 React 化（ADR-015）；§4 ADR 數量 11→15、文檔完整度更新 |
 | v2.0 | 2026-06-01 | 完整重寫對齊 M2 路線變更（ADR-005~011）；新增模組 0.0 (Sprint 0)、2.4（M2 重組追溯）、11.0（跨 milestone 維運）；模組 5.0/7.0/8.0 重寫；確立本檔為狀態真相源 |
 | v1.0 | 2026-05-26 | 初版（M1 完成時的 baseline） |

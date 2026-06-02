@@ -1,8 +1,10 @@
 # ADR-013: 主骨架切換 zipline-tej → zipline-reloaded
 
-> **狀態：** 已接受 | **日期：** 2026-06-01 | **決策者：** Self
+> **狀態：** 已接受（§ 4 負面後果部分已由 ADR-014 解除） | **日期：** 2026-06-01 | **決策者：** Self
+> **Amended by：** [ADR-014](./ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md)
+> — zipline-reloaded 3.0.4 → 3.1.1 升級已解除 § 4 列出的 pandas<2 / numpy<2 / Python<3.12 / vectorbt 暫停 四項負面後果。本 ADR 主決策（採用 zipline-reloaded 為主骨架）維持有效；僅版本鎖定與相關約束被 ADR-014 更新。
 > **Supersedes：** [ADR-005](./ADR-005-mainframe-tquant-lab-zipline-fork.md)（TQuant-Lab / zipline-tej 主骨架角色廢止）
-> **Related：** ADR-001（rqalpha 已 superseded）、ADR-007（雙引擎方案受影響，vectorbt 半邊暫停）、ADR-011（M2 目錄結構）、ADR-012（uv 套件管理）
+> **Related：** ADR-001（rqalpha 已 superseded）、ADR-007（vector 半邊隨 ADR-014 恢復）、ADR-011（M2 目錄結構）、ADR-012（uv 套件管理）、ADR-014（3.1.1 升級）
 
 ---
 

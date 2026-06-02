@@ -81,6 +81,88 @@ def test_upsert_frame_calls_execute_values_with_on_conflict() -> None:
     assert rows[0] == ("2330", date(2024, 11, 1), -8312, 452, -45)
 
 
+# ---------------------------------------------------------------------------
+# M2 additions — positions upsert (real impl) + signals/orders/fills stubs
+# ---------------------------------------------------------------------------
+
+
+def test_upsert_positions_calls_execute_values_with_unique_constraint() -> None:
+    """positions uses ON CONFLICT against UNIQUE(strategy_id, run_id, stock_id, opened_at)."""
+    from backtest_platform.data.db_writer import upsert_positions
+
+    cur = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+
+    rows = [
+        {
+            "strategy_id": "four_layer_resonance",
+            "run_id": "run-001",
+            "stock_id": "2330",
+            "opened_at": "2026-05-30T09:01:23+08:00",
+            "entry_price": 542.0,
+            "quantity": 1000,
+            "stop_loss": 520.0,
+            "take_profit": 600.0,
+            "status": "OPEN",
+        }
+    ]
+
+    with patch(
+        "backtest_platform.data.db_writer._connection"
+    ) as mock_conn_ctx, patch(
+        "psycopg2.extras.execute_values"
+    ) as mock_exec:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        n = upsert_positions(rows)
+
+    assert n == 1
+    assert mock_exec.call_count == 1
+    sql = mock_exec.call_args.args[1]
+    assert sql.startswith("INSERT INTO positions")
+    assert (
+        "ON CONFLICT (strategy_id, run_id, stock_id, opened_at) DO UPDATE SET" in sql
+    ), "positions upsert must target UNIQUE constraint"
+    # PK / unique columns must not be in SET clause
+    for forbidden in ("strategy_id = EXCLUDED.strategy_id",
+                      "opened_at = EXCLUDED.opened_at"):
+        assert forbidden not in sql, f"forbidden SET clause: {forbidden}"
+    # Mutable columns must be in SET clause
+    for required in ("status = EXCLUDED.status", "exit_price = EXCLUDED.exit_price"):
+        assert required in sql, f"missing SET clause: {required}"
+
+
+def test_upsert_positions_empty_returns_zero() -> None:
+    from backtest_platform.data.db_writer import upsert_positions
+
+    with patch("backtest_platform.data.db_writer._connection") as mock_conn_ctx:
+        n = upsert_positions([])
+    assert n == 0
+    mock_conn_ctx.assert_not_called()
+
+
+def test_upsert_signals_stub_raises_not_implemented() -> None:
+    """signals writer is M2 P2 / M4 — stub for forward-compat import."""
+    from backtest_platform.data.db_writer import upsert_signals
+
+    with pytest.raises(NotImplementedError, match="M4"):
+        upsert_signals([{"signal_id": "x"}])
+
+
+def test_upsert_orders_stub_raises_not_implemented() -> None:
+    from backtest_platform.data.db_writer import upsert_orders
+
+    with pytest.raises(NotImplementedError, match="M4"):
+        upsert_orders([{"order_id": "x"}])
+
+
+def test_upsert_fills_stub_raises_not_implemented() -> None:
+    from backtest_platform.data.db_writer import upsert_fills
+
+    with pytest.raises(NotImplementedError, match="M4"):
+        upsert_fills([{"fill_id": "x"}])
+
+
 @pytest.mark.integration
 def test_real_upsert_idempotent() -> None:
     """Round-trip against a live TimescaleDB. Skipped unless env says it's up."""

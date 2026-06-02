@@ -1,7 +1,7 @@
 # 架構與設計文件 — backtest_platform
 
-> **版本：** v1.4 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / **M2+ 路線變更**
-> **v1.5 變更 (2026-06-01)**：主骨架再從 `TQuant-Lab (zipline-tej)` 切到 `zipline-reloaded`（Sprint 0 S1 spike 揭露 zipline-tej import 階段強制要 TEJ API key）。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。
+> **版本：** v1.5 | **更新：** 2026-06-01 | **狀態：** M1 已實作 / **M2+ 路線變更**
+> **v1.5 變更 (2026-06-01)**：主骨架再從 `TQuant-Lab (zipline-tej)` 切到 `zipline-reloaded`（Sprint 0 S1 spike 揭露 zipline-tej import 階段強制要 TEJ API key）。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。下文「TQuant-Lab」/「zipline-tej」字樣為歷史脈絡保留，現況皆指 zipline-reloaded。
 > **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架（**已於 v1.5 再次取代為 zipline-reloaded**）；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。
 > **v1.3 修正**：補齊 partial disclosure（Telegram / TWSE / UI / live container）、L3-A 補 live+engines 子模組、新增 M5 Target State、L3-B 改寫、補 Sequence Diagram、箭頭加 protocol、DDD 戰術 + 限界上下文 Strategic Relationship、§5.1 重畫成 C4 Deployment
 
@@ -14,7 +14,7 @@
 | 本文段落 | 狀態 | 對應新文檔 |
 | :--- | :--- | :--- |
 | §1.1.2 Container 表 | ⚠️ 缺新模組 | [17 §5 目錄結構](./17_m2_to_m5_master_plan.md) + [23 deployment topology](./23_deployment_topology.md) |
-| §1.4 技術選型表（回測主 rqalpha） | ⚠️ 過時 | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) |
+| §1.4 技術選型表（回測主 rqalpha） | ⚠️ 過時 | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)（已 superseded by [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)：zipline-reloaded）|
 | §3.3 元件職責（缺 adapters/validation/orchestration/monitoring/dashboard） | ⚠️ 缺新模組 | [17 §5](./17_m2_to_m5_master_plan.md) |
 | §4.1 ER 圖（6 表） | ⚠️ 缺 6 張新表 | [21 data_contract §4](./21_data_contract.md) |
 | §5.1 Deployment Diagram | ⚠️ M5 需加 Streamlit/InfluxDB/Discord bot（見 ADR-010） | [23 deployment_topology](./23_deployment_topology.md) |
@@ -246,10 +246,10 @@ flowchart TD
     subgraph container["Container: Application"]
         subgraph app_layer["Application 層"]
             pipe["pipeline.py"]
-            subgraph engines_grp["engines/  M2+"]
-                rq["rqalpha_runner.py"]
+            subgraph engines_grp["engines/  M2+ (ADR-013)"]
+                zr["zipline_adapter/<br/>(zipline-reloaded 3.0.4)"]
                 vb["vectorbt_runner.py<br/>M3"]
-                mod_tw["mod_taiwan_stock/<br/>(rqalpha 自訂)"]
+                bundle["adapters/data_bundle/<br/>finmind_bundle.py"]
             end
             subgraph validation_grp["validation/  M3+"]
                 pbo["pbo.py"]
@@ -288,9 +288,9 @@ flowchart TD
     cfg --> sig
     score --> sig
 
-    rq -.-> sig
-    rq -.-> mod_tw
-    rq -.-> dbw
+    zr -.-> sig
+    zr -.-> bundle
+    zr -.-> dbw
     vb -.-> sig
     vb -.-> dbw
 
