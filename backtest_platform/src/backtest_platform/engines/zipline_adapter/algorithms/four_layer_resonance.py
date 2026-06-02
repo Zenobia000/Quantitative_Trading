@@ -39,7 +39,7 @@ from zipline.api import (
 )
 from zipline.utils.events import date_rules, time_rules
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.config.strategy_config import StrategyConfig, get_preset
 from backtest_platform.engines.zipline_adapter.algorithms.base import (
     get_history_window,
     preload_merged_frames,
@@ -75,7 +75,11 @@ def initialize(context):
     Preloads merged frames from parquet cache for all symbols and
     registers the daily evaluation callback for market_close - 5min.
     """
-    context.config = StrategyConfig()
+    # Config preset injection (default v2 baseline). `STRATEGY_PRESET=v3` (set by
+    # `backtest-run --config v3`) lets DEFAULT_CONFIG_V3 run in the real engine —
+    # required to calibrate the v3 verdict against the offline sim. Previously
+    # hardcoded StrategyConfig(), so v3 never reached the event-driven path.
+    context.config = get_preset(os.environ.get("STRATEGY_PRESET", "v2"))
 
     universe_env = os.environ.get("UNIVERSE_FINMIND")
     universe_syms = (
@@ -161,11 +165,45 @@ def _portfolio_state(context, asset) -> tuple[int, float]:
     return 1, float(pos.cost_basis)
 
 
+def _trailing_consec_structure(prepared: pd.DataFrame) -> int:
+    """Consecutive trailing bars (ending at the last) with structure_score >= 1.
+
+    Feeds EvaluateBar.consec_structure_bars for the v3 ``entry_confirm_days`` gate.
+    Window-derivable and exact.
+    """
+    n = 0
+    for v in reversed(prepared["structure_score"].tolist()):
+        if pd.notna(v) and v >= 1:
+            n += 1
+        else:
+            break
+    return n
+
+
+def _bars_since_exit(prepared: pd.DataFrame) -> int:
+    """Bars since the last stoploss/exit in the prepared walk (re-entry cooldown proxy).
+
+    Window-local approximation of the real portfolio's last exit — the walk-loop
+    re-walks from window start, so this is exact for the walk but an approximation
+    for the engine's true position. Sufficient for the cooldown's second-order
+    effect on entry timing (the dominant v3 effect is min_structure, not cooldown).
+    """
+    if "action" not in prepared.columns:
+        return 10**9
+    for i, a in enumerate(reversed(prepared["action"].tolist())):
+        if a in ("stoploss", "exit"):
+            return i
+    return 10**9
+
+
 def _build_evaluate_bar(
     last: pd.Series,
     prev: pd.Series,
     in_position: int,
     entry_cost_price: float,
+    consec_structure_bars: int = 1,
+    bars_since_exit: int = 10**9,
+    prev_box_upper: float = float("nan"),
 ) -> EvaluateBar:
     """Construct EvaluateBar from the last two rows of prepared columns.
 
@@ -205,6 +243,9 @@ def _build_evaluate_bar(
         state_hold=int(last.get("state_hold", 0) or 0),
         state_warning=int(last.get("state_warning", 0) or 0),
         volatility_rate=_f(last.get("volatility_rate")),
+        consec_structure_bars=consec_structure_bars,
+        bars_since_exit=bars_since_exit,
+        prev_box_upper=prev_box_upper,
     )
 
 
@@ -238,7 +279,13 @@ def evaluate_window_with_state(
 
     last = prepared.iloc[-1]
     prev = prepared.iloc[-2]
-    eb = _build_evaluate_bar(last, prev, in_position, entry_cost_price)
+    pbu = prev.get("box_upper")
+    eb = _build_evaluate_bar(
+        last, prev, in_position, entry_cost_price,
+        consec_structure_bars=_trailing_consec_structure(prepared),
+        bars_since_exit=_bars_since_exit(prepared),
+        prev_box_upper=float(pbu) if pd.notna(pbu) else float("nan"),
+    )
     return evaluate_bar(eb, config)
 
 

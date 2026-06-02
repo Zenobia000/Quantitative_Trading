@@ -98,3 +98,19 @@ DEFAULT_CONFIG_V3 = StrategyConfig(
     entry_cooldown_bars=3,
     exit_flameout_confirm_bars=2,
 )
+
+# Named presets for engine/CLI config injection (e.g. STRATEGY_PRESET env var,
+# `backtest-run --config v3`). Lets the zipline algorithm run v3 without
+# hardcoding StrategyConfig() — required to calibrate the v3 verdict against
+# the offline sim on the real event-driven engine.
+PRESETS: dict[str, StrategyConfig] = {"v2": DEFAULT_CONFIG, "v3": DEFAULT_CONFIG_V3}
+
+
+def get_preset(name: str) -> StrategyConfig:
+    """Return the named StrategyConfig preset ('v2' baseline / 'v3' relaxed)."""
+    try:
+        return PRESETS[name]
+    except KeyError:
+        raise ValueError(
+            f"unknown strategy preset {name!r}; choose from {sorted(PRESETS)}"
+        ) from None

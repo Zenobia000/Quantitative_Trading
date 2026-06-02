@@ -191,6 +191,14 @@ def cli():
     default=False,
     help="Post summary to Discord (requires DISCORD_BOT_TOKEN)",
 )
+@click.option(
+    "--config",
+    "config_preset",
+    type=click.Choice(["v2", "v3"]),
+    default="v2",
+    show_default=True,
+    help="StrategyConfig preset: v2 baseline / v3 relaxed entry (DEFAULT_CONFIG_V3)",
+)
 def backtest_run(
     stocks: str,
     start: datetime,
@@ -201,14 +209,16 @@ def backtest_run(
     output_dir: Path,
     tearsheet: bool,
     discord_notify: bool,
+    config_preset: str,
 ) -> None:
     """Run a backtest with the four-layer resonance algorithm.
 
     Example:
-        backtest-run --stocks 2330 --start 2024-01-15 --end 2024-02-29
+        backtest-run --stocks 2330 --start 2024-01-15 --end 2024-02-29 --config v3
     """
-    # Set env BEFORE importing zipline (bundle/algorithm read UNIVERSE_FINMIND)
+    # Set env BEFORE importing zipline (bundle/algorithm read these at initialize)
     os.environ["UNIVERSE_FINMIND"] = stocks
+    os.environ["STRATEGY_PRESET"] = config_preset
     zipline_root_resolved = _resolve_zipline_root(zipline_root)
     os.environ["ZIPLINE_ROOT"] = str(zipline_root_resolved)
 
