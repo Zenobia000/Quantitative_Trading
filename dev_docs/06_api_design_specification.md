@@ -1,15 +1,16 @@
 # API 設計規範 — backtest_platform
 
-> **版本：** v1.1 | **更新：** 2026-06-02 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）/ CLI + Python API（無 HTTP API）
+> **版本：** v1.2 | **更新：** 2026-06-02 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **v0.6 HTTP API（FastAPI，8.A.3 提前交付，研究迴圈唯讀 + 觸發面）**
 
 ---
 
 ## 1. API 形式
 
-本專案不暴露 HTTP API（M5 才考慮）。當前提供：
+當前提供三種介面：
 
 1. **CLI（Click）** — 端到端操作
 2. **Python API** — 程式內呼叫（pure functions + Pydantic models）
+3. **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate審判庭 / metrics / presets），詳見 §9。原規劃 M3（8.A.3）才做，因平台優先策略提前交付。
 
 ---
 
@@ -341,3 +342,58 @@ action, in_position
 | CLI 不接收 secrets | 一律從 env 或 `.env` 載入（避免歷史命令外洩） |
 | Logging 不印 token | Loguru format 排除 sensitive fields |
 | Shioaji credentials（M5） | KMS / 1Password CLI |
+
+---
+
+## 9. HTTP API（v0.6 Wave B，FastAPI）
+
+> 原 WBS 8.A.3（M3 / Sprint 11）任務，因「先把系統平台做完」策略提前於 v0.6 交付。
+> 契約源：[ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) + `21_data_contract.md` §8。
+> 模組：`src/backtest_platform/api/`（app 工廠 + 4 個 router；薄轉接層，零業務邏輯）。
+
+### 9.1 啟動
+
+```bash
+# 開發（自動 reload）
+uv run uvicorn backtest_platform.api.app:app --reload --port 8000
+# 互動式 OpenAPI 文件： http://localhost:8000/docs
+```
+
+執行需 `api` extra（`uv sync --extra api`：fastapi / uvicorn / httpx）。
+
+### 9.2 統一回應信封（rules/patterns.md §API 回應格式）
+
+每個端點都回傳相同形狀，連 4xx/5xx 也被 exception handler 重新包成信封（不會出現裸 `{"detail": ...}`）：
+
+```json
+{ "success": true, "data": { ... }, "error": null, "meta": { "total": 0, "page": 1, "limit": 50 } }
+```
+
+* `success`：布林狀態旗標
+* `data`：酬載（錯誤時 `null`）
+* `error`：人類可讀訊息（成功時 `null`）
+* `meta`：分頁等中繼資料（`total` / `page` / `limit`），非列表端點為 `null`
+
+### 9.3 端點
+
+| Method | Path | 用途 | 後端 |
+| :--- | :--- | :--- | :--- |
+| GET | `/health` | liveness + 版本 | — |
+| GET | `/presets` | 列出所有 StrategyConfig preset + 各自參數 | `config.strategy_config.PRESETS` |
+| GET | `/presets/{name}` | 單一 preset 參數（未知→404） | `get_preset` |
+| GET | `/runs` | runs ledger 分頁列表（`?page=&limit=`） | `research.runs_store.read_runs` |
+| GET | `/runs/compare` | 跨 run 比較（`?baseline=`：delta/rank/sign） | `research.compare.compare_runs` |
+| GET | `/runs/{run_id}` | 單一 run 完整紀錄（未知→404） | `read_runs` |
+| POST | `/runs` | 觸發一次 IS run（驗 RunConfig→判 gate→append，201） | `research.is_harness.run_and_judge` |
+| GET | `/gate/spec` | 審判庭預設準則（ADR-016 K1/K2/K3 + ADR-019 health） | `validation.gate_state.DEFAULT_GATE` |
+| POST | `/gate/evaluate` | 對任意 metrics dict 判 PASS/FAIL/INCOMPLETE | `evaluate_gate` |
+| POST | `/metrics/summary` | 日報酬序列 → A/B/C 指標 | `validation.metrics` |
+| POST | `/metrics/trades` | 交易清單 → E 指標（缺 key→400） | `validation.metrics` |
+
+### 9.4 設計約束
+
+* **薄轉接層**：router 只做請求驗證 + 序列化，邏輯全在 `research` / `validation` 純函式。
+* **依賴注入**：runs ledger 路徑（`$BACKTEST_RUNS_PATH`）與重量級 executor 透過 FastAPI `Depends` 注入，測試以 temp ledger + stub executor 覆寫（hermetic，不碰 parquet/zipline）。
+* **路由順序**：`/runs/compare` 宣告早於 `/runs/{run_id}`，避免 "compare" 被當成 run_id 吞掉。
+* **邊界驗證**：所有 POST body 為 `extra="forbid"` 的 Pydantic 模型，未知欄位 422 快速失敗。
+* **尚未涵蓋**：監控/風控面板端點（Discord 告警、Risk Gate、熔斷狀態）待 Wave D（risk/monitoring）合入 main 後再補；本批僅研究迴圈 + 驗證讀寫面。

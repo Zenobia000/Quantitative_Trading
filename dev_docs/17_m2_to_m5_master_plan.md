@@ -171,6 +171,18 @@ backtest_platform/src/backtest_platform/
 │   ├── grafana_dashboards.json              # ~200 LOC（JSON 設定）
 │   └── db_schema.sql                        # ~150 LOC（TimescaleDB tables）
 │
+├── research/                                # ★ v0.1-v0.3 新增（研究迴圈：run loop）
+│   ├── run_config.py                        # RunConfig（強制 hypothesis 預註冊）
+│   ├── is_harness.py                        # run_is / run_and_judge
+│   ├── runs_store.py                        # append-only JSONL ledger
+│   ├── sweep.py / compare.py                # 參數網格 + 多 run 比較
+│   └── cli.py                               # run-is / runs / sweep / compare
+│
+├── api/                                     # ★ v0.6 新增（HTTP API，FastAPI；原 M3 8.A.3 提前）
+│   ├── app.py / envelope.py / schemas.py    # create_app 工廠 + 統一信封 + 邊界驗證
+│   ├── deps.py                              # runs path + executor 依賴注入
+│   └── routers/                             # presets / runs / gate / metrics
+│
 ├── data/                                    # M1 保留作 fallback
 │   ├── finmind_etl.py                       # ★ M1 保留
 │   ├── adjustment.py                        # ★ M1 保留

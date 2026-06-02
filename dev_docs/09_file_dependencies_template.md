@@ -44,6 +44,8 @@ graph TD
     Pipeline[pipeline.py<br/>Application]
     Engines[engines/<br/>Application M2+]
     Validation[validation/<br/>Application M3+]
+    Research[research/<br/>Application v0.1+<br/>run loop]
+    Api[api/<br/>Application v0.6<br/>FastAPI 薄轉接]
     Live[live/<br/>Application M4+/M5]
 
     Strategy[strategy/<br/>Domain<br/>純函式]
@@ -62,6 +64,12 @@ graph TD
     Engines --> Strategy
     Engines --> Data
     Validation --> Data
+    Research --> Strategy
+    Research --> Validation
+    Research --> Config
+    Api --> Research
+    Api --> Validation
+    Api --> Config
     Live --> Strategy
     Live --> Data
     Live -.->|M5| Shioaji
