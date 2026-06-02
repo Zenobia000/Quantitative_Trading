@@ -249,7 +249,7 @@
 | **5.A.7.a** | **`ingest_universe` 批次 helper（per-symbol isolation + all-fail raise）** | DEV | 4h | ✅ Wave 2 | 2026-06-02（commit `90bdfe9` / PR #15；含 mock/stub unit tests，error isolation 單一來源化） |
 | **5.A.7.b** | **DEFAULT_UNIVERSE live 10 檔 FinMind ingest → parquet（含 2330 + 9 檔）** | DEV | 2h | ✅ Wave 3 | 2026-06-02 — **R14 關閉**；新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/`）；live 跑 2020-2024 5yr `ok=10/10` 35s；解開 7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt 真正執行並通過）→ 252 pass / 4 skip，coverage 95.22%。cache 不入版控（runbook 化） |
 | 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
-| 5.B.2 | WFA splitter 自寫 | DEV | 8h | ⏳ M3 | — |
+| 5.B.2 | WFA splitter 自寫 | DEV | 8h | ✅ v0.2 | 2026-06-02 — `validation/wfa.py`（purge+embargo，rolling/anchored），對拍驗證過 |
 | 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01（兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠）|
 | 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ M3 | — — vectorbt cross-check 完成後可抽象 |
 | 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
@@ -262,18 +262,18 @@
 
 | 編號 | 任務 | 工時 | 備註 |
 |:--|:--|:---:|:--|
-| 6.1.1 | metrics.py 30+ 指標 enum + functions | 16h | 對應 18 §4 taxonomy |
+| 6.1.1 | metrics.py 30+ 指標 enum + functions | 16h | ✅ v0.2 — `validation/metrics.py`（A/B/C/E 類 12 函式，對照 18 §4，45 tests）|
 | 6.1.2 | quantstats 報表整合 | 8h | |
 | 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | 4h | |
 | 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | (已估) | |
 | 6.2.2 | WFA 結果視覺化 | 8h | 接 dashboard 面板 E |
-| 6.3.1 | PBO 自寫（避 pypbo AGPL）| 16h | 對 Bailey 論文表 5.2 對拍 |
-| 6.3.2 | DSR 自寫 | 8h | |
-| 6.4.1 | Bootstrap 1000 iter | 8h | |
-| 6.4.2 | Monte Carlo trade permutation | 8h | |
+| 6.3.1 | PBO 自寫（避 pypbo AGPL）| 16h | ✅ v0.2 — `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過）|
+| 6.3.2 | DSR 自寫 | 8h | ✅ v0.2 — `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014）|
+| 6.4.1 | Bootstrap 1000 iter | 8h | ✅ v0.2 — `validation/resampling.py` bootstrap_ci |
+| 6.4.2 | Monte Carlo trade permutation | 8h | ✅ v0.2 — `validation/resampling.py` permutation p-value |
 | 6.5.x | 跑 DOE 1-10（doe_research_template）| ~100h | M3 大頭 |
 
-**模組小計**：~180h | M3 大頭
+**模組小計**：~180h | **v0.2 統計驗證 pipeline 後端 ✅**（metrics/dsr/pbo/wfa/resampling 純函式，對照 18 §4 + López de Prado，10-agent workflow 建 + 對拍驗證，119 tests）；剩 6.1.2 quantstats 整合 / 6.5.x DOE（策略執行，待有候選）
 
 ---
 

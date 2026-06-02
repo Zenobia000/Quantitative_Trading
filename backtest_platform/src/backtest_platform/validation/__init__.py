@@ -1,11 +1,19 @@
 """Statistical validation + run gate-as-code.
 
-``gate_state`` (v0.1): ADR-016 edge gate (K1/K2/K3) + ADR-019 health checks as
-pure functions — the strategy-agnostic '審判庭' that judges any run objectively.
+v0.1 — ``gate_state``: ADR-016 edge gate (K1/K2/K3) + ADR-019 health checks as
+pure functions; the strategy-agnostic '審判庭' that judges any run objectively.
 
-PBO / WFA / Monte Carlo / DSR (IS→WFA→OOS sealed-vault state machine) land in
-v0.2 (M3); see dev_docs/adrs/ADR-018.
+v0.2 — statistical-validation pipeline (pure functions, dev_docs/18 §4 + López de
+Prado): ``metrics`` (A/B/C/E performance), ``dsr`` (Deflated/Probabilistic Sharpe),
+``pbo`` (Probability of Backtest Overfitting, CSCV), ``wfa`` (walk-forward splitter
+with purge+embargo), ``resampling`` (bootstrap CI + Monte Carlo permutation).
 """
+from backtest_platform.validation import dsr, metrics, pbo, resampling, wfa
+from backtest_platform.validation.dsr import (
+    deflated_sharpe_ratio,
+    expected_max_sharpe,
+    psr,
+)
 from backtest_platform.validation.gate_state import (
     DEFAULT_GATE,
     Criterion,
@@ -15,13 +23,20 @@ from backtest_platform.validation.gate_state import (
     cross_window_consistent,
     evaluate_gate,
 )
+from backtest_platform.validation.pbo import probability_of_backtest_overfitting
+from backtest_platform.validation.resampling import (
+    bootstrap_ci,
+    monte_carlo_permutation_pvalue,
+)
+from backtest_platform.validation.wfa import walk_forward_splits
 
 __all__ = [
-    "DEFAULT_GATE",
-    "Criterion",
-    "CriterionResult",
-    "GateResult",
-    "GateStatus",
-    "cross_window_consistent",
-    "evaluate_gate",
+    # gate (v0.1)
+    "DEFAULT_GATE", "Criterion", "CriterionResult", "GateResult", "GateStatus",
+    "cross_window_consistent", "evaluate_gate",
+    # statistical pipeline (v0.2)
+    "metrics", "dsr", "pbo", "wfa", "resampling",
+    "psr", "expected_max_sharpe", "deflated_sharpe_ratio",
+    "probability_of_backtest_overfitting", "walk_forward_splits",
+    "bootstrap_ci", "monte_carlo_permutation_pvalue",
 ]

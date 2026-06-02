@@ -145,7 +145,7 @@
 | Ulcer Index | `sqrt(mean(drawdown_pct^2))` | Martin (1989) | `metrics.ulcer_index()` | M3 |
 | VaR (95%) | `np.percentile(returns, 5)` | Jorion (2006) | `metrics.var()` | M3 |
 | CVaR (95%) / Expected Shortfall | `mean(returns[returns <= VaR])` | Rockafellar & Uryasev | `metrics.cvar()` | M3 |
-| Downside Deviation | `std(returns[returns < MAR])` | Sortino & Price | `metrics.downside_deviation()` | M3 |
+| Downside Deviation | `sqrt(mean(min(r - MAR, 0)^2))`（全長分母，與 Sortino 配對標準式；MAR=0 預設） | Sortino & Price | `metrics.downside_deviation()` | M3 |
 
 ### 4.3 C 類 — 風險調整
 
