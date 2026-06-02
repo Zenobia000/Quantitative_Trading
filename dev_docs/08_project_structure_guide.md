@@ -121,6 +121,14 @@ src/backtest_platform/
 │   ├── grafana_dashboards.json   # 4 系統面板 (F ETL G quota H 排程 I 資源)
 │   └── db_schema.sql             # TimescaleDB 13 表 DDL
 │
+├── api/                          # ★ v0.6 新增 — HTTP API (FastAPI, ADR-015 / 21 §8)
+│   ├── __init__.py               # create_app / API_VERSION re-export
+│   ├── app.py                    # create_app 工廠 + 信封 exception handlers
+│   ├── envelope.py               # {success,data,error,meta} 統一信封
+│   ├── schemas.py                # 請求模型（extra=forbid 邊界驗證）
+│   ├── deps.py                   # runs path + run executor 依賴注入
+│   └── routers/                  # presets / runs / gate / metrics（薄轉接層）
+│
 └── pipeline.py                   # Application：M1 端到端 CLI（backward-compat shim）
                                   # M2+ 主入口改為 orchestration/cli.py
 ```
@@ -142,6 +150,8 @@ src/backtest_platform/
 | `monitoring/` | | | | ✅ | |
 | `dashboard/streamlit_app.py` | | | ✅ MVP | | + D/E 面板 |
 | `dashboard/grafana_dashboards.json` | | | | ✅ | |
+| `api/` (FastAPI HTTP) | | | ✅ v0.6（提前；研究迴圈讀寫面） | + 監控/風控面板端點 | |
+| `research/` (run loop) | | | ✅ v0.1-v0.3（RunConfig/IS harness/runs ledger/sweep/compare/CLI） | | |
 | `pipeline.py` (M1 shim) | ✅ | (保留) | | | |
 
 ---

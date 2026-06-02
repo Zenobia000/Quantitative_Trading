@@ -304,7 +304,7 @@
 | 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | — | 12h | ✅ | 2026-06-01 | — |
 | 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | — | 16h | ⏳ | — | M3 |
 | 8.A.2 | 面板 D+E（React 版，ADR-015） | — | 12h | ⏳ | — | M5 |
-| 8.A.3 | Dashboard REST API 層（FastAPI，14 端點；ADR-015 / 21_data_contract §8） | — | 10h | ⏳ | — | M3 |
+| 8.A.3 | Dashboard REST API 層（FastAPI；ADR-015 / 21_data_contract §8） | — | 10h | ✅ v0.6 | 2026-06-02 | `api/`（app 工廠 + runs/gate/metrics/presets 4 router，11 端點，統一信封，100% cov）。**提前交付**（原 M3）；研究迴圈讀寫面已上，監控/風控面板端點待 Wave D 合入後補（見 doc 06 §9.4） |
 | 8.B.1 | Grafana 4 個系統面板 (F-I) | — | 12h | ⏳ | — | M4 |
 | 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | — | 4h | ⏳ | — | M4 |
 | 8.C.1 | Discord notifier base | — | 4h | ✅ | 2026-05-31 | — |
@@ -316,7 +316,7 @@
 | 8.E.2 | GCS upload script | — | 4h | ⏳ | — | M5 |
 | 8.F.1 | 災難恢復演練 | — | 8h | ⏳ | — | M5 |
 
-**模組小計**：~102h | 進度 ~20%（Discord 完成 + 儀表板設計階段完成：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md)）
+**模組小計**：~102h | 進度 ~30%（Discord 完成 + InfluxDB writer + 儀表板設計階段完成：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) + **8.A.3 REST API 層 v0.6 提前交付**）
 
 ---
 
