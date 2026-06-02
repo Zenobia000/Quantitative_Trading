@@ -201,12 +201,12 @@
 | 3.D.1 | DBConfig + 連線 context manager | DEV | 3h | ✅ | 2026-05-25 | — |
 | 3.D.2 | upsert_frame | DEV | 5h | ✅ | 2026-05-25 | 3.D.1 |
 | 3.D.3 | Integration test 跑真實 DB | QA | 4h | ✅ | 2026-05-25 | 3.D.2 |
-| 3.D.4 | 新增 9 張 M2+ 表 (見 21 §4) | DEV | 8h | ⏳ | — | M2 啟動 |
+| 3.D.4 | 新增 9 張 M2+ 表 (見 21 §4) + db_writer.upsert_positions | DEV | 8h | ✅ | 2026-06-02 | M2 啟動 |
 | 3.E.1 | FinLab live polling adapter | DEV | 8h | ⏳ | — | 0.3.5 |
 | 3.E.2 | Shioaji quote adapter (備援) | DEV | 6h | ⏳ | — | 0.3.4 |
 | 3.E.3 | Live feed → TimescaleDB writer | DEV | 6h | ⏳ | — | 3.E.1 |
 
-**模組小計**：120h | 進度 53%
+**模組小計**：120h | 進度 60%（含 3.D.4 完成）
 
 ---
 

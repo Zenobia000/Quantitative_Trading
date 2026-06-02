@@ -189,6 +189,17 @@ def test_finlab_bundle_zipline_can_read(tmp_zipline_root):
     assert b"end of run" in result.stdout
 ```
 
+### 3.1.b TimescaleDB schema 防漂移（unit test, no DB needed）
+
+`tests/data/test_init_sql_schema.py` 是 fast 路徑：純 regex 解析 `docker/timescaledb/init.sql`，斷言 §4 13 張表 / hypertable / GIN index / UUID PK / UNIQUE constraint / retention policy 都齊。任何 DDL 與 21 §4 spec 漂移會立刻紅燈。
+
+| 屬性 | 值 |
+| :--- | :--- |
+| 標記 | 無（純 unit，每次 CI 跑） |
+| 耗時 | < 1s |
+| 依賴 | 無（不啟 Docker / 不連 DB） |
+| 補強 | `test_real_upsert_idempotent`（integration marker）跑真實 round-trip |
+
 ### 3.2 Broker ↔ Sandbox
 
 ```python
