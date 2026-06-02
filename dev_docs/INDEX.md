@@ -29,7 +29,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**18 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011~016 + 2026-06-02 新增 017/018） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**19 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011~016 + 2026-06-02 新增 017/018/019） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -99,6 +99,7 @@
 | [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) | M2 acceptance KPI 凍結（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健性）— 彙整 01/02/v2.md 既有數字 | — |
 | [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設進場假設；附帶修 `_format_perf_summary` ffill metric bug | 記錄 ADR-016 gate 的執行結果 |
 | [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) | 監控優先 → 研究迴圈優先：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | **重定位** ADR-009/ADR-015 產物（不取代分層/設計系統）；UX 化 ADR-017 |
+| [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) | v3 進場重設：參數化分級放寬（必含層+可選，非純 N-of-4 — L2⊂L3）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline；反過擬合硬約束（v0.1 不 sweep、進場數非 edge） | ADR-017 的 M0 進場 hypothesis 定稿；v0.1 策略側 |
 
 ---
 
