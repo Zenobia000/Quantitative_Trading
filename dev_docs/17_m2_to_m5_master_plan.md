@@ -18,16 +18,16 @@
 | :---: | :--- | :--- | :--- |
 | **D1** | 資料源：FinMind 免費版 + sponsor + TWSE 補爬 | **付費 FinLab**（年費 ~9–10k TWD） | M1 `data/finmind_etl.py` 改為 fallback；不再自 maintain ETL |
 | **D2** | 系統定位：純回測平台（M1–M3）→ paper（M4）→ live（M5） | **完整交易系統**：backtest + paper + live 三模式 + 雙儀表板從 M3 啟動 | L7 監控提前 2 個 milestone，新增 Streamlit/Grafana/Discord 三層 |
-| **D3** | 工程哲學：截長補短，自寫 framework，rqalpha 為主回測引擎 | **不自建 framework**，以 **TQuant-Lab (Zipline 台股 fork)** 為主骨架，自寫薄 adapter | 砍 rqalpha；引入 Zipline event-driven；vectorbt 降為副引擎 |
+| **D3** | 工程哲學：截長補短，自寫 framework，rqalpha 為主回測引擎 | **不自建 framework**，以 **zipline-reloaded**（原 TQuant-Lab，ADR-013 切換）為主骨架，自寫薄 adapter | 砍 rqalpha；引入 zipline event-driven；vectorbt 降為副引擎 |
 
 ### 1.2 現狀問題
 
 | 問題 | 出處 | 處置 |
 | :--- | :--- | :--- |
-| rqalpha 無台股 mod、無 Shioaji broker | `research_open_source_backtest_platforms.md` §3.5 | 改用 TQuant-Lab，內建 XTAI 日曆 + TEJ 官方 Shioaji 範例 |
+| rqalpha 無台股 mod、無 Shioaji broker | `research_open_source_backtest_platforms.md` §3.5 | 改用 zipline-reloaded（原 TQuant-Lab，ADR-013），`exchange-calendars` 完整支援 XTAI + Shioaji 路徑於 M4–M5 自寫 broker |
 | FinMind 免費版缺券商分點 → v2 L3 籌碼分不完整 | 02 PRD §7.1 風險 | 改用 FinLab，原生支援券商分點 |
 | M1 已交付 962 LOC（`strategy/` + `data/`），不能浪費 | M1 release | 0 重構，搬路徑 + 補 wrapper 即可 |
-| `engines/`、`validation/` 仍為空骨架 | 05 架構 L3-A | M2 用 TQuant-Lab 填 engines；M3 自寫 PBO/DSR 填 validation |
+| `engines/`、`validation/` 仍為空骨架 | 05 架構 L3-A | M2 用 zipline-reloaded（ADR-013）填 engines；M3 自寫 PBO/DSR 填 validation |
 | 業界已有「7 層 reference architecture + 30+ 指標 taxonomy」共識 | LEAN / Nautilus / López de Prado | 一次定義到位，寫進 18 號文檔 |
 
 ### 1.3 預期結果
@@ -49,9 +49,9 @@
 | **Plan A** | 自建 framework + rqalpha | 6–8k | 22 週 | 低 | 自寫 | ❌ 重造輪子 |
 | **Plan B** | FinLab SDK 當主骨架 | 1800 | 14 週 | **高** | 表達困難 | ❌ 深度鎖定 + 精度爭議 |
 | **Hybrid** | FinLab 資料 + 自寫 adapter + rqalpha | ~4000 | 18 週 | 中 | 自寫 | ⚠️ Sprint 0 失敗時備援 |
-| **Plan TQuant-Lab** ✅ | TQuant-Lab (Zipline 台股 fork) + FinLab 資料 + vectorbt 副引擎 | **~2500** | **17 週** | 低 | **天然支援** | ✅ **採用** |
+| ~~**Plan TQuant-Lab**~~ → **Plan zipline-reloaded** ✅ | zipline-reloaded（社群維護 zipline 主線） + FinLab 資料 + vectorbt 副引擎 | **~2500** | **17 週** | 低 | **天然支援** | ✅ **採用**（原 Plan TQuant-Lab，ADR-013 切換）|
 
-### 2.1 為何選 TQuant-Lab
+### 2.1 為何選 zipline-reloaded（原為何選 TQuant-Lab）
 
 | 理由 | 說明 |
 | :--- | :--- |
@@ -345,8 +345,8 @@ streamlit run dashboard/streamlit_app.py
 
 | 風險 | 嚴重度 | 緩解 |
 | :--- | :---: | :--- |
-| TQuant-Lab 84 stars 社群小 | M | Zipline 本體 17k stars，TQuant-Lab 只是台股 patch；可 fork 到自己 repo 不依賴 upstream |
-| TEJ 改 TQuant-Lab license | L | MIT 已授權，fork 後不可撤回 |
+| ~~TQuant-Lab 84 stars 社群小~~ | — | ADR-013 已切換至 zipline-reloaded 主線（社群活躍 1.7k stars），此風險解除 |
+| ~~TEJ 改 TQuant-Lab license~~ | — | ADR-013 已切換至 zipline-reloaded（Apache-2.0、無單一廠商控制），此風險解除 |
 | FinLab 5GB/月流量限制 | **H** | 一次性歷史回填寫入 Zipline bundle 後永久本地；日增量打 API；流量 monitor 在 Grafana |
 | FinLab 引擎精度爭議 | — | 不用 `finlab.sim`，只用其資料 |
 | FinLab 倒閉 / 漲價 | M | FinMind bundle 為 fallback，已驗證可工作（M1 既有實作） |
@@ -364,7 +364,7 @@ streamlit run dashboard/streamlit_app.py
 
 | ❌ 不做 | 為什麼 |
 | :--- | :--- |
-| 不自建 framework | 用 TQuant-Lab，業界 7 層 reference 已有實作 |
+| 不自建 framework | 用 zipline-reloaded（原 TQuant-Lab，ADR-013），業界 7 層 reference 已有實作 |
 | 不重構 M1 既有 962 LOC | 搬路徑、補 wrapper，0 改動 |
 | 不為「未來可能換廠商」過度抽象 | Zipline 已有 Broker 介面 |
 | 不在 M2 上實盤 | M5 才上，前 4 個 milestone 都在驗證 |

@@ -4,7 +4,7 @@
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
-> **v2.0 變更**：完整重寫對齊 M2 路線變更（ADR-005~011）— rqalpha → TQuant-Lab、FinMind → FinLab 主、新增 adapters/orchestration/monitoring/dashboard 模組、Discord 取代 Telegram、Sprint 0 spike 工項加入。
+> **v2.0 變更**：完整重寫對齊 M2 路線變更（ADR-005~013）— rqalpha → ~~TQuant-Lab~~ → zipline-reloaded（ADR-013 supersede ADR-005）、FinMind → FinLab 主、新增 adapters/orchestration/monitoring/dashboard 模組、Discord 取代 Telegram、Sprint 0 spike 工項加入。
 
 ---
 
@@ -70,7 +70,7 @@
 └── 4.4 Zipline algorithm wrapper (M2)              ← 新增
 
 5.0 回測引擎
-├── 5.A TQuant-Lab (Zipline) 主骨架 (M2)            ← 重寫 (ADR-005)
+├── 5.A zipline-reloaded 主骨架 (M2，原 TQuant-Lab) ← 重寫 (ADR-005 → superseded by ADR-013)
 ├── 5.B vectorbt 副引擎 (M3)                        ← 重寫 (ADR-007)
 ├── 5.C 雙引擎對齊測試
 └── 5.D engines/ CLI
@@ -341,7 +341,7 @@
 ### 已解決的技術債（v1.0 列為待解，現已 fix）
 
 - ~~pytest-asyncio 9.x 不相容~~ → 已 bump to >=0.24（commit `2936119`，2026-06-01）
-- ~~rqalpha 自訂 mod 是否值得寫~~ → 廢止；改 TQuant-Lab（ADR-005）
+- ~~rqalpha 自訂 mod 是否值得寫~~ → 廢止；改 zipline-reloaded（ADR-005 → ADR-013）
 
 ---
 
@@ -353,6 +353,7 @@
 | FinLab 倒閉 / 漲價 | 低 | 高 | FinMind bundle 為 fallback（ADR-006 已備）| Self |
 | FinLab 引擎精度爭議 | — | — | 不用 finlab.sim，只用其資料 | — |
 | ~~TQuant-Lab 84 stars 社群小~~ | — | — | ADR-013 已切到 zipline-reloaded 主線（社群活躍），此風險解除 | — |
+| **R-15 dev_docs 散落 TQuant-Lab 引用** | — | — | ✅ **Complete** (2026-06-02) — 8 份 docs（INDEX/02/05/08/17/18/22/16）已 sweep 至 ADR-013/014 路線 | Self |
 | Sprint 0 S2 fail（M1 plug Zipline 不通）| 低 | 高 | 強制 debug，不退場（is deal-breaker） | Self |
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
@@ -361,7 +362,6 @@
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
 | **R14** DEFAULT_UNIVERSE 10 檔僅 ingest 2330 | 高 | **致命**（M2 acceptance 若靠單股將有 TSMC 偏誤）| Sprint 3 Day 1 ingest 其餘 9 檔（5.A.7）；regression tests 解 skip | Self |
-| **R15** 8 份文檔仍引用 TQuant-Lab / zipline-tej（ADR-013 §後續 doc sweep 未執行）| 中 | 低 | Sprint 3 documentation chore 批次 sweep；非阻塞 | Self |
 
 ---
 

@@ -33,8 +33,8 @@
 | :--- | :--- | :--- |
 | [QuantConnect LEAN](https://github.com/QuantConnect/Lean) | 開源（C#/Python，Apache-2.0） | 7 層架構最完整實作參考 |
 | [Nautilus Trader](https://github.com/nautechsystems/nautilus_trader) | 開源（Rust/Python，LGPL-3.0） | 機構級事件驅動 + OMS 設計 |
-| [Zipline-reloaded](https://github.com/stefan-jansen/zipline-reloaded) | 開源（Python，Apache-2.0） | 本專案主骨架原型 |
-| [TQuant-Lab](https://github.com/tejtw/TQuant-Lab) | 開源（Python，MIT） | Zipline 台股 fork，本專案直接採用 |
+| [Zipline-reloaded](https://github.com/stefan-jansen/zipline-reloaded) | 開源（Python，Apache-2.0） | **本專案主骨架** (M2，ADR-013) |
+| ~~[TQuant-Lab](https://github.com/tejtw/TQuant-Lab)~~ | ~~開源（Python，MIT）~~ | ~~Zipline 台股 fork~~ — 原規劃採用，ADR-013 棄用（zipline-tej import 強綁 TEJ key）|
 | **López de Prado**, *Advances in Financial Machine Learning* (2018) | 書 | D 類統計穩健性（PBO/DSR/CPCV）原始公式 |
 | **López de Prado**, *Machine Learning for Asset Managers* (2020) | 書 | Strategy Risk、Min Track Record Length |
 | **Bailey & López de Prado** (2014), *The Deflated Sharpe Ratio* | 論文 | DSR 公式與 reference table 5.2 |

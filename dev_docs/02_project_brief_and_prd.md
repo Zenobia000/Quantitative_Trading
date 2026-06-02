@@ -142,12 +142,13 @@
 | D-002 | 採用 MVP 工作流模式 | 已決定 | 見 01_workflow_manual.md |
 | D-003 | 使用 Public GitHub repo（Zenobia000） | 已決定 | 2026-05-26 上線 |
 | D-004 | risk_pct 從 1% → 0.5% 對齊 Heat 6% | 已決定（v2.1） | v2.md changelog |
-| D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）|
+| D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）— Sprint 0 S1 揭露 zipline-tej import 強綁 TEJ key |
 | D-006 | 主資料源採付費 FinLab + FinMind fallback | 已決定 | ADR-006 |
 | D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊隨 ADR-014 升級恢復）|
 | D-008 | 系統定位升級為三模式（backtest/paper/live） | 已決定 | ADR-008 |
 | D-009 | 監控三層 Streamlit + Grafana + Discord | 已決定 | ADR-009 / ADR-010（Discord 取代 Telegram）|
 | D-010 | 套件管理採 uv | 已決定 | ADR-012 |
+| D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
 
 ---
 
