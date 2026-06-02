@@ -11,10 +11,12 @@
     POST /api/board       寫回整份看板 JSON → 同步 16_wbs §7 表格
 
 啟動：
-    python tools/scrum_board/server.py            # 預設 127.0.0.1:8765
+    python tools/scrum_board/server.py            # 預設綁 0.0.0.0:8765（區網可達）
     python tools/scrum_board/server.py --port 9000
+    python tools/scrum_board/server.py --host 127.0.0.1   # 僅本機
 
-僅綁定 127.0.0.1（本機），不對外暴露。
+預設綁 0.0.0.0 方便遠端 / 容器外瀏覽器存取；此 server 無認證，**請只在可信任的內網使用**，
+不要暴露到公網。要鎖回本機請加 --host 127.0.0.1。
 """
 from __future__ import annotations
 
@@ -103,12 +105,15 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scrum board 本地伺服器")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--host", default="0.0.0.0")
     args = parser.parse_args()
 
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
-    url = f"http://{args.host}:{args.port}/"
-    print(f"[scrum_board] 看板已啟動：{url}")
+    shown = "127.0.0.1" if args.host in ("0.0.0.0", "") else args.host
+    print(f"[scrum_board] 看板已啟動：http://{shown}:{args.port}/")
+    if args.host in ("0.0.0.0", ""):
+        print(f"[scrum_board] ⚠️ 綁 0.0.0.0：區網其他機器可透過 http://<本機IP>:{args.port}/ 連入")
+        print("[scrum_board]    此 server 無認證，請只在可信任內網使用；鎖回本機加 --host 127.0.0.1")
     print(f"[scrum_board] 真相源：{BOARD_PATH}")
     print("[scrum_board] Ctrl-C 結束")
     try:
