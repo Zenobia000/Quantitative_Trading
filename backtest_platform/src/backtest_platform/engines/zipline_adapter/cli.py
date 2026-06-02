@@ -143,6 +143,11 @@ def _maybe_notify_discord(summary: dict, run_id: str) -> None:
 @click.group()
 def cli():
     """zipline-reloaded adapter CLI — backtest / paper / live entry points."""
+    # Load .env (FINMIND_TOKEN etc.) so `ingest`/`backtest-run` pick up secrets
+    # from the gitignored .env without an explicit shell export. No-op if absent.
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
 
 @cli.command("backtest-run")
