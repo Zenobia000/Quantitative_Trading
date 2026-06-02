@@ -1,6 +1,8 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.5 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
+> **版本：** v2.7 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
+> **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
+> **v2.7 新增（2026-06-02）**：反發散切版 — §6 新增**版本 Roadmap**（v0.1 essential MVP〔M0 v3 進場 + IS gate as code 最小後端〕→ v0.2 OOS/WFA/PBO/DSR → v0.3 研究後端 → v0.4 研究前端 → v0.5 paper → v1.0 live）；§7 Sprint 4-12 對齊版本展開（`scrum_board.json` 真相源同步、`sync_wbs.py` 重生）；**鐵律：v3 edge 未證實前不做前端/重功能**。
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
@@ -318,6 +320,26 @@
 
 ---
 
+### 模組 8.G 研究迴圈 UX 與 Run 物件化（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)，最高槓桿補強）— 新增
+
+> 大廠 UI/UX deep-research 對標（`web_design/03_uiux_benchmark_and_reinforcement_plan.md`）：現行 A–E 全是 live 監控，缺研究迭代迴圈 UX。**鐵律：補齊研究迴圈前不再擴張監控 panel（Panel D / Panel B live WS 凍結至 M5）**。後端契約先行（純 Python/CLI 可 TDD），最薄前端隨 ADR-015 React 化批次補。
+
+| 編號 | 任務 | 工時 | 狀態 | 里程碑 |
+|:--|:--|:---:|:--|:--|
+| 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | 8h | ✅ 2026-06-02 | — |
+| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | 6h | ⏳ | M0/M2 |
+| 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | 6h | ⏳ | M0/M2 |
+| 8.G.3 | `validation/gate_state.py`：IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict（ADR-016 K1/K2/K3） | 8h | ⏳ | M0 |
+| 8.G.4 | 試驗次數計數 → DSR deflate（trials_count + dsr.py 接 n_trials） | 4h | ⏳ | M0/M3 |
+| 8.G.5 | CLI 擴充：run-new / run-list / sweep / compare / validate is·wfa·oos / promote check（06 + README 同步） | 8h | ⏳ | M2 |
+| 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | 6h | ⏳ | M0/M2 |
+| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | 20h | ⏳ | M3 |
+| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | 10h | ⏳ | M5 |
+
+**模組小計**：~76h | 進度 ~10%（對標證據包完成；後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）
+
+---
+
 ## 4. 進度摘要
 
 | 項目 | 當前值 | 目標值 |
@@ -394,6 +416,54 @@
 
 任一項不達標 → 觸發退場條件回 M0。M3 OOS 門檻（OOS Sharpe > 0.6 × IS、PBO < 30%、DSR > 0.95）見 `01_workflow_manual.md` §6。
 
+
+### 版本 Roadmap（反發散切版，2026-06-02 收斂）
+
+> **反發散原則（一句）**：唯一真 blocker 是「策略 edge」而非平台功能——每個版本的 exit 都綁一個可客觀驗收的 gate，且整條版本序列在 v3 edge 未證實前**不得**往前推進前端/重功能。
+>
+> **essential MVP 邊界（v0.1）**：能把 v3 進場 edge 客觀驗出真偽的最小路徑＝M0 v3 進場重設 + 讓每次迭代「客觀、可重現、可守門」的最小後端護欄。**明確不含任何前端、不含 sweep/compare/Cmd-K/promotion UI、不含 OOS sealed vault 完整版。**
+
+#### 版本切分表
+
+| 版本 | 名稱 | 里程碑 | 目標（一句） | 含哪些 WBS | Exit Criteria |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **v0.1** | edge 驗證最小迴圈（**Essential MVP**） | M0/M2 | v3 進場重設 + 讓迭代客觀可守門的最小後端 | 4.0 v3進場（候選 A/B/C）、8.G.3-min（IS gate 硬門檻 dict as code）、8.G.1-min（runs 主表最小 DDL）、8.G.2-min（RunConfig 最小 schema）、8.G.5-min（CLI run-new/run-list/validate is） | v3 進場重設完成且可重現；對 portfolio 雙窗口（2015-2020 + 2020-2024）跑 IS，`gate_state.py` 自動輸出 ADR-016 K1/K2/K3 + min_trades 逐條 PASS/FAIL + 差距值並落 runs 表。**雙向 gate**：(綠) 全 PASS → 開 v0.2；(紅) 任一 FAIL → 走 ADR-017 退場路徑回 M0 再設或評估砍策略，**不得**推進 v0.2+ |
+| **v0.2** | OOS + 統計顯著性驗證 | M3 | IS→WFA→OOS 不可逆 gate 就位後實跑 OOS | 8.G.3-full（IS→WFA→OOS 狀態機 + OOS sealed vault）、8.G.2-full（OOS 區間系統鎖死 + hypothesis 預登記）、8.G.4（trials→DSR deflate）、8.G.1-full（4 張時序表補 run_id FK）、5.B.2（WFA splitter）、6.3（PBO CSCV + DSR） | sealed vault 在 IS 未 PASS 前擋住 OOS 存取且留痕（TDD 覆蓋「未過 gate 讀 OOS 被擋」「狀態不可回退」）；v3 達 OOS Sharpe > 0.6×IS、PBO < 30%、DSR > 0.95（含 trials deflate）。任一紅線自動擋下游 |
+| **v0.3** | 統計驗證完整化 + 多 run 比較後端（CLI-only） | M3 | edge 穩健性蓋章（高原非孤立尖峰），全程 code-first | 6.1（metrics.py 30+ 指標 enum + quantstats）、6.4（Bootstrap + Monte Carlo）、6.5.x（DOE 1-10）、8.G.5-full（CLI 補 sweep/compare/promote check）、5.C.1（Engine Protocol 抽象） | DOE 關鍵 run 完成、PBO < 30% 維持；sweep heatmap 資料（CLI 輸出）顯示穩健高原；compare CLI 可對多 run 做 baseline delta；promote check CLI 可讀 validation_status。此版完成＝edge 已被穩健證明 |
+| **v0.4** | 研究工作區最薄前端（React 化第一批） | M3 | 把 v0.1-v0.3 的後端真相源最薄前端化（純讀） | 8.G.6（設計系統 token 擴充：categorical/diverging 色盤 + 收 teal drift）、8.G.7-partial（/research/runs Runs Table + /runs/:id Run Report + /validate）、8.A.3（Dashboard REST API 層 FastAPI）、8.A.1（Panel A/B/C React 版）、FirstRunEmptyState 元件 | Runs Table 可瀏覽/排序/pin baseline；Run Report 複用 Panel A 元件渲染 equity/drawdown/rolling/heatmap + Reproduce 卡；Validate gate 前端呈現 IS gate 逐條綠/紅。**前端 0 新增策略邏輯（純讀後端 run 真相源）** |
+| **v0.5** | Paper trading + 監控接管 | M4 | edge 證實後才接 broker + 啟監控面板 | 7.A（PaperBroker + trade log）、7.C（Risk Gate 12 條 + 3 級熔斷）、7.D（Prefect daily flow + orchestration CLI）、8.C.2（Discord 3 級告警規則引擎）、8.B（Grafana 系統面板）、8.D（InfluxDB + Prometheus） | 3 個月 paper trading 報告產出且不退化（對照 live_start_date 邊界）；Risk Gate ex-ante 12 條生效；Discord 三級告警 + Grafana 系統面板運作 |
+| **v1.0** | 小倉位實盤 + 晉升前端收尾 | M5 | Shioaji 小倉位接通 + 晉升狀態機強制 gate | 7.B（ShioajiBroker + 1/4 倉位）、8.G.8（Promotion stepper + A-E 改 /monitor/* + Panel E 重定位）、8.A.2（Panel D+E React 版）、8.G.7-full（/research/compare + /sweep + Cmd-K）、8.E/8.F（備份 + 災難恢復演練） | Shioaji 小倉位實盤接通 + 1/4 倉位運行；Promotion stepper 強制 gate（每階段綠燈才解鎖 + audit log）；連續觀察不退化即評估全倉 |
+| **v1.x** | Roadmap 層（進階研究 UX / 運維） | post-M5 | 高原視覺化、進階防過擬合 UX、Grafana F-I 等 | sweep/compare 視覺化（heatmap + parallel coordinates）、power gauge UI、四層共振歸因下鑽、trade markers 疊 K 線、Grafana 進階面板 | 依實際使用頻次按需疊加，無硬 exit |
+
+#### essential MVP（v0.1）邊界說明
+
+**包含（不做就無法客觀驗出 v3 edge）**：
+- (a) M0 v3 進場重設設計與實作（4.0 策略層：候選 A `4 層全 AND → N-of-4 + 總分門檻` + B `移除 structure_score==2 硬門檻` + C `進場改持續站上 K 日`）；
+- (b) 8.G.3-min＝`validation/gate_state.py` 只實作「IS gate 硬門檻 dict（ADR-016 K1/K2/K3 + min_trades）逐條 PASS/FAIL + 差距值」，**不做** IS→WFA→OOS 不可逆狀態機、**不做** OOS sealed vault；
+- (c) 8.G.1-min＝`runs` 主表最小 DDL（run_id PK + git_sha + bundle_ref + 4 層進場參數 + status + created_at），收口散落在 4 張時序表的孤兒 run_id，**先不補全部 FK**；
+- (d) 8.G.2-min＝RunConfig Pydantic schema 只含「IS 區間 + 進場參數 + 成本攤平 + engine + hypothesis 文字欄」，**先不含** OOS 區間鎖死、range/step sweep、hypothesis 系統鎖死；
+- (e) 8.G.5-min＝CLI 只留 `run-new` / `run-list` / `validate is`。
+
+**判準**：一個功能若「即使沒有它，v3 進場 edge 仍能被客觀驗出來」，就不是 essential MVP，一律延後當版本層疊加。
+
+#### deferred 清單（順 edge 進程 / 依賴往後疊）
+
+| 延後項 | 延到版本 | 為何延後 |
+| :--- | :--- | :--- |
+| 8.G.7 前端 Research 工作區全套（runs/new/:id/compare/sweep/validate） | v0.4 起分批 | edge 未證前前端 ROI 趨近零（無策略可看、無候選池可比） |
+| 8.G.8 前端 Promotion stepper + A-E 改 /monitor/* + Panel E 重定位 | v1.0（M5） | 晉升前端只在真要晉升 live 時才需要 |
+| Cmd-K command palette | v1.0 | 導覽層 ROI 高但非 edge 驗證剛需 |
+| sweep/compare 視覺化（heatmap + parallel coordinates） | 後端 v0.3、前端 v1.0 | v0.1-v0.2 用 CLI/code-first 即可 |
+| power gauge UI（回測次數/參數/研究天數三軸） | post-MVP | v0.1 只需後端記 trials counter，UI 非必要 |
+| OOS sealed vault 完整封存機制 | v0.2 | IS gate 綠燈後才需要，v0.1 IS 階段用不到 |
+| 8.G.4 trials_count → DSR deflate | v0.2 | 多重檢定校正在 OOS 階段才有意義 |
+| 8.G.6 設計系統 token 擴充（categorical/diverging 色盤） | v0.4 | 前端第一批時才需色盤 |
+| Panel D 全部 / Panel B live WebSocket | 維持 ADR-018 既定 M5（v1.0）凍結 | 無可部署策略前 ROI 趨近零，不提前 |
+| 跨策略 correlation gate / baseline factor library | M3+（v0.3 後有候選池） | 無候選池前無意義 |
+| 四層共振歸因下鑽 / trade markers 疊 K 線 | Run Report 後續迭代（v1.x） | v3 debug 階段如需可走 code-first ad-hoc，非 v0.x 阻塞 |
+| notebook 雙模式 / hosted notebook | 不做 | 只共用 TimescaleDB 資料層即可 |
+| leaderboard / staking / 多人簽核 / champion-challenger registry / Alpha marketplace | 永久不做 | 單人專案過度設計（ADR-018 明列） |
+
 ---
 
 ## 7. 開發節奏建議
@@ -420,8 +490,17 @@
 | ✅ Sprint 1 | 6/1（提前完成） | zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
 | ✅ Sprint 2 | 6/1（單日壓縮） | pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check） | 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
 | ✅ Sprint 3 | 6/2-6/15 | universe ingest（`ingest` CLI + live 10 檔，R14 關閉）+ M2+ DB schema + coverage gate→80 + doc sweep + **5.A.6 portfolio IS 回測執行** → ⚠️ **M2 IS gate FAIL（ADR-017）**：策略進場過嚴、雙窗口無 edge，觸發退場條件 → 回 M0 重設進場假設 | 5.A.7.a ✅ + 5.A.7.b ✅ + 3.D.4 ✅ + 5.A.6 ✅ |
-| ⏳ Sprint 4 | 6/16-6/29 | **（重定義，ADR-017）** M0 進場假設重設（v3）：依 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` 候選方向 A/B/D 設計 → 重跑 ADR-016 gate | M0 進場重設 |
-| Sprint 5-8 | 6/30-8/24 | M3 統計驗證 + WFA + PBO/DSR + DOE | 5.B.2 + 6.* |
+| ⏳ Sprint 4 — v0.1 ①：M0 v3 進場假設設計與實作 | 6/16-6/29 | v0.1 essential ① edge：依 spec `2026-06-02-m0-entry-redesign-scope.md` 落地 v3 進場邏輯——候選 A（4 層全 AND → N-of-4 + 總分門檻）+ B（移除 structure_score==2 硬門檻）+ C（進場改持續站上 K 日，取代單日首次）。先用既有 CLI 對 2330 + portfolio 雙窗口跑出 v3 IS metrics（人工讀，下個 sprint 接 gate_state.py 自動判定）。交易次數明顯脫離 14 次/5 年過稀區間（目標 >40 次/5 年）視為 edge 訊號改善。反發散守則：只動進場 hypothesis，不碰出場/不碰前端/不碰統計重功能/不前置 run 物件化。 | 4.0 v3進場 + 5.A.6（雙窗口重跑） |
+| Sprint 5 — v0.1 ②：客觀化最小後端（runs 表 + RunConfig + 最小 CLI，純 TDD） | 6/30-7/13 | v0.1 essential ② 客觀化骨架（純後端 TDD，先寫測試後實作，coverage 維持 ≥80）：8.G.1-min `runs` 主表最小 DDL（run_id PK + git_sha + bundle_ref + 4 層進場參數 + status + created_at）收口散落在 4 張時序表的孤兒 run_id（先不補全部 FK）；8.G.2-min RunConfig Pydantic schema（IS 區間 + 進場參數 + 成本攤平 + engine + hypothesis 文字欄，先不含 OOS 鎖死/sweep）；8.G.5-min CLI run-new / run-list 落地，讓「改了哪幾個輸入、跑第幾次」有真相源，取代 CLI 手敲 + 散落 ADR。對映 21（資料契約）/ 06（API）/ README 同步。 | 8.G.1-min + 8.G.2-min + 8.G.5-min |
+| Sprint 6 — v0.1 ③：IS gate as code（gate_state.py 最小版）+ v0.1 Exit Gate Review | 7/14-7/27 | v0.1 essential ③ 守門（完成 essential MVP）：8.G.3-min `validation/gate_state.py` 實作 IS gate 硬門檻 dict（ADR-016 K1 CAGR>18% / K2 Sharpe>1.0 / K3 滑點 0.3% Sharpe>1.0 + min_trades）逐條 PASS/FAIL + 差距值，把 ADR-016 從散落 ADR 變成可執行 gate 並落 runs 表；CLI 加 validate is；對 v3 portfolio 雙窗口自動跑 IS gate。**v0.1 exit gate 雙向決策**：(綠) 全 PASS → 開 v0.2；(紅) 任一 FAIL → 走 ADR-017 退場路徑回 M0 再迭代（記錄 trials，最多 2 輪後若仍無 edge 才評估砍策略），**不得**推進 v0.2+。產出 sprint_gate_review.md。 | 8.G.3-min（gate_state.py IS 硬門檻 dict） |
+| Sprint 7 — v0.2 ①：IS→WFA→OOS 不可逆狀態機 + OOS sealed vault（僅當 v0.1 綠燈） | 7/28-8/10 | v0.2 ① gate 升級（純後端 TDD，前置硬依賴：跑 OOS 前 vault 必須先鎖死）：8.G.3-full 把『唯讀 IS 指標』升級為『工作流強制 gate』——IS→WFA→OOS 不可逆狀態機（IS PASS 才解鎖 WFA、WFA PASS 才解鎖 OOS）+ OOS sealed vault（前置 gate 未過前 OOS 區段對 CLI 不可讀/不可執行、存取計次留痕）；8.G.2-full RunConfig 補 OOS 區間系統鎖死 + hypothesis 預登記（防 post-hoc）；8.G.1-full 4 張時序表補 run_id FK（migration 通過）。TDD 覆蓋『未過 gate 讀 OOS 被擋』『狀態不可回退』。**若 v0.1 紅燈：本 sprint 不啟動，容量轉回 M0 再設一輪 v3。** | 8.G.3-full + 8.G.2-full + 8.G.1-full |
+| Sprint 8 — v0.2 ②：WFA splitter + PBO/DSR + trials deflate → 實跑 OOS | 8/11-8/24 | v0.2 ② OOS 蓋章：5.B.2 WFA splitter（purge+embargo 自寫）+ 6.3 PBO(CSCV) 自寫（對 Bailey 論文對拍）+ DSR 自寫 + 8.G.4 trials_count → dsr.py deflate 接通。在 v0.2 ① sealed vault 保護下對 v3 跑 OOS（gate 解鎖後僅一次）：驗 OOS Sharpe > 0.6×IS、PBO < 30%、DSR > 0.95（含 deflate）。任一紅線 gate_state 自動擋下游、回 Draft；全綠 → status=oos_pass，解鎖 v0.3。 | 5.B.2 + 6.3 + 8.G.4 |
+| Sprint 9 — v0.3 ①：統計驗證完整化（metrics enum + Bootstrap/MC + compare CLI） | 8/25-9/7 | v0.3 ① 統計完整化（CLI-only，仍不做前端）：6.1 metrics.py 30+ 指標 enum/functions + quantstats 報表整合；6.4 Bootstrap + Monte Carlo；8.G.5-full CLI 補 compare（多 run baseline delta 表）+ promote check（讀 validation_status）。多 run 比較走 code-first，取代手敲。06 API + README 同步。 | 6.1 + 6.4 + 8.G.5-full（compare/promote check） |
+| Sprint 10 — v0.3 ②：DOE 1-10 + Engine Protocol + sweep CLI（edge 穩健性蓋章） | 9/8-9/21 | v0.3 ② edge 穩健性蓋章（完成統計驗證後端，解鎖 v0.4 前端）：6.5.x DOE 1-10 執行（M3 大頭分批起跑）+ 5.C.1 Engine Protocol 抽象 + 8.G.5-full sweep CLI 寫 DB。確認 v3 edge 為穩健高原（heatmap 資料 CLI 輸出）非單點尖峰；PBO < 30% 維持。此版完成＝edge 已被穩健證明。 | 6.5 + 5.C.1 + 8.G.5-full（sweep） |
+| Sprint 11 — v0.4 ①：設計系統 token + REST API + Runs Table/Validate 前端 | 9/22-10/5 | v0.4 ① 最薄前端第一批（edge 已證後才疊加，純讀後端 run 真相源）：8.G.6 設計系統 token 擴充（categorical/diverging 色盤 + 收 teal drift）+ 研究級元件規格；8.A.3 Dashboard REST API 層（FastAPI）；8.G.7-partial /research/runs Runs Table（瀏覽/排序/pin baseline）+ /research/validate（IS gate 逐條綠/紅）+ FirstRunEmptyState（CLI-first 空狀態）。前端 0 新增策略邏輯。 | 8.G.6 + 8.A.3 + 8.G.7-partial（Runs Table/Validate） |
+| Sprint 12 — v0.4 ②：Run Report + Panel A/B/C React 化（複用元件） | 10/6-10/19 | v0.4 ② 完成研究前端 MVP：8.G.7-partial /research/runs/:id Run Report（複用 Panel A 元件渲染 equity/drawdown/rolling/heatmap + Reproduce 卡）；8.A.1 Panel A/B/C React 版（run-scoped 複用，非 live-only）。驗收：可從 Runs Table 點進任一 v3 run 看完整 tear sheet + 一鍵 Reproduce。完成即 v0.4 研究工作區前端 MVP，解鎖 v0.5 paper。 | 8.G.7-partial（Run Report）+ 8.A.1（Panel A/B/C React） |
+| Sprint 13-15 | 10/20-11/30（外推） | v0.5：Paper trading + 監控接管 — PaperBroker + trade log、Risk Gate ex-ante 12 條 + 3 級熔斷、Prefect daily flow、Discord 3 級告警規則引擎、Grafana 系統面板。3 個月 paper 報告不退化才往 v1.0。 | 7.A + 7.C + 7.D + 8.C.2 + 8.B + 8.D |
+| Sprint 16+ | 2027 Q1+（外推） | v1.0：小倉位實盤（Shioaji 1/4 倉）+ 晉升 stepper 強制 gate + Panel D/E React + Compare/Sweep/Cmd-K 前端 + 備份/DR；之後 v1.x roadmap 層按需疊加。 | 7.B + 8.G.8 + 8.A.2 + 8.G.7-full + 8.E/8.F |
 
 <!-- SCRUM_BOARD:END -->
 
@@ -462,6 +541,8 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.7 | 2026-06-02 | **反發散版本切版 + Sprint 對齊（承 ADR-018）**：§6 新增「版本 Roadmap」——essential MVP（v0.1）= M0 v3 進場重設 + 讓迭代客觀可守門的最小後端（8.G.3-min IS gate as code + 8.G.1/8.G.2/8.G.5 最小版），明確不含前端/sweep/compare/Cmd-K/promotion UI/OOS sealed vault；後續 v0.2 OOS+統計 → v0.3 研究後端 → v0.4 研究前端 MVP → v0.5 M4 paper → v1.0 M5 live → v1.x roadmap 層，每版綁可客觀驗收 exit gate。§7 Sprint 表經 `tools/scrum_board`（`scrum_board.json` 真相源 + `sync_wbs.py` 重生）展開為 Sprint 4-12 對齊版本（Sprint 4-6=v0.1、7-8=v0.2、9-10=v0.3、11-12=v0.4）+ Sprint 13-15/16+ 外推 rollup；鐵律：v3 edge 未證前不推進前端/重功能。 |
+| v2.6 | 2026-06-02 | **監控優先 → 研究迴圈優先 pivot（ADR-018）**：大廠 UI/UX deep-research 對標（10 平台：QuantConnect/BRAIN/Numerai/Bloomberg/W&B/MLflow/OSS 報表/機構平台/開發者工具/防過擬合）→ 證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 維度差距、8 CRITICAL、7 張 Mermaid 流程圖、補強 roadmap）；§2/§3 新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（runs 主表 / RunConfig schema / gate_state.py IS→WFA→OOS + OOS sealed vault / trials→DSR deflate / CLI 擴充 / 研究級元件 / 前端 research 工作區）；A–E 監控重定位為 live 子視圖（Panel E 改隸屬 Validate gate）、Panel D / Panel B live WS 凍結至 M5；ADR 數量 17→18；§1 banner 加 v2.6 pivot 說明 |
 | v2.5 | 2026-06-02 | **M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**：5.A.6 portfolio IS 雙窗口執行（2020-2024 −1.75% / 2015-2020 −4.94%），對 ADR-016 K1/K2/K3 全 FAIL；根因＝進場過嚴（2330 5 年 14 次進場、勝率 50%），參數探針證實非出場非 bug；§1 banner / §6 M2 milestone ❌ / §5 R9 標已部分實現 / §7 Sprint 4 重定義為 M0 進場重設 / ADR 數量 16→17 / 技術債加 `_format_perf_summary` ffill bug（已修）；M0 證據包見 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` |
 | v2.4 | 2026-06-02 | **5.A.7.b 完成 + R14 關閉**：新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/m2_universe_ingest_runbook.md`）+ 06/README 同步；live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt）解 skip 並通過 → 252 pass / 4 skip、coverage 95.22%；模組 5.0 64%→66%；§5 R14 標 ✅ 關閉；§7 Sprint 3 更新；剩 5.A.6 portfolio |
 | v2.3 | 2026-06-02 | **6/2 PR 批次同步 + R14 真相校正**：§1 banner/git 分支/最新 commit 更新至 `a75c0af`（PR #15/16/17/18 已合入）；**5.A.7 拆為 5.A.7.a helper ✅（PR #15）/ 5.A.7.b live ingest ⏳（R14 仍開放，repo 內無 parquet cache）**；模組 5.0 60%→64%；§4 整體進度統一為 48%（修 43/48 內部打架）、覆蓋率更新為 93.74%（gate→80，PR #17）；§5 R14 改寫為「部分緩解」+ cache runbook 不入版控策略；§7 Sprint 3 列已完成 PR 與剩餘關鍵路徑 |
