@@ -281,13 +281,13 @@
 
 | 編號 | 任務 | 工時 | 備註 |
 |:--|:--|:---:|:--|
-| 7.A.1 | PaperBroker 即時資料 + 模擬撮合 | 16h | sprint S5/S6 後 |
+| 7.A.1 | PaperBroker 模擬撮合 | 16h | ✅ v0.5 — `adapters/brokers/paper_broker.py`（fills/positions/cash/equity，strategy-agnostic）|
 | 7.A.2 | Paper trade log → TimescaleDB | 4h | |
 | 7.A.3 | 3 個月 paper trading 跑 | (時間) | |
 | 7.B.1 | ShioajiBroker 抄 TEJ 範例改 | 12h | sprint S4 後 |
 | 7.B.2 | 永豐金實盤接通 + 小倉位 | 16h | M5 |
-| 7.C.1 | Risk Gate 12 條 ex-ante 規則 | 16h | 對應 24 §2 |
-| 7.C.2 | 3 級熔斷狀態機 + kill_switch.sh | 8h | 對應 24 §4 |
+| 7.C.1 | Risk Gate 12 條 ex-ante 規則 | 16h | ✅ v0.5 — `risk/risk_gate.py`（EX-001~012 + §2.2 評估順序，純函式）|
+| 7.C.2 | 3 級熔斷狀態機 | 8h | ✅ v0.5 — `risk/circuit_breaker.py`（L1/L2/L3→HALTED latched；EX-012 接 shared BreakerState）；kill_switch.sh ⏳ |
 | 7.C.3 | Risk metrics 即時計算 | 8h | |
 | 7.D.1 | Prefect daily flow 每日排程 | 8h | |
 | 7.D.2 | orchestration/cli.py 完整 | 8h | |
@@ -308,9 +308,9 @@
 | 8.B.1 | Grafana 4 個系統面板 (F-I) | 12h | ⏳ M4 |
 | 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | 4h | ⏳ M4 |
 | 8.C.1 | Discord notifier base | 4h | ✅ 2026-05-31 |
-| 8.C.2 | Discord 3 級告警規則引擎 | 6h | ⏳ M4 |
+| 8.C.2 | Discord 3 級告警規則引擎 | 6h | ✅ v0.5 — `monitoring/alert_rules.py`（Critical/High/Info + 去重 30min + 靜默窗 TWT）|
 | 8.C.3 | Discord 整合測試 | 2h | ✅（unit tests 12 個） |
-| 8.D.1 | InfluxDB metric writer | 4h | ⏳ M4 |
+| 8.D.1 | InfluxDB metric writer | 4h | ✅ v0.5 — `monitoring/influx_writer.py`（line protocol + graceful degradation）|
 | 8.D.2 | Prometheus exporters | 4h | ⏳ M4 |
 | 8.E.1 | pg_dump daily backup | 4h | M5 |
 | 8.E.2 | GCS upload script | 4h | M5 |
