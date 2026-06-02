@@ -84,22 +84,36 @@ def test_format_perf_summary_single_bar_omits_sharpe():
     assert "sharpe_naive" not in summary
 
 
-def test_format_perf_summary_aggregates_action_record_columns():
+def test_format_perf_summary_counts_trades_from_transactions():
+    """Trade counts come from actual fills, NOT the ffill-corrupted action_* cols.
+
+    Regression guard: zipline `record()` forward-fills action columns on days
+    without that action, so summing them inflates counts (a single early buy
+    read as ~1000 buys). The summary must count transactions instead.
+    """
     idx = pd.bdate_range("2024-01-02", periods=3)
     perf = pd.DataFrame(
         {
             "portfolio_value": [1_000_000, 1_010_000, 1_020_000],
             "returns": [0.0, 0.01, 0.0099],
             "n_evaluated": [1, 2, 1],
-            "action_buy": [1, 0, 0],
-            "action_hold": [0, 1, 1],
+            # ffilled action col present but MUST be ignored for counting
+            "action_buy": [1, 1, 1],
+            "transactions": [
+                [{"amount": 1000, "price": 100.0}],   # buy
+                [],
+                [{"amount": -1000, "price": 110.0}],  # sell
+            ],
         },
         index=idx,
     )
     summary = cli_mod._format_perf_summary(perf, capital_base=1_000_000)
     assert summary["bars"] == 3
     assert summary["n_evaluated_total"] == 4
-    assert summary["action_totals"] == {"buy": 1, "hold": 2}
+    assert summary["n_buys"] == 1
+    assert summary["n_sells"] == 1
+    assert summary["n_round_trips"] == 1
+    assert "action_totals" not in summary  # removed — was ffill-corrupted
     assert "sharpe_naive" in summary  # ≥ 2 bars with std > 0
     assert summary["mean_daily_return"] > 0
 
@@ -181,7 +195,9 @@ def test_maybe_notify_discord_sends_when_token_set(monkeypatch):
         "bars": 40,
         "total_return": 0.05,
         "final_value": 1_050_000,
-        "action_totals": {"buy": 3, "hold": 30},
+        "n_buys": 3,
+        "n_sells": 3,
+        "n_round_trips": 3,
     }
     mock_notifier = MagicMock()
     mock_notifier_cls = MagicMock(return_value=mock_notifier)
@@ -202,7 +218,8 @@ def test_maybe_notify_discord_swallows_send_exception(monkeypatch):
     monkeypatch.setenv("DISCORD_BOT_TOKEN", "fake")
     summary = {
         "start": "x", "end": "y", "bars": 1,
-        "total_return": 0.0, "final_value": 0, "action_totals": {},
+        "total_return": 0.0, "final_value": 0,
+        "n_buys": 0, "n_sells": 0, "n_round_trips": 0,
     }
     mock_notifier = MagicMock()
     mock_notifier.send.side_effect = RuntimeError("network down")

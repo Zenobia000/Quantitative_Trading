@@ -57,11 +57,21 @@ def _format_perf_summary(perf: pd.DataFrame, capital_base: float) -> dict:
     final_value = float(perf["portfolio_value"].iloc[-1])
     total_return = (final_value / capital_base) - 1.0
 
-    # Aggregate per-action counts from record() rows
-    action_cols = [c for c in perf.columns if c.startswith("action_")]
-    action_totals = {
-        c.replace("action_", ""): int(perf[c].fillna(0).sum()) for c in action_cols
-    }
+    # Trade counts from actual fills (ground truth). The per-bar action_*
+    # values recorded via zipline `record()` are FORWARD-FILLED on days an
+    # action is absent (record only writes the keys present that bar), so
+    # summing them yields meaningless inflated totals — e.g. a single early
+    # "buy" reads as ~1000 "buys" over a multi-year run. Count transactions.
+    n_buys = n_sells = 0
+    if "transactions" in perf.columns:
+        for txns in perf["transactions"]:
+            if isinstance(txns, list):
+                for t in txns:
+                    amt = t.get("amount", 0)
+                    if amt > 0:
+                        n_buys += 1
+                    elif amt < 0:
+                        n_sells += 1
 
     summary = {
         "bars": len(perf),
@@ -71,7 +81,9 @@ def _format_perf_summary(perf: pd.DataFrame, capital_base: float) -> dict:
         "final_value": final_value,
         "total_return": total_return,
         "n_evaluated_total": int(perf["n_evaluated"].fillna(0).sum()) if "n_evaluated" in perf else 0,
-        "action_totals": action_totals,
+        "n_buys": n_buys,
+        "n_sells": n_sells,
+        "n_round_trips": min(n_buys, n_sells),
     }
 
     # quantstats / empyrical compatible — only when we have ≥2 bars
@@ -133,7 +145,8 @@ def _maybe_notify_discord(summary: dict, run_id: str) -> None:
             f"Period: {summary['start']} → {summary['end']} ({summary['bars']} bars)\n"
             f"Total return: **{summary['total_return']:.4%}**\n"
             f"Final value: NT$ {summary['final_value']:,.0f}\n"
-            f"Actions: {summary['action_totals']}"
+            f"Trades: {summary['n_round_trips']} round-trips "
+            f"({summary['n_buys']} buys / {summary['n_sells']} sells)"
         )
         notifier.send(content=msg)
     except Exception as exc:  # noqa: BLE001 — notification failure ≠ backtest failure
@@ -247,7 +260,10 @@ def backtest_run(
     click.echo(f"Total return : {summary['total_return']:.4%}")
     if "sharpe_naive" in summary:
         click.echo(f"Sharpe (naive): {summary['sharpe_naive']:.3f}")
-    click.echo(f"Actions      : {summary['action_totals']}")
+    click.echo(
+        f"Trades       : {summary['n_round_trips']} round-trips "
+        f"({summary['n_buys']} buys / {summary['n_sells']} sells)"
+    )
 
     if tearsheet:
         ts_path = _maybe_write_tearsheet(perf, output_dir, run_id)
