@@ -382,7 +382,7 @@
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
 | 訊號邏輯與 XQ 差異 > 0.5% | 中 | 高 | 100 樣本抽查、修正 _normalize | Self |
-| **R9 策略本身無 Edge** | 高 | 致命 | 🟠 **緩解中（v3 進場重設 v0.1）**（2026-06-02）：原 IS 無 edge（~14 次/5 年、勝率 50%，ADR-017）→ **v3 進場參數化放寬（必含層+可選）+ flameout 最小搭配已定稿並實作（ADR-019；16 synthetic 測試、signals.py 100%、suite 271 pass、v2 baseline regression 釘死）**。**待驗**：Sprint 6 雙窗口 IS 人工讀（cache-gated；2330+中小型成分股）跨窗符號一致+操盤手體檢，綠燈≠有 edge。若 v3 仍無一致正期望 → 回 M0 換 edge 來源（候選 D），不續鬆閘自欺 | Self |
+| **R9 策略本身無 Edge** | 高 | 致命 | 🟠 **緩解中（v3 進場 v0.1 IS gate FAIL → 待 v3.1 結構修正）**（2026-06-02）：v3 機制已實作（ADR-019；16 測試、signals.py 100%、v2 regression 釘死）。**雙窗口 IS 已跑（`scripts/v3_double_window_is.py`，3 固定 config 不 sweep）→ 🔴 RED**：v3 放寬雙窗皆淨負（portfolio CAGR −4.48%/−2.38%）且**劣於 v2**（−1.08%/+0.44%），勝率下降；**冒煙槍＝structure==1 中段進場占 72–76% ≫ 30% 健檢門檻**（`min_structure=1` 灌入箱中無人區，正中波段 lens 預警）。exit 搭配證實有效（v3>v3_f1、持有 6.1 vs 4.5）。**判決**：未過 v0.1 gate，**不進 v0.2**。**下一步（非 sweep）**：回 M0 改進場結構條件（方向 A 突破 OR 箱頂回測 / B 保 structure==2 只解 transition），走 sunnydata-design Phase 1；禁止在 IS 上手調救數字。詳見 `dev_docs/v3_entry_is_gate_review_2026-06-02.md` | Self |
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
 | ~~**R14** DEFAULT_UNIVERSE live ingest 尚未執行~~ | — | — | ✅ **已關閉**（2026-06-02）：`ingest` CLI 子命令 + runbook 落地，live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試解 skip 並通過。剩 5.A.6 portfolio 回測（與 R14 無關）| Self |
