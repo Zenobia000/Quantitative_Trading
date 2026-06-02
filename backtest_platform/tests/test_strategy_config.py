@@ -109,3 +109,21 @@ def test_v3_1b_preset_keeps_structure_strict() -> None:
     assert b.entry_first_cross_only is False    # transition relaxed
     assert b.entry_min_layers == 3
     assert b.entry_confirm_days == 2
+
+
+def test_v3_1a_preset_breakout_or_retest() -> None:
+    """Direction A: structure==2 breakout primary + box-top retest (entry_retest_band)."""
+    from backtest_platform.config.strategy_config import get_preset
+
+    a = get_preset("v3.1a")
+    assert a.entry_min_structure == 2       # breakout still required for the OR's first arm
+    assert a.entry_retest_band > 0          # ...plus accept box-top retest
+    assert a.entry_first_cross_only is False
+    assert a.entry_confirm_days == 2
+
+
+def test_retest_band_bounds() -> None:
+    with pytest.raises(ValidationError):
+        StrategyConfig(entry_retest_band=0.5)   # > le=0.2
+    with pytest.raises(ValidationError):
+        StrategyConfig(entry_retest_band=-0.01)  # < 0

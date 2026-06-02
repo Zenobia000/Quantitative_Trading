@@ -62,6 +62,10 @@ class StrategyConfig(BaseModel):
     exit_flameout_confirm_bars: int = Field(
         1, ge=1, le=5, description="flameout momentum 觸發確認 bar (v2=1, v3=2)"
     )
+    entry_retest_band: float = Field(
+        0.0, ge=0, le=0.2,
+        description="箱頂回測帶：0=僅突破；>0 額外接受 close>=box_upper*(1-band) 的箱頂回測 (方向A=0.03)",
+    )
 
     # --- Derived cost rates (computed, not configurable) ---
     @property
@@ -113,12 +117,27 @@ DEFAULT_CONFIG_V3_1B = StrategyConfig(
     exit_flameout_confirm_bars=2,
 )
 
+# Direction A (ADR-019 §4) — keep structure==2 breakout as primary, but ALSO accept
+# a box-top retest (close >= box_upper*(1-retest_band) while above box_mid). Keeps
+# structure quality (no mid-box flood, unlike v3) yet adds participation that dirB
+# (breakout-only) misses. Goal: push 2015-2020 positive without re-breaking struct1.
+DEFAULT_CONFIG_V3_1A = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=2,           # breakout is the OR's first arm
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
+    entry_retest_band=0.03,          # ...OR within 3% of box top
+)
+
 # Named presets for engine/CLI config injection (STRATEGY_PRESET env / `backtest-run
 # --config` / research `run-is --preset`).
 PRESETS: dict[str, StrategyConfig] = {
     "v2": DEFAULT_CONFIG,
     "v3": DEFAULT_CONFIG_V3,
     "v3.1b": DEFAULT_CONFIG_V3_1B,
+    "v3.1a": DEFAULT_CONFIG_V3_1A,
 }
 
 
