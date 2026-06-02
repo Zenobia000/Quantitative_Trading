@@ -405,17 +405,26 @@
 
 ### Sprint 規劃（2 週為一個 sprint）
 
+> **互動看板**：下表的真相源已遷移至 `dev_docs/scrum_board.json`，由 `tools/scrum_board`
+> 拖拉式看板維護。**請勿手改下方 marker 之間的內容** — 在看板拖拉卡片即會自動回寫此區塊與 JSON。
+> 啟動看板：`python tools/scrum_board/server.py` → http://127.0.0.1:8765
+
+<!-- SCRUM_BOARD:START (此區塊由 tools/scrum_board 自動生成，請勿手改) -->
+
 | Sprint | 日期 | 重點 | 對應 WBS |
 |:--|:--|:--|:--|
 | ✅ Sprint -1 | 5/15-5/25 | M0 策略規格定稿 | 1.1 + 10.1 |
-| ✅ Sprint 0a | 5/26-5/30 | M1 完成（資料+策略+pipeline）| 3.A + 4.0 + 9.1 |
+| ✅ Sprint 0a | 5/26-5/30 | M1 完成（資料+策略+pipeline） | 3.A + 4.0 + 9.1 |
 | ✅ Sprint 0b | 5/31-6/1 | M2 重組 + scaffolding + ADR + Discord | 2.4 + 0.1 + 8.C |
-| ✅ Sprint 0c | 6/1（提前完成）| Sprint 0 spike 執行 + Gate Conditional Pass + ADR-013 pivot | 0.2 + 0.3 + 0.4 |
-| ✅ Sprint 1 | 6/1（提前完成）| zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
-| ✅ Sprint 2 | 6/1（單日壓縮）| pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）| 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
-| 🚧 Sprint 3 | 6/2-6/15 | ✅ 已完成：`ingest_universe` helper（PR #15）+ 9 張 M2+ DB 表（PR #16）+ coverage gate→80（PR #17）+ R-15 doc sweep（PR #18）+ **`ingest` CLI + live 10 檔 ingest（R14 關閉）**。**剩餘關鍵路徑**：5.A.6 multi-stock aggregator → Portfolio 10 檔 IS 回測 | 5.A.7.a ✅ + 5.A.7.b ✅ + 3.D.4 ✅ + 5.A.6 🚧 |
-| Sprint 4 | 6/16-6/29 | **（重定義，ADR-017）** M0 進場假設重設（v3）：依 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` 候選方向 A/B/D 設計 → 重跑 ADR-016 gate | M0 進場重設 |
+| ✅ Sprint 0c | 6/1（提前完成） | Sprint 0 spike 執行 + Gate Conditional Pass + ADR-013 pivot | 0.2 + 0.3 + 0.4 |
+| ✅ Sprint 1 | 6/1（提前完成） | zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
+| ✅ Sprint 2 | 6/1（單日壓縮） | pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check） | 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
+| ✅ Sprint 3 | 6/2-6/15 | universe ingest（`ingest` CLI + live 10 檔，R14 關閉）+ M2+ DB schema + coverage gate→80 + doc sweep + **5.A.6 portfolio IS 回測執行** → ⚠️ **M2 IS gate FAIL（ADR-017）**：策略進場過嚴、雙窗口無 edge，觸發退場條件 → 回 M0 重設進場假設 | 5.A.7.a ✅ + 5.A.7.b ✅ + 3.D.4 ✅ + 5.A.6 ✅ |
+| ⏳ Sprint 4 | 6/16-6/29 | **（重定義，ADR-017）** M0 進場假設重設（v3）：依 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` 候選方向 A/B/D 設計 → 重跑 ADR-016 gate | M0 進場重設 |
 | Sprint 5-8 | 6/30-8/24 | M3 統計驗證 + WFA + PBO/DSR + DOE | 5.B.2 + 6.* |
+
+<!-- SCRUM_BOARD:END -->
+
 | ... | ... | 後續 sprint 待近期規劃 | |
 
 ### 早期停止 Gate

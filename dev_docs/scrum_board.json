@@ -1,0 +1,134 @@
+{
+  "version": 1,
+  "project": "Quantitative Trading Platform — Scrum Board",
+  "sourceOfTruth": "此檔為看板的機器可讀真相源。tools/scrum_board 讀寫此檔，並同步 16_wbs_development_plan.md §7。AI 讀此檔即知最新 sprint 狀態。",
+  "updatedAt": "2026-06-02T13:30:54+08:00",
+  "columns": [
+    {
+      "id": "backlog",
+      "title": "Backlog",
+      "emoji": ""
+    },
+    {
+      "id": "todo",
+      "title": "To Do",
+      "emoji": "⏳"
+    },
+    {
+      "id": "in_progress",
+      "title": "In Progress",
+      "emoji": "🚧"
+    },
+    {
+      "id": "review",
+      "title": "Review",
+      "emoji": "🔎"
+    },
+    {
+      "id": "done",
+      "title": "Done",
+      "emoji": "✅"
+    }
+  ],
+  "cards": [
+    {
+      "id": "sprint--1",
+      "kind": "sprint",
+      "title": "Sprint -1",
+      "dates": "5/15-5/25",
+      "milestone": "M0",
+      "goal": "M0 策略規格定稿",
+      "wbs": "1.1 + 10.1",
+      "column": "done",
+      "order": 0
+    },
+    {
+      "id": "sprint-0a",
+      "kind": "sprint",
+      "title": "Sprint 0a",
+      "dates": "5/26-5/30",
+      "milestone": "M1",
+      "goal": "M1 完成（資料+策略+pipeline）",
+      "wbs": "3.A + 4.0 + 9.1",
+      "column": "done",
+      "order": 1
+    },
+    {
+      "id": "sprint-0b",
+      "kind": "sprint",
+      "title": "Sprint 0b",
+      "dates": "5/31-6/1",
+      "milestone": "M2",
+      "goal": "M2 重組 + scaffolding + ADR + Discord",
+      "wbs": "2.4 + 0.1 + 8.C",
+      "column": "done",
+      "order": 2
+    },
+    {
+      "id": "sprint-0c",
+      "kind": "sprint",
+      "title": "Sprint 0c",
+      "dates": "6/1（提前完成）",
+      "milestone": "M2",
+      "goal": "Sprint 0 spike 執行 + Gate Conditional Pass + ADR-013 pivot",
+      "wbs": "0.2 + 0.3 + 0.4",
+      "column": "done",
+      "order": 3
+    },
+    {
+      "id": "sprint-1",
+      "kind": "sprint",
+      "title": "Sprint 1",
+      "dates": "6/1（提前完成）",
+      "milestone": "M2",
+      "goal": "zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI",
+      "wbs": "5.A.1' + 5.A.3' + 4.4 + 5.D",
+      "column": "done",
+      "order": 4
+    },
+    {
+      "id": "sprint-2",
+      "kind": "sprint",
+      "title": "Sprint 2",
+      "dates": "6/1（單日壓縮）",
+      "milestone": "M2",
+      "goal": "pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）",
+      "wbs": "5.A.4 + 5.A.5 + 5.B.1 + 5.B.3",
+      "column": "done",
+      "order": 5
+    },
+    {
+      "id": "sprint-3",
+      "kind": "sprint",
+      "title": "Sprint 3",
+      "dates": "6/2-6/15",
+      "milestone": "M2",
+      "goal": "universe ingest（`ingest` CLI + live 10 檔，R14 關閉）+ M2+ DB schema + coverage gate→80 + doc sweep + **5.A.6 portfolio IS 回測執行** → ⚠️ **M2 IS gate FAIL（ADR-017）**：策略進場過嚴、雙窗口無 edge，觸發退場條件 → 回 M0 重設進場假設",
+      "wbs": "5.A.7.a ✅ + 5.A.7.b ✅ + 3.D.4 ✅ + 5.A.6 ✅",
+      "column": "done",
+      "order": 6
+    },
+    {
+      "id": "sprint-4",
+      "kind": "sprint",
+      "title": "Sprint 4",
+      "dates": "6/16-6/29",
+      "milestone": "M2",
+      "goal": "**（重定義，ADR-017）** M0 進場假設重設（v3）：依 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` 候選方向 A/B/D 設計 → 重跑 ADR-016 gate",
+      "wbs": "M0 進場重設",
+      "column": "todo",
+      "order": 7
+    },
+    {
+      "id": "sprint-5-8",
+      "kind": "sprint",
+      "title": "Sprint 5-8",
+      "dates": "6/30-8/24",
+      "milestone": "M3",
+      "goal": "M3 統計驗證 + WFA + PBO/DSR + DOE",
+      "wbs": "5.B.2 + 6.*",
+      "column": "backlog",
+      "order": 8
+    }
+  ]
+}
