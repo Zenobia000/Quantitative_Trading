@@ -251,7 +251,7 @@
 | 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
 | 5.B.2 | WFA splitter 自寫 | DEV | 8h | ✅ v0.2 | 2026-06-02 — `validation/wfa.py`（purge+embargo，rolling/anchored），對拍驗證過 |
 | 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01（兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠）|
-| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ⏳ M3 | — — vectorbt cross-check 完成後可抽象 |
+| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ✅ v0.3 | `engines/protocol.py`（Engine Protocol + SimEngine 實作；zipline/vectorbt stub）|
 | 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
 
 **模組小計**：~100h | Sprint 1 ~30h + Sprint 2 ~30h + Sprint 3 5.A.7.a helper 4h + 5.A.7.b CLI/live ingest 2h = 66h（66%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套 + ADR-014 + `ingest_universe` helper（PR #15）+ `ingest` CLI 子命令 + **live 10 檔 ingest（R14 關閉，7 個 cache-gated 驗證測試解 skip）**；**剩餘關鍵路徑：5.A.6 multi-stock aggregator + portfolio IS 回測**
@@ -263,7 +263,7 @@
 | 編號 | 任務 | 工時 | 備註 |
 |:--|:--|:---:|:--|
 | 6.1.1 | metrics.py 30+ 指標 enum + functions | 16h | ✅ v0.2 — `validation/metrics.py`（A/B/C/E 類 12 函式，對照 18 §4，45 tests）|
-| 6.1.2 | quantstats 報表整合 | 8h | |
+| 6.1.2 | quantstats 報表整合 | 8h | ✅ v0.3 — `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful）|
 | 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | 4h | |
 | 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | (已估) | |
 | 6.2.2 | WFA 結果視覺化 | 8h | 接 dashboard 面板 E |
@@ -329,9 +329,9 @@
 | 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | 8h | ✅ 2026-06-02 | — |
 | 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | 6h | ⏳ | M0/M2 |
 | 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | 6h | ⏳ | M0/M2 |
-| 8.G.3 | `validation/gate_state.py`：IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict（ADR-016 K1/K2/K3） | 8h | ⏳ | M0 |
-| 8.G.4 | 試驗次數計數 → DSR deflate（trials_count + dsr.py 接 n_trials） | 4h | ⏳ | M0/M3 |
-| 8.G.5 | CLI 擴充：run-new / run-list / sweep / compare / validate is·wfa·oos / promote check（06 + README 同步） | 8h | ⏳ | M2 |
+| 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | 8h | ✅ v0.1+v0.3 | `gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
+| 8.G.4 | 試驗次數計數 → DSR deflate | 4h | ✅ v0.3 | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr）|
+| 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) ✅；validate gate-machine 串接/promote ⏳ | 8h | 🟡 v0.3 | `research/cli.py` run-is/runs/sweep/compare；`sweep`=grid 展開+全網格 CSV(防 cherry-pick)、`compare`=ledger 排名+delta |
 | 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | 6h | ⏳ | M0/M2 |
 | 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | 20h | ⏳ | M3 |
 | 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | 10h | ⏳ | M5 |
