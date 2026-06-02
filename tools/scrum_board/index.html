@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrum Board · Quantitative Trading</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">◧</span>
+      <div>
+        <h1>Quantitative Trading · Scrum Board</h1>
+        <p class="subtitle" id="subtitle">載入中…</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="stats" id="stats"></div>
+      <span class="sync-pill" id="syncPill" data-state="idle">● 就緒</span>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="filters" id="milestoneFilters"></div>
+    <div class="toolbar-actions">
+      <button class="btn" id="addCardBtn">＋ 新增卡片</button>
+      <button class="btn btn-ghost" id="exportBtn">匯出 JSON</button>
+      <button class="btn btn-ghost" id="reloadBtn">重新載入</button>
+    </div>
+  </section>
+
+  <main class="board" id="board"></main>
+
+  <!-- 卡片編輯 modal -->
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2 id="modalTitle">編輯卡片</h2>
+      <form id="cardForm">
+        <label>標題<input name="title" required /></label>
+        <label>里程碑
+          <select name="milestone">
+            <option value="M0">M0</option>
+            <option value="M1">M1</option>
+            <option value="M2">M2</option>
+            <option value="M3">M3</option>
+            <option value="">（無）</option>
+          </select>
+        </label>
+        <label>日期<input name="dates" placeholder="6/2-6/15" /></label>
+        <label>對應 WBS<input name="wbs" placeholder="5.A.6 + …" /></label>
+        <label>重點 / 目標<textarea name="goal" rows="4"></textarea></label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="deleteCardBtn">刪除</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" id="cancelBtn">取消</button>
+          <button type="submit" class="btn">儲存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
