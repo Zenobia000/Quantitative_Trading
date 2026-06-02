@@ -7,8 +7,24 @@ v0.2 — statistical-validation pipeline (pure functions, dev_docs/18 §4 + Lóp
 Prado): ``metrics`` (A/B/C/E performance), ``dsr`` (Deflated/Probabilistic Sharpe),
 ``pbo`` (Probability of Backtest Overfitting, CSCV), ``wfa`` (walk-forward splitter
 with purge+embargo), ``resampling`` (bootstrap CI + Monte Carlo permutation).
+
+v0.3 — ``gate_machine`` (IS→WFA→OOS irreversible state machine + OOS sealed vault),
+``trials`` (trials-counter → DSR-deflated gate criterion), ``tearsheet`` (quantstats).
 """
 from backtest_platform.validation import dsr, metrics, pbo, resampling, wfa
+from backtest_platform.validation.gate_machine import (
+    GateState,
+    OOSSealedError,
+    ValidationGate,
+)
+from backtest_platform.validation.tearsheet import summary_stats, write_tearsheet
+from backtest_platform.validation.trials import (
+    DSR_THRESHOLD,
+    TrialsCounter,
+    TrialsDeflatedResult,
+    deflated_sharpe_pass,
+    trials_deflated_criterion,
+)
 from backtest_platform.validation.dsr import (
     deflated_sharpe_ratio,
     expected_max_sharpe,
@@ -39,4 +55,9 @@ __all__ = [
     "psr", "expected_max_sharpe", "deflated_sharpe_ratio",
     "probability_of_backtest_overfitting", "walk_forward_splits",
     "bootstrap_ci", "monte_carlo_permutation_pvalue",
+    # gate machine + trials + tearsheet (v0.3)
+    "GateState", "OOSSealedError", "ValidationGate",
+    "TrialsCounter", "TrialsDeflatedResult", "deflated_sharpe_pass",
+    "trials_deflated_criterion", "DSR_THRESHOLD",
+    "summary_stats", "write_tearsheet",
 ]
