@@ -51,3 +51,34 @@ def test_config_is_immutable() -> None:
     c = StrategyConfig()
     with pytest.raises(ValidationError):
         c.box_period = 30  # type: ignore[misc]
+
+
+def test_v3_entry_fields_default_to_v2_behavior() -> None:
+    """New v3 entry params must default to v2-reproducing values (no baseline drift)."""
+    c = StrategyConfig()
+    assert c.entry_min_layers == 4
+    assert c.entry_min_structure == 2
+    assert c.entry_first_cross_only is True
+    assert c.entry_confirm_days == 1
+    assert c.entry_cooldown_bars == 0
+    assert c.exit_flameout_confirm_bars == 1
+
+
+def test_v3_preset_relaxed_values() -> None:
+    from backtest_platform.config.strategy_config import DEFAULT_CONFIG_V3
+
+    c = DEFAULT_CONFIG_V3
+    assert (c.entry_min_layers, c.entry_min_structure) == (3, 1)
+    assert c.entry_first_cross_only is False
+    assert c.entry_confirm_days == 2
+    assert c.entry_cooldown_bars == 3
+    assert c.exit_flameout_confirm_bars == 2
+
+
+def test_v3_entry_field_bounds() -> None:
+    with pytest.raises(ValidationError):
+        StrategyConfig(entry_min_layers=5)
+    with pytest.raises(ValidationError):
+        StrategyConfig(entry_min_structure=3)
+    with pytest.raises(ValidationError):
+        StrategyConfig(entry_confirm_days=0)
