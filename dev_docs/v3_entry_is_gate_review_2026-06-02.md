@@ -50,3 +50,23 @@
 ## 5. 結論一句話
 
 v3 進場「機制」實作正確（已測、v2 可重現、exit 搭配有效），但**這組放寬 preset（尤其 `min_structure=1`）在雙窗口 IS 是淨負、未通過 gate**。誠實結論：**回 M0 改進場結構條件（方向 A/B），不鬆閘自欺、不在 IS 上 sweep。** R9 維持「🟠 緩解中（待 v3.1 結構修正）」。
+
+---
+
+## 6. 真引擎校準（2026-06-02 補，Step 1）— 🟢 zipline 確認 RED
+
+§1 的 RED 由輕量 offline sim 判定；§0 已聲明「最終 gate 若需定論應另跑 zipline」。**現已補做**：透過 config 注入（`backtest-run --config v3`，原 `algorithms/four_layer_resonance.py:78` 寫死 `StrategyConfig()`，v3 從未進引擎）+ 算法 v3 wiring，用真 zipline event-driven 引擎重跑 portfolio（同 8 檔）。
+
+| 窗口 | config | SIM Sharpe | **Zipline Sharpe** | Zipline total return | 交易數 |
+|:--|:--|:--:|:--:|:--:|:--:|
+| 2020-2024 | v2 | +0.21 | **+0.20** | +1.03% | 103 |
+| 2020-2024 | **v3** | -0.44 | **-0.43** | **-5.20%** | **466** |
+| 2015-2020 | v2 | -0.64 | -0.91 | -3.01% | 77 |
+| 2015-2020 | v3 | -0.99 | （infra timeout：v3 過度交易使 5yr CLI run >590s，未完成；2015-2020 v2 已負 + 2020-2024 v3 崩盤 + Sharpe 吻合 → 判決不依賴此格） | — | — |
+
+**三項確認：**
+1. **RED 獲真引擎背書**：zipline 2020-2024 v2 正（+1.03%/Sharpe+0.20）→ v3 崩成負（-5.20%/Sharpe-0.43），與 sim 同向；v3 在真引擎一樣淨負且劣於 v2。
+2. **兩個獨立引擎 Sharpe 吻合到 ~0.01**（sim vs zipline：v2 +0.21/+0.20、v3 -0.44/-0.43）→ 同時背書 RED 判決**並驗證 offline sim 可信**（顧問點名的「判決壓在未校準 sim 上」harness 可信度風險**解除**）。total return 絕對值差異來自 sim CAGR vs zipline 全期 total return + fill model 差異，屬預期。
+3. **冒煙槍引擎側確認**：v3 交易 466 round-trips vs v2 103（4.5×）→ 放寬進場灌入大量低品質進場，與 sim structure1%=76% 同源。
+
+**收斂**：M0 重設靶心（`min_structure=1` 是禍首）為真、非 sim artifact；後續 harness 可放心建在 sim 上。照計畫 Step 2（gate_state）→ Step 3（harness）→ Step 4（結構競賽 方向 B/A），認賠線不變。

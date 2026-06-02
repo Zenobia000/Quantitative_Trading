@@ -82,3 +82,19 @@ def test_v3_entry_field_bounds() -> None:
         StrategyConfig(entry_min_structure=3)
     with pytest.raises(ValidationError):
         StrategyConfig(entry_confirm_days=0)
+
+
+def test_get_preset_selects_v2_or_v3() -> None:
+    from backtest_platform.config.strategy_config import get_preset
+
+    assert get_preset("v2").entry_min_structure == 2
+    assert get_preset("v2").entry_first_cross_only is True
+    assert get_preset("v3").entry_min_structure == 1
+    assert get_preset("v3").entry_confirm_days == 2
+
+
+def test_get_preset_rejects_unknown() -> None:
+    from backtest_platform.config.strategy_config import get_preset
+
+    with pytest.raises(ValueError, match="unknown strategy preset"):
+        get_preset("bogus")
