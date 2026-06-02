@@ -123,3 +123,238 @@ def test_write_parquet_creates_three_files(tmp_path: Path) -> None:
     assert paths["broker_chips"].exists()
     roundtrip = pd.read_parquet(paths["daily_bars"])
     assert len(roundtrip) == 2
+
+
+# --------------------------------------------------------------------------- #
+# Extended coverage: error path, empty data, CLI
+# --------------------------------------------------------------------------- #
+
+
+class _EmptyLoader:
+    """Loader returning empty DataFrames from every endpoint."""
+
+    def taiwan_stock_daily(self, stock_id, start_date, end_date):
+        return pd.DataFrame()
+
+    def taiwan_stock_institutional_investors(self, stock_id, start_date, end_date):
+        return pd.DataFrame()
+
+    def taiwan_stock_day_trading(self, stock_id, start_date, end_date):
+        return pd.DataFrame()
+
+    def taiwan_stock_dividend(self, stock_id, start_date, end_date):
+        return pd.DataFrame()
+
+
+def test_fetch_bundle_with_all_empty_loader_returns_empty_bundle():
+    """When every endpoint returns empty, fetch_bundle still constructs a valid ETLBundle."""
+    bundle = fetch_bundle(
+        stock_id="9999",
+        start=date(2024, 1, 1),
+        end=date(2024, 1, 31),
+        loader=_EmptyLoader(),
+        rate_limit_seconds=0,
+    )
+    assert bundle.stock_id == "9999"
+    assert bundle.daily_bars.empty
+    assert bundle.institutional.empty
+    assert bundle.broker_chips.empty
+    # Empty bundle still has the correct column schema
+    expected_daily_cols = {
+        "stock_id", "trade_date", "open", "high", "low", "close", "volume", "adj_factor",
+    }
+    assert expected_daily_cols.issubset(set(bundle.daily_bars.columns))
+
+
+def test_fetch_bundle_swallows_dividend_fetch_exception():
+    """Adjustment is best-effort — if dividend fetch raises, daily still returned."""
+
+    class DivFailsLoader(StubLoader):
+        def taiwan_stock_dividend(self, stock_id, start_date, end_date):
+            raise RuntimeError("FinMind 429 rate limit")
+
+    bundle = fetch_bundle(
+        stock_id="2330",
+        start=date(2024, 1, 1),
+        end=date(2024, 1, 31),
+        loader=DivFailsLoader(),
+        rate_limit_seconds=0,
+    )
+    # Daily bars still populated despite dividend fetch failure
+    assert len(bundle.daily_bars) == 2
+
+
+def test_fetch_bundle_skips_adjustment_when_disabled():
+    """apply_adjustment=False shortcuts the dividend fetch path."""
+
+    class NoDivLoader(StubLoader):
+        def taiwan_stock_dividend(self, stock_id, start_date, end_date):
+            raise AssertionError("should not be called when apply_adjustment=False")
+
+    bundle = fetch_bundle(
+        stock_id="2330",
+        start=date(2024, 1, 1),
+        end=date(2024, 1, 31),
+        loader=NoDivLoader(),
+        rate_limit_seconds=0,
+        apply_adjustment=False,
+    )
+    assert len(bundle.daily_bars) == 2
+
+
+def test_normalize_institutional_handles_empty_input():
+    """Empty raw → empty frame with expected output columns."""
+    from backtest_platform.data.finmind_etl import _normalize_institutional
+
+    out = _normalize_institutional(pd.DataFrame(), "2330")
+    assert out.empty
+    assert list(out.columns) == [
+        "stock_id", "trade_date", "foreign_buy", "trust_buy", "dealer_buy",
+    ]
+
+
+def test_normalize_day_trading_handles_empty_input():
+    from backtest_platform.data.finmind_etl import _normalize_day_trading
+
+    out = _normalize_day_trading(pd.DataFrame(), "2330")
+    assert out.empty
+    assert "day_trade_volume" in out.columns
+
+
+def test_normalize_daily_handles_empty_input():
+    from backtest_platform.data.finmind_etl import _normalize_daily
+
+    out = _normalize_daily(pd.DataFrame(), "2330")
+    assert out.empty
+    assert "open" in out.columns
+
+
+def test_col_or_zero_falls_back_when_column_missing():
+    from backtest_platform.data.finmind_etl import _col_or_zero
+
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    s = _col_or_zero(df, "missing")
+    assert (s == 0).all()
+    assert len(s) == 3
+
+
+# --------------------------------------------------------------------------- #
+# CLI test
+# --------------------------------------------------------------------------- #
+
+
+def test_main_cli_dry_run_no_output_no_db(tmp_path):
+    """Without --output or --db, CLI exits cleanly with "dry-run complete" log."""
+    from unittest.mock import patch
+
+    from click.testing import CliRunner
+
+    from backtest_platform.data import finmind_etl as etl
+
+    runner = CliRunner()
+    fake_bundle = MagicMock_return_empty_bundle()
+
+    with patch.object(etl, "fetch_bundle", return_value=fake_bundle):
+        result = runner.invoke(
+            etl.main,
+            [
+                "--stock-id", "2330",
+                "--start", "2024-01-02",
+                "--end", "2024-01-15",
+            ],
+        )
+    assert result.exit_code == 0, result.output
+
+
+def test_main_cli_writes_parquet(tmp_path):
+    from unittest.mock import patch
+
+    from click.testing import CliRunner
+
+    from backtest_platform.data import finmind_etl as etl
+
+    runner = CliRunner()
+    fake_bundle = MagicMock_return_empty_bundle()
+    fake_paths = {"daily_bars": tmp_path / "f1.parquet"}
+
+    with (
+        patch.object(etl, "fetch_bundle", return_value=fake_bundle),
+        patch.object(etl, "write_parquet", return_value=fake_paths) as mock_wp,
+    ):
+        result = runner.invoke(
+            etl.main,
+            [
+                "--stock-id", "2330",
+                "--start", "2024-01-02",
+                "--end", "2024-01-15",
+                "--output", str(tmp_path),
+            ],
+        )
+    assert result.exit_code == 0, result.output
+    mock_wp.assert_called_once()
+
+
+def MagicMock_return_empty_bundle():
+    """Helper: construct a real ETLBundle (Pydantic) with empty frames for CLI tests."""
+    return ETLBundle(
+        stock_id="2330",
+        start_date=date(2024, 1, 2),
+        end_date=date(2024, 1, 15),
+        daily_bars=pd.DataFrame(
+            columns=["stock_id", "trade_date", "open", "high", "low", "close", "volume", "adj_factor"],
+        ),
+        institutional=pd.DataFrame(
+            columns=["stock_id", "trade_date", "foreign_buy", "trust_buy", "dealer_buy"],
+        ),
+        broker_chips=pd.DataFrame(
+            columns=[
+                "stock_id", "trade_date",
+                "top_broker_buy", "key_broker_buy", "gov_broker_buy", "geo_broker_buy",
+                "day_trade_volume", "margin_offset_volume",
+            ],
+        ),
+    )
+
+
+def test_build_loader_with_token(monkeypatch):
+    """_build_loader imports FinMind lazily and applies token when given."""
+    from backtest_platform.data import finmind_etl as etl
+    from unittest.mock import MagicMock as _MM, patch as _patch
+
+    fake_dl = _MM()
+    fake_dl_cls = _MM(return_value=fake_dl)
+
+    fake_module = _MM()
+    fake_module.DataLoader = fake_dl_cls
+
+    fake_package = _MM()
+    fake_package.data = fake_module
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "FinMind", fake_package,
+    )
+    monkeypatch.setitem(
+        __import__("sys").modules, "FinMind.data", fake_module,
+    )
+    loader = etl._build_loader("secret-token")
+    assert loader is fake_dl
+    fake_dl.login_by_token.assert_called_once_with(api_token="secret-token")
+
+
+def test_build_loader_without_token(monkeypatch):
+    from backtest_platform.data import finmind_etl as etl
+    from unittest.mock import MagicMock as _MM
+
+    fake_dl = _MM()
+    fake_dl_cls = _MM(return_value=fake_dl)
+
+    fake_module = _MM()
+    fake_module.DataLoader = fake_dl_cls
+    fake_package = _MM()
+    fake_package.data = fake_module
+    monkeypatch.setitem(__import__("sys").modules, "FinMind", fake_package)
+    monkeypatch.setitem(__import__("sys").modules, "FinMind.data", fake_module)
+
+    loader = etl._build_loader(None)
+    assert loader is fake_dl
+    fake_dl.login_by_token.assert_not_called()
