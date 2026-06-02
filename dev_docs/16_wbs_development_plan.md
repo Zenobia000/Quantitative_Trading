@@ -1,6 +1,6 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.4 | **更新：** 2026-06-02 | **狀態：** M1 完成 + Sprint 0 Gate + Sprint 1 ✅ + Sprint 2 ✅（wrapper bug fix + validation 三件套 + ADR-014 pandas 2 升級）/ Sprint 3 active：universe ingest **完成（`ingest` CLI + live 10 檔 ingest，R14 關閉）** → 剩 5.A.6 portfolio 回測
+> **版本：** v2.5 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + Sprint 0-2 ✅ + Sprint 3 ✅（universe ingest + 5.A.6 portfolio IS 回測執行）→ **⚠️ M2 IS gate FAIL（ADR-017）：策略進場過嚴、雙窗口無 edge → 觸發退場條件，回 M0 重設進場假設**。Sprint 4 重定義為 M0 進場重設。
 >
 > **本文件為「狀態真相源」（Single Source of Truth）** — 其他文件（README / 01 / 02 / 17-24 / ADR）禁止寫 milestone 狀態欄；查狀態請來此檔。
 >
@@ -243,7 +243,7 @@
 | **5.A.3''** | **Taiwan Stock Controls（漲跌停 / 整股 / 手續費 / 證交稅）** | DEV | 6h | ✅ | 2026-06-01（commit 8b6563b）|
 | 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | ✅ | 2026-06-01（commit 8b6563b → Sprint 2 `b5c97de` `evaluate_bar` 校正）|
 | 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ✅ | 2026-06-01（Sprint 2 `validation/regression_vs_m1.py`，2330 2024 全年 **100.00% match**，commit `b5c97de`）|
-| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | 🚧 Sprint 3 | — — 5.A.7.b cache 已就緒（✅）；待 multi-stock aggregator + 回測流程（解 test_universe_ingest 3 個 Wave 3 skip）|
+| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | ✅ 執行（gate FAIL）| 2026-06-02 — Algorithm 原生支援多股，無需另寫 aggregator。雙窗口 portfolio IS：2020-2024 **−1.75%**、2015-2020（ADR-016 凍結窗口）**−4.94%**；2330 5 年僅 14 次進場、勝率 50%、在市場 3.9%。**對 ADR-016 K1/K2/K3 全 FAIL → 觸發退場（[ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md)）**。參數探針證實約束在進場非出場 |
 | **5.A.7.a** | **`ingest_universe` 批次 helper（per-symbol isolation + all-fail raise）** | DEV | 4h | ✅ Wave 2 | 2026-06-02（commit `90bdfe9` / PR #15；含 mock/stub unit tests，error isolation 單一來源化） |
 | **5.A.7.b** | **DEFAULT_UNIVERSE live 10 檔 FinMind ingest → parquet（含 2330 + 9 檔）** | DEV | 2h | ✅ Wave 3 | 2026-06-02 — **R14 關閉**；新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/`）；live 跑 2020-2024 5yr `ok=10/10` 35s；解開 7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt 真正執行並通過）→ 252 pass / 4 skip，coverage 95.22%。cache 不入版控（runbook 化） |
 | 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
@@ -329,7 +329,7 @@
 | 單元測試覆蓋率 | **95.22%**（5.A.7.b 後 252 pass / 4 skip；`--cov-fail-under` gate 80） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 16（+012 uv / 013 zipline-reloaded / 014 3.1.1 升級 / 015 儀表板 React / 016 M2 KPI 凍結） | 持續 |
+| ADR 數量 | 17（+016 M2 KPI 凍結 / **017 M2 IS gate FAIL → 回 M0 重設進場**） | 持續 |
 | 文檔完整度 | ~96%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / 21 API 契約） | 100% |
 
 ### 技術債（M2 待處理）
@@ -343,6 +343,7 @@
 
 - ~~pytest-asyncio 9.x 不相容~~ → 已 bump to >=0.24（commit `2936119`，2026-06-01）
 - ~~rqalpha 自訂 mod 是否值得寫~~ → 廢止；改 zipline-reloaded（ADR-005 → ADR-013）
+- ~~`_format_perf_summary` action_totals 來自 zipline `record()` ffill 欄位加總（單筆 buy 讀成 ~1000 筆）~~ → 改從 `transactions` 算真實成交筆數 + regression test（2026-06-02，ADR-017 §2.3）
 
 ---
 
@@ -359,7 +360,7 @@
 | Sprint 0 S1/S3 fail | 中 | 中 | Hybrid 路線（19 →01 §5.A 已備）| Self |
 | 下市股資料源無法解決 | 中 | 高 | 退路：接受偏誤 buffer（+3% CAGR target）| Self |
 | 訊號邏輯與 XQ 差異 > 0.5% | 中 | 高 | 100 樣本抽查、修正 _normalize | Self |
-| 策略本身無 Edge（IC 測試紅燈）| 高 | 致命 | 接受 → 砍策略 / 改 hypothesis | Self |
+| **R9 策略本身無 Edge** | 高 | 致命 | 🔴 **已於 IS 部分實現**（2026-06-02，ADR-017）：portfolio 雙窗口 IS 無 edge（進場 ~14 次/5 年、勝率 50%）。**處置**：回 M0 重設**進場**假設（v3）；非砍策略，先重訂進場 edge 再重跑 ADR-016 gate。若 v3 仍無 edge → 才評估砍策略 | Self |
 | 時間不夠（兼職 + 個人專案）| 高 | 中 | 嚴格按 milestone 早期停止 | Self |
 | 個人興趣變動 | 中 | 致命 | 文檔完整 → 隨時可重啟 | Self |
 | ~~**R14** DEFAULT_UNIVERSE live ingest 尚未執行~~ | — | — | ✅ **已關閉**（2026-06-02）：`ingest` CLI 子命令 + runbook 落地，live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試解 skip 並通過。剩 5.A.6 portfolio 回測（與 R14 無關）| Self |
@@ -374,7 +375,7 @@
 | **M1** 資料+策略骨架 | 2026-05-26 | 44 tests 全綠 + 端到端跑通 | ✅ |
 | **M2 預備** Sprint 0 scaffolding + 結構重組 + Discord | 2026-06-01 | scaffolding/docs/結構/Discord 全綠 + 11 ADR | ✅ |
 | **Sprint 0 Gate** 6 spike 跑通 | 2026-06-08（暫定） | 6 spike PASS + gate_review.md | ⏳ |
-| **M2** zipline-reloaded IS 回測通過 | 2026-08（暫定） | Zipline portfolio backtest + 綠燈（ADR-013）| ⏳ |
+| **M2** zipline-reloaded IS 回測通過 | 2026-08（暫定） | Zipline portfolio backtest + 綠燈（ADR-013）| ❌ **IS gate FAIL**（2026-06-02，ADR-017）→ 退場條件觸發，回 M0 重設進場 |
 | **M3** OOS+統計驗證 | 2026-11 | PBO < 30% + DOE 完整 + Streamlit MVP | ⏳ |
 | **M4** Paper trading + 監控 | 2027-02 | 3 個月模擬報告 + Discord + Grafana | ⏳ |
 | **M5** 小倉位實盤 | 2027-05 | Shioaji + 完整 dashboard + 1/4 倉位 | ⏳ |
@@ -413,7 +414,7 @@
 | ✅ Sprint 1 | 6/1（提前完成）| zipline-reloaded 切換 + FinMind bundle + Algorithm + Taiwan controls + CLI | 5.A.1' + 5.A.3' + 4.4 + 5.D |
 | ✅ Sprint 2 | 6/1（單日壓縮）| pandas 2 升級（ADR-014）+ wrapper bug fix `evaluate_bar` + validation 三件套（regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）| 5.A.4 + 5.A.5 + 5.B.1 + 5.B.3 |
 | 🚧 Sprint 3 | 6/2-6/15 | ✅ 已完成：`ingest_universe` helper（PR #15）+ 9 張 M2+ DB 表（PR #16）+ coverage gate→80（PR #17）+ R-15 doc sweep（PR #18）+ **`ingest` CLI + live 10 檔 ingest（R14 關閉）**。**剩餘關鍵路徑**：5.A.6 multi-stock aggregator → Portfolio 10 檔 IS 回測 | 5.A.7.a ✅ + 5.A.7.b ✅ + 3.D.4 ✅ + 5.A.6 🚧 |
-| Sprint 4 | 6/16-6/29 | M2 acceptance（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健，見 ADR-016）+ FinLab bundle（M3 規劃） | M2 結尾 |
+| Sprint 4 | 6/16-6/29 | **（重定義，ADR-017）** M0 進場假設重設（v3）：依 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` 候選方向 A/B/D 設計 → 重跑 ADR-016 gate | M0 進場重設 |
 | Sprint 5-8 | 6/30-8/24 | M3 統計驗證 + WFA + PBO/DSR + DOE | 5.B.2 + 6.* |
 | ... | ... | 後續 sprint 待近期規劃 | |
 
@@ -452,6 +453,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v2.5 | 2026-06-02 | **M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**：5.A.6 portfolio IS 雙窗口執行（2020-2024 −1.75% / 2015-2020 −4.94%），對 ADR-016 K1/K2/K3 全 FAIL；根因＝進場過嚴（2330 5 年 14 次進場、勝率 50%），參數探針證實非出場非 bug；§1 banner / §6 M2 milestone ❌ / §5 R9 標已部分實現 / §7 Sprint 4 重定義為 M0 進場重設 / ADR 數量 16→17 / 技術債加 `_format_perf_summary` ffill bug（已修）；M0 證據包見 `docs/superpowers/specs/2026-06-02-m0-entry-redesign-scope.md` |
 | v2.4 | 2026-06-02 | **5.A.7.b 完成 + R14 關閉**：新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/m2_universe_ingest_runbook.md`）+ 06/README 同步；live 跑 2020-2024 10 檔 `ok=10/10`，parquet cache 就緒（不入版控）；7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt）解 skip 並通過 → 252 pass / 4 skip、coverage 95.22%；模組 5.0 64%→66%；§5 R14 標 ✅ 關閉；§7 Sprint 3 更新；剩 5.A.6 portfolio |
 | v2.3 | 2026-06-02 | **6/2 PR 批次同步 + R14 真相校正**：§1 banner/git 分支/最新 commit 更新至 `a75c0af`（PR #15/16/17/18 已合入）；**5.A.7 拆為 5.A.7.a helper ✅（PR #15）/ 5.A.7.b live ingest ⏳（R14 仍開放，repo 內無 parquet cache）**；模組 5.0 60%→64%；§4 整體進度統一為 48%（修 43/48 內部打架）、覆蓋率更新為 93.74%（gate→80，PR #17）；§5 R14 改寫為「部分緩解」+ cache runbook 不入版控策略；§7 Sprint 3 列已完成 PR 與剩餘關鍵路徑 |
 | v2.2 | 2026-06-01 | **WBS status audit sync**：Sprint 1/2 標 ✅；模組 4.0 100%、5.0 60%、9.0 70%；§3 5.A.4 ~ 5.A.7 / 5.B.1 / 5.B.3 落地紀錄；§5 風險表新增 R14（universe ingest 9 檔缺）/ R15（doc sweep）；§6 加 M2 acceptance KPI 子節（CAGR>18% / Sharpe>1.0，凍結於 ADR-016）；§7 Sprint 表 1/2/3 更新；總進度 43%→48% |

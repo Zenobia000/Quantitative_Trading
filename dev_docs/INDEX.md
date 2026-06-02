@@ -3,6 +3,8 @@
 > 依 `VibeCoding_Workflow_Templates` v3.0 模板產出，對應實際 `backtest_platform/` 程式碼狀態。
 > **產出日期**：2026-05-26 | **對應版本**：backtest_platform 0.1.0 (M1)
 > **2026-06-01 更新**：階段 7 完整定版（11 份 ADR + 7 份規格文檔 17/18/20-24，原 19 已併入 01 §5.A）；16 WBS 升 v2.0 為單一狀態真相源（見 15 §10 規則）
+>
+> **2026-06-02 更新**：universe ingest（`ingest` CLI）完成、R14 關閉；**M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**；ADR 數量 16→17；16 WBS 升 v2.5
 
 ---
 
@@ -93,6 +95,7 @@
 | [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) | zipline-reloaded 3.0.4 → 3.1.1 升級，解鎖 pandas 2 / numpy 2 / vectorbt | amends **ADR-013** § 4 |
 | [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) | 儀表板設計系統 + React 升級（5 面板規格 + Assembly + REST API 契約） | — |
 | [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) | M2 acceptance KPI 凍結（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健性）— 彙整 01/02/v2.md 既有數字 | — |
+| [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設進場假設；附帶修 `_format_perf_summary` ffill metric bug | 記錄 ADR-016 gate 的執行結果 |
 
 ---
 
