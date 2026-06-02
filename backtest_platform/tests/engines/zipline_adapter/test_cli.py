@@ -345,3 +345,88 @@ def test_list_bundles_includes_finmind():
     assert result.exit_code == 0, result.output
     # finmind is registered at module import (side-effect of _ensure_bundle_registered)
     assert "finmind" in result.output
+
+
+# --------------------------------------------------------------------------- #
+# ingest command
+# --------------------------------------------------------------------------- #
+_FB = "backtest_platform.engines.zipline_adapter.bundles.finmind_bundle"
+
+
+def test_ingest_dry_run_lists_universe_without_calling_helper():
+    runner = CliRunner()
+    with patch(f"{_FB}.ingest_universe") as m:
+        res = runner.invoke(
+            cli_mod.cli,
+            ["ingest", "--start", "2020-01-01", "--end", "2024-12-31", "--dry-run"],
+        )
+    assert res.exit_code == 0, res.output
+    m.assert_not_called()
+    assert "2330" in res.output and "2891" in res.output  # first + last default
+
+
+def test_ingest_default_universe_invokes_helper():
+    from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import (
+        DEFAULT_UNIVERSE,
+        UniverseIngestResult,
+    )
+
+    runner = CliRunner()
+    with patch(f"{_FB}.ingest_universe") as m:
+        m.return_value = UniverseIngestResult(
+            bundles={s: MagicMock() for s in DEFAULT_UNIVERSE}, failed_symbols=[]
+        )
+        res = runner.invoke(
+            cli_mod.cli, ["ingest", "--start", "2020-01-01", "--end", "2024-12-31"]
+        )
+    assert res.exit_code == 0, res.output
+    universe_arg = m.call_args.args[0]
+    assert universe_arg == list(DEFAULT_UNIVERSE)
+
+
+def test_ingest_stocks_override():
+    from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import (
+        UniverseIngestResult,
+    )
+
+    runner = CliRunner()
+    with patch(f"{_FB}.ingest_universe") as m:
+        m.return_value = UniverseIngestResult(
+            bundles={"2330": MagicMock(), "2454": MagicMock()}, failed_symbols=[]
+        )
+        res = runner.invoke(
+            cli_mod.cli,
+            ["ingest", "--start", "2020-01-01", "--end", "2024-12-31",
+             "--stocks", "2330,2454"],
+        )
+    assert res.exit_code == 0, res.output
+    assert m.call_args.args[0] == ["2330", "2454"]
+
+
+def test_ingest_all_fail_exits_nonzero():
+    runner = CliRunner()
+    with patch(f"{_FB}.ingest_universe", side_effect=RuntimeError("all failed")):
+        res = runner.invoke(
+            cli_mod.cli, ["ingest", "--start", "2020-01-01", "--end", "2024-12-31"]
+        )
+    assert res.exit_code == 1
+    assert "failed" in res.output.lower()
+
+
+def test_ingest_partial_failure_warns_exit_zero():
+    from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import (
+        UniverseIngestResult,
+    )
+
+    runner = CliRunner()
+    with patch(f"{_FB}.ingest_universe") as m:
+        m.return_value = UniverseIngestResult(
+            bundles={"2330": MagicMock()}, failed_symbols=["9999"]
+        )
+        res = runner.invoke(
+            cli_mod.cli,
+            ["ingest", "--start", "2020-01-01", "--end", "2024-12-31",
+             "--stocks", "2330,9999"],
+        )
+    assert res.exit_code == 0, res.output
+    assert "9999" in res.output

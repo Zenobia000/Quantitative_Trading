@@ -264,5 +264,68 @@ def list_bundles():
         click.echo(f"  - {name:<25} calendar={entry.calendar_name}")
 
 
+@cli.command("ingest")
+@click.option("--start", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option("--end", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option(
+    "--stocks",
+    default=None,
+    help="Comma-separated override; default = DEFAULT_UNIVERSE (10 檔)",
+)
+@click.option(
+    "--cache-dir",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="parquet cache dir (default: data/parquet)",
+)
+@click.option("--dry-run/--no-dry-run", default=False, show_default=True)
+def ingest(
+    start: datetime,
+    end: datetime,
+    stocks: str | None,
+    cache_dir: Path | None,
+    dry_run: bool,
+) -> None:
+    """Batch-ingest a universe into the parquet cache (FinMind → parquet).
+
+    Per-symbol failures are isolated by ``ingest_universe``; one bad symbol
+    does not abort the batch. Exit 1 only when every symbol fails.
+
+    Example:
+        ingest --start 2020-01-01 --end 2024-12-31
+    """
+    from backtest_platform.engines.zipline_adapter.bundles import finmind_bundle
+
+    universe = (
+        [s.strip() for s in stocks.split(",") if s.strip()]
+        if stocks
+        else list(finmind_bundle.DEFAULT_UNIVERSE)
+    )
+
+    if dry_run:
+        click.echo(
+            f"[dry-run] would ingest {len(universe)} symbols "
+            f"{start.date()}..{end.date()}"
+        )
+        for sym in universe:
+            click.echo(f"  - {sym}")
+        click.echo(f"cache_dir = {cache_dir or 'data/parquet (default)'}")
+        return
+
+    try:
+        result = finmind_bundle.ingest_universe(
+            universe, start=start.date(), end=end.date(), cache_dir=cache_dir
+        )
+    except RuntimeError as exc:
+        click.echo(f"ingest failed — every symbol failed: {exc}", err=True)
+        sys.exit(1)
+
+    click.echo("\n=== Ingest Summary ===")
+    click.echo(f"ok     : {len(result.bundles)} / {len(universe)}")
+    if result.failed_symbols:
+        click.echo(f"failed : {result.failed_symbols}")
+    click.echo(f"cache  : {cache_dir or 'data/parquet'}")
+
+
 if __name__ == "__main__":
     cli()
