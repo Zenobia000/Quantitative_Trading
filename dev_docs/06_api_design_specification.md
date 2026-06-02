@@ -1,6 +1,6 @@
 # API 設計規範 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 / CLI + Python API（無 HTTP API）
+> **版本：** v1.1 | **更新：** 2026-06-02 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）/ CLI + Python API（無 HTTP API）
 
 ---
 
@@ -78,12 +78,25 @@ python -m backtest_platform.pipeline run \
 - `reports/calendar__<id>__<start>__<end>.csv` — 每日 scores + states + action
 - stdout：last 20 rows + summary stats
 
-### 3.3 後續 CLI（M2+）
+### 3.3 `engines.zipline_adapter.cli` — zipline-reloaded 回測引擎（M2，ADR-013）
+
+Click group，子命令 `ingest` / `backtest-run` / `list-bundles`。執行需帶 extra：
+`uv run --extra sprint1 --extra dev python -m backtest_platform.engines.zipline_adapter.cli <cmd>`。
+
+| 子命令 | 用途 | 主要 options |
+| :--- | :--- | :--- |
+| `ingest` | 批次抓 universe 進 parquet cache（FinMind → `data/parquet/`） | `--start` / `--end`（必填）、`--stocks`（逗號覆蓋，預設 `DEFAULT_UNIVERSE` 10 檔）、`--cache-dir`、`--dry-run` |
+| `backtest-run` | 跑四層共振 Algorithm 回測 | `--stocks`（必填）、`--start` / `--end`、`--capital-base`、`--tearsheet`、`--discord-notify` |
+| `list-bundles` | 列出已註冊 zipline bundle（`register()` side-effect sanity check） | — |
+
+`ingest` exit code：全 symbol 失敗 → 1；部分失敗 → 0 + 警告（partial-universe 回測仍可進行，per `ingest_universe` 契約）。
+完整流程見 [runbooks/m2_universe_ingest_runbook.md](./runbooks/m2_universe_ingest_runbook.md)。
+
+### 3.4 後續 CLI（M2+）
 
 | 指令 | 階段 | 用途 |
 | :--- | :---: | :--- |
 | `python -m backtest_platform.data.universe build` | M2 | 建立 universe snapshot |
-| `python -m backtest_platform.engines.rqalpha_runner run` | M2 | rqalpha portfolio 回測 |
 | `python -m backtest_platform.engines.vectorbt_runner sweep` | M3 | 參數網格 |
 | `python -m backtest_platform.validation.pbo compute` | M3 | PBO/DSR 計算 |
 | `python -m backtest_platform.validation.wfa walk` | M3 | Walk-Forward |
