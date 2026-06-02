@@ -25,10 +25,24 @@ dev_docs/scrum_board.json   ◄── 真相源，AI 直接讀
 
 ## 啟動
 
+一鍵腳本（自動定位 repo venv，無需先 activate）：
+
 ```bash
-python tools/scrum_board/server.py            # http://127.0.0.1:8765
+./tools/scrum_board/start.sh            # 綁 0.0.0.0:8765（區網可達，會印出本機 IP）
+./tools/scrum_board/start.sh 9000       # 換 port
+HOST=127.0.0.1 ./tools/scrum_board/start.sh   # 鎖回本機
+```
+
+或直接呼叫 server：
+
+```bash
+python tools/scrum_board/server.py                    # 預設綁 0.0.0.0:8765
+python tools/scrum_board/server.py --host 127.0.0.1   # 僅本機
 python tools/scrum_board/server.py --port 9000
 ```
+
+> ⚠️ 預設綁 `0.0.0.0` 方便遠端 / 容器外瀏覽器存取，代表**同網段其他機器可連入**。
+> 此 server 無認證，請只在可信任內網使用，勿暴露公網；要鎖回本機加 `--host 127.0.0.1`。
 
 開瀏覽器 → 拖拉卡片跨欄（Backlog / To Do / In Progress / Review / Done）→ 右上角顯示
 「已同步 WBS」即代表 `scrum_board.json` 與 WBS §7 都已寫回。
@@ -57,6 +71,7 @@ python tools/scrum_board/server.py --port 9000
 
 | 檔案 | 職責 |
 | :--- | :--- |
+| `start.sh` | 一鍵啟動腳本（自動找 venv python，預設綁 0.0.0.0）|
 | `server.py` | 本地 HTTP 伺服器（零依賴）|
 | `sync_wbs.py` | 純函式同步引擎（`render_table` / `replace_between_markers` / `sync`）|
 | `index.html` / `styles.css` / `app.js` | 前端看板 UI |
@@ -72,4 +87,4 @@ backtest_platform/.venv/bin/python -m pytest tools/scrum_board/tests/ -q
 
 - 真相源是 `dev_docs/scrum_board.json`；WBS §7 marker 之間的內容由工具生成，**請勿手改**。
 - WBS §1 banner、模組工時表等其他區段**不受工具影響**，仍由人維護。
-- 伺服器僅綁 `127.0.0.1`，不對外暴露。
+- 伺服器預設綁 `0.0.0.0`（區網可達、無認證）；僅在可信任內網使用，或加 `--host 127.0.0.1` 鎖回本機。
