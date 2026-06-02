@@ -201,3 +201,25 @@ def test_v2_default_entry_unchanged_by_v3_params(rows):
     buys = df[df["action"] == "buy"]
     assert (buys["structure_score"] == 2).all()
     assert (buys["total_score"] >= 5).all()
+
+
+# ───────────────────────── direction A: box-top retest ─────────────────────────
+from backtest_platform.config.strategy_config import get_preset  # noqa: E402
+
+
+def test_v3_1a_accepts_box_top_retest_that_breakout_only_rejects():
+    # structure==1 but close within 3% of box_upper → box-top retest entry (dir A)
+    rows = [make_row(1, 2, 2, 1, close=98, box_upper=100, box_lower=70)] * 3
+    assert "buy" in _actions(rows, get_preset("v3.1a"))
+    assert "buy" not in _actions(rows, get_preset("v3.1b"))  # breakout-only rejects retest
+
+
+def test_v3_1a_rejects_mid_box_below_retest_band():
+    # structure==1 but close far below box top (mid-box no-man's-land) → still rejected
+    rows = [make_row(1, 2, 2, 1, close=85, box_upper=100, box_lower=70)] * 3
+    assert "buy" not in _actions(rows, get_preset("v3.1a"))
+
+
+def test_v3_1a_still_takes_clean_breakout():
+    rows = [make_row(2, 2, 2, 1, close=101, box_upper=100, box_lower=70)] * 3
+    assert "buy" in _actions(rows, get_preset("v3.1a"))

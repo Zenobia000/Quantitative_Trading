@@ -355,13 +355,26 @@ def _evaluate_priority(
         and row["close"] > prev_box_upper
     )
     cooldown_ok = bars_since_exit >= config.entry_cooldown_bars or breakout_exempt
+    # structure gate: breakout (>= entry_min_structure) OR, when entry_retest_band>0,
+    # a box-top retest (close within band of box_upper while still above box_mid,
+    # i.e. structure>=1). Keeps structure quality without the v3 mid-box flood.
+    _box_upper = row.get("box_upper")
+    structure_breakout = row["structure_score"] >= config.entry_min_structure
+    structure_retest = (
+        config.entry_retest_band > 0
+        and row["structure_score"] >= 1
+        and pd.notna(_box_upper)
+        and float(_box_upper) > 0
+        and row["close"] >= float(_box_upper) * (1 - config.entry_retest_band)
+    )
+    structure_ok = structure_breakout or structure_retest
     buy_sig = (
         not in_pos
         and cooldown_ok
         and mandatory_layers
         and not negative_veto
         and layers_hit >= config.entry_min_layers
-        and row["structure_score"] >= config.entry_min_structure
+        and structure_ok
         and row["total_score"] >= config.strong_buy_threshold
         and first_cross_ok
         and confirm_ok

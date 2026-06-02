@@ -92,3 +92,35 @@ v3 進場「機制」實作正確（已測、v2 可重現、exit 搭配有效）
 **認賠線進度（A+B 兩發）**：`struct1<30%` ✅ + `邊際單不劣於 v2` ✅ + `同號為正` ❌（2015-2020 仍負）= **2/3**。**還剩方向 A 一發**（突破 OR 箱頂回測，保結構品質再增參與度，需新 code：`entry_retest_band` 進場 mode）。若方向 A 後三條件仍非同時成立 → 判四層假設在此 universe 無強 edge → escalate（換 universe 候選 D 或砍）。
 
 > **harness 價值已兌現**：方向 B 從「手寫 script + 人腦判 ADR」變成 `run-is --preset v3.1b --hypothesis ... → gate 逐條綠紅 + 落 ledger` 一行；ledger 留 lineage。
+
+---
+
+## 8. 結構競賽方向 A + A+B 收斂結論
+
+**方向 A = 突破(structure==2) OR 箱頂回測**（`entry_retest_band=0.03`：close>=box_upper*0.97 且 structure>=1），保結構品質再增參與度。
+
+| 窗口 | v2 | **v3.1b（突破only，方向B）** | v3.1a（+箱頂回測，方向A） |
+|:--|:--|:--|:--|
+| 2015-2020 | -1.08% / -0.64 | **-0.72% / -0.25** | -2.41% / -0.62 |
+| 2020-2024 | +0.44% / +0.21 | **+1.23% / +0.41** | -0.73% / -0.16 |
+| trades | 61 / 81 | 112 / 129 | 196 / 210 |
+
+**方向 A 比 dirB 更差**：加箱頂回測進場反而傷害績效。**dirB（純突破 structure==2）是三輪競賽最佳；任何 structure==1 進場（v3 箱中 OR A 箱頂回測）都讓績效變差。**
+
+> **指標誠實註記**：v3.1a struct1%=58-67%，但箱頂回測本就是 structure==1，所以 `struct1_pct` 把「箱中無人區」與「箱頂回測」混為一談、無法區分。真正判決是**績效**（A 更差）；此指標侷限記下，後續若再用需細化（如分 box_mid~box_upper*0.97 vs box_upper*0.97~box_upper 兩段）。
+
+### A+B 收斂結論（認賠線判定）
+
+三輪結構競賽（v3 全放鬆 / dirB 突破only / A +回測）後，**最佳變體 dirB**：
+- `struct1<30%` ✅、`邊際單不劣於 v2` ✅、**`同號為正` ❌**（2015-2020 仍 -0.72%）= **2/3，未三者同時成立**。
+- 且 dirB 最佳僅 2020-2024 +1.23%/Sharpe 0.41，**離 ADR-016 edge bar（18%/1.0）很遠**。
+
+**判決：四層共振在此 large/mid-cap universe 無強、跨窗一致的 edge。** 關鍵：**進場閘已不是 bottleneck** —— dirB 進場品質乾淨（struct1=0、健檢全綠、抱得住），但**標的本身 alpha 不足**（籌碼 lens 早предупредил：放寬解進場稀、解不了標的無 alpha）。
+
+### 下一步（escalate，非再調進場）
+
+回 M0 換 **edge 來源**（非進場閘）：
+- **候選 D：換中小型動能 universe**（v2.md line 134 自承 large-cap edge 未定義）——但須先處理生存者偏誤 R7、流動性/滑點上調，且 universe 與進場閘**絕不同 cycle 動**。
+- 或重訂 factor / edge 假設；或砍四層換假設。
+
+工具（run-is + gate + ledger）已就緒，換 universe 後可直接 `run-is --preset dirB --stocks <新universe>` 一行驗。
