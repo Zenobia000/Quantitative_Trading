@@ -143,8 +143,8 @@
 
 ### 模組 0.0 Sprint 0（M1→M2 gate）— 新增
 
-| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 依賴 |
-|:--|:--|:--|:---:|:--|:--|:--|
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
 | 0.1.1 | RUNBOOK + 6 spike scaffolding | DEV | 8h | ✅ | 2026-05-31 | — |
 | 0.1.2 | pyproject extras (mainframe/data_paid/sprint0) | DEV | 1h | ✅ | 2026-05-31 | — |
 | 0.1.3 | .env.example 加 FINLAB/TEJ/INFLUXDB | DEV | 1h | ✅ | 2026-05-31 | — |
@@ -166,17 +166,17 @@
 
 ### 模組 2.4 M2 重組執行 — 新增（追溯記錄）
 
-| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 |
-|:--|:--|:--|:---:|:--|:--|
-| 2.4.1 | 寫 ADR-005~009 (路線變更 5 個) | ARCH | 6h | ✅ | 2026-05-31 |
-| 2.4.2 | 寫 ADR-010 Discord 遷移 | ARCH | 1h | ✅ | 2026-05-31 |
-| 2.4.3 | 寫 ADR-011 目錄結構決策 | ARCH | 2h | ✅ | 2026-06-01 |
-| 2.4.4 | 寫 17/18/20/21/22/23/24 規格文檔 | DOC | 8h | ✅ | 2026-05-31 |
-| 2.4.5 | git mv strategy → strategies/four_layer_resonance | DEV | 2h | ✅ | 2026-05-31 |
-| 2.4.6 | 新建 adapters/orchestration/monitoring/dashboard 骨架 | DEV | 1h | ✅ | 2026-05-31 |
-| 2.4.7 | 改 imports (10 處 code + tests) | DEV | 2h | ✅ | 2026-05-31 |
-| 2.4.8 | 文檔合併方案 B (19 → 01, 21~24 cross-ref) | DOC | 3h | ✅ | 2026-05-31 |
-| 2.4.9 | 06/08/09 同步 M2 結構 | DOC | 2h | ✅ | 2026-05-31 |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 2.4.1 | 寫 ADR-005~009 (路線變更 5 個) | ARCH | 6h | ✅ | 2026-05-31 | — |
+| 2.4.2 | 寫 ADR-010 Discord 遷移 | ARCH | 1h | ✅ | 2026-05-31 | — |
+| 2.4.3 | 寫 ADR-011 目錄結構決策 | ARCH | 2h | ✅ | 2026-06-01 | — |
+| 2.4.4 | 寫 17/18/20/21/22/23/24 規格文檔 | DOC | 8h | ✅ | 2026-05-31 | — |
+| 2.4.5 | git mv strategy → strategies/four_layer_resonance | DEV | 2h | ✅ | 2026-05-31 | — |
+| 2.4.6 | 新建 adapters/orchestration/monitoring/dashboard 骨架 | DEV | 1h | ✅ | 2026-05-31 | — |
+| 2.4.7 | 改 imports (10 處 code + tests) | DEV | 2h | ✅ | 2026-05-31 | — |
+| 2.4.8 | 文檔合併方案 B (19 → 01, 21~24 cross-ref) | DOC | 3h | ✅ | 2026-05-31 | — |
+| 2.4.9 | 06/08/09 同步 M2 結構 | DOC | 2h | ✅ | 2026-05-31 | — |
 
 **模組小計**：27h | 進度 100% ✅
 
@@ -184,8 +184,8 @@
 
 ### 模組 3.0 資料層
 
-| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 依賴 |
-|:--|:--|:--|:---:|:--|:--|:--|
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
 | 3.A.1 | FinMind fetch_bundle | DEV | 8h | ✅ | 2026-05-22 | — |
 | 3.A.2 | Pydantic schemas | DEV | 4h | ✅ | 2026-05-22 | — |
 | 3.A.3 | _normalize_* | DEV | 6h | ✅ | 2026-05-22 | 3.A.1 |
@@ -214,20 +214,20 @@
 
 ### 模組 4.0 策略層
 
-| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 |
-|:--|:--|:--|:---:|:--|:--|
-| 4.1.1 | StrategyConfig Pydantic frozen | DEV | 3h | ✅ | 2026-05 |
-| 4.1.2 | RSI / Stochastic / MACD weighted | DEV | 6h | ✅ | 2026-05 |
-| 4.1.3 | SwingHigh/Low shift(1) 處理 | DEV | 3h | ✅ | 2026-05 |
-| 4.2.1 | compute_scores 四層計分 | DEV | 8h | ✅ | 2026-05 |
-| 4.2.2 | REQUIRED_COLUMNS 驗證 | DEV | 1h | ✅ | 2026-05 |
-| 4.2.3 | net_volume ffill 邏輯 | DEV | 2h | ✅ | 2026-05 |
-| 4.3.1 | compute_states 4 狀態 | DEV | 4h | ✅ | 2026-05 |
-| 4.3.2 | _evaluate_priority 7 訊號 + 優先序 | DEV | 10h | ✅ | 2026-05 |
-| 4.3.3 | compute_signals walk-loop | DEV | 6h | ✅ | 2026-05 |
-| 4.3.4 | evaluate_bar dataclass + 函式 | DEV | 5h | ✅ | 2026-05 |
-| 4.4.1 | Zipline algorithm wrapper skeleton | DEV | 4h | ✅ | 2026-06-01 — `four_layer_resonance.py` initialize / schedule_function |
-| 4.4.2 | initialize/handle_data 整合 M1 純函式 | DEV | 6h | ✅ | 2026-06-01 — Sprint 2 改為 `evaluate_bar` 事件驅動評估（取代原 `compute_signals.iloc[-1]` walk-loop wrapper bug） |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 4.1.1 | StrategyConfig Pydantic frozen | DEV | 3h | ✅ | 2026-05 | — |
+| 4.1.2 | RSI / Stochastic / MACD weighted | DEV | 6h | ✅ | 2026-05 | — |
+| 4.1.3 | SwingHigh/Low shift(1) 處理 | DEV | 3h | ✅ | 2026-05 | — |
+| 4.2.1 | compute_scores 四層計分 | DEV | 8h | ✅ | 2026-05 | — |
+| 4.2.2 | REQUIRED_COLUMNS 驗證 | DEV | 1h | ✅ | 2026-05 | — |
+| 4.2.3 | net_volume ffill 邏輯 | DEV | 2h | ✅ | 2026-05 | — |
+| 4.3.1 | compute_states 4 狀態 | DEV | 4h | ✅ | 2026-05 | — |
+| 4.3.2 | _evaluate_priority 7 訊號 + 優先序 | DEV | 10h | ✅ | 2026-05 | — |
+| 4.3.3 | compute_signals walk-loop | DEV | 6h | ✅ | 2026-05 | — |
+| 4.3.4 | evaluate_bar dataclass + 函式 | DEV | 5h | ✅ | 2026-05 | — |
+| 4.4.1 | Zipline algorithm wrapper skeleton | DEV | 4h | ✅ | 2026-06-01 | `four_layer_resonance.py` initialize / schedule_function |
+| 4.4.2 | initialize/handle_data 整合 M1 純函式 | DEV | 6h | ✅ | 2026-06-01 | Sprint 2 改為 `evaluate_bar` 事件驅動評估（取代原 `compute_signals.iloc[-1]` walk-loop wrapper bug） |
 
 **模組小計**：70h | 進度 100% ✅（M1 完成；M2 wrapper Sprint 1-2 落地）
 
@@ -235,24 +235,24 @@
 
 ### 模組 5.0 回測引擎（M2 重點，zipline-reloaded — 原 TQuant-Lab，ADR-013）
 
-| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 |
-|:--|:--|:--|:---:|:--|:--|
-| 5.A.1 | TQuant-Lab 環境裝起來（spike S1）| DEV | 4h | ❌→pivot | 2026-06-01（S1 fail → 5.A.1' 取代）|
-| **5.A.1'** | **zipline-reloaded 切換（ADR-013，Sprint 1 Day 1）** | DEV | 4h | ✅ | 2026-06-01（commit d31044a，Gate 1+2 全綠）|
-| 5.A.2 | XTAI calendar 驗證 + 對拍 | QA | 2h | ✅ | 2026-06-01（Day 1 Gate 2：243 sessions、春節正確）|
-| 5.A.3 | Algorithm + Order routing 學習 | DEV | 8h | ✅ | 2026-06-01（Day 4-5，commit 8b6563b）|
-| **5.A.3'** | **FinMind bundle ingester + parquet cache（Sprint 1 Day 2-3）** | DEV | 12h | ✅ | 2026-06-01（commit ed3a987，~360 LOC + 11 tests）|
-| **5.A.3''** | **Taiwan Stock Controls（漲跌停 / 整股 / 手續費 / 證交稅）** | DEV | 6h | ✅ | 2026-06-01（commit 8b6563b）|
-| 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | ✅ | 2026-06-01（commit 8b6563b → Sprint 2 `b5c97de` `evaluate_bar` 校正）|
-| 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ✅ | 2026-06-01（Sprint 2 `validation/regression_vs_m1.py`，2330 2024 全年 **100.00% match**，commit `b5c97de`）|
-| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | ✅ 執行（gate FAIL）| 2026-06-02 — Algorithm 原生支援多股，無需另寫 aggregator。雙窗口 portfolio IS：2020-2024 **−1.75%**、2015-2020（ADR-016 凍結窗口）**−4.94%**；2330 5 年僅 14 次進場、勝率 50%、在市場 3.9%。**對 ADR-016 K1/K2/K3 全 FAIL → 觸發退場（[ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md)）**。參數探針證實約束在進場非出場 |
-| **5.A.7.a** | **`ingest_universe` 批次 helper（per-symbol isolation + all-fail raise）** | DEV | 4h | ✅ Wave 2 | 2026-06-02（commit `90bdfe9` / PR #15；含 mock/stub unit tests，error isolation 單一來源化） |
-| **5.A.7.b** | **DEFAULT_UNIVERSE live 10 檔 FinMind ingest → parquet（含 2330 + 9 檔）** | DEV | 2h | ✅ Wave 3 | 2026-06-02 — **R14 關閉**；新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/`）；live 跑 2020-2024 5yr `ok=10/10` 35s；解開 7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt 真正執行並通過）→ 252 pass / 4 skip，coverage 95.22%。cache 不入版控（runbook 化） |
-| 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01（ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de`）|
-| 5.B.2 | WFA splitter 自寫 | DEV | 8h | ✅ v0.2 | 2026-06-02 — `validation/wfa.py`（purge+embargo，rolling/anchored），對拍驗證過 |
-| 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01（兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠）|
-| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ✅ v0.3 | `engines/protocol.py`（Engine Protocol + SimEngine 實作；zipline/vectorbt stub）|
-| 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01（commit c980a44，Sprint 1 Day 6-7 收尾 + README） |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 5.A.1 | TQuant-Lab 環境裝起來（spike S1） | DEV | 4h | ❌→pivot | 2026-06-01 | S1 fail → 5.A.1' 取代 |
+| **5.A.1'** | **zipline-reloaded 切換（ADR-013，Sprint 1 Day 1）** | DEV | 4h | ✅ | 2026-06-01 | commit d31044a，Gate 1+2 全綠 |
+| 5.A.2 | XTAI calendar 驗證 + 對拍 | QA | 2h | ✅ | 2026-06-01 | Day 1 Gate 2：243 sessions、春節正確 |
+| 5.A.3 | Algorithm + Order routing 學習 | DEV | 8h | ✅ | 2026-06-01 | Day 4-5，commit 8b6563b |
+| **5.A.3'** | **FinMind bundle ingester + parquet cache（Sprint 1 Day 2-3）** | DEV | 12h | ✅ | 2026-06-01 | commit ed3a987，~360 LOC + 11 tests |
+| **5.A.3''** | **Taiwan Stock Controls（漲跌停 / 整股 / 手續費 / 證交稅）** | DEV | 6h | ✅ | 2026-06-01 | commit 8b6563b |
+| 5.A.4 | FourLayerResonance Algorithm 完整實作 | DEV | 16h | ✅ | 2026-06-01 | commit 8b6563b → Sprint 2 `b5c97de` `evaluate_bar` 校正 |
+| 5.A.5 | 對 2330 IS 回測對齊 M1 pipeline.py | QA | 4h | ✅ | 2026-06-01 | Sprint 2 `validation/regression_vs_m1.py`，2330 2024 全年 **100.00% match**，commit `b5c97de` |
+| 5.A.6 | Portfolio (10 檔) IS 回測 | DEV | 8h | ✅ 執行（gate FAIL） | 2026-06-02 | Algorithm 原生支援多股，無需另寫 aggregator。雙窗口 portfolio IS：2020-2024 **−1.75%**、2015-2020（ADR-016 凍結窗口）**−4.94%**；2330 5 年僅 14 次進場、勝率 50%、在市場 3.9%。**對 ADR-016 K1/K2/K3 全 FAIL → 觸發退場（[ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md)）**。參數探針證實約束在進場非出場 |
+| **5.A.7.a** | **`ingest_universe` 批次 helper（per-symbol isolation + all-fail raise）** | DEV | 4h | ✅ Wave 2 | 2026-06-02 | commit `90bdfe9` / PR #15；含 mock/stub unit tests，error isolation 單一來源化 |
+| **5.A.7.b** | **DEFAULT_UNIVERSE live 10 檔 FinMind ingest → parquet（含 2330 + 9 檔）** | DEV | 2h | ✅ Wave 3 | 2026-06-02 | **R14 關閉**；新增 `ingest` CLI 子命令（+5 mock test）+ runbook（`dev_docs/runbooks/`）；live 跑 2020-2024 5yr `ok=10/10` 35s；解開 7 個 cache-gated 驗證測試（regression_vs_m1 + cross_check_vectorbt 真正執行並通過）→ 252 pass / 4 skip，coverage 95.22%。cache 不入版控（runbook 化） |
+| 5.B.1 | vectorbt adapter (grid 用) | DEV | 12h | ✅ Sprint 2 | 2026-06-01 | ADR-014 升級恢復；`validation/cross_check_vectorbt.py` 2330 多範圍全 PASS，誤差 $6-20/$1M，commit `b5c97de` |
+| 5.B.2 | WFA splitter 自寫 | DEV | 8h | ✅ v0.2 | 2026-06-02 | `validation/wfa.py`（purge+embargo，rolling/anchored），對拍驗證過 |
+| 5.B.3 | vectorbt vs Zipline 對拍 | QA | 8h | ✅ Sprint 2 | 2026-06-01 | 兩段式 acceptance：相對 1% / 絕對 10 bps；3 個 integration test + 2 unit test 全綠 |
+| 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ✅ v0.3 | — | `engines/protocol.py`（Engine Protocol + SimEngine 實作；zipline/vectorbt stub） |
+| 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01 | commit c980a44，Sprint 1 Day 6-7 收尾 + README |
 
 **模組小計**：~100h | Sprint 1 ~30h + Sprint 2 ~30h + Sprint 3 5.A.7.a helper 4h + 5.A.7.b CLI/live ingest 2h = 66h（66%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套 + ADR-014 + `ingest_universe` helper（PR #15）+ `ingest` CLI 子命令 + **live 10 檔 ingest（R14 關閉，7 個 cache-gated 驗證測試解 skip）**；**剩餘關鍵路徑：5.A.6 multi-stock aggregator + portfolio IS 回測**
 
@@ -260,18 +260,18 @@
 
 ### 模組 6.0 統計驗證（M3）
 
-| 編號 | 任務 | 工時 | 備註 |
-|:--|:--|:---:|:--|
-| 6.1.1 | metrics.py 30+ 指標 enum + functions | 16h | ✅ v0.2 — `validation/metrics.py`（A/B/C/E 類 12 函式，對照 18 §4，45 tests）|
-| 6.1.2 | quantstats 報表整合 | 8h | ✅ v0.3 — `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful）|
-| 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | 4h | |
-| 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | (已估) | |
-| 6.2.2 | WFA 結果視覺化 | 8h | 接 dashboard 面板 E |
-| 6.3.1 | PBO 自寫（避 pypbo AGPL）| 16h | ✅ v0.2 — `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過）|
-| 6.3.2 | DSR 自寫 | 8h | ✅ v0.2 — `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014）|
-| 6.4.1 | Bootstrap 1000 iter | 8h | ✅ v0.2 — `validation/resampling.py` bootstrap_ci |
-| 6.4.2 | Monte Carlo trade permutation | 8h | ✅ v0.2 — `validation/resampling.py` permutation p-value |
-| 6.5.x | 跑 DOE 1-10（doe_research_template）| ~100h | M3 大頭 |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 6.1.1 | metrics.py 30+ 指標 enum + functions | — | 16h | ✅ v0.2 | — | `validation/metrics.py`（A/B/C/E 類 12 函式，對照 18 §4，45 tests） |
+| 6.1.2 | quantstats 報表整合 | — | 8h | ✅ v0.3 | — | `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful） |
+| 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | — | 4h | ⏳ | — | — |
+| 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | — | (已估) | ⏳ | — | — |
+| 6.2.2 | WFA 結果視覺化 | — | 8h | ⏳ | — | 接 dashboard 面板 E |
+| 6.3.1 | PBO 自寫（避 pypbo AGPL） | — | 16h | ✅ v0.2 | — | `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過） |
+| 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
+| 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |
+| 6.4.2 | Monte Carlo trade permutation | — | 8h | ✅ v0.2 | — | `validation/resampling.py` permutation p-value |
+| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | ⏳ | — | M3 大頭 |
 
 **模組小計**：~180h | **v0.2 統計驗證 pipeline 後端 ✅**（metrics/dsr/pbo/wfa/resampling 純函式，對照 18 §4 + López de Prado，10-agent workflow 建 + 對拍驗證，119 tests）；剩 6.1.2 quantstats 整合 / 6.5.x DOE（策略執行，待有候選）
 
@@ -279,19 +279,19 @@
 
 ### 模組 7.0 Paper + 實盤（M4-M5）
 
-| 編號 | 任務 | 工時 | 備註 |
-|:--|:--|:---:|:--|
-| 7.A.1 | PaperBroker 模擬撮合 | 16h | ✅ v0.5 — `adapters/brokers/paper_broker.py`（fills/positions/cash/equity，strategy-agnostic）|
-| 7.A.2 | Paper trade log → TimescaleDB | 4h | |
-| 7.A.3 | 3 個月 paper trading 跑 | (時間) | |
-| 7.B.1 | ShioajiBroker 抄 TEJ 範例改 | 12h | sprint S4 後 |
-| 7.B.2 | 永豐金實盤接通 + 小倉位 | 16h | M5 |
-| 7.C.1 | Risk Gate 12 條 ex-ante 規則 | 16h | ✅ v0.5 — `risk/risk_gate.py`（EX-001~012 + §2.2 評估順序，純函式）|
-| 7.C.2 | 3 級熔斷狀態機 | 8h | ✅ v0.5 — `risk/circuit_breaker.py`（L1/L2/L3→HALTED latched；EX-012 接 shared BreakerState）；kill_switch.sh ⏳ |
-| 7.C.3 | Risk metrics 即時計算 | 8h | |
-| 7.D.1 | Prefect daily flow 每日排程 | 8h | |
-| 7.D.2 | orchestration/cli.py 完整 | 8h | |
-| 7.D.3 | 訊號→下單→fills 完整鏈路測試 | 16h | |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 7.A.1 | PaperBroker 模擬撮合 | — | 16h | ✅ v0.5 | — | `adapters/brokers/paper_broker.py`（fills/positions/cash/equity，strategy-agnostic） |
+| 7.A.2 | Paper trade log → TimescaleDB | — | 4h | ⏳ | — | — |
+| 7.A.3 | 3 個月 paper trading 跑 | — | (時間) | ⏳ | — | — |
+| 7.B.1 | ShioajiBroker 抄 TEJ 範例改 | — | 12h | ⏳ | — | sprint S4 後 |
+| 7.B.2 | 永豐金實盤接通 + 小倉位 | — | 16h | ⏳ | — | M5 |
+| 7.C.1 | Risk Gate 12 條 ex-ante 規則 | — | 16h | ✅ v0.5 | — | `risk/risk_gate.py`（EX-001~012 + §2.2 評估順序，純函式；對應 24 §2） |
+| 7.C.2 | 3 級熔斷狀態機 | — | 8h | ✅ v0.5 | — | `risk/circuit_breaker.py`（L1/L2/L3→HALTED latched；EX-012 接 shared BreakerState；對應 24 §4）；kill_switch.sh ⏳ |
+| 7.C.3 | Risk metrics 即時計算 | — | 8h | ⏳ | — | — |
+| 7.D.1 | Prefect daily flow 每日排程 | — | 8h | ⏳ | — | — |
+| 7.D.2 | orchestration/cli.py 完整 | — | 8h | ⏳ | — | — |
+| 7.D.3 | 訊號→下單→fills 完整鏈路測試 | — | 16h | ⏳ | — | — |
 
 **模組小計**：~110h
 
@@ -299,22 +299,22 @@
 
 ### 模組 8.0 監控與儀表板
 
-| 編號 | 任務 | 工時 | 狀態 |
-|:--|:--|:---:|:--|
-| 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | 12h | ✅ 2026-06-01 |
-| 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | 16h | ⏳ M3 |
-| 8.A.2 | 面板 D+E（React 版，ADR-015） | 12h | ⏳ M5 |
-| 8.A.3 | Dashboard REST API 層（FastAPI，14 端點；ADR-015 / 21_data_contract §8） | 10h | ⏳ M3 |
-| 8.B.1 | Grafana 4 個系統面板 (F-I) | 12h | ⏳ M4 |
-| 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | 4h | ⏳ M4 |
-| 8.C.1 | Discord notifier base | 4h | ✅ 2026-05-31 |
-| 8.C.2 | Discord 3 級告警規則引擎 | 6h | ✅ v0.5 — `monitoring/alert_rules.py`（Critical/High/Info + 去重 30min + 靜默窗 TWT）|
-| 8.C.3 | Discord 整合測試 | 2h | ✅（unit tests 12 個） |
-| 8.D.1 | InfluxDB metric writer | 4h | ✅ v0.5 — `monitoring/influx_writer.py`（line protocol + graceful degradation）|
-| 8.D.2 | Prometheus exporters | 4h | ⏳ M4 |
-| 8.E.1 | pg_dump daily backup | 4h | M5 |
-| 8.E.2 | GCS upload script | 4h | M5 |
-| 8.F.1 | 災難恢復演練 | 8h | M5 |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | — | 12h | ✅ | 2026-06-01 | — |
+| 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | — | 16h | ⏳ | — | M3 |
+| 8.A.2 | 面板 D+E（React 版，ADR-015） | — | 12h | ⏳ | — | M5 |
+| 8.A.3 | Dashboard REST API 層（FastAPI，14 端點；ADR-015 / 21_data_contract §8） | — | 10h | ⏳ | — | M3 |
+| 8.B.1 | Grafana 4 個系統面板 (F-I) | — | 12h | ⏳ | — | M4 |
+| 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | — | 4h | ⏳ | — | M4 |
+| 8.C.1 | Discord notifier base | — | 4h | ✅ | 2026-05-31 | — |
+| 8.C.2 | Discord 3 級告警規則引擎 | — | 6h | ✅ v0.5 | — | `monitoring/alert_rules.py`（Critical/High/Info + 去重 30min + 靜默窗 TWT） |
+| 8.C.3 | Discord 整合測試 | — | 2h | ✅ | — | unit tests 12 個 |
+| 8.D.1 | InfluxDB metric writer | — | 4h | ✅ v0.5 | — | `monitoring/influx_writer.py`（line protocol + graceful degradation） |
+| 8.D.2 | Prometheus exporters | — | 4h | ⏳ | — | M4 |
+| 8.E.1 | pg_dump daily backup | — | 4h | ⏳ | — | M5 |
+| 8.E.2 | GCS upload script | — | 4h | ⏳ | — | M5 |
+| 8.F.1 | 災難恢復演練 | — | 8h | ⏳ | — | M5 |
 
 **模組小計**：~102h | 進度 ~20%（Discord 完成 + 儀表板設計階段完成：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md)）
 
@@ -324,17 +324,17 @@
 
 > 大廠 UI/UX deep-research 對標（`web_design/03_uiux_benchmark_and_reinforcement_plan.md`）：現行 A–E 全是 live 監控，缺研究迭代迴圈 UX。**鐵律：補齊研究迴圈前不再擴張監控 panel（Panel D / Panel B live WS 凍結至 M5）**。後端契約先行（純 Python/CLI 可 TDD），最薄前端隨 ADR-015 React 化批次補。
 
-| 編號 | 任務 | 工時 | 狀態 | 里程碑 |
-|:--|:--|:---:|:--|:--|
-| 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | 8h | ✅ 2026-06-02 | — |
-| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | 6h | ⏳ | M0/M2 |
-| 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | 6h | ⏳ | M0/M2 |
-| 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | 8h | ✅ v0.1+v0.3 | `gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
-| 8.G.4 | 試驗次數計數 → DSR deflate | 4h | ✅ v0.3 | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr）|
-| 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) ✅；validate gate-machine 串接/promote ⏳ | 8h | 🟡 v0.3 | `research/cli.py` run-is/runs/sweep/compare；`sweep`=grid 展開+全網格 CSV(防 cherry-pick)、`compare`=ledger 排名+delta |
-| 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | 6h | ⏳ | M0/M2 |
-| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | 20h | ⏳ | M3 |
-| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | 10h | ⏳ | M5 |
+| 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
+|:--|:--|:--|:--:|:--:|:--|:--|
+| 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | — | 8h | ✅ | 2026-06-02 | — |
+| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | — | 6h | ⏳ | — | M0/M2 |
+| 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | — | 6h | ⏳ | — | M0/M2 |
+| 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | — | 8h | ✅ v0.1+v0.3 | — | M0/M2；`gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
+| 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |
+| 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) ✅；validate gate-machine 串接/promote ⏳ | — | 8h | 🟡 v0.3 | — | `research/cli.py` run-is/runs/sweep/compare；`sweep`=grid 展開+全網格 CSV(防 cherry-pick)、`compare`=ledger 排名+delta |
+| 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | — | 6h | ⏳ | — | M0/M2 |
+| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | ⏳ | — | M3 |
+| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | — | 10h | ⏳ | — | M5 |
 
 **模組小計**：~76h | 進度 ~10%（對標證據包完成；後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）
 
