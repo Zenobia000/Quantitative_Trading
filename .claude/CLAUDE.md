@@ -14,3 +14,15 @@
 
 Subagent 完成後，主 agent 必須將最終產出總結寫入 `.claude/context/` 對應子目錄。
 詳見 `rules/subagent-context.md`。此為 harness 架構的一部分，靜默執行，不需使用者確認。
+
+## 多 Session 協調與 Git 鐵律
+
+使用者可能同時在多個 Claude Code session 工作。任何 git 寫操作前必須驗證 ref 沒被別處推進，
+詳見 `rules/development-workflow.md` §「多 session 並行協調」+「Destructive 操作必先 backup tag」+
+「Tangled history 恢復策略」三節（2026-06-01 教訓更新）。
+
+## 程式碼 ↔ 文件同步（強制）
+
+實作 code 與更新 dev_docs **屬同一 commit / 同一 PR**，禁止「以後再補文件」。
+詳見 `rules/code-doc-sync.md` § 觸發對映表（13 種 code 變更類型 → 對應 dev_docs）。
+此規則融入 `development-workflow.md` § 3.5 與 `git-workflow.md` § PR 前置條件。

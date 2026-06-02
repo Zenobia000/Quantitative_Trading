@@ -1,7 +1,9 @@
 # ADR-007: 雙引擎策略（Zipline event-driven + vectorbt vectorized）
 
 > **狀態：** 已接受 | **日期：** 2026-05-31 | **決策者：** Self
-> **Related：** ADR-001（rqalpha 角色已被 ADR-005 取代，vectorbt 副引擎角色延續）
+> **Related：** ADR-001（rqalpha 角色已被 ADR-005 取代，vectorbt 副引擎角色延續）、ADR-013（主引擎已切到 zipline-reloaded）、[ADR-014](./ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md)（vector 半邊 2026-06-01 恢復可用）
+>
+> **2026-06-01 更新**：Sprint 1 期間 vectorbt 因 pandas<2 不相容暫停（記錄於 ADR-013 § 4），zipline-reloaded 3.1.1 升級（ADR-014）後 vectorbt 1.0+ 同棧可裝，本 ADR 雙引擎方案完整回復。
 
 ---
 

@@ -104,6 +104,18 @@ pytest -m e2e                           # release gate
 
 **鐵律**：搬到 `strategies/four_layer_resonance/` 後測試 import path 更新即可，**0 邏輯變動**。
 
+### 2.1.1 M2 Mainframe 模組測試（Stream D Wave 2 2026-06-02）
+
+| 模組 | 新增測試檔 | 覆蓋率 | 重點 |
+| :--- | :--- | :--- | :--- |
+| `engines/zipline_adapter/algorithms/four_layer_resonance.py` | `tests/engines/zipline_adapter/algorithms/test_four_layer_resonance.py`（29 個）| 0% → 97% | initialize / evaluate_and_trade 用 mock zipline.api，evaluate_bar wrapper, _execute_action priority, _portfolio_state / _current_weight |
+| `engines/zipline_adapter/cli.py` | `tests/engines/zipline_adapter/test_cli.py`（18 個）| 0% → 95% | _ensure_bundle_registered、_resolve_zipline_root（explicit>env>default）、_format_perf_summary 邊界（empty/1bar/zero-std）、_maybe_write_tearsheet ImportError 退化、_maybe_notify_discord token 缺/錯誤吞噬、Click `backtest-run` / `list-bundles` 整合 |
+| `pipeline.py` | `tests/test_pipeline.py`（10 個）| 0% → 100% | run_pipeline mock fetch/score/signal 三組依賴、signal_calendar 欄位切片、summary_stats 空 vs 有資料、run_cmd Click 寫 CSV 與 console |
+| `data/schemas.py` | `tests/data/test_schemas.py`（16 個）| 已 98% → 維持 | Pydantic ValidationError 邊界（empty stock_id、price ≤ 0、volume 負、adj_factor 0）、ETLBundle.merged() NaN 補零、排序 |
+| `data/finmind_etl.py` | `tests/data/test_finmind_etl.py`（既有 4 + 新增 11） | 75% → 98% | 空 loader、dividend fetch 失敗吞噬、apply_adjustment=False short-circuit、`_normalize_*` empty 路徑、`_build_loader` token / no-token、CLI dry-run + parquet 路徑 |
+
+**整體覆蓋率**：Stream D Wave 1 baseline 66% → Wave 2 後 **93.74%**（pyproject.toml `--cov-fail-under` 80）。
+
 ### 2.2 Adapter 單元測試（M2+）
 
 每個 adapter 必須：
@@ -188,6 +200,17 @@ def test_finlab_bundle_zipline_can_read(tmp_zipline_root):
     assert result.returncode == 0
     assert b"end of run" in result.stdout
 ```
+
+### 3.1.b TimescaleDB schema 防漂移（unit test, no DB needed）
+
+`tests/data/test_init_sql_schema.py` 是 fast 路徑：純 regex 解析 `docker/timescaledb/init.sql`，斷言 §4 13 張表 / hypertable / GIN index / UUID PK / UNIQUE constraint / retention policy 都齊。任何 DDL 與 21 §4 spec 漂移會立刻紅燈。
+
+| 屬性 | 值 |
+| :--- | :--- |
+| 標記 | 無（純 unit，每次 CI 跑） |
+| 耗時 | < 1s |
+| 依賴 | 無（不啟 Docker / 不連 DB） |
+| 補強 | `test_real_upsert_idempotent`（integration marker）跑真實 round-trip |
 
 ### 3.2 Broker ↔ Sandbox
 
@@ -376,24 +399,47 @@ def test_100_stocks_10_years_backtest_under_30min(benchmark):
 | `monitoring/alerter.py` | 90% | 同上 |
 | `dashboard/` | 50%（UI 寬鬆） | 同上 |
 
-### 7.2 排除清單
+### 7.2 排除清單與 gate 設定
+
+實際 `pyproject.toml`（Stream D Wave 1 baseline，2026-06-02）：
 
 ```toml
-# pyproject.toml
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --cov=backtest_platform --cov-report=term-missing --cov-fail-under=65"
+
 [tool.coverage.run]
+source = ["src/backtest_platform"]
+branch = true
 omit = [
-    "*/migrations/*",
-    "*/dashboard/grafana_dashboards.json",
-    "*/__main__.py",
+    # Skeleton modules with no production code (per Q4 workflow decision)
+    "src/backtest_platform/adapters/__init__.py",
+    "src/backtest_platform/adapters/*/__init__.py",
+    "src/backtest_platform/dashboard/__init__.py",
+    "src/backtest_platform/orchestration/__init__.py",
+    "src/backtest_platform/strategies/__init__.py",
+    # Validation harnesses (covered by integration tests, not unit)
+    "src/backtest_platform/engines/zipline_adapter/validation/*",
 ]
 
 [tool.coverage.report]
+show_missing = true
+skip_covered = false
 exclude_lines = [
     "pragma: no cover",
-    "if TYPE_CHECKING:",
     "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.$",
 ]
 ```
+
+**Gate ratchet 計畫**：
+
+| 階段 | fail_under | 觸發條件 |
+|:--|:--:|:--|
+| Wave 1 baseline | 65 | adjustment.py 100% 後總覆蓋 ~68% |
+| Wave 2 中段 | 75 | Stream A FinMind bundle 補測 + Stream D TEST-002/003/005 |
+| Wave 2 結尾 | 80 | Stream D 全 TEST-* 完成（algorithms / cli / pipeline 從 0% 補滿） |
 
 ---
 

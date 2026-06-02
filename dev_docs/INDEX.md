@@ -25,7 +25,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**14 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012/013/014） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**16 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011/012/013/014/015/016） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -91,6 +91,21 @@
 | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
 | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005**（§ 4 後果部分由 ADR-014 修正）|
 | [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) | zipline-reloaded 3.0.4 → 3.1.1 升級，解鎖 pandas 2 / numpy 2 / vectorbt | amends **ADR-013** § 4 |
+| [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) | 儀表板設計系統 + React 升級（5 面板規格 + Assembly + REST API 契約） | — |
+| [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) | M2 acceptance KPI 凍結（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健性）— 彙整 01/02/v2.md 既有數字 | — |
+
+---
+
+### 階段 8：UI / 設計系統參考（2026-06-01 新增）
+
+> 與核心 dev_docs 並行的設計系統工作區。M3 Streamlit 面板 + M5 React 前端的視覺基礎；目前內容以「AI 網頁開發流水線」為框架，含 design-system specs + 既有 UI clone 分析（x.ai、Grok）。
+
+| 路徑 | 用途 | 對應 |
+| :--- | :--- | :--- |
+| [web_design/README.md](./web_design/README.md) | 模組化 AI 網頁開發流水線總覽 | 獨立 |
+| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai 完整 UI 5 層分析（L0-L4 + extracted CSS vars / DOM / fonts） | 設計參考 |
+| [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
+| web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
 
 ---
 

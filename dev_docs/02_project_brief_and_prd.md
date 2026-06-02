@@ -1,40 +1,27 @@
 # 專案簡報與 PRD — backtest_platform
 
-> **版本：** v2.0 | **更新：** 2026-05-31
+> **版本：** v3.0 | **更新：** 2026-06-01
 > **進度狀態：** 詳見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源，見 [`15 §10`](./15_documentation_and_maintenance_guide.md) 規則）
 >
 > **v1.0** (2026-05-26)：M1 完成時的 PRD 基線版本（原 rqalpha + FinMind 路線）
-> **v2.0** (2026-05-31)：M2+ 重大路線變更 — 詳見下方 v2.0 Pivot Banner
+> **v2.0** (2026-05-31)：M2+ 重大路線變更，以 Pivot Banner 標示過時段落
+> **v3.0** (2026-06-01)：§1-§7 全面對齊 ADR-013（zipline-reloaded 主骨架），移除過時標示；完整規劃見 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md)
 
 ---
 
-## 🚨 v2.0 Pivot Banner（2026-05-31）
+## 決策沿革（Decision Lineage）
 
-M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**。新規劃請參閱對應文檔：
+本文 §1-§7 已對齊以下決策的最新狀態。完整 M2-M5 規劃以 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) 為準。
 
-| 變更 | 從 → 到 | 正式文檔 |
-| :--- | :--- | :--- |
-| **回測引擎主骨架** | rqalpha → ~~TQuant-Lab (Zipline 台股 fork)~~ → **zipline-reloaded 3.0.4** | [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)（已 superseded）+ [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) |
-| **資料源** | FinMind 免費版 → **付費 FinLab** + FinMind fallback | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
-| **引擎策略** | 單引擎 → **雙引擎**（Zipline event + vectorbt vector） | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) |
-| **系統定位** | 回測平台 → **完整交易系統**（backtest / paper / live 三模式） | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
-| **監控架構** | Grafana 單一 → **Streamlit + Grafana + Discord** 三層 | [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) |
-| **完整 M2-M5 規劃** | — | [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) |
-
-### 過時段落明確標示
-
-| 本文段落 | 狀態 | 對應新文檔 |
-| :--- | :--- | :--- |
-| §4 功能範圍表（M2-M5 列） | ⚠️ 過時 | [17 master plan §7](./17_m2_to_m5_master_plan.md) |
-| §4 假設（「FinMind 免費版 + sponsor」） | ⚠️ 過時 | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
-| §4 依賴（缺 FinLab/zipline-reloaded/Streamlit） | ⚠️ 過時 | [17 master plan §5](./17_m2_to_m5_master_plan.md)（注意：ADR-013 已將 TQuant-Lab 改為 zipline-reloaded）|
-| §5 Q-004（rqalpha 自訂 mod） | ✅ 已關閉 | 廢止，改 zipline-reloaded（ADR-013，原 ADR-005 TQuant-Lab 已 superseded）|
-| §3 Epic 1-3 user stories | ✅ 仍適用 | implementation 路線改新 plan |
-| §1-§2 商業目標、§6 成功判斷 | ✅ 仍適用 | — |
-
-下方原 §1-§7 內容**保留作 v1.0 歷史脈絡**，新讀者請直接讀 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md)。
-
----
+| 主題 | 最終決策（最新） | 沿革 | 正式文檔 |
+| :--- | :--- | :--- | :--- |
+| **回測引擎主骨架** | **zipline-reloaded**（社群版，免商業綁定） | rqalpha → TQuant-Lab/zipline-tej → zipline-reloaded | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)（supersedes [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)、[ADR-001](./adrs/ADR-001-engine-rqalpha-plus-vectorbt.md)）|
+| **資料源** | **付費 FinLab** 為主 + FinMind 免費版 fallback | FinMind 免費版 + sponsor → 付費 FinLab | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
+| **引擎策略** | **雙引擎**（Zipline event 主 + vectorbt vector） | 單引擎 → 雙引擎 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md)（vector 半邊隨 [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) 恢復）|
+| **系統定位** | **完整交易系統**（backtest / paper / live 三模式共用 strategy code） | 純回測平台 → 三模式 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
+| **監控架構** | **Streamlit + Grafana + Discord** 三層 | Grafana 單一 → 三層（Telegram → Discord）| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) |
+| **套件管理** | **uv** | poetry → uv | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) |
+| **M2 目錄結構** | engines/ + adapters/ + validation/ 模組邊界 | — | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) |
 
 ---
 
@@ -79,7 +66,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 
 | ID | 描述 | 允收標準 | BDD |
 | :--- | :--- | :--- | :--- |
-| US-003 | As a 策略研究者, I want to 跑 IS 期間（2015–2020）的 portfolio 回測, so that 我能判斷策略是否達標 v2.md 4.3.1 綠燈 | 1. rqalpha 整合<br>2. 輸出 quantstats 報表<br>3. 對照綠/黃/紅燈表自動標記 | `backtest_is.feature` (M2) |
+| US-003 | As a 策略研究者, I want to 跑 IS 期間（2015–2020）的 portfolio 回測, so that 我能判斷策略是否達標 v2.md 4.3.1 綠燈 | 1. zipline-reloaded 整合（Backtest 模式，ADR-013）<br>2. 輸出 quantstats 報表<br>3. 對照綠/黃/紅燈表自動標記 | `backtest_is.feature` (M2) |
 | US-004 | As a 策略研究者, I want to 跑 OOS（2023–2024）一次性驗證, so that 我能判斷策略是否過擬合 | 1. OOS 結果不可回頭調參<br>2. 自動計算 PBO / DSR<br>3. 失敗即標記策略淘汰 | `backtest_oos.feature` (M3) |
 
 ### Epic 3：風控與運維（M4+）
@@ -87,7 +74,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | ID | 描述 | 允收標準 | BDD |
 | :--- | :--- | :--- | :--- |
 | US-005 | As a 策略研究者, I want to 跑 paper trading 3 個月模擬, so that 驗證實盤滑點與回測假設一致 | 1. 每日訊號生成<br>2. 對比實際開盤價 vs 假設進場價<br>3. 滑點 < 預估 1.5x 才晉升 | `paper_trade.feature` (M4) |
-| US-006 | As a 策略研究者, I want to 看 Grafana 即時監控策略健康度, so that 退化時能及早發現 | 1. 30D 滾動 Sharpe、PF<br>2. 退化告警經 Discord 發送（ADR-010）<br>3. 熔斷規則自動執行 | `monitoring.feature` (M5) |
+| US-006 | As a 策略研究者, I want to 看 Streamlit + Grafana 雙儀表板即時監控策略健康度, so that 退化時能及早發現 | 1. 30D 滾動 Sharpe、PF<br>2. 退化告警經 Discord 發送（ADR-010）<br>3. 熔斷規則自動執行 | `monitoring.feature` (M4+) |
 
 ---
 
@@ -97,14 +84,14 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 
 | 層 | M1 ✅ | M2 | M3 | M4 | M5 |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 資料層（ETL + DB） | ✅ | 補齊券商分點 | — | 即時資料 | — |
-| 策略層（計分 + 訊號） | ✅ | — | — | — | — |
-| 回測引擎 | — | rqalpha | vectorbt + WFA | — | — |
+| 資料層（Bundle + DB） | ✅ | FinMind/FinLab bundle | — | 即時資料 feed | — |
+| 策略層（計分 + 訊號） | ✅ | plug 為 Algorithm | — | — | — |
+| 回測引擎 | — | zipline-reloaded (event) | vectorbt + WFA | — | — |
 | 統計驗證 | — | — | PBO/DSR/MC | — | — |
-| 紙上交易 | — | — | — | ✅ | — |
-| 實盤下單 | — | — | — | — | Shioaji |
-| 監控告警 | — | — | — | Grafana | + Discord |
-| 前端 UI | — | — | — | Streamlit | React |
+| 紙上交易 | — | — | — | PaperBroker | — |
+| 實盤下單 | — | — | — | — | ShioajiBroker |
+| 監控告警 | — | — | Streamlit | Grafana + Discord | — |
+| 前端 UI | — | — | Streamlit 面板 A–C | — | 面板 D–E |
 
 ### 非功能需求
 
@@ -114,7 +101,7 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | 性能 | 100 檔 portfolio 回測 | < 30 分鐘 |
 | 可靠性 | ETL idempotent | 重跑結果一致 |
 | 可觀測性 | Trade audit trail | 100% trade 記錄含 scores/prices/position |
-| 可重現性 | 訊號邏輯 | rqalpha & vectorbt 結果差異 < 0.1% |
+| 可重現性 | 訊號邏輯 | zipline & vectorbt 結果差異 < 0.1% |
 
 ### 不做什麼
 
@@ -128,15 +115,17 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 ### 假設與依賴
 
 **假設**：
-- FinMind 免費版 + sponsor 可提供 80% 資料需求
+- 付費 FinLab 為主資料源、FinMind 免費版作 fallback（ADR-006）
 - 券商分點資料可透過 TWSE 公開資訊補爬
 - 個人 PC 算力足夠跑 100 檔 × 10 年回測
 
-**依賴**（v1.0 baseline；M2+ 實際依賴見 v2.0 banner + ADR-013）：
-- FinMind API（資料源；M2+ 主要為 FinLab，FinMind 為 fallback — ADR-006）
-- TimescaleDB（儲存）
-- ~~rqalpha~~ → ~~zipline-tej~~ → **zipline-reloaded==3.0.4**（回測引擎主，ADR-013；3.1.1 升級為 ADR-014）
-- vectorbt（回測引擎副，參數網格；M3 啟用）
+**依賴**：
+- FinLab API（主資料源，付費）+ FinMind API（fallback）— ADR-006
+- TimescaleDB（儲存 / bundle cache）
+- zipline-reloaded（回測引擎主骨架）— ADR-013
+- vectorbt 1.0+（回測引擎副，參數網格；ADR-014 升級後恢復可用）— ADR-007
+- Streamlit + Grafana + Discord（監控告警三層）— ADR-009 / ADR-010
+- uv（套件管理）— ADR-012
 - Shioaji（永豐金證券下單 API，M5）
 
 ---
@@ -147,13 +136,18 @@ M2 啟動前完成三大決策變更，**本文 §4-§7 部分內容已過時**�
 | :--- | :--- | :--- | :--- |
 | Q-001 | 下市股資料源如何取得 | 待決定 | 詳見 `strategy/research/v2.2_ic_test_plan.md` 評估表 |
 | Q-002 | 券商分點補爬策略 | 待決定 | M2 開始時決定 |
-| Q-003 | 是否升級 FinMind sponsor | 待決定 | 等 POC 結果 |
-| Q-004 | rqalpha 自訂 mod 是否值得寫 | 待 M2 評估 | 替代方案：直接用 vectorbt |
+| Q-003 | 是否升級 FinMind sponsor | 已關閉 | 改採付費 FinLab 為主源（ADR-006），FinMind 降為 fallback |
+| Q-004 | rqalpha 自訂 mod 是否值得寫 | 已關閉 | 廢止 rqalpha，主骨架改 zipline-reloaded（ADR-013，原 ADR-005 TQuant-Lab 已 superseded）|
 | D-001 | 採用 v2.md 為單一策略契約 | 已決定 | 偏離須在 6.3 留記錄 |
 | D-002 | 採用 MVP 工作流模式 | 已決定 | 見 01_workflow_manual.md |
 | D-003 | 使用 Public GitHub repo（Zenobia000） | 已決定 | 2026-05-26 上線 |
 | D-004 | risk_pct 從 1% → 0.5% 對齊 Heat 6% | 已決定（v2.1） | v2.md changelog |
-| D-013 | 主骨架 zipline-tej → **zipline-reloaded 3.0.4** | 已決定（2026-06-01） | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) — Sprint 0 S1 揭露 zipline-tej import 強綁 TEJ key |
+| D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）— Sprint 0 S1 揭露 zipline-tej import 強綁 TEJ key |
+| D-006 | 主資料源採付費 FinLab + FinMind fallback | 已決定 | ADR-006 |
+| D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊隨 ADR-014 升級恢復）|
+| D-008 | 系統定位升級為三模式（backtest/paper/live） | 已決定 | ADR-008 |
+| D-009 | 監控三層 Streamlit + Grafana + Discord | 已決定 | ADR-009 / ADR-010（Discord 取代 Telegram）|
+| D-010 | 套件管理採 uv | 已決定 | ADR-012 |
 | D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
 
 ---

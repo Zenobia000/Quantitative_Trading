@@ -3,8 +3,10 @@
 > **狀態：** 已接受（部分被取代） | **日期：** 2026-05-31 | **決策者：** Self
 > **Superseded（部分）：** § 3「Telegram 告警等級」段落與 § 5 步驟 6 之「Telegram bot」
 > 已由 [ADR-010](./ADR-010-discord-alerter-supersedes-telegram.md) 取代為 Discord bot；
-> 雙儀表板（Streamlit + Grafana）決策維持有效。
-> **Related：** ADR-002（TimescaleDB 時序儲存）、ADR-010（Discord 告警通道）
+> 策略績效層（面板 A–E）之 Streamlit 實作與「純 Python、無前端工程負擔」理由，已由
+> [ADR-015](./ADR-015-dashboard-design-system-and-react-upgrade.md) 取代為 React + Design System；
+> 雙儀表板**分層原則**（Streamlit/Grafana/告警三層分工）與 Grafana 系統健康層維持有效。
+> **Related：** ADR-002（TimescaleDB 時序儲存）、ADR-010（Discord 告警通道）、ADR-015（Design System + React 升級）
 
 ---
 

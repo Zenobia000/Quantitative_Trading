@@ -6,7 +6,7 @@
 > **對應 ADR：** ADR-005~012 + **ADR-013（取代 ADR-005 主骨架選擇）**
 > **進度追蹤：** 見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源；本文件為「路線與計畫書」，不含進度）
 >
-> **v1.1 變更（2026-06-01）**：主骨架 `TQuant-Lab (zipline-tej)` → `zipline-reloaded 3.0.4`。Sprint 0 S1 spike 揭露 zipline-tej import 階段 hard-code TEJ API call，違反「免 TEJ key 仍可開發」前提。zipline-reloaded 為社群維護 zipline 主線 fork，0 商業綁定、SQLAlchemy 2.x、`exchange-calendars` 提供完整 XTAI 支援。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。下文「TQuant-Lab」字樣為歷史脈絡保留，現況皆指 zipline-reloaded。
+> **v1.1 變更（2026-06-01）**：主骨架 `TQuant-Lab (zipline-tej)` → `zipline-reloaded 3.1.1`（Sprint 1 鎖 3.0.4，同日升 3.1.1 開放 pandas 2 / numpy 2 / vectorbt）。Sprint 0 S1 spike 揭露 zipline-tej import 階段 hard-code TEJ API call，違反「免 TEJ key 仍可開發」前提。zipline-reloaded 為社群維護 zipline 主線 fork，0 商業綁定、SQLAlchemy 2.x、`exchange-calendars` 提供完整 XTAI 支援。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) + [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md)。下文「TQuant-Lab」字樣為歷史脈絡保留，現況皆指 zipline-reloaded；ADR-013 § 4 列為負面後果的 pandas<2 / vectorbt 暫停 等約束已隨 ADR-014 解除。
 
 ---
 
