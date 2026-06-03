@@ -586,7 +586,7 @@ flowchart TD
 
 ### 5.1.1 研究工作區 Page 規格索引（已建立）
 
-> 以下 8 份 Page 規格依 `pages/page_template.md` 格式落地（繼承 Global v2.0 Grok 單色 dark），與 `02_backtest_dashboard_design_update.md` §3 的監控面板索引（已改名 `pages/monitor_{a-d}_*.md`、route `/monitor/*`）並列，構成三區 IA：**research_0N（研究）/ monitor_{a-d}（監控）/ system（系統，待補）**。Assembly Master Prompt（`assembly/research_0N_*_integrated.md`）隨各里程碑 React 化時再產出。
+> 以下 8 份 Page 規格依 `pages/page_template.md` 格式落地（繼承 Global v2.0 Grok 單色 dark），與 `02_backtest_dashboard_design_update.md` §3 的監控面板索引（已改名 `pages/monitor_{a-d}_*.md`、route `/monitor/*`）並列，構成三區 IA：**research_0N（研究 8）/ monitor_{a-d}（監控 4）/ system_{data,alerts}（系統 2）**。Assembly Master Prompt（`assembly/research_0N_*_integrated.md`）隨各里程碑 React 化時再產出。
 
 | # | 頁面 | Route | M | Page 規格 | 複用/重定位 |
 | :-: | :--- | :--- | :-: | :--- | :--- |
@@ -598,6 +598,13 @@ flowchart TD
 | 6 | Sweep 參數掃描 | `/research/sweep` | M3 | [`pages/research_06_sweep.md`](./pages/research_06_sweep.md) | CompareChart heatmap |
 | 7 | Validate gate | `/research/validate` | M3 | [`pages/research_07_validate_gate.md`](./pages/research_07_validate_gate.md) | **Panel E 升級/重定位** |
 | 8 | Promotion stepper | `/research/promote/:strategy_id` | M5 | [`pages/research_08_promote.md`](./pages/research_08_promote.md) | StatusBadge stepper |
+
+**系統區（System，2 頁）**——bundle_ref 快照回饋 New Run；告警設定接收 Grafana F–I 與 Panel D 事件：
+
+| 頁面 | Route | M | Page 規格 | 對接 |
+| :--- | :--- | :-: | :--- | :--- |
+| 資料管理 | `/system/data` | M3 | [`pages/system_data.md`](./pages/system_data.md) | bundle/ingest/品質 → New Run bundle ref |
+| 告警設定 | `/system/alerts` | M5 | [`pages/system_alerts.md`](./pages/system_alerts.md) | Discord 三級；接 Grafana F–I / Panel D |
 
 > 全域元件（Cmd-K / Saved Views / FirstRunEmptyState）與研究級元件（CodeEditor / ResearchTable / CompareChart / parameter form / gate badge）規格見 §6.2，於各 Page 規格內以 element 引用。
 
