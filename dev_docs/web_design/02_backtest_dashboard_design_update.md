@@ -37,7 +37,7 @@
 | B | 部位狀態 | M3 | `/monitor/positions` | [`pages/monitor_b_positions.md`](./pages/monitor_b_positions.md) | [`assembly/monitor_b_positions_integrated.md`](./assembly/monitor_b_positions_integrated.md) | 5 | `positions` |
 | C | 訊號日誌 | M3 | `/monitor/signals` | [`pages/monitor_c_signals.md`](./pages/monitor_c_signals.md) | [`assembly/monitor_c_signals_integrated.md`](./assembly/monitor_c_signals_integrated.md) | 4 | `signals`+`fills` |
 | D | 風控指標 | M5 | `/monitor/risk` | [`pages/monitor_d_risk.md`](./pages/monitor_d_risk.md) | [`assembly/monitor_d_risk_integrated.md`](./assembly/monitor_d_risk_integrated.md) | 4 | `risk_metrics` |
-| ~~E~~ | 統計驗證（重定位） | M3 | `/research/validate` | [`pages/research_07_validate_gate.md`](./pages/research_07_validate_gate.md) | （隨 React 化產出） | 6 | `validation_runs`+`runs` |
+| ~~E~~ | 統計驗證（重定位） | M3 | `/research/validate` | [`pages/research_07_validate_gate.md`](./pages/research_07_validate_gate.md) | [`assembly/research_07_validate_gate_integrated.md`](./assembly/research_07_validate_gate_integrated.md) | 6 | `validation_runs`+`runs` |
 
 > Grafana 系統健康（F–I）與 Discord 告警沿用既有，本次僅色彩 token 對齊 Global，不重做。
 

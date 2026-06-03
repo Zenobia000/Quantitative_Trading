@@ -586,7 +586,7 @@ flowchart TD
 
 ### 5.1.1 研究工作區 Page 規格索引（已建立）
 
-> 以下 8 份 Page 規格依 `pages/page_template.md` 格式落地（繼承 Global v2.0 Grok 單色 dark），與 `02_backtest_dashboard_design_update.md` §3 的監控面板索引（已改名 `pages/monitor_{a-d}_*.md`、route `/monitor/*`）並列，構成三區 IA：**research_0N（研究 8）/ monitor_{a-d}（監控 4）/ system_{data,alerts}（系統 2）**。Assembly Master Prompt（`assembly/research_0N_*_integrated.md`）隨各里程碑 React 化時再產出。
+> 以下 8 份 Page 規格依 `pages/page_template.md` 格式落地（繼承 Global v2.0 Grok 單色 dark），與 `02_backtest_dashboard_design_update.md` §3 的監控面板索引（已改名 `pages/monitor_{a-d}_*.md`、route `/monitor/*`）並列，構成三區 IA：**research_0N（研究 8）/ monitor_{a-d}（監控 4）/ system_{data,alerts}（系統 2）**。各頁的 Assembly Master Prompt（`assembly/<page>_integrated.md`，內嵌 Grok v2.0 壓縮 Tokens）已一併產出，可直接貼 Lovable；React 化時依里程碑取用。
 
 | # | 頁面 | Route | M | Page 規格 | 複用/重定位 |
 | :-: | :--- | :--- | :-: | :--- | :--- |
