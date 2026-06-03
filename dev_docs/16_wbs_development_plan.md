@@ -331,7 +331,7 @@
 | 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | — | 6h | 🟡 v0.1-min | 2026-06-02 | `research/run_config.py`（IS 區間 + 成本 + engine + hypothesis 強制欄已實作）；OOS 鎖死 / range-step sweep / hypothesis 系統鎖死延後 v0.2 |
 | 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | — | 8h | ✅ v0.1+v0.3 | — | M0/M2；`gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
 | 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |
-| 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) ✅；validate gate-machine 串接/promote ⏳ | — | 8h | 🟡 v0.3 | — | `research/cli.py` run-is/runs/sweep/compare；`sweep`=grid 展開+全網格 CSV(防 cherry-pick)、`compare`=ledger 排名+delta |
+| 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) + validate(v0.6) ✅；promote check ⏳ | — | 8h | 🟡 v0.6 | 2026-06-02 | `research/cli.py` run-is〔+`--tearsheet`〕/runs/sweep/compare/**validate**；`validate`=接 `ValidationGate` 推進 IS→WFA→OOS 工作流 gate（IS 階段）+ OOS sealed-vault 狀態；剩 promote check（讀 validation_status）⏳ |
 | 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | — | 6h | ⏳ | — | M0/M2 |
 | 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | ⏳ | — | M3 |
 | 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | — | 10h | ⏳ | — | M5 |

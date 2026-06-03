@@ -10,13 +10,15 @@ turning '手寫 script 半天' into one disciplined, lineage-bearing command.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from pathlib import Path
 
 import click
 
-from backtest_platform.research.is_harness import run_and_judge
+from backtest_platform.research.is_harness import run_and_judge_with_returns
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH, append_run, read_runs
+from backtest_platform.validation.gate_machine import GateState, ValidationGate
+from backtest_platform.validation.tearsheet import write_tearsheet
 
 
 @click.group()
@@ -31,7 +33,15 @@ def cli() -> None:
 @click.option("--start", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--end", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
-def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path) -> None:
+@click.option(
+    "--tearsheet", is_flag=True, default=False,
+    help="額外輸出 quantstats HTML tear sheet（需 validation extra）",
+)
+@click.option(
+    "--tearsheet-dir", default="reports/tearsheets", show_default=True,
+    help="tear sheet 輸出目錄（檔名 = <run_id>.html）",
+)
+def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path, tearsheet, tearsheet_dir) -> None:
     cfg = RunConfig(
         hypothesis=hypothesis,
         preset=preset,
@@ -39,7 +49,7 @@ def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path) -> None:
         is_start=start.date(),
         is_end=end.date(),
     )
-    rec = run_and_judge(cfg)
+    rec, returns = run_and_judge_with_returns(cfg)
     append_run(rec, runs_path)
     click.echo(f"\nrun_id={rec['run_id']}  preset={preset}  [{rec['gate_status']}]")
     click.echo(rec["gate_summary"])
@@ -50,6 +60,15 @@ def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path) -> None:
         f"churn%={m.get('churn_pct'):.2f} avg_hold={m.get('avg_hold'):.1f}"
     )
     click.echo(f"  → appended to {runs_path}")
+    if tearsheet:
+        out_path = Path(tearsheet_dir) / f"{rec['run_id']}.html"
+        written = write_tearsheet(
+            returns, out_path, title=f"{preset} IS {cfg.is_start}..{cfg.is_end}"
+        )
+        if written is not None:
+            click.echo(f"  → tear sheet: {written}")
+        else:
+            click.echo("  → tear sheet skipped（quantstats 不可用 / 資料 < 2 bars）")
 
 
 @cli.command("runs")
@@ -89,6 +108,45 @@ def compare_cmd(runs_path, baseline) -> None:
             f"cagr={c.metrics.get('cagr', float('nan')):.4f} "
             f"sharpe={c.metrics.get('sharpe', float('nan')):.3f}  {delta}"
         )
+
+
+@cli.command("validate")
+@click.option("--run-id", required=True, help="ledger 內要驗的 run_id")
+@click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
+def validate_cmd(run_id, runs_path) -> None:
+    """Drive a ledger run through the IS→WFA→OOS 工作流 gate (IS phase).
+
+    Unlike `run-is`（唯讀審判庭），this feeds the run's IS metrics into the
+    *stateful* ``ValidationGate``: PASS → IS_PASS（WFA 解鎖）；否則 FAILED。也回報
+    OOS sealed-vault 狀態（OOS 在 IS+WFA 都通過前保持封存，防 look-ahead leak）。
+    """
+    records = read_runs(runs_path)
+    rec = next((r for r in records if str(r.get("run_id")) == run_id), None)
+    if rec is None:
+        raise click.ClickException(f"run {run_id!r} not found in {runs_path}")
+
+    metrics = rec.get("metrics") or {}
+    gate = ValidationGate()
+    state = gate.submit_is(metrics)
+    result = gate.last_is_result
+
+    click.echo(
+        f"run_id={run_id}  preset={rec.get('preset')}  hypothesis={rec.get('hypothesis')}"
+    )
+    click.echo(result.summary())
+    click.echo(f"\nGATE STATE: {state.value}")
+    if state is GateState.IS_PASS:
+        click.echo("  IS gate ✅ → WFA 已解鎖（submit WFA 結果後才解 OOS）")
+    else:
+        failing = [r.criterion.label for r in result.failing()]
+        missing = [r.criterion.label for r in result.missing()]
+        if failing:
+            click.echo(f"  IS gate ❌ FAIL：{', '.join(failing)}")
+        if missing:
+            click.echo(f"  IS gate ⚠ INCOMPLETE（缺指標）：{', '.join(missing)}")
+    click.echo(
+        f"  OOS vault：{'UNSEALED' if gate.oos_unsealed else 'SEALED（IS+WFA 通過前不可讀）'}"
+    )
 
 
 def _coerce(v: str):

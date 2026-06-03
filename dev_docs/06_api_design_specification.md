@@ -1,6 +1,6 @@
 # API 設計規範 — backtest_platform
 
-> **版本：** v1.2 | **更新：** 2026-06-02 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **v0.6 HTTP API（FastAPI，8.A.3 提前交付，研究迴圈唯讀 + 觸發面）**
+> **版本：** v1.3 | **更新：** 2026-06-02 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **研究迴圈 CLI（§3.5：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate）** + **v0.6 HTTP API（FastAPI，§9）**
 
 ---
 
@@ -8,7 +8,7 @@
 
 當前提供三種介面：
 
-1. **CLI（Click）** — 端到端操作
+1. **CLI（Click）** — 端到端操作（ETL / zipline 回測 / **研究迴圈 `research.cli`：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate**，詳見 §3.5）
 2. **Python API** — 程式內呼叫（pure functions + Pydantic models）
 3. **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate審判庭 / metrics / presets），詳見 §9。原規劃 M3（8.A.3）才做，因平台優先策略提前交付。
 
@@ -102,6 +102,37 @@ Click group，子命令 `ingest` / `backtest-run` / `list-bundles`。執行需�
 | `python -m backtest_platform.validation.pbo compute` | M3 | PBO/DSR 計算 |
 | `python -m backtest_platform.validation.wfa walk` | M3 | Walk-Forward |
 | `python -m backtest_platform.live.paper_trader run` | M4 | 紙上交易 |
+
+---
+
+### 3.5 `research.cli` — 研究迴圈 CLI（v0.1–v0.6）
+
+把「手寫 script 半天」收成「一行 run + gate 自動逐條綠紅 + 落 runs ledger」的研究迴圈入口。
+
+```bash
+# 跑一次 IS run（強制 hypothesis 預登記）→ 判 gate → 落 runs ledger
+uv run python -m backtest_platform.research.cli run-is \
+    --preset v3.1b --hypothesis "雙窗是否同號為正" \
+    --stocks 2330,1101,1303 --start 2020-01-01 --end 2024-12-31 \
+    [--tearsheet] [--tearsheet-dir reports/tearsheets]   # 額外輸出 quantstats HTML
+
+uv run python -m backtest_platform.research.cli runs                       # 列出 ledger
+uv run python -m backtest_platform.research.cli sweep --base-preset v3.1b \
+    --grid "entry_min_layers=3,4;entry_confirm_days=1,2" \
+    --stocks 2330,1101 --start 2020-01-01 --end 2024-12-31                 # 全網格 CSV
+uv run python -m backtest_platform.research.cli compare --baseline <run_id>  # 多 run delta
+uv run python -m backtest_platform.research.cli validate --run-id <run_id>   # 工作流 gate
+```
+
+| 子命令 | 用途 | 後端 |
+| :--- | :--- | :--- |
+| `run-is` | 跑 IS sim → 判 gate → 落 ledger；`--tearsheet` 額外出 quantstats HTML（需 `validation` extra） | `is_harness.run_and_judge_with_returns` + `tearsheet.write_tearsheet` |
+| `runs` | 列出 runs ledger（run_id / preset / gate / hypothesis） | `runs_store.read_runs` |
+| `sweep` | 參數網格展開 → 跑每個 → 輸出**全網格** CSV（防 cherry-pick） | `sweep.run_sweep` |
+| `compare` | 多 run baseline delta + 排名 + 同號一致性 | `compare.compare_runs` |
+| `validate` | 把 ledger 內某 run 推進 IS→WFA→OOS **工作流 gate**（IS 階段）：PASS→IS_PASS 解鎖 WFA，並回報 OOS sealed-vault 狀態（IS+WFA 通過前 OOS 封存，防 look-ahead leak） | `validation.gate_machine.ValidationGate` |
+
+> `run-is`／`validate` 區別：`run-is` 是**唯讀審判庭**（`evaluate_gate` 逐條綠紅）；`validate` 是**有狀態工作流 gate**（`ValidationGate`，強制 IS→WFA→OOS 不可逆推進 + OOS 封存）。
 
 ---
 

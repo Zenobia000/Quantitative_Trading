@@ -112,11 +112,17 @@ def _metrics(strat: pd.Series, strat_slip: pd.Series, trades: list[dict], n_buys
     }
 
 
-def run_is(
+def _run_is_core(
     cfg: RunConfig,
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
-) -> dict:
-    """Run the IS portfolio sim for a RunConfig. Returns a metrics dict."""
+) -> tuple[dict, pd.Series]:
+    """The IS portfolio sim. Returns ``(metrics, portfolio daily-returns series)``.
+
+    The returns series is the positional mean of the per-stock daily returns —
+    the *same* series the metrics are computed from — exposed so a caller can
+    render a tear sheet / plot without re-running the sim. Empty Series when no
+    stock had >= 30 bars in the window.
+    """
     base = get_preset(cfg.preset)
     slip = base.model_copy(update={"slip_rate": _SLIP_STRESS})
     norm_returns, slip_returns, all_trades, n_buys = [], [], [], 0
@@ -129,12 +135,33 @@ def run_is(
         all_trades.extend(_trades(sig, base))
         n_buys += int((sig["action"] == "buy").sum())
     if not norm_returns:
-        return {"trades": 0, "closed": 0, "bars": 0}
+        return {"trades": 0, "closed": 0, "bars": 0}, pd.Series(dtype=float)
     port = pd.concat(norm_returns, axis=1).mean(axis=1)
     port_slip = pd.concat(slip_returns, axis=1).mean(axis=1)
     out = _metrics(port, port_slip, all_trades, n_buys)
     out["bars"] = len(port)
-    return out
+    return out, port
+
+
+def run_is(
+    cfg: RunConfig,
+    loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
+) -> dict:
+    """Run the IS portfolio sim for a RunConfig. Returns a metrics dict."""
+    return _run_is_core(cfg, loader)[0]
+
+
+def run_is_returns(
+    cfg: RunConfig,
+    loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
+) -> pd.Series:
+    """Portfolio daily-returns series for a RunConfig (for tear sheets / plots).
+
+    The same series the IS metrics are derived from; an empty Series when the
+    window yields no tradable data. Pair with
+    ``validation.tearsheet.write_tearsheet``.
+    """
+    return _run_is_core(cfg, loader)[1]
 
 
 def run_and_judge(
@@ -143,9 +170,23 @@ def run_and_judge(
     gate=None,
 ) -> dict:
     """run_is → evaluate_gate → a complete, ledger-ready run record."""
-    metrics = run_is(cfg, loader)
+    return run_and_judge_with_returns(cfg, loader, gate)[0]
+
+
+def run_and_judge_with_returns(
+    cfg: RunConfig,
+    loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
+    gate=None,
+) -> tuple[dict, pd.Series]:
+    """One sim pass → ``(ledger-ready run record, portfolio daily returns)``.
+
+    The record is identical to ``run_and_judge``'s; returning the returns series
+    alongside it lets a caller that wants both (e.g. ``run-is --tearsheet``) avoid
+    running the sim twice.
+    """
+    metrics, returns = _run_is_core(cfg, loader)
     result: GateResult = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
-    return {
+    record = {
         "run_id": cfg.run_id,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "hypothesis": cfg.hypothesis,
@@ -157,3 +198,4 @@ def run_and_judge(
         "gate_status": result.status.value,
         "gate_summary": result.summary(),
     }
+    return record, returns
