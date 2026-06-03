@@ -137,3 +137,65 @@ def test_run_is_without_tearsheet_does_not_write(tmp_path, monkeypatch):
     assert res.exit_code == 0, res.output
     assert "tear sheet" not in res.output
     assert ledger.exists()
+
+
+# --- promote-check -------------------------------------------------------
+
+def test_promote_check_approved_is_eligible(tmp_path):
+    # Forward-compat: a run that carries an explicit APPROVED validation_status
+    # (written once v0.2 wires OOS into the ledger) is the only promotable state.
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [{
+        "run_id": "appr1", "preset": "v2", "hypothesis": "h",
+        "metrics": _PASS_METRICS, "gate_status": "PASS",
+        "validation_status": "APPROVED",
+    }])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "appr1", "--runs-path", str(ledger)])
+    assert res.exit_code == 0, res.output
+    assert "VALIDATION STATUS: APPROVED" in res.output
+    assert "ELIGIBLE" in res.output
+    assert "NOT ELIGIBLE" not in res.output
+
+
+def test_promote_check_is_pass_not_eligible_lists_outstanding(tmp_path):
+    # IS passes but nothing beyond is recorded → NOT promotable; WFA/OOS/approve
+    # are listed as outstanding. Promotion is never rubber-stamped on IS alone.
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [{"run_id": "good1", "preset": "v2", "hypothesis": "h", "metrics": _PASS_METRICS}])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "good1", "--runs-path", str(ledger)])
+    assert res.exit_code == 0, res.output
+    assert "VALIDATION STATUS: IS_PASS" in res.output
+    assert "NOT ELIGIBLE" in res.output
+    assert "WFA" in res.output and "OOS" in res.output
+
+
+def test_promote_check_is_fail_not_eligible(tmp_path):
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [{"run_id": "bad1", "preset": "v3", "hypothesis": "h", "metrics": _FAIL_METRICS}])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "bad1", "--runs-path", str(ledger)])
+    assert res.exit_code == 0, res.output
+    assert "VALIDATION STATUS: FAILED" in res.output
+    assert "NOT ELIGIBLE" in res.output
+
+
+def test_promote_check_explicit_status_overrides_derivation(tmp_path):
+    # An explicit (non-terminal) validation_status is honored over IS derivation:
+    # OOS_PASS shows as such, still NOT eligible, only `approve` outstanding.
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [{
+        "run_id": "oos1", "preset": "v2", "hypothesis": "h",
+        "metrics": _FAIL_METRICS, "validation_status": "OOS_PASS",
+    }])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "oos1", "--runs-path", str(ledger)])
+    assert res.exit_code == 0, res.output
+    assert "VALIDATION STATUS: OOS_PASS" in res.output
+    assert "NOT ELIGIBLE" in res.output
+    assert "approve" in res.output
+
+
+def test_promote_check_unknown_run_id_errors(tmp_path):
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "nope", "--runs-path", str(ledger)])
+    assert res.exit_code != 0
+    assert "not found" in res.output

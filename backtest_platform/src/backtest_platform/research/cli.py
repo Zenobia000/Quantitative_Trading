@@ -149,6 +149,77 @@ def validate_cmd(run_id, runs_path) -> None:
     )
 
 
+# Forward path IS_PASS → … → APPROVED, with the human label for the phase each
+# state *clears*. Promotion to live requires reaching APPROVED (all four cleared).
+_PROMOTION_PHASES: tuple[tuple[GateState, str], ...] = (
+    (GateState.IS_PASS, "IS gate"),
+    (GateState.WFA_PASS, "WFA"),
+    (GateState.OOS_PASS, "OOS"),
+    (GateState.APPROVED, "approve"),
+)
+
+
+def _resolve_validation_status(rec: dict) -> GateState:
+    """A run's furthest-cleared workflow state.
+
+    An explicit ``validation_status`` (written once v0.2 wires WFA/OOS into the
+    ledger) is authoritative. Absent that, v0.1 records carry only the IS verdict,
+    so we re-derive it through ``ValidationGate`` (single threshold source): IS
+    PASS → IS_PASS, else FAILED. Never fabricates progress past what is recorded.
+    """
+    raw = rec.get("validation_status")
+    if raw:
+        try:
+            return GateState(raw)
+        except ValueError:
+            pass
+    return ValidationGate().submit_is(rec.get("metrics") or {})
+
+
+def _outstanding_phases(state: GateState) -> list[str]:
+    """Phases still blocking promotion, from ``state`` up to APPROVED.
+
+    A cleared forward state lists only the phases above it. FAILED / PENDING have
+    cleared nothing on the promotion path → every phase is outstanding (must
+    re-clear IS first).
+    """
+    order = [st for st, _ in _PROMOTION_PHASES]
+    cleared = order.index(state) if state in order else -1
+    return [label for i, (_, label) in enumerate(_PROMOTION_PHASES) if i > cleared]
+
+
+@cli.command("promote-check")
+@click.option("--run-id", required=True, help="ledger 內要查晉升資格的 run_id")
+@click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
+def promote_check_cmd(run_id, runs_path) -> None:
+    """Read a run's validation_status and report promotion eligibility (read-only).
+
+    A run is promotable to live **only** in state ``APPROVED`` (IS→WFA→OOS→approve
+    all cleared). The v0.1 ledger records the IS verdict only, so a run that has
+    merely passed IS is reported NOT eligible with the outstanding phases listed —
+    promotion is never rubber-stamped on IS alone（防未驗證策略上線）.
+    """
+    records = read_runs(runs_path)
+    rec = next((r for r in records if str(r.get("run_id")) == run_id), None)
+    if rec is None:
+        raise click.ClickException(f"run {run_id!r} not found in {runs_path}")
+
+    state = _resolve_validation_status(rec)
+    click.echo(
+        f"run_id={run_id}  preset={rec.get('preset')}  hypothesis={rec.get('hypothesis')}"
+    )
+    click.echo(f"VALIDATION STATUS: {state.value}")
+    if state is GateState.APPROVED:
+        click.echo("  PROMOTE ✅ ELIGIBLE — IS→WFA→OOS→approve 全數通過，可晉升實盤")
+        return
+    click.echo("  PROMOTE ⛔ NOT ELIGIBLE — 晉升須 state=APPROVED（防未驗證策略上線）")
+    outstanding = _outstanding_phases(state)
+    if outstanding:
+        click.echo(f"  待完成階段：{' → '.join(outstanding)}")
+    if state is GateState.FAILED:
+        click.echo("  （IS gate 未通過或無法完整評估；走 ADR-017 退場路徑回 M0 再設）")
+
+
 def _coerce(v: str):
     v = v.strip()
     if v.lower() in ("true", "false"):
