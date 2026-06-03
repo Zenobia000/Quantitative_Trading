@@ -9,7 +9,7 @@
 ## [PAGE META]
 
 - **page_name**: Signal Log (訊號日誌)
-- **route_path**: `/dashboard/signals`
+- **route_path**: `/monitor/signals`
 - **page_type**: dashboard
 - **primary_goal**: 讓交易者檢視當日產生的策略訊號、追蹤每筆訊號的執行狀態（Signal → Fill），快速定位未成交或延遲訊號
 - **secondary_goal**: 透過 30 天時間軸與 Funnel 轉換率，評估訊號品質與下單管線健康度（latency / fill rate）
@@ -52,7 +52,7 @@
   - refresh_indicator: Badge + Caption / optional / 顯示「即時 · {n}s 前更新」，TTL 倒數；歷史日期時顯示「歷史快照」
 - **states**:
   - default: 顯示今日日期 + All + 即時刷新中
-  - hover: SegmentedControl 選項 hover 邊框轉 accent #22D3EE
+  - hover: SegmentedControl 選項 hover 邊框轉單色白邊 rgba(245,245,245,.7)
   - loading: DatePicker / Filter 維持可互動，refresh_indicator 顯示 spinner（無進場動畫，僅旋轉指示器）
   - error: refresh_indicator 轉 error 色 #EF4444 + 「更新失敗，點擊重試」
   - empty: 不適用（控制列恆顯示）
@@ -70,7 +70,7 @@
     - col_action: Badge / required / buy / add / reduce / exit / stoploss，色+文字雙編碼（buy/add 偏 gain、reduce/exit/stoploss 偏 loss/warning）
     - col_reason: Text (truncate) / required / reason_json 摘要（如主因 score），溢出省略
     - col_status: StatusBadge / required / FILLED / SUBMITTED / PENDING / REJECTED，FILLED 用 success #22C55E、REJECTED 用 error #EF4444
-  - row_expand_detail: JSONViewer / required / 點 row 展開 reason_json 完整內容（scores / prices / context），bg-code #0D1117、Geist Mono
+  - row_expand_detail: JSONViewer / required / 點 row 展開 reason_json 完整內容（scores / prices / context），bg-code #161616、Geist Mono
 - **states**:
   - default: 依 filter 顯示訊號列，依 signal_time 倒序
   - hover: row 背景轉 bg-surface 高亮、cursor pointer
@@ -85,7 +85,7 @@
 - **layout**: 全寬圖表卡片，內含多軌（buy / add / reduce / exit / stoploss）散點圖（Plotly.js go.Scatter 多軌；React 中以 react-plotly.js 包裝）
 - **elements**:
   - section_title: H2 / required / "Signal Timeline (30D)"
-  - scatter_chart: ScatterChart (multi-track) / required / X=日期(30天)、Y=action 軌道；每點代表一筆訊號，dataviz 色盤分軌（#22D3EE #A78BFA #F59E0B #34D399 #F472B6）
+  - scatter_chart: ScatterChart (multi-track) / required / X=日期(30天)、Y=action 軌道；每點代表一筆訊號，5 軌用 §6.1 **Categorical 8-色盤**（低飽和、dark 底 WCAG 達標的受控例外）。此處正是 §10 GAP-1「單色在 ≥5 類別破功」的實證：以受控離散色盤取代 v1 鮮豔虹色
   - point_tooltip: ChartTooltip / required / hover 顯示 time / symbol / action / status / 主因 score
   - track_legend: Legend / required / 五軌可點擊切換顯示
 - **states**:
@@ -162,7 +162,8 @@
 
 ## [EXCEPTION TO GLOBAL RULES]
 
-無特殊例外，完全遵循 Global System 規範（dark-first、teal 主色、flat 1px border 無陰影、Geist Mono 數值、漲跌雙編碼、即時數據無動畫、文字 AA / KPI 數值 AAA）。
+- signal_timeline_30d 多軌散點（5 action 類別）用 §6.1 **Categorical 8-色盤**（低飽和、dark 底 WCAG 達標）— 屬「chrome 單色、資料區受控離散色盤」例外，僅限圖表內容區。這是 §10 GAP-1 點名的破功點：單色明度階在 ≥5 類別無法區分，故開受控例外。
+- 其餘完全遵循 Global v2.0（Grok 單色 dark、flat 1px border #2A2A2A、Geist Mono 數值、白環 focus、漲跌雙編碼、即時數據無動畫、文字 AA / KPI 數值 AAA）。
 
 ---
 

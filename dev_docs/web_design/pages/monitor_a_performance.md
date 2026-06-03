@@ -9,7 +9,7 @@
 ## [PAGE META]
 
 - **page_name**: 面板 A 績效總覽 (Panel A · Performance Overview)
-- **route_path**: /dashboard/performance
+- **route_path**: /monitor/performance
 - **page_type**: dashboard
 - **primary_goal**: 讓使用者在單一畫面評估某策略相對 benchmark(0050) 的整體績效，透過 6 張 KPI Card 與 4 組互動圖表快速判讀報酬、風險、勝率與時間分布。
 - **secondary_goal**: 作為深入分析的入口 — 點擊 equity 曲線某日可 drill-down 跳轉面板 C 該日訊號（帶 filter）。
@@ -35,7 +35,7 @@
 
 3. **equity_curve**
    - section_type: chart (line, dual-series)
-   - section_purpose: strategy 線(accent) + benchmark 0050(muted 虛線, normalize 同起點)；支援 zoom / pan / hover tooltip 與 drill-down。
+   - section_purpose: strategy 線(白實線) + benchmark 0050(灰虛線, normalize 同起點)；支援 zoom / pan / hover tooltip 與 drill-down。
 
 4. **drawdown_chart**
    - section_type: chart (filled area)
@@ -90,11 +90,11 @@
 
 - **layout**: full-width chart card；高度 320–400px；右上 legend。
 - **elements**:
-  - EquityLine: Line series (Recharts/Plotly) / required / strategy 權益曲線，accent #22D3EE 實線。
-  - BenchmarkLine: Line series / required / 0050 normalize 同起點，benchmark muted rgba(230,237,245,.45) 虛線。
+  - EquityLine: Line series (Recharts/Plotly) / required / strategy 權益曲線，strategy #F5F5F5 白實線（單色）。
+  - BenchmarkLine: Line series / required / 0050 normalize 同起點，benchmark muted rgba(255,255,255,.40) 灰虛線。
   - ChartTooltip: Tooltip / required / hover 顯示日期 + 雙序列數值。
   - ZoomPanControl: 互動 / required / 框選 zoom、拖曳 pan、雙擊 reset。
-  - DrillDownHandler: 互動 / required / 點某日資料點 → 跳轉 `/dashboard/signals?date=YYYY-MM-DD&strategy_id=...`（面板 C）。
+  - DrillDownHandler: 互動 / required / 點某日資料點 → 跳轉 `/monitor/signals?date=YYYY-MM-DD&strategy_id=...`（面板 C）。
 - **states**:
   - default: 雙線繪製 + legend。
   - loading: 圖表區 skeleton（矩形佔位）。
@@ -154,7 +154,7 @@
 2. 變更 StrategySelector 或 DateRangePicker → 立即重查 → 全頁重繪（KPI 用 quantstats 重算、圖表重繪）。
 3. 調整 rolling_sharpe WindowToggle → 僅該 section 用 pandas rolling 本地重算重繪（不重新打 API，若已有原始序列）。
 4. 點 RefreshButton → 清快取 + rerun → 全頁重查。
-5. 點 equity_curve 某日資料點 → drill-down 跳轉面板 C `/dashboard/signals`，帶 `date` 與 `strategy_id` filter。
+5. 點 equity_curve 某日資料點 → drill-down 跳轉面板 C `/monitor/signals`，帶 `date` 與 `strategy_id` filter。
 6. equity_curve 與 drawdown_chart 的 zoom / pan 共用 time axis，連動縮放。
 
 ### RWD 行為差異
@@ -209,5 +209,5 @@
 - [ ] 快取 TTL 300s + 手動 refresh（清快取）+ page load/filter change 觸發正確。
 - [ ] RWD 符合 Desktop / Tablet / Mobile 定義（table→card、sidebar→drawer @<1024px）。
 - [ ] 數值全用 Geist Mono tabular-nums；漲跌色 + 文字雙編碼。
-- [ ] 文字對比達 AA、KPI 數值達 AAA；focus-visible ring accent #22D3EE。
-- [ ] dark-first、flat 1px border 無陰影、即時數據無進場動畫。
+- [ ] 文字對比達 AA、KPI 數值達 AAA；focus-visible ring 單色白環 rgba(245,245,245,.7)。
+- [ ] dark-first（Grok 單色）、flat 1px border #2A2A2A 無陰影、即時數據無進場動畫。

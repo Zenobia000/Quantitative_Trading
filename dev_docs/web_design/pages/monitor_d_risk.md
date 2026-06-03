@@ -1,14 +1,14 @@
 # Page Layer Spec — 面板 D 風控指標 (Risk Metrics)
 
 > 對應 `dev_docs/20_dashboard_specification.md` 面板 D。React 版（自 Streamlit 升級）。
-> 填完後貼入 `assembly/02_panel_d_risk_integrated.md` 的 CURRENT TASK 區段。
+> 填完後貼入 `assembly/monitor_d_risk_integrated.md` 的 CURRENT TASK 區段。
 
 ---
 
 ## [PAGE META]
 
 - **page_name**: 風控指標面板 (Risk Metrics Panel)
-- **route_path**: /dashboard/risk
+- **route_path**: /monitor/risk
 - **page_type**: dashboard
 - **primary_goal**: 即時呈現策略當前風險水位（DD / VaR / Heat / Concentration），讓使用者一眼判斷是否觸及熔斷層級
 - **secondary_goal**: 提供近 7 日風險事件審計軌跡與單一事件的 drill-down context，支援事後歸因
@@ -79,9 +79,9 @@
 
 - **layout**: 1-column 全寬圖表卡（Recharts LineChart 或 Plotly.js）
 - **elements**:
-  - MddLine: LineSeries / required / 90 日 MDD 折線，dataviz 色 #22D3EE，無進場動畫
+  - MddLine: LineSeries / required / 90 日 MDD 折線，單色 strategy #F5F5F5 白線，無進場動畫
   - ThresholdL1: ReferenceLine(hline) / required / -10% 暫停（warning #E9A60C dashed）
-  - ThresholdL2: ReferenceLine(hline) / required / -15% 減倉（accent / amber #F59E0B dashed）
+  - ThresholdL2: ReferenceLine(hline) / required / -15% 減倉（amber #F59E0B dashed）
   - ThresholdL3: ReferenceLine(hline) / required / -20% 全停（error #EF4444 dashed）
   - HoverTooltip: Tooltip / required / hover 顯示日期 + MDD 值 + 命中之熔斷層級文字（L1/L2/L3）
   - YAxis/XAxis: Axis / required / Y 軸百分比、X 軸 90 日；軸標 Geist Mono
@@ -168,4 +168,4 @@
 - [ ] RWD 行為符合上表（Desktop 3 欄 / Mobile 單欄 + table→card + drawer→sheet）
 - [ ] 所有數值使用 Geist Mono tabular-nums，KPI 數值對比達 AAA、一般文字達 AA
 - [ ] 資料更新 TTL（metrics 30s / events 60s）與手動 refresh 正確運作，無全頁 reload
-- [ ] dark-first、flat 1px border 無陰影、teal 主色繼承自 Global System
+- [ ] dark-first（Grok 單色）、flat 1px border #2A2A2A 無陰影；單色基調繼承自 Global System v2.0
