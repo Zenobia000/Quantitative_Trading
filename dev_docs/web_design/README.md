@@ -22,13 +22,15 @@ prompt_architect_pipeline/
 │   ├── SYSTEM_DOCUMENT_SPEC.md            ← [Template] 四層系統文件模板
 │   └── 01_sunny_brand_system.md           ← [Example] 桑尼品牌實施範例
 │
-├── pages/                                  ← 骨架層（頁面規格）
+├── pages/                                  ← 骨架層（頁面規格；三區 IA）
 │   ├── page_template.md                   ← [Template] 頁面規格範本
-│   └── 01_dashboard.md                    ← [Example] 儀表板規格範例
+│   ├── research_01~08_*.md                ← 研究工作區 8 頁
+│   ├── monitor_a~d_*.md                   ← 監控區 4 面板（範例：monitor_a_performance.md）
+│   └── system_{data,alerts}.md           ← 系統區 2 頁
 │
 ├── assembly/                               ← 心臟層（組裝器）
 │   ├── PIPELINE_ORCHESTRATOR.md           ← [Template] 組裝調度範本
-│   └── 01_dashboard_integrated.md         ← [Example] 完整組裝 Prompt 範例
+│   └── <page>_integrated.md               ← 各頁 Master Prompt（範例：monitor_a_performance_integrated.md）
 │
 ├── modules/                                ← 積木層（模組系統）
 │   ├── MODULE_REGISTRY.md                 ← 8 大模組定義 + 功能清單 + 深度分級
@@ -72,7 +74,7 @@ prompt_architect_pipeline/
 
 ### 路徑 B：我已經有 Design System，要做一頁
 
-1. 看範例 `global/01_sunny_brand_system.md` → `pages/01_dashboard.md` → `assembly/01_dashboard_integrated.md`
+1. 看範例 `global/02_backtest_platform_brand_system.md` → `pages/monitor_a_performance.md` → `assembly/monitor_a_performance_integrated.md`（backtest_platform 三層完整實例；`global/01_sunny_brand_system.md` 為另一品牌示範）
 2. 拷貝 `pages/page_template.md` 定義你的頁面
 3. 填入 `assembly/PIPELINE_ORCHESTRATOR.md` 組裝
 4. 將結果貼到 Lovable / Claude 執行
