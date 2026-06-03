@@ -8,7 +8,7 @@
 ## [PAGE META]
 
 - **page_name**: 面板 B — 部位狀態 (Positions)
-- **route_path**: `/dashboard/positions`
+- **route_path**: `/monitor/positions`
 - **page_type**: dashboard
 - **primary_goal**: 讓使用者即時掌握當前持倉的風險暴露與損益狀態，快速判斷是否需要調整部位
 - **secondary_goal**: 透過產業配置與集中度指標揭露投資組合的結構性風險
@@ -104,7 +104,7 @@
 - **layout**: 半寬圖表卡（Desktop 與 concentration_risk 並排 2 欄）/ 全寬（Tablet 以下）
 - **elements**:
   - section_title: H3 / required / "產業配置"
-  - pie_chart: PieChart (Recharts Pie 或 Plotly.js go.Pie) / required / 依產業別市值佔比繪製；色盤用 dataviz 序列 (#22D3EE #A78BFA #F59E0B #34D399 #F472B6)
+  - pie_chart: PieChart (Recharts Pie 或 Plotly.js go.Pie) / required / 依產業別市值佔比繪製；色盤用 §6.1 **Categorical 8-色盤**（低飽和、dark 底 WCAG 達標的受控例外，非 v1 鮮豔虹色）
   - tooltip: Tooltip / required / hover 顯示產業名 + 市值金額 (NT$) + 佔比 %
   - legend: Legend / optional / 產業名 + 佔比
 - **states**:
@@ -186,7 +186,8 @@
 
 ## [EXCEPTION TO GLOBAL RULES]
 
-無特殊例外，完全遵循 Global System（backtest_platform Design System）。
+- industry_allocation 圓餅圖（多產業類別）用 §6.1 **Categorical 8-色盤**（低飽和、dark 底 WCAG 達標）— 屬「chrome 單色、資料區受控離散色盤」例外，僅限圖表內容區，不汙染 chrome 單色。
+- 其餘完全遵循 Global v2.0（Grok 單色 dark、flat 1px border #2A2A2A、Geist Mono 數值、白環 focus、漲跌雙編碼）。
 
 ---
 
@@ -201,7 +202,8 @@
 - [ ] 集中度 Top1/Top3/Top5 + HHI 計算正確，HHI 含集中度文字標記
 - [ ] 所有數值 Geist Mono tabular-nums 右對齊
 - [ ] RWD 三斷點行為正確（table→card @<1024px）
-- [ ] dark-first、teal 主色、flat 1px border 無陰影
+- [ ] dark-first（Grok 單色）、flat 1px border #2A2A2A 無陰影
 - [ ] 即時數據刷新無進場動畫
-- [ ] 對比達標：一般文字 AA、KPI 數值 AAA；focus-visible ring accent #22D3EE
+- [ ] 產業圓餅用受控 Categorical 8-色盤（達 WCAG），不用 v1 鮮豔虹色
+- [ ] 對比達標：一般文字 AA、KPI 數值 AAA；focus-visible ring 單色白環 rgba(245,245,245,.7)
 - [ ] 刷新 TTL 60s 生效；live mode 預留 WebSocket 接口（M5）

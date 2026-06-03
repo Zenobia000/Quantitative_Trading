@@ -584,6 +584,30 @@ flowchart TD
 | A–E 由 `/dashboard/*` 改名 `/monitor/*`、標 live 子視圖 | 【現有】重定位 |
 | Panel D 全部 / Panel B live WebSocket | 【現有】**維持 M5 凍結，不提前** |
 
+### 5.1.1 研究工作區 Page 規格索引（已建立）
+
+> 以下 8 份 Page 規格依 `pages/page_template.md` 格式落地（繼承 Global v2.0 Grok 單色 dark），與 `02_backtest_dashboard_design_update.md` §3 的監控面板索引（已改名 `pages/monitor_{a-d}_*.md`、route `/monitor/*`）並列，構成三區 IA：**research_0N（研究 8）/ monitor_{a-d}（監控 4）/ system_{data,alerts}（系統 2）**。各頁的 Assembly Master Prompt（`assembly/<page>_integrated.md`，內嵌 Grok v2.0 壓縮 Tokens）已一併產出，可直接貼 Lovable；React 化時依里程碑取用。
+
+| # | 頁面 | Route | M | Page 規格 | 複用/重定位 |
+| :-: | :--- | :--- | :-: | :--- | :--- |
+| 1 | 策略庫 | `/research/strategies` | M3 | [`pages/research_01_strategy_library.md`](./pages/research_01_strategy_library.md) | FirstRunEmptyState |
+| 2 | New Run 設定頁 | `/research/runs/new` | M3 | [`pages/research_02_run_new.md`](./pages/research_02_run_new.md) | parameter form + CodeEditor |
+| 3 | Runs Table 研究主頁 | `/research/runs` | M3 | [`pages/research_03_runs_table.md`](./pages/research_03_runs_table.md) | ResearchTable + power gauge |
+| 4 | Run Report | `/research/runs/:id` | M3 | [`pages/research_04_run_report.md`](./pages/research_04_run_report.md) | **複用 Panel A** + Reproduce |
+| 5 | Compare 多 run 比較 | `/research/compare` | M3 | [`pages/research_05_compare.md`](./pages/research_05_compare.md) | CompareChart parcoords |
+| 6 | Sweep 參數掃描 | `/research/sweep` | M3 | [`pages/research_06_sweep.md`](./pages/research_06_sweep.md) | CompareChart heatmap |
+| 7 | Validate gate | `/research/validate` | M3 | [`pages/research_07_validate_gate.md`](./pages/research_07_validate_gate.md) | **Panel E 升級/重定位** |
+| 8 | Promotion stepper | `/research/promote/:strategy_id` | M5 | [`pages/research_08_promote.md`](./pages/research_08_promote.md) | StatusBadge stepper |
+
+**系統區（System，2 頁）**——bundle_ref 快照回饋 New Run；告警設定接收 Grafana F–I 與 Panel D 事件：
+
+| 頁面 | Route | M | Page 規格 | 對接 |
+| :--- | :--- | :-: | :--- | :--- |
+| 資料管理 | `/system/data` | M3 | [`pages/system_data.md`](./pages/system_data.md) | bundle/ingest/品質 → New Run bundle ref |
+| 告警設定 | `/system/alerts` | M5 | [`pages/system_alerts.md`](./pages/system_alerts.md) | Discord 三級；接 Grafana F–I / Panel D |
+
+> 全域元件（Cmd-K / Saved Views / FirstRunEmptyState）與研究級元件（CodeEditor / ResearchTable / CompareChart / parameter form / gate badge）規格見 §6.2，於各 Page 規格內以 element 引用。
+
 ### 5.2 建議的整體 IA
 
 ```
@@ -665,7 +689,7 @@ flowchart TD
 - **雙引擎對拍容差** [不確定]：flow-run-config-execute-001 採用「1% 相對 / 10 bps 絕對」，源自 cross_check_vectorbt 既有邏輯；若實測噪音偏大需放寬。
 - **Categorical 色盤具體值** [不確定]：建議取現成低飽和盤，但 dark 底 WCAG 達標的精確 hex 需實際驗色，不在本報告範圍。
 - **A–D 是否「過度設計」** [部分主觀]：判定為「時機錯置」而非「內部過度」——A–D 本身品質高，問題是投資時序。此判斷依賴「研究迴圈優先於監控」的核心假設成立；若使用者已有近期上 paper/live 的明確計畫，則 A–D 的優先序應上調。
-- **本報告未做 codebase 直接探索**：所有判斷基於提供的 taxonomy + 10 維度差距分析 + 流程素材；引用的檔案路徑（如 `02_panel_e_validation.md` 行號）轉述自差距分析，未逐一回查原檔，使用前建議抽查核對。
+- **本報告未做 codebase 直接探索**：所有判斷基於提供的 taxonomy + 10 維度差距分析 + 流程素材；引用的檔案路徑（如原 `02_panel_e_validation.md`，現已重定位為 `pages/research_07_validate_gate.md`）轉述自差距分析，未逐一回查原檔，使用前建議抽查核對。
 
 ---
 
