@@ -7,6 +7,7 @@
 > **2026-06-02 更新**：universe ingest（`ingest` CLI）完成、R14 關閉；**M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**；ADR 數量 16→17；16 WBS 升 v2.5
 >
 > **2026-06-02 更新（二）**：大廠 UI/UX deep-research 對標完成 → **監控優先 → 研究迴圈優先 pivot（ADR-018）**：Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate 工作流；新增 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 平台對標 + 10 維度差距 + 7 流程圖 + roadmap）；ADR 數量 17→18；16 WBS 升 v2.6（§8.G 研究迴圈 UX）
+> **2026-06-03 更新**：研究迴圈 CLI 補 `validate`+`promote-check`（8.G.5 封頂）；large-cap v3 IS FAIL → **escalate 候選 D（ADR-020 提案中）**：換 point-in-time 中小型動能 universe（rank 51-300、反 survivorship），機制凍結、資料 spike（FinLab 進階券商分點）為 go/no-go gating；新增設計 spec `specs/2026-06-03-candidate-d-smallcap-universe-design.md`；ADR 數量 19→20
 
 ---
 
@@ -100,6 +101,7 @@
 | [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設進場假設；附帶修 `_format_perf_summary` ffill metric bug | 記錄 ADR-016 gate 的執行結果 |
 | [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) | 監控優先 → 研究迴圈優先：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | **重定位** ADR-009/ADR-015 產物（不取代分層/設計系統）；UX 化 ADR-017 |
 | [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) | v3 進場重設：參數化分級放寬（必含層+可選，非純 N-of-4 — L2⊂L3）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline；反過擬合硬約束（v0.1 不 sweep、進場數非 edge） | ADR-017 的 M0 進場 hypothesis 定稿；v0.1 策略側 |
+| [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) | **候選 D（提案中）**：large-cap v3 IS FAIL → escalate 換 point-in-time 中小型動能 universe（rank 51-300、季 rebalance、反 survivorship）；機制凍結、成本上調；資料 spike（FinLab 進階券商分點 ~250 檔）為 go/no-go gating | ADR-017 §5 退場路徑落地；ADR-019 機制不動 |
 
 ---
 
