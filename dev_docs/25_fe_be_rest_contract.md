@@ -23,7 +23,7 @@
 
 ## §0 為什麼需要這份文件
 
-截至 v0.6，後端 FastAPI 只落地 **11 條路由**（`/runs`、`/gate`、`/metrics`、`/presets` + `/health`），而 `web_design/` 的 **14 個頁面**（Research 8 / Monitor 4 / System 2）共需要約 **71 條端點**。在本檔之前，契約**分裂於三處且互相衝突**：
+截至 v0.6，後端 FastAPI 只落地 **11 條路由**（`/runs`、`/gate`、`/metrics`、`/presets` + `/health`），而 `web_design/` 的 **17 個頁面**（Research 8 + Monitor 4 + System 2 + Home cockpit `/` + Monitor fleet `/monitor` + Trade review `/research/runs/:id/trades` 3 新，2026-06-04）共需要約 **83 條端點**。在本檔之前，契約**分裂於三處且互相衝突**：
 
 | 衝突項 | `06 §9`（已實作） | `21 §8`（Monitor A–E） | per-page `[DATA & API]` |
 | :--- | :--- | :--- | :--- |
@@ -66,10 +66,11 @@
 
 | 前綴 | 區 | 內容 |
 | :--- | :--- | :--- |
-| `/runs`、`/gate`、`/metrics`、`/presets` | Research（已實作） | run 帳本、IS gate、指標計算機、preset（**v0.6 已落地，路徑零改動**）|
+| `/runs`、`/gate`、`/metrics`、`/presets` | Research（已實作） | run 帳本、IS gate、指標計算機、preset（**v0.6 已落地，路徑零改動**）；run 子資源含 equity/trades/log/traded-symbols/candles/attribution/day-context（Trade review）|
 | `/research/*` | Research（新增） | strategies、saved-views、trials、sweep、validate、promote |
-| `/monitor/*` | Monitor | performance、positions、signals、risk（**全 stub 至 M4**，§5.4）|
+| `/monitor/*` | Monitor | performance、positions、signals、risk（**全 stub 至 M4**，§5.4）；`/monitor/fleet*` 艦隊板 |
 | `/system/*` | System | bundles、ingest、alerts、risk-spec |
+| `/home/*` | Home（cockpit） | landing 聚合：fleet / research-status / system-health / recent（BFF 風格，§6.4）|
 | `/health`、`/ws/*` | 全域 | liveness、WebSocket（唯一 WS，§5.3）|
 
 > **決策（ADR-021）**：沿用 v0.6 已實作的裸 root，**11 條既有路由零遷移**（never break userspace）。per-page 規格發明的 `/api/research/*`、`/api/performance/*` 一律映射到上表（附錄 A）。前端 API client 的 `BASE_URL` 是唯一可調環境變數，路徑本身不帶版本。
@@ -149,6 +150,11 @@
 | 訊號（歷史）| 300 | `/monitor/signals/timeline`、`/monitor/fills` | monitor_c |
 | 風控遙測 | 30/60 | `/monitor/risk/metrics`(30)、`/monitor/risk/mdd-trend`(60) | monitor_d |
 | 績效面板（Monitor A）| 300 | `/monitor/performance/*` | monitor_a |
+| 艦隊板（live + 健康 + 退化）| 60 | `/monitor/fleet`、`/monitor/portfolio-summary` | monitor_fleet |
+| 艦隊相關性（低頻）| 300 | `/monitor/correlation` | monitor_fleet |
+| Home cockpit（艦隊/系統健康）| 60 | `/home/fleet`、`/home/system-health` | home_overview |
+| Home cockpit（研究狀態/最近）| 300 | `/home/research-status`、`/home/recent` | home_overview |
+| Trade review（run 快照不變）| 300 | `/runs/{id}/traded-symbols\|candles\|attribution\|day-context` | research_trade_review |
 | 手動刷新 | — | sweep/compare 結果（使用者觸發）| research_05/06 |
 
 ### §5.2 長任務 poll 協定（submit → status → result）
@@ -206,8 +212,12 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/runs/{run_id}` | ✅ ready | — → 完整 ledger record dict | 404 | run_04 | — |
 | POST | `/runs` | 🟡 needs-work | `RunCreateRequest{hypothesis,preset,stocks[],is_start,is_end,engine="sim"}` → record（同步）→ **async** `{run_id,status:"queued"}` | 422 | run_02 | M3.5（轉 async，§5.2）|
 | GET | `/runs/{run_id}/equity` | ⬜ needs-work | — → `{returns[], equity[], drawdown[], monthly[], distribution[]}`（`run_is_returns` 持久化）| 404（舊 record 無 series）| run_04/05、mon_a(回測半) | M3.2 |
-| GET | `/runs/{run_id}/trades` | ⬜ needs-work | — → `[{entry,exit,pnl,hold_days,…}]`（`is_harness._trades` 持久化）| 404 | run_04 | M3.2 |
+| GET | `/runs/{run_id}/trades` | ⬜ needs-work | `?symbol=`（選填，Trade review 逐股）→ `[{symbol,entry,exit,pnl,hold_days,reason,…}]`（`is_harness._trades` 持久化）| 404 | run_04、trade_review | M3.2 |
 | GET | `/runs/{run_id}/log` | ⬜ needs-work | — → `{lines[], status}`（job lifecycle log）| 404 | run_04 | M3.5 |
+| GET | `/runs/{run_id}/traded-symbols` | ⬜ needs-work | — → `[{symbol, trades, pnl_contrib}]`（有交易個股 + 貢獻排序）| 404 | trade_review | M3.2 |
+| GET | `/runs/{run_id}/candles` | ⬜ needs-data | `?symbol=&start=&end=` → `{ohlc[], markers:[{ts,side,price}]}`（個股 K 線 + entry/exit marker；K 線需 `market_reader`）| 404 | trade_review | M4 |
+| GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{layers:[L1..L4], score}`（四層共振歸因，需 harness 捕捉）| 404 | trade_review | M3.2 |
+| GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{scores:{L1..L4}, signal_reason}`（context_drawer 當日四層分數）| 404 | trade_review | M3.2 |
 | GET | `/runs/estimate` | ⬜ ready | `?<grid params>` → `{n_configs, est_minutes}`（`sweep.expand_grid`）| 422 | run_02 | M3.1 |
 | POST | `/runs/tag` | ⬜ needs-work | `{run_ids[], tag, pin?}` → `{updated[]}` | **409 IS_GATE_NOT_PASSED**（pin 未過 IS）| run_03 | M3.3 |
 | GET | `/runs/trials` | ⬜ needs-work | `?param_space=<hash>` → `{cumulative_trials, dsr, deflated, power}`（`dsr.py`+`trials.py` 持久化）| — | run_03/05/06 | M3.4 |
@@ -245,6 +255,10 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | POST | `/metrics/summary` | ✅ ready | `MetricsSummaryRequest{daily_returns[],risk_free}` → `{total_return,cagr,max_drawdown,ulcer_index,downside_deviation,sharpe,sortino,calmar}` | run_04、mon_a | — |
 | POST | `/metrics/trades` | ✅ ready | `TradeMetricsRequest{trades[]}` → `{win_rate,profit_factor,avg_hold,kelly_fraction}` | run_04、mon_c | — |
 | GET | `/monitor/strategies` | 🔵 needs-work | strategy selector（live）| mon_a | M4 |
+| GET | `/monitor/fleet` | 🔵 needs-data | 各策略 stage / 健康評分 / live KPI / 退化旗標（艦隊板）| monitor_fleet | M4 |
+| GET | `/monitor/portfolio-summary` | 🔵 needs-data | 組合 equity / 曝險 / Heat / 計數 | monitor_fleet | M4 |
+| GET | `/monitor/correlation` | 🔵 needs-data | 策略間報酬相關性矩陣（需多 live 策略）| monitor_fleet | M4 |
+| POST | `/monitor/fleet/{strategy_id}/action` | 🔵 needs-data | `{action:demote\|retire\|replace}` → 寫 `promotion_audit`（依 M3.6 service；409/423 on gate 違反）| monitor_fleet | M4 |
 | GET | `/monitor/performance/equity` | 🔵 needs-data | live 策略 equity series | mon_a | M4 |
 | GET | `/monitor/performance/benchmark` | 🔵 needs-data | 0050 benchmark series（`market_reader` over daily_bars）| mon_a | M4 |
 | GET | `/monitor/performance/monthly` | 🔵 needs-data | 月報酬 | mon_a | M4 |
@@ -286,6 +300,19 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 > **Bundle 命名 reconcile**：per-page 規格曾寫 `/api/research/bundles`；契約統一為 `/system/bundles`（bundle 屬資料系統面，非研究面）。
 
+### §6.4 Home / Cockpit zone（landing `/` 聚合，BFF 風格）
+
+> Home（`home_overview`，route `/`）是每日進場入口，**跨三區聚合**——非新資料源，而是把 Research/Monitor/System 既有端點彙整成單畫面 cockpit。因此各端點就緒度 = 其聚合來源中最重者：研究面（research-status/recent）M3.x 可上，含 live 艦隊/系統健康者 gated 於 M4。前端可先 partial 渲染（研究半），live 半走 §5.4 stub。
+
+| Method | Path | Status / 就緒 | Resp（`data`）聚合來源 | 消費頁 | 里程碑 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/home/research-status` | ⬜ needs-work | active runs + IS gate blocker + power gauge + trials/DSR（聚合 `/runs`、`/gate`、`/runs/trials`）| home_overview | M3.4 |
+| GET | `/home/recent` | ⬜ needs-work | 最近 run / 晉升 / saved views（聚合 `/runs`、`/research/promote`、`/research/saved-views`）| home_overview | M3.3 |
+| GET | `/home/fleet` | 🔵 needs-data | live/paper 策略 + stage + 健康 + 今日 KPI + 退化旗標（聚合 `/monitor/fleet`）| home_overview | M4 |
+| GET | `/home/system-health` | 🔵 needs-data | bundle 新鮮度 + 告警計數 + FinLab quota（聚合 `/system/bundles`、`/system/alerts`、Grafana quota）| home_overview | M4 |
+
+> **聚合 vs 直連決策**：`/home/*` 採 BFF 聚合（後端一次組裝）而非前端多打——cockpit 首屏延遲敏感，且聚合邏輯（退化判定、blocker 彙整）屬後端職責。各來源端點仍獨立存在（§6.1–§6.3），`/home/*` 不取代它們。
+
 ---
 
 ## §7 型別生成 bridge（OpenAPI → TS）
@@ -306,12 +333,12 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | :--- | :--- | :--- | :--- |
 | **M3.0** | 契約合一閘（零新邏輯）| 升 `envelope.py`（error 物件）、修 `/runs` window bug、接 openapi-typescript、加 Bearer | （契約+型別 scaffold）|
 | **M3.1** | 便宜 config/catalog 讀路由 | `/research/universe-filters`、`/runs/estimate`、`/system/risk/*`、`/system/alerts/{rules,channels,test}`、`/presets/{name}` enrich | run_02、sys_alerts(讀)、mon_d(config)|
-| **M3.2** | 暴露已算出的 series | `/runs/{id}/equity`、`/runs/{id}/trades`、compare `?run_ids` | run_04/05、mon_a(回測半)|
-| **M3.3** | strategy registry + 側存 | `/research/strategies*`、`/research/saved-views`、`/runs/tag` | run_01/03 |
-| **M3.4** | trials/DSR guardrail 持久化 | `/runs/trials`、`/research/trials/increment` | run_03/05 |
+| **M3.2** | 暴露已算出的 series + 逐股 review | `/runs/{id}/equity`、`/runs/{id}/trades?symbol`、compare `?run_ids`、`/runs/{id}/{traded-symbols,attribution,day-context}` | run_04/05、mon_a(回測半)、trade_review(K線除外)|
+| **M3.3** | strategy registry + 側存 + Home recent | `/research/strategies*`、`/research/saved-views`、`/runs/tag`、`/home/recent` | run_01/03、home(recent)|
+| **M3.4** | trials/DSR guardrail + Home 研究狀態 | `/runs/trials`、`/research/trials/increment`、`/home/research-status` | run_03/05、home(研究半)|
 | **M3.5** | async job（CRITICAL #2）+ bundle/DQ | `POST /runs`(async)、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | run_06、sys_data、run_02(async)|
 | **M3.6** | validation+promotion service（CRITICAL #3）| `/research/validate/*`、`/research/promote/*` | run_07/08 |
-| **M4** | live-telemetry daemon（CRITICAL #1, needs-DATA）| 全 `/monitor/*`、`/research/promote/{id}/observation`、editable alerts | mon_a/b/c/d、sys_alerts(編輯)|
+| **M4** | live-telemetry daemon（CRITICAL #1, needs-DATA）| 全 `/monitor/*`（含 `/monitor/fleet*`）、`/home/{fleet,system-health}`、`/runs/{id}/candles`、`/research/promote/{id}/observation`、editable alerts | mon_a/b/c/d、monitor_fleet、home(live 半)、trade_review(K線)、sys_alerts(編輯)|
 
 ---
 
@@ -344,6 +371,10 @@ per-page `[DATA & API]` 曾發明 `/api/*` 路徑（與後端裸 root 不符）�
 | `/api/fills` | `/monitor/fills` |
 | `/api/strategies` | `/research/strategies`（research 主）/ `/monitor/strategies`（live selector）|
 | `/api/system/*` | `/system/*` |
+| `/api/home/*`（home_overview）| `/home/*`（去 `/api`，§6.4）|
+| `/api/monitor/fleet`、`/api/monitor/portfolio-summary`、`/api/monitor/correlation`（monitor_fleet）| `/monitor/fleet`、`/monitor/portfolio-summary`、`/monitor/correlation` |
+| `/api/monitor/fleet/{id}/action` | `/monitor/fleet/{strategy_id}/action` |
+| `/api/research/runs/:id/{traded-symbols,candles,attribution,day-context}`（trade_review）| `/runs/{id}/{traded-symbols,candles,attribution,day-context}` |
 
 ---
 

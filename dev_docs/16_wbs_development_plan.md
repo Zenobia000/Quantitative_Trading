@@ -1,7 +1,7 @@
 # WBS 開發計劃 — backtest_platform
 
 > **版本：** v3.0 | **更新：** 2026-06-04 | **狀態：** M1 ✅ + **v0.2–v0.6 後端 waves ✅**（v0.2 統計驗證 pipeline / v0.3 研究迴圈 + gate machine / v0.5 risk + 監控 + paper broker / v0.6 REST API）。四層共振 v3 進場雙窗口 IS gate FAIL（ADR-017；v3.1a/v3.1b 兩方向皆無強跨窗 edge，ADR-019）→ **策略 edge 未證；改採「平台優先」**：先把策略無關聯的可重用後端平台（validation / research / risk / monitoring / API）建完，待出現候選策略即可直接驗證。**前端（v0.4）與實盤（v1.0）仍 gated 於真實 edge 證明**。
-> **v3.0 新增（2026-06-04）**：前後端契約優先盤點（FE 14 頁 ~71 端點 ↔ 後端 11 條）→ **REST 契約合一（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）**：新建 `25_fe_be_rest_contract.md` 為契約唯一真相源；新增**模組 8.H 前後端 REST 契約落地**（M3.0 合一閘 → M3.1-M3.4 便宜接線 → M3.5/M3.6/M4 三 CRITICAL blocker）；ADR 20→21。
+> **v3.0 新增（2026-06-04）**：前後端契約優先盤點（FE 17 頁 ~83 端點 ↔ 後端 11 條）→ **REST 契約合一（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）**：新建 `25_fe_be_rest_contract.md` 為契約唯一真相源（含 Home cockpit / Monitor fleet / Trade review 3 新頁）；新增**模組 8.H 前後端 REST 契約落地**（M3.0 合一閘 → M3.1-M3.4 便宜接線 → M3.5/M3.6/M4 三 CRITICAL blocker）；ADR 20→21。
 > **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
 > **v2.7 新增（2026-06-02）**：反發散切版 — §6 新增**版本 Roadmap**（v0.1 essential MVP〔M0 v3 進場 + IS gate as code 最小後端〕→ v0.2 OOS/WFA/PBO/DSR → v0.3 研究後端 → v0.4 研究前端 → v0.5 paper → v1.0 live）；§7 Sprint 4-12 對齊版本展開（`scrum_board.json` 真相源同步、`sync_wbs.py` 重生）；**鐵律：v3 edge 未證實前不做前端/重功能**。
 >
@@ -133,7 +133,7 @@
 | 8.0 監控與儀表板 | 80h | 38h | 47% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB；待 8.A.1/8.A.2 面板 / 8.B Grafana / 8.D.2 Prometheus |
 | 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ | **REST 契約合一定版**（doc 25 + ADR-021，2026-06-04，PR #61）；8.H.1 M3.0 合一閘 + 8.H.6 async jobs + 8.H.8 telemetry daemon 為淨新增 infra，估時待 M3.0 開工細估；**前端建置 gated 於 v3 edge（同 8.G）** |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
-| 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 71 端點 registry）|
+| 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 83 端點 registry，含 3 新頁）|
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
 | **合計** | **1050h** | **694h** | **66%** | M1 ✅ + v0.2–v0.6 後端 waves ✅（validation / research / risk / monitoring / API）+ **REST 契約合一（ADR-021）** |
 
@@ -342,7 +342,7 @@
 
 ### 模組 8.H 前後端 REST 契約落地（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）— 新增
 
-> 2026-06-04 契約優先盤點：FE 14 頁需求 ~71 端點 ↔ 後端已實作 11 條 → 54 缺。契約合一至 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**（端點 registry + 就緒度真相）。**便宜 `ready` 工作 front-load，3 個 CRITICAL blocker 押後，Monitor 區（needs-data）排最後**。端點明細見 25 §6/§8；本表為狀態真相。
+> 2026-06-04 契約優先盤點：FE 17 頁需求 ~83 端點 ↔ 後端已實作 11 條 → 66 缺（含 Home cockpit / Monitor fleet / Trade review 3 新頁）。契約合一至 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**（端點 registry + 就緒度真相）。**便宜 `ready` 工作 front-load，3 個 CRITICAL blocker 押後，Monitor 區（needs-data）排最後**。端點明細見 25 §6/§8；本表為狀態真相。
 
 | ID | 任務 | 估時 | 狀態 | 完成日 | 備註 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
