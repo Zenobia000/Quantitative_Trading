@@ -35,10 +35,26 @@
 - 它不只說 PASS，而是**壓力測試後抓出海市蜃樓**。天真回測器會直接上線這個動能（它「過了」）；平台的對抗層擋下來了。
 - 這正是 PBO/DSR/OOS/參數高原 存在的理由，也是「平台優先」對的鐵證：**有紀律的平台保護你不部署幻覺。**
 
+## 🔢 量化防過擬合驗證（PBO + DSR + WFA，`scripts/momentum_validate.py`）
+
+對抗式驗證是**定性**的（看參數鄰域崩不崩），容易對動能「天生的參數敏感」過度悲觀。所以再跑平台的**量化**防過擬合三件套（30-config grid，all universe 29 檔，2015-2024）——**首次端到端在真策略上跑 metrics/pbo/dsr/wfa pipeline**：
+
+| 指標 | 值 | 門檻 | 判 |
+|:--|:--|:--|:--:|
+| **PBO**（CSCV，Bailey 2017） | **21.4%** | <30% | ✅ |
+| **DSR**（deflate 30 trials，Bailey-LdP 2014） | **1.00** | >0.95 | ✅ |
+| **WFA OOS Sharpe**（6 fold，purge+embargo） | **0.84**（OOS/IS=0.62） | >1.0 | ❌ |
+
+WFA 逐 fold OOS Sharpe：1.41 / 0.63 / 0.94 / 2.50 / **−1.26（2022 動能崩盤）** / 0.82。
+
+**量化判讀比「海市蜃樓」更精準**：PBO 21% + DSR pass ⇒ **不是純過擬合/雜訊——有真實 signal**（IS-best 排名 OOS 多半在中位數之上、最佳 Sharpe 撐過 30-trial deflation）。**但 WFA OOS Sharpe 0.84 < 1.0 + 一個 −1.26 崩盤 fold ⇒ 不可直接部署**。這正是動能的經典面貌：**真實但波動大、會崩盤的因子溢酬**。
+
+> **方法論收穫**：單一回測 over-optimize（「動能 PASS gate」幻象）、對抗式 probing over-pessimize（「到處脆弱」）、**PBO+DSR+WFA 三件套給出校準後的真相（真 signal 但未達可部署門檻）**——這就是為何要跑完整 pipeline、為何平台值得有。
+
 ## 結論 & 建議
 
-1. **不要部署這個動能**（過擬合幻覺）。
-2. **動能仍是對的 family**（萃到真實動能溢酬→正，不像四層毀價值），但**天真實作 + 小倖存 universe + 無 OOS = 海市蜃樓**。
+1. **不要直接部署這個動能**（WFA OOS Sharpe 0.84 < 1.0、有崩盤 fold）——但**它不是純幻覺**（PBO/DSR 過，有真實溢酬）。
+2. **動能是對的 family**（真實 signal、萃到動能溢酬，不像四層毀價值），但此小倖存 universe 上**邊際 + 崩盤風險**未達可部署門檻。
 3. **找真 edge 的合法路徑（平台已備）**：用 **Candidate D point-in-time 大 universe（250 檔，survivorship-clean）** + **OOS/WFA 留出窗** + **PBO/DSR 量化過擬合** + **參數高原檢查** + **誠實成本**。跑完才知道動能有沒有「真的、跨樣本、可部署」的 edge。
 4. **平台改進（agent 揪出）**：`strategy.py` 成本模型 Sharpe-optimistic（lump-sum），應改為更貼近現實的攤提/波動拖累——已加註，列 follow-up。
 
