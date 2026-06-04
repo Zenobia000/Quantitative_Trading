@@ -3,6 +3,7 @@
  * 所有 API 呼叫一律走這裡（GOAL.md 硬約束 #3）。對齊 dev_docs/25_fe_be_rest_contract.md。
  */
 import type { ApiErrorCode, ApiResult, Envelope } from '@/types/domain'
+import { statusToCode } from '@/types/domain'
 
 const BASE = import.meta.env.VITE_API_BASE ?? '' // dev 走 vite proxy（相對路徑）
 const TOKEN = import.meta.env.VITE_API_TOKEN ?? 'dev-token'
@@ -70,10 +71,15 @@ export async function http<T>(path: string, opts: HttpOptions = {}): Promise<Api
 
   if (!env.success || env.error) {
     const err = env.error
+    if (typeof err === 'string' || err == null) {
+      // v0.6 後端：error 為字串 → 由 status 推 code
+      throw new ApiError(statusToCode(res.status), err ?? `請求失敗 (${res.status})`, undefined, res.status)
+    }
+    // doc 25 目標：error 為 {code,message,detail} 物件
     throw new ApiError(
-      (err?.code as ApiErrorCode) ?? 'INTERNAL',
-      err?.message ?? `請求失敗 (${res.status})`,
-      err?.detail,
+      (err.code as ApiErrorCode) ?? statusToCode(res.status),
+      err.message ?? `請求失敗 (${res.status})`,
+      err.detail,
       res.status,
     )
   }

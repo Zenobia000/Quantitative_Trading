@@ -33,12 +33,42 @@ export interface ApiMeta {
   data_source?: string
 }
 
+/**
+ * envelope.error 的兩種形狀：
+ * - v0.6 後端（shipped）：純字串
+ * - doc 25 目標契約：{code,message,detail} 物件
+ * http client 會把兩者正規化成 ApiError。
+ */
+export type EnvelopeError = string | ApiErrorShape
+
 /** doc 25 §1.1 統一信封 */
 export interface Envelope<T> {
   success: boolean
   data: T | null
-  error: ApiErrorShape | null
+  error: EnvelopeError | null
   meta?: ApiMeta
+}
+
+/** 由 HTTP status 推 error code（後端 error 為字串時用；對齊 doc 25 §2 status↔code）。 */
+export function statusToCode(status: number): ApiErrorCode {
+  switch (status) {
+    case 400:
+      return 'BAD_REQUEST'
+    case 401:
+      return 'UNAUTHORIZED'
+    case 404:
+      return 'NOT_FOUND'
+    case 409:
+      return 'IS_GATE_NOT_PASSED'
+    case 422:
+      return 'VALIDATION_ERROR'
+    case 423:
+      return 'OOS_VAULT_LOCKED'
+    case 504:
+      return 'QUERY_TIMEOUT'
+    default:
+      return 'INTERNAL'
+  }
 }
 
 /** 解包後給頁面用的結果 */
