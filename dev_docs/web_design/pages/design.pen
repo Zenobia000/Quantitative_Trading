@@ -114867,7 +114867,7 @@
                           "id": "Fwo40",
                           "name": "Cap",
                           "fill": "$color.text.tertiary",
-                          "content": "hover 任一 bar → 回跳當日四層分數 / 訊號 reason（context drawer）",
+                          "content": "hover 任一 bar → 回跳當日因子分數 / 訊號 reason（context drawer）",
                           "fontFamily": "$font.sans",
                           "fontSize": 11,
                           "fontWeight": "normal"
@@ -115835,7 +115835,7 @@
                           "id": "Cn5fc",
                           "name": "T",
                           "fill": "$color.text.primary",
-                          "content": "四層共振歸因",
+                          "content": "因子/層級歸因",
                           "fontFamily": "$font.sans",
                           "fontSize": 18,
                           "fontWeight": "700"
@@ -116217,7 +116217,7 @@
                               "id": "A7Pwy",
                               "name": "H",
                               "fill": "$color.text.secondary",
-                              "content": "四層共振分數 · 2022-01-11",
+                              "content": "當日因子分數 · 2022-01-11",
                               "fontFamily": "$font.sans",
                               "fontSize": 13,
                               "fontWeight": "600"
