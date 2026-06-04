@@ -1,7 +1,8 @@
 # Page Layer Spec — 逐筆覆盤 (Research · Trade Review)
 
 > 來源：補強需求（回看每隻策略在哪檔股票的進出場點位）；把 `research_04_run_report.md` 的 `TradeListLink`（疊 K 線 + hover 回跳）展開成完整頁。
-> 對齊 `03` §taxonomy「Trade markers 疊 K 線 + hover 回跳」（✅ ADR-017 重設進場最直接的 debug 工具）+ §1.5「逐筆 trade 表可回跳市場狀態」+「四層共振歸因下鑽」。
+> 對齊 `03` §taxonomy「Trade markers 疊 K 線 + hover 回跳」（✅ ADR-017 重設進場最直接的 debug 工具）+ §1.5「逐筆 trade 表可回跳市場狀態」+「因子/層級歸因下鑽」。
+> **策略無關**：歸因維度依該策略 `reason_json` 動態決定（N 個因子/層），不寫死任一策略；four_layer_resonance 僅為 N=4 的特例。
 > 繼承 Global v2.0（**Grok 單色 dark** / Geist Mono 數值 / 白環 focus / 漲跌 ↑↓ 雙編碼）。
 > **狀態**：M3 設計 spec；assembly 隨 React 化再產出。
 
@@ -12,8 +13,8 @@
 - **page_name**: 逐筆覆盤 (Trade Review)
 - **route_path**: /research/runs/:id/trades
 - **page_type**: detail (review)
-- **primary_goal**: 讓研究者對某 run 逐檔股票回看進出場點位——個股 K 線疊 entry/exit marker、hover 回跳當日市場狀態與四層共振分數，肉眼核對訊號合理性，作為 IS gate FAIL 後重設進場的直接 debug 工具。
-- **secondary_goal**: 以四層共振歸因下鑽，量化每筆交易/每檔股票各層（L1–L4）的貢獻，找出「哪一層在這檔/這段失效」。
+- **primary_goal**: 讓研究者對某 run 逐檔股票回看進出場點位——個股 K 線疊 entry/exit marker、hover 回跳當日市場狀態與訊號計分（reason_json scores），肉眼核對訊號合理性，作為 IS gate FAIL 後重設進場的直接 debug 工具。
+- **secondary_goal**: 以因子/層級歸因下鑽，量化每筆交易/每檔股票各因子的貢獻（依策略 reason_json 動態 N 個因子/層），找出「哪個因子/層在這檔/這段失效」。
 - **target_users**:
   - 主要：量化研究者（覆盤、重設進場邏輯）
   - 次要：操盤手（核對 live 策略某檔進出場是否如預期）
@@ -32,19 +33,19 @@
 
 2. **candlestick_chart**
    - section_type: chart (candlestick + markers)
-   - section_purpose: 選定個股的 K 線圖，疊 entry（▲）/ exit（▼）marker + 停損線；hover 任一 bar 回跳當日市場狀態與四層共振分數。
+   - section_purpose: 選定個股的 K 線圖，疊 entry（▲）/ exit（▼）marker + 停損線；hover 任一 bar 回跳當日市場狀態與訊號因子分數。
 
 3. **trade_list**
    - section_type: data_table (round-trip)
    - section_purpose: 該股逐筆 round-trip（進場時間/價、出場時間/價、持有天數、報酬、觸發 reason）；點列高亮 K 線對應 marker。
 
-4. **resonance_attribution**
-   - section_type: chart + stats（四層共振歸因）
-   - section_purpose: 該筆/該股各層 L1–L4 貢獻分解（哪層帶 alpha、哪層拖累），對映四層共振計分。
+4. **attribution**
+   - section_type: chart + stats（因子/層級歸因）
+   - section_purpose: 該筆/該股各因子/層貢獻分解（哪因子帶 alpha、哪因子拖累），對映該策略 reason_json 歸因分數（因子數動態 N）。
 
 5. **context_drawer**
    - section_type: drawer（hover/點選觸發）
-   - section_purpose: 回跳某日市場狀態快照——當日四層分數、訊號 reason_json、價量籌碼 context。
+   - section_purpose: 回跳某日市場狀態快照——當日因子分數、訊號 reason_json、價量籌碼 context。
 
 ---
 
@@ -73,7 +74,7 @@
   - EntryMarkers: Marker ▲ / required / 進場點（gain 色 + ▲，hover 顯進場價/原因）。
   - ExitMarkers: Marker ▼ / required / 出場點（loss/gain 依損益 + ▼，hover 顯出場價/報酬）。
   - StopLossLine: ReferenceLine / optional / 停損價（dashed warning）。
-  - HoverBridge: 互動 / required / hover 任一 bar → 觸發 context_drawer 顯當日四層分數/訊號（回跳市場狀態）。
+  - HoverBridge: 互動 / required / hover 任一 bar → 觸發 context_drawer 顯當日因子分數/訊號（回跳市場狀態）。
   - ZoomPan: 互動 / required / 框選 zoom / 拖曳 pan / 雙擊 reset。
 - **states**:
   - default: K 線 + entry/exit marker + 圖例。
@@ -99,25 +100,25 @@
   - error: inline error + 重試。
 - **copy_constraints**: reason 單行 ≤ 40 字；比率 2 位小數。
 
-### Section: resonance_attribution
+### Section: attribution
 
-- **layout**: 上 4 層貢獻 bar，下 per-trade 歸因表。
+- **layout**: 上各因子/層貢獻 bar（動態 N 根），下 per-trade 歸因表。
 - **elements**:
-  - LayerBars: Bar ×4 / required / L1–L4 各層對該股/該筆的貢獻（單色明度階 + 文字標層名與分數）。
-  - AttributionTable: DataTable / optional / 每筆 trade 的四層分數 + 結果（命中/失效，色+文字）。
-  - WeakLayerNote: Inline / required / 標「哪一層在此失效」（服務重設進場）。
+  - FactorBars: Bar ×N / required / 各因子/層對該股/該筆的貢獻，N 由策略 reason_json 動態決定（單色明度階 + 文字標因子名與分數）。
+  - AttributionTable: DataTable / optional / 每筆 trade 的各因子分數 + 結果（命中/失效，色+文字）。
+  - WeakFactorNote: Inline / required / 標「哪個因子/層在此失效」（服務重設進場）。
 - **states**:
-  - default: 4 層 bar + 歸因。
+  - default: N 因子 bar + 歸因。
   - loading: skeleton。
-  - empty: 「無歸因資料（需四層分數留存）」。
+  - empty: 「無歸因資料（需因子分數留存）」。
   - error: inline error + 重試。
-- **copy_constraints**: 層名固定 L1–L4 + 中文標籤；分數 2 位小數。
+- **copy_constraints**: 因子/層名來自策略 reason_json（動態，非寫死層數）；分數 2 位小數。
 
 ### Section: context_drawer
 
 - **layout**: 右側 drawer（hover bar / 點 marker 觸發）。
 - **elements**:
-  - DaySnapshot: Stats / required / 當日四層共振分數（L1–L4）+ 總分。
+  - DaySnapshot: Stats / required / 當日各因子分數（reason_json scores，動態 N）+ 總分。
   - SignalReason: JSONViewer（bg-code #161616 / Geist Mono）/ required / 當日訊號 reason_json（scores / prices / context）。
   - PriceVolChip: Mini / optional / 當日價量 / 籌碼摘要（法人 / 主力，若有 FinLab 資料）。
 - **states**:
@@ -135,9 +136,9 @@
 
 1. 自 Run Report 帶 run_id 載入 → review_header 預選貢獻最大個股 → 渲染 K 線 + marker + trade list + 歸因。
 2. 切換 SymbolSelector → 重繪該股 K 線 / trade list / 歸因。
-3. hover K 線某 bar 或點 marker → context_drawer 回跳當日四層分數 + 訊號 reason（核對進場合理性）。
+3. hover K 線某 bar 或點 marker → context_drawer 回跳當日因子分數（reason_json scores）+ 訊號 reason（核對進場合理性）。
 4. 點 trade_list 某列 → 高亮 K 線對應 entry/exit marker。
-5. resonance_attribution 標「哪層失效」→ 回研究迴圈（New Run / Validate）改假設。
+5. attribution 標「哪個因子/層失效」→ 回研究迴圈（New Run / Validate）改假設。
 
 ### RWD 行為差異
 
@@ -157,17 +158,17 @@
 ## [DATA & API]
 
 - **uses_api**: true
-- **主要資料表**: `runs` + `fills`/trade（逐筆）+ `daily_bars`（個股 K 線）+ `signals`（reason_json / 四層分數）。
-- **endpoints**:
-  - GET `/api/research/runs/:id/traded-symbols` — 該 run 有交易的個股 + 貢獻排序。
-  - GET `/api/research/runs/:id/trades?symbol=` — 該股逐筆 round-trip（進/出場時間價、報酬、reason）。
-  - GET `/api/research/runs/:id/candles?symbol=&start=&end=` — 個股 K 線 + entry/exit marker 座標。
-  - GET `/api/research/runs/:id/attribution?symbol=` — 四層共振歸因。
-  - GET `/api/research/runs/:id/day-context?symbol=&date=` — 當日四層分數 + 訊號 reason（context_drawer）。
+- **主要資料表**: `runs` + `fills`/trade（逐筆）+ `daily_bars`（個股 K 線）+ `signals`（reason_json / 因子分數）。
+- **endpoints**（路徑以 `25_fe_be_rest_contract.md` §6 為準，下為 by-reference）:
+  - GET `/runs/{id}/traded-symbols` — 該 run 有交易的個股 + 貢獻排序。
+  - GET `/runs/{id}/trades?symbol=` — 該股逐筆 round-trip（進/出場時間價、報酬、reason）。
+  - GET `/runs/{id}/candles?symbol=&start=&end=` — 個股 K 線 + entry/exit marker 座標。
+  - GET `/runs/{id}/attribution?symbol=` — 因子/層級歸因（回傳 reason_json 動態 N 因子貢獻，非寫死四層）。
+  - GET `/runs/{id}/day-context?symbol=&date=` — 當日因子分數 + 訊號 reason（context_drawer）。
 - **error_cases**:
   - run 無 trade（200 空）：review_header empty。
   - 個股無 K 線：candlestick empty。
-  - 無四層分數留存：attribution empty（提示需後端留存分數）。
+  - 無因子分數留存：attribution empty（提示需後端留存分數）。
   - 網路錯誤：section 級 inline error + 重試。
 
 ---
@@ -182,12 +183,12 @@
 
 ## [ACCEPTANCE CRITERIA]
 
-- [ ] 5 個 section（review_header / candlestick_chart / trade_list / resonance_attribution / context_drawer）功能正常。
-- [ ] candlestick 疊 entry（▲）/ exit（▼）marker，漲跌 + 符號雙編碼；hover bar 回跳當日四層分數 + 訊號 reason。
+- [ ] 5 個 section（review_header / candlestick_chart / trade_list / attribution / context_drawer）功能正常。
+- [ ] candlestick 疊 entry（▲）/ exit（▼）marker，漲跌 + 符號雙編碼；hover bar 回跳當日因子分數 + 訊號 reason。
 - [ ] SymbolSelector 切換個股重繪 K 線 / trade / 歸因。
 - [ ] trade_list round-trip（進/出場時間價、報酬、reason）；點列高亮 K 線對應 marker。
-- [ ] resonance_attribution 顯 L1–L4 貢獻 + 標「哪層失效」（服務重設進場）。
-- [ ] context_drawer 回跳當日四層分數 + reason_json（bg-code #161616）。
+- [ ] attribution 顯各因子/層貢獻（動態 N，依策略 reason_json）+ 標「哪個因子/層失效」（服務重設進場）。
+- [ ] context_drawer 回跳當日因子分數 + reason_json（bg-code #161616）。
 - [ ] 每 section 四態完備；K 線/trade 在 @<1024px 橫向捲動不轉 card。
 - [ ] 數值 Geist Mono tabular-nums；文字 AA / KPI AAA；focus 白環。
 - [ ] dark-first（Grok 單色）、flat 1px border #2A2A2A 無陰影。

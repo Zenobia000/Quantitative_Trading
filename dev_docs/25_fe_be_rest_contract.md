@@ -216,8 +216,8 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/runs/{run_id}/log` | ⬜ needs-work | — → `{lines[], status}`（job lifecycle log）| 404 | run_04 | M3.5 |
 | GET | `/runs/{run_id}/traded-symbols` | ⬜ needs-work | — → `[{symbol, trades, pnl_contrib}]`（有交易個股 + 貢獻排序）| 404 | trade_review | M3.2 |
 | GET | `/runs/{run_id}/candles` | ⬜ needs-data | `?symbol=&start=&end=` → `{ohlc[], markers:[{ts,side,price}]}`（個股 K 線 + entry/exit marker；K 線需 `market_reader`）| 404 | trade_review | M4 |
-| GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{layers:[L1..L4], score}`（四層共振歸因，需 harness 捕捉）| 404 | trade_review | M3.2 |
-| GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{scores:{L1..L4}, signal_reason}`（context_drawer 當日四層分數）| 404 | trade_review | M3.2 |
+| GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{factors:[{name, score}…], total}`（因子/層級歸因，**維度 N 由策略 `reason_json` 決定，不寫死層數**；four_layer 為 N=4 特例。需 harness 捕捉）| 404 | trade_review | M3.2 |
+| GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{factors:[{name, score}…], total, signal_reason}`（context_drawer 當日因子分數，策略無關 N 維）| 404 | trade_review | M3.2 |
 | GET | `/runs/estimate` | ⬜ ready | `?<grid params>` → `{n_configs, est_minutes}`（`sweep.expand_grid`）| 422 | run_02 | M3.1 |
 | POST | `/runs/tag` | ⬜ needs-work | `{run_ids[], tag, pin?}` → `{updated[]}` | **409 IS_GATE_NOT_PASSED**（pin 未過 IS）| run_03 | M3.3 |
 | GET | `/runs/trials` | ⬜ needs-work | `?param_space=<hash>` → `{cumulative_trials, dsr, deflated, power}`（`dsr.py`+`trials.py` 持久化）| — | run_03/05/06 | M3.4 |
