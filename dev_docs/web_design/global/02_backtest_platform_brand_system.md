@@ -134,7 +134,7 @@
 
 ### 常用佈局 Pattern
 
-- **Monitoring Shell**：左側深色 sidebar（面板切換 A–E，240px，<1024px 收 drawer）+ 頂列（strategy selector + date range + refresh）+ 主內容區。
+- **Application Shell**（三區 IA，對齊 [`../03_uiux_benchmark_and_reinforcement_plan.md`](../03_uiux_benchmark_and_reinforcement_plan.md) §4.7/§5.2 + [`../02_backtest_dashboard_design_update.md`](../02_backtest_dashboard_design_update.md) §3）：左側深色 sidebar（240px，<1024px 收 drawer）採三段式——上段 **Research 研究工作區**（研究迴圈主層級：策略庫 / New Run / Runs / Compare / Sweep / Validate / Promote）、中段 **Monitor 監控**（A 績效總覽 / B 部位狀態 / C 訊號日誌 / D 風控指標，均為 live 策略子視圖；Panel E 統計驗證已重定位至 Validate gate）、下段 **系統**（資料管理 / 告警設定）+ 頂列 **Cmd-K 全域命令列** + strategy selector + date range + refresh + 主內容區。（取代 v1 單區「A–E 面板切換」shell，承 ADR-018 研究迴圈優先 pivot。）
 - **KPI Stat Row**：頂部 4–6 張 KPI 卡，數值 Geist Mono，漲跌上色，1px border 無陰影，即時切換無動畫。
 - **Chart + Table Split**：左 2/3 主圖（Plotly/Recharts），右 1/3 明細表；<1024px 垂直堆疊、表格轉卡片。
 - **Drill-down**：圖表點選 → 跳到關聯面板並帶 filter（如 equity 點某日 → 面板 C 該日訊號）。
@@ -220,5 +220,5 @@ RULES
 
 ---
 
-**版本**：v2.0（Grok 單色 dark，取代 v1 teal）｜ **套用對象**：backtest_platform 監控儀表板 React 版 ｜ **最後更新**：2026-06-02
+**版本**：v2.0（Grok 單色 dark，取代 v1 teal）｜ **套用對象**：backtest_platform 監控儀表板 React 版 ｜ **最後更新**：2026-06-04（§UX Pattern 的 shell 由單區「A–E 面板切換」對齊為三區 Application Shell，承 [`../03_uiux_benchmark_and_reinforcement_plan.md`](../03_uiux_benchmark_and_reinforcement_plan.md) §4.7/§5.2）
 **衍生自**：Grok design clone（`cloning/clones/grok/`，忠實還原 grok.com）

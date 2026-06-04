@@ -15,7 +15,7 @@
 - **target_users**:
   - 主要：每日盤中/盤後檢視持倉的交易者（高頻使用）
   - 次要：風險管理者審視組合集中度與 Portfolio Heat
-- **entry_point**: 主導覽列「部位狀態」分頁；由面板 A（總覽）KPI 點擊下鑽進入
+- **entry_point**: 側邊導覽「Monitor → 部位狀態」；由面板 A（總覽）KPI 點擊下鑽進入
 - **expected_time_on_page**: 1-3 分鐘（盤中快速掃描），風險檢視時可延長至 5 分鐘
 
 ---
