@@ -128,7 +128,7 @@
 | 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
 | 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；待 5.A.6 portfolio |
 | 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
-| 7.0 Paper+實盤 | 110h | 40h | 36% | ✅ v0.5 Wave D（7.A.1 PaperBroker + 7.C.1 Risk Gate 12 條 + 7.C.2 3 級熔斷，PR #38）；7.B Shioaji / 7.D Prefect ⏳ |
+| 7.0 Paper+實盤 | 110h | 48h | 44% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI（fail-fast staged flow，Prefect-optional）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 38h | 47% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB；待 8.A.1/8.A.2 面板 / 8.B Grafana / 8.D.2 Prometheus |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 110h | 92% | 持續 |
@@ -289,9 +289,9 @@
 | 7.C.1 | Risk Gate 12 條 ex-ante 規則 | — | 16h | ✅ v0.5 | — | `risk/risk_gate.py`（EX-001~012 + §2.2 評估順序，純函式；對應 24 §2） |
 | 7.C.2 | 3 級熔斷狀態機 | — | 8h | ✅ v0.5 | — | `risk/circuit_breaker.py`（L1/L2/L3→HALTED latched；EX-012 接 shared BreakerState；對應 24 §4）；kill_switch.sh ⏳ |
 | 7.C.3 | Risk metrics 即時計算 | — | 8h | ⏳ | — | — |
-| 7.D.1 | Prefect daily flow 每日排程 | — | 8h | ⏳ | — | — |
-| 7.D.2 | orchestration/cli.py 完整 | — | 8h | ⏳ | — | — |
-| 7.D.3 | 訊號→下單→fills 完整鏈路測試 | — | 16h | ⏳ | — | — |
+| 7.D.1 | Prefect daily flow 每日排程 | — | 8h | 🟡 | 2026-06-04 | `orchestration/daily_flow.py` fail-fast staged 引擎（ETL→signals→risk→orders→log，collaborator 注入）+ **Prefect-optional**（`as_prefect_flow`：未裝 prefect 則 inline fallback，prefect 非硬依賴）|
+| 7.D.2 | orchestration/cli.py 完整 | — | 8h | 🟡 | 2026-06-04 | `orchestration/cli.py` run〔--dry-run/--real〕+ list-stages；dry-run 跑 no-op demo 管線（安全），real 套 build_daily_stages；18 測試、模組 94% cov |
+| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | ⏳ | — | engine/CLI 已備（7.D.1/2），待接真實 ETL/signals/RiskGate/PaperBroker collaborators |
 
 **模組小計**：~110h
 
