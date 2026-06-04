@@ -359,7 +359,7 @@
 1. 券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊）
 2. ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）
 3. SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 < 1% 差異）
-4. lock file 未引入（M2 啟動後 `uv lock` 產出 `uv.lock` 入版控；ADR-012）— **2026-06-04：drift 已開始咬人**，`uv run` / `.venv` 解析到 pytest 9.0.3 + pytest-asyncio 1.4.0（`Package.obj` 不相容，全 suite collection 中斷）、`.venv` 缺 `api` extra（fastapi）+ zipline 編譯擴充 `._adjustments` 壞 → **全 suite 無法一鍵驗證**（純 Python 子集如 `tests/data` 可跑）。**自主開發前置剛需**：優先補 `uv.lock` 釘死 pytest<9 + 修復 extras，否則 loop 無法判 green
+4. lock file 未引入（M2 啟動後 `uv lock` 產出 `uv.lock` 入版控；ADR-012）<!-- env-drift 診斷與解決見 PR #47（chore/uv-lock-and-env-repair）獨佔此項，避免雙 PR 改同一行 -->
 
 ### 已解決的技術債（v1.0 列為待解，現已 fix）
 
