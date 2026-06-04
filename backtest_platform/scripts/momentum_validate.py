@@ -36,9 +36,9 @@ LOOKBACKS, SKIPS, TOP_FRACS = (126, 189, 252, 315, 378), (0, 21), (0.2, 0.33, 0.
 _MEGA = {"2330", "2317", "2454", "2412", "2882", "2891", "2308", "1303", "1101", "3008"}
 
 
-def _grid() -> list[MomentumConfig]:
+def _grid(vol_target: float | None = None) -> list[MomentumConfig]:
     return [
-        MomentumConfig(lookback_days=lb, skip_days=sk, top_fraction=tf)
+        MomentumConfig(lookback_days=lb, skip_days=sk, top_fraction=tf, vol_target_annual=vol_target)
         for lb in LOOKBACKS for sk in SKIPS for tf in TOP_FRACS
     ]
 
@@ -65,11 +65,15 @@ def _returns_frame(prices, configs) -> pd.DataFrame:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--universe", default="all", choices=["large", "smid", "all"])
+    ap.add_argument("--vol-target", type=float, default=None,
+                    help="年化目標波動 (crash control)；e.g. 0.15。省略=vanilla")
     a = ap.parse_args()
 
     uni = _universe(a.universe)
     prices = price_panel(uni)
-    configs = _grid()
+    configs = _grid(a.vol_target)
+    if a.vol_target:
+        print(f"[crash control] vol-target = {a.vol_target:.0%} annual\n")
     df = _returns_frame(prices, configs)
     matrix = df.to_numpy()
     sharpes = np.array([ann_sharpe(df[c]) for c in df.columns])

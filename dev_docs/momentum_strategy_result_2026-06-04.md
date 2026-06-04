@@ -60,3 +60,22 @@ WFA 逐 fold OOS Sharpe：1.41 / 0.63 / 0.94 / 2.50 / **−1.26（2022 動能崩
 
 ## 限制
 測試 universe 小（10-29 檔現存上市）、無 OOS、成本模型 Sharpe-optimistic。本文是**診斷 + 防過擬合示範**，非動能的最終 verdict——最終 verdict 需上述完整紀律在大 point-in-time universe 上跑。
+
+---
+
+## 附錄（b）：崩盤風控嘗試 — **誠實負結果**（2026-06-04）
+
+WFA 的 −1.26 崩盤 fold（2022）促使加**波動目標（vol-targeting）**崩盤風控：`MomentumConfig.vol_target_annual`（trailing 波動縮放曝險，max_lev=1.0 僅 de-risk；off by default）。這是**理論驅動**（崩盤＝高波動）、非 data-mined 的單一原則性控制。
+
+**重跑量化驗證（all universe）vanilla vs vol-target 15%：**
+
+| | PBO | WFA OOS Sharpe | 2022 崩盤 fold |
+|:--|:--|:--|:--|
+| vanilla | 21% ✅ | 0.84 | −1.26 |
+| **vol-target 15%** | **38% ❌** | **0.80** | **−1.46（更深）** |
+
+**🔴 風控沒救到、反而更糟。** 原因：vol-targeting 對**持續性**高波動 regime 有效，但對 2022 的**急速動能崩盤反轉**無效——trailing 波動在傷害**發生後**才縮曝險、接著錯過反彈；加上 29 檔小 universe 上 vol-target 只引入估計噪音。
+
+**紀律結論**：到此**停止在小倖存 universe 上加風控**——每多試一個控制就多一個 researcher degree of freedom（p-hacking）。**真正的 binding 限制是 universe（小 + 倖存偏誤），這正是 (c) 大 point-in-time universe 要解的**。vol-targeting 作為**可重用平台能力**保留（對的策略/universe 上仍可能有用），但不在此處繼續調。
+
+> 又一次平台紀律的價值：**主動驗證一個原則性假設、它失敗、誠實記錄負結果**——而非調到「看起來有用」（那就是過擬合）。
