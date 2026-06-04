@@ -32,6 +32,7 @@ from backtest_platform.validation.dsr import (
 )
 from backtest_platform.validation.gate_state import (
     DEFAULT_GATE,
+    MOMENTUM_GATE,
     Criterion,
     CriterionResult,
     GateResult,
@@ -48,8 +49,8 @@ from backtest_platform.validation.wfa import walk_forward_splits
 
 __all__ = [
     # gate (v0.1)
-    "DEFAULT_GATE", "Criterion", "CriterionResult", "GateResult", "GateStatus",
-    "cross_window_consistent", "evaluate_gate",
+    "DEFAULT_GATE", "MOMENTUM_GATE", "Criterion", "CriterionResult", "GateResult",
+    "GateStatus", "cross_window_consistent", "evaluate_gate",
     # statistical pipeline (v0.2)
     "metrics", "dsr", "pbo", "wfa", "resampling",
     "psr", "expected_max_sharpe", "deflated_sharpe_ratio",

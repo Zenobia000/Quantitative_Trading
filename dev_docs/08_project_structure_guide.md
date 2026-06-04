@@ -72,11 +72,14 @@ src/backtest_platform/
 │
 ├── strategies/                   # ★ M2 改名 — 多策略 namespace
 │   ├── __init__.py               # （未來：strategy registry）
-│   └── four_layer_resonance/     # M1 四層共振策略
-│       ├── __init__.py           # 對外 re-export (compute_scores, compute_signals, ...)
-│       ├── indicators.py         # RSI / KD / MACD / SwingHigh/Low
-│       ├── scoring.py            # compute_scores（四層計分）
-│       └── signals.py            # compute_signals + evaluate_bar
+│   ├── four_layer_resonance/     # M1 四層共振策略（診斷證實負 edge，待砍）
+│   │   ├── __init__.py           # 對外 re-export (compute_scores, compute_signals, ...)
+│   │   ├── indicators.py         # RSI / KD / MACD / SwingHigh/Low
+│   │   ├── scoring.py            # compute_scores（四層計分）
+│   │   └── signals.py            # compute_signals + evaluate_bar
+│   └── momentum/                 # ★ v0.8 新增 — 跨截面 12-1 動能（Jegadeesh-Titman）
+│       ├── __init__.py           # MomentumConfig / backtest_momentum re-export
+│       └── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
 │
 ├── adapters/                     # ★ M2 新增 — 廠商接口層 (ADR-005/006/008)
 │   ├── __init__.py
@@ -141,6 +144,7 @@ src/backtest_platform/
 | `config/` | ✅ | + settings.py | | | |
 | `data/` | ✅ | | | | |
 | `strategies/four_layer_resonance/` | ✅（改名搬入）| | | | |
+| `strategies/momentum/` | | | ✅ v0.8（12-1 跨截面動能 + IS harness + MOMENTUM_GATE；證平台 strategy-agnostic） | | |
 | `adapters/data_bundle/` | | ✅ | | | |
 | `adapters/data_feed/` | | | | ✅ | |
 | `adapters/brokers/paper_broker.py` | | | | ✅ | |
