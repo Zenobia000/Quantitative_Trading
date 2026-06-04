@@ -131,10 +131,11 @@
 | 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
 | 7.0 Paper+實盤 | 110h | 48h | 44% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI（fail-fast staged flow，Prefect-optional）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
+| 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ | **REST 契約合一定版**（doc 25 + ADR-021，2026-06-04）；8.H.1 M3.0 合一閘 + 8.H.6 async jobs + 8.H.8 telemetry daemon 為淨新增 infra，估時待 M3.0 開工細估；**前端建置 gated 於 v3 edge（同 8.G）** |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
-| 10.0 文檔 | 120h | 110h | 92% | 持續 |
+| 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 71 端點 registry）|
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
-| **合計** | **1050h** | **710h** | **68%** | M1 ✅ + v0.2–v0.8 後端 waves ✅（validation / research / risk / monitoring / API / orchestration / Grafana / momentum 模組）|
+| **合計** | **1050h** | **714h** | **68%** | M1 ✅ + v0.2–v0.8 後端 waves ✅（validation / research / risk / monitoring / API / orchestration / Grafana / momentum 模組）+ **REST 契約合一（ADR-021）**|
 
 兼職（10h/週）→ 預估剩 60 週（約 14 個月）完成 M5；含 buffer 預計 2027-08 全倉上線。
 
