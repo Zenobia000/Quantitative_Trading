@@ -207,7 +207,7 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 | Method | Path | Status / 就緒 | Req → Resp（`data`）| 錯誤 | 消費頁 | 里程碑 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/runs` 📄 | ✅ ready | `?page&limit` → `[{run_id, preset, gate_status, hypothesis, metrics, is_start, is_end}]`，`meta{total,page,limit}` | — | run_03/04 | M3.0（修 `is_start/is_end` window null bug）|
+| GET | `/runs` 📄 | ✅ ready | `?page&limit&sort=&strategy_id=&version=&status=&engine=`（filter/sort 選填，runs table 用）→ `[{run_id, preset, gate_status, hypothesis, metrics, is_start, is_end}]`，`meta{total,page,limit}` | — | run_03/04 | M3.0（修 `is_start/is_end` window null bug）|
 | GET | `/runs/compare` | 🟡 ready | `?baseline=&run_ids=a,b,c&metric_keys=…` → `{baseline_id, metric_keys, sign_consistent, rankings, comparisons[]}` | 404 NOT_FOUND | run_05 | M3.2（加 `run_ids` 子集 + equity）|
 | GET | `/runs/{run_id}` | ✅ ready | — → 完整 ledger record dict | 404 | run_04 | — |
 | POST | `/runs` | 🟡 needs-work | `RunCreateRequest{hypothesis,preset,stocks[],is_start,is_end,engine="sim"}` → record（同步）→ **async** `{run_id,status:"queued"}` | 422 | run_02 | M3.5（轉 async，§5.2）|
@@ -363,6 +363,7 @@ per-page `[DATA & API]` 曾發明 `/api/*` 路徑（與後端裸 root 不符）�
 | `/api/research/runs/{id}/equity` | `/runs/{id}/equity` |
 | `/api/research/runs/{id}/trades` | `/runs/{id}/trades` |
 | `/api/research/runs/trials` | `/runs/trials` |
+| `/api/research/compare`（research_05）| `/runs/compare`（**例外：非 `/research/compare`**；compare 屬 runs 子資源，泛則不適用）|
 | `/api/research/bundles` | `/system/bundles` |
 | `/api/performance/*` | `/monitor/performance/*` |
 | `/api/positions/*` | `/monitor/positions/*` |
