@@ -107,7 +107,7 @@
 
 - ❌ 即時行情接收（M5 才考慮）
 - ❌ 自動實盤下單（M5 才考慮）
-- ❌ 多策略管理（單一策略為主）
+- 🟡 多策略管理：**研究層維持單策略**深究；**營運層擴張為多策略艦隊 lite**（同時監控/操作數隻已晉升策略 + 退化換掉，[ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md)，M4–M5、gated 於 ≥1 可部署策略）。仍不做跨人 leaderboard / staking / 完整 model registry / 多人簽核。
 - ❌ 多市場（台股為主，不做美股 / 港股）
 - ❌ 期權 / 期貨（純股票策略）
 - ❌ 多帳戶管理
@@ -152,6 +152,7 @@
 | D-015 | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設**進場**假設 | 已決定（2026-06-02） | ADR-017 — 記錄 ADR-016 gate 執行結果；參數探針定位約束在進場非出場 |
 | D-016 | **監控優先 → 研究迴圈優先**：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | 已決定（2026-06-02） | ADR-018 — 大廠 UI/UX deep-research 對標（10 平台）；重定位 ADR-009/015 產物、UX 化 ADR-017；證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md` |
 | D-017 | **v3 進場重設**：四層共振進場參數化分級放寬（必含層+可選層，非純 N-of-4）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline | 已決定（2026-06-02） | ADR-019 — 四交易視角壓測收斂；L2⊂L3（chip 含 foreign+trust）→ dir/chip=機構共識；反過擬合硬約束（v0.1 不 sweep、進場數非 edge、雙窗 IS 非 OOS） |
+| D-018 | **多策略艦隊營運（lite）**：營運層擴張為同時監控/操作數隻已晉升策略 + 退化換掉（研究層仍單策略）；處置複用 ADR-018 晉升 audit；仍排除跨人 leaderboard / staking / 完整 registry / 多人簽核 | 已決定（2026-06-04） | ADR-022 — 使用者實需「管理多隻策略、退化換掉」；切分研究單策略 vs 營運多策略艦隊；gated 於 M4 live daemon + ≥1 可部署策略（現 0） |
 
 ---
 

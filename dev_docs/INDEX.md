@@ -8,7 +8,8 @@
 >
 > **2026-06-02 更新（二）**：大廠 UI/UX deep-research 對標完成 → **監控優先 → 研究迴圈優先 pivot（ADR-018）**：Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate 工作流；新增 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 平台對標 + 10 維度差距 + 7 流程圖 + roadmap）；ADR 數量 17→18；16 WBS 升 v2.6（§8.G 研究迴圈 UX）
 > **2026-06-03 更新**：研究迴圈 CLI 補 `validate`+`promote-check`（8.G.5 封頂）；large-cap v3 IS FAIL → **escalate 候選 D（ADR-020 提案中）**：換 point-in-time 中小型動能 universe（rank 51-300、反 survivorship），機制凍結、資料 spike（FinLab 進階券商分點）為 go/no-go gating；新增設計 spec `specs/2026-06-03-candidate-d-smallcap-universe-design.md`；ADR 數量 19→20
-> **2026-06-04 更新**：前後端契約優先盤點（FE 14 頁需求 ↔ FastAPI 11 條供給 ↔ 既有契約）→ **REST 契約合一（ADR-021）**：三處分裂（06 §9 / 21 §8 / per-page）併入新建 **25_fe_be_rest_contract.md**（71 端點 registry + 單一 envelope/錯誤碼/分頁/裸 root/Bearer/realtime + OpenAPI→TS）；06 §9 / 21 §8 / 20 / 12 §7 加降級 banner；ADR 數量 20→21
+> **2026-06-04 更新**：前後端契約優先盤點（FE 14 頁需求 ↔ FastAPI 11 條供給 ↔ 既有契約）→ **REST 契約合一（ADR-021）**：三處分裂（06 §9 / 21 §8 / per-page）併入新建 **25_fe_be_rest_contract.md**（71→83 端點 registry + 單一 envelope/錯誤碼/分頁/裸 root/Bearer/realtime + OpenAPI→TS）；06 §9 / 21 §8 / 20 / 12 §7 加降級 banner；ADR 數量 20→21
+> **2026-06-04 更新（二）**：Trade Review 去 four_layer_resonance 策略耦合（泛化為 reason_json 動態 N 因子歸因）；**多策略艦隊營運 lite（ADR-022）**：營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略），改寫 PRD「❌ 多策略管理」+ D-018；ADR 數量 21→22
 
 ---
 
@@ -31,7 +32,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**19 份 ADR**：原 4 份 + 2026-05-31 新增 005~010 + 2026-06-01 新增 011~016 + 2026-06-02 新增 017/018/019） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**22 份 ADR**：…017/018/019 + 2026-06-03 新增 020（候選 D）+ 2026-06-04 新增 021（REST 契約合一）/022（多策略艦隊 lite）） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -104,6 +105,7 @@
 | [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) | v3 進場重設：參數化分級放寬（必含層+可選，非純 N-of-4 — L2⊂L3）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline；反過擬合硬約束（v0.1 不 sweep、進場數非 edge） | ADR-017 的 M0 進場 hypothesis 定稿；v0.1 策略側 |
 | [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) | **候選 D（提案中）**：large-cap v3 IS FAIL → escalate 換 point-in-time 中小型動能 universe（rank 51-300、季 rebalance、反 survivorship）；機制凍結、成本上調；資料 spike（FinLab 進階券商分點 ~250 檔）為 go/no-go gating | ADR-017 §5 退場路徑落地；ADR-019 機制不動 |
 | [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) | **前後端 REST 契約合一**：三處分裂（06 §9 / 21 §8 / per-page）→ 單一契約 doc 25 + OpenAPI 機器真相；envelope error 字串→物件、offset 分頁、裸 root、single-user Bearer、polling+單一 WS、Monitor stub | **supersede** ADR-015 §4/§5 + ADR-018 契約落點指派 |
+| [ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md) | **多策略艦隊營運（lite）**：營運層擴張為同時監控/操作數隻已晉升策略 + 退化換掉（研究層仍單策略）；處置複用 ADR-018 晉升 audit；仍排除跨人 leaderboard/staking/完整 registry/多人簽核；gated 於 M4 + ≥1 可部署策略 | **部分放寬** 03 §5.3「刻意不做 champion/challenger」+ PRD「❌ 多策略管理」（D-018）|
 
 ---
 

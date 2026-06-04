@@ -611,7 +611,7 @@ flowchart TD
 | 頁面 | Route | M | Page 規格 | 補的缺口 |
 | :--- | :--- | :-: | :--- | :--- |
 | 首頁 · 控制塔 | `/`（root landing）| M3 | [`pages/home_overview.md`](./pages/home_overview.md) | 缺首頁；跨三區總覽 + 艦隊 strip |
-| 策略艦隊總控 | `/monitor`（Monitor zone home）| M4-M5 | [`pages/monitor_fleet.md`](./pages/monitor_fleet.md) | 多策略 live 看板 + 退化示警/換掉（**§5.3 原刻意延後的 champion/challenger，建議補 ADR**）|
+| 策略艦隊總控 | `/monitor`（Monitor zone home）| M4-M5 | [`pages/monitor_fleet.md`](./pages/monitor_fleet.md) | 多策略 live 看板 + 退化示警/換掉（**§5.3 原刻意延後的 champion/challenger，已由 [ADR-022](../adrs/ADR-022-multi-strategy-fleet-operations.md) 裁定為營運層 lite**）|
 | 逐筆覆盤 | `/research/runs/:id/trades` | M3 | [`pages/research_trade_review.md`](./pages/research_trade_review.md) | 個股 K 線疊進/出場 marker + 四層共振歸因（展開 Run Report TradeListLink）|
 
 > 全域元件（Cmd-K / Saved Views / FirstRunEmptyState）與研究級元件（CodeEditor / ResearchTable / CompareChart / parameter form / gate badge）規格見 §6.2，於各 Page 規格內以 element 引用。
