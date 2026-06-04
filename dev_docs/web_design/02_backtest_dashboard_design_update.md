@@ -33,6 +33,7 @@
 
 | ID | 面板 | M | Route | Page 規格 | Assembly Prompt | Sections | 主資料表 |
 | :-: | :--- | :-: | :--- | :--- | :--- | :-: | :--- |
+| 🏠 | 艦隊總控（Monitor zone home）| M4-M5 | `/monitor` | [`pages/monitor_fleet.md`](./pages/monitor_fleet.md) | （隨 React 化產出）| 6 | `runs`+`equity_snapshots` |
 | A | 績效總覽 | M3 | `/monitor/performance` | [`pages/monitor_a_performance.md`](./pages/monitor_a_performance.md) | [`assembly/monitor_a_performance_integrated.md`](./assembly/monitor_a_performance_integrated.md) | 6 | `equity_snapshots` |
 | B | 部位狀態 | M3 | `/monitor/positions` | [`pages/monitor_b_positions.md`](./pages/monitor_b_positions.md) | [`assembly/monitor_b_positions_integrated.md`](./assembly/monitor_b_positions_integrated.md) | 5 | `positions` |
 | C | 訊號日誌 | M3 | `/monitor/signals` | [`pages/monitor_c_signals.md`](./pages/monitor_c_signals.md) | [`assembly/monitor_c_signals_integrated.md`](./assembly/monitor_c_signals_integrated.md) | 4 | `signals`+`fills` |
