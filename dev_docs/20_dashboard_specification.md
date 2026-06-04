@@ -1,5 +1,7 @@
 # 儀表板規格 — backtest_platform
 
+> ⚠️ **定位 banner（ADR-021，2026-06-04）**：本檔是面板 **FUNCTION / data-needs 真相源**（每個元件要哪張表 + 哪個欄 + 怎麼算），**不定義 REST shape**（內文仍寫前 React 的 Streamlit 直連 SQL，已 superseded by ADR-015）。前後端 REST 契約見 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**；本檔**餵**契約，非 **host** 契約。
+>
 > **版本：** v1.0 | **更新：** 2026-05-31
 > **適用 M**：M3 MVP（Streamlit A+B+C）/ M4 加 Grafana + Discord / M5 補 D+E
 > **進度**：見 [`16_wbs_development_plan.md §8`](./16_wbs_development_plan.md)（單一狀態真相源）
