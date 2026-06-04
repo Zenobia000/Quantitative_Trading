@@ -138,6 +138,24 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 
 ---
 
+### 3.6 `orchestration.cli` — 每日管線排程（v0.7，WBS 7.D）
+
+把跨波次建的模組（ETL → signals → risk gate → orders → log）串成一次可操作的每日 run 的 staged-flow 引擎。**fail-fast**（任一 stage 失敗即停並留完整 audit trail）、collaborator 經 `FlowContext.config` 注入（可單元測試）、**Prefect-optional**（裝了 prefect 走 `@flow` 排程，沒裝則 inline 跑，prefect 非硬依賴）。
+
+```bash
+uv run python -m backtest_platform.orchestration.cli run --dry-run   # no-op demo 管線（安全）
+uv run python -m backtest_platform.orchestration.cli run --real      # 套 build_daily_stages（需注入 collaborators）
+uv run python -m backtest_platform.orchestration.cli list-stages     # 列出 ETL→signals→risk→orders→log
+```
+
+| 子命令 | 用途 | 後端 |
+| :--- | :--- | :--- |
+| `run --dry-run` | 跑 no-op demo 管線（不碰資料/broker/網路）→ flow engine smoke test | `daily_flow.run_flow` + `demo_stages` |
+| `run --real` | 跑 ETL→signals→risk→orders→log 正式管線；collaborator 未注入時乾淨回報缺哪個（不 crash），real 接線見 7.D.3 | `daily_flow.build_daily_stages` |
+| `list-stages` | 列出每日管線 stage 順序 | `daily_flow.build_daily_stages` |
+
+---
+
 ## 4. Python API
 
 ### 4.1 `config.strategy_config`

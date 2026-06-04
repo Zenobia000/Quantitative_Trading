@@ -147,7 +147,7 @@ src/backtest_platform/
 | `adapters/brokers/shioaji_broker.py` | | | | | ✅ |
 | `engines/vectorbt_adapter.py` | | | ✅ | | |
 | `validation/` | | | ✅ | | |
-| `orchestration/` | | ✅ (cli.py) | | + daily_flow | |
+| `orchestration/` | | | ✅ v0.7 daily_flow（fail-fast staged engine + cli，Prefect-optional；real collaborator 接線 = 7.D.3 follow-up） | | |
 | `monitoring/` | | | | ✅ | |
 | `dashboard/streamlit_app.py` | | | ✅ MVP | | + D/E 面板 |
 | `dashboard/grafana_dashboards.json` | | | | ✅ | |
