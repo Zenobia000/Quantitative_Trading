@@ -1,7 +1,7 @@
 # Page Layer Spec — 策略艦隊總控 (Monitor · Fleet)
 
 > 來源：補強需求（多策略 live 監控 + 退化示警換掉）；Monitor 區 zone home（`/monitor`），下鑽單策略 Panel A–D。
-> **範圍註記**：本頁是 `03` §5.3 **刻意延後**的「champion/challenger 艦隊營運」——03 為單人縮小成「一次研究一隻 → 晉升 → 監控那一隻」。使用者明確要「管理多隻策略像員工、退化換掉」，故補回。**屬產品範圍擴張，建議補一則 ADR（多策略艦隊營運）**。對應 03 §5.3「有多策略候選池再加 correlation gate / 跨策略比較」。
+> **範圍註記**：本頁是 `03` §5.3 原**刻意延後**的「champion/challenger 艦隊營運」——03 為單人縮小成「一次研究一隻 → 晉升 → 監控那一隻」。使用者明確要「管理多隻策略像員工、退化換掉」，故補回，**範圍已由 [ADR-022](../../adrs/ADR-022-multi-strategy-fleet-operations.md) 正式裁定**（營運層多策略艦隊 lite；研究層仍單策略；仍排除跨人 leaderboard/staking/完整 registry/多人簽核）。對應 03 §5.3「有多策略候選池再加 correlation gate / 跨策略比較」；端點見 `25 §6.2`（M4、gated 於 ≥1 可部署策略）。
 > 繼承 Global v2.0（**Grok 單色 dark** / Geist Mono 數值 / 白環 focus / 漲跌 ↑↓ 雙編碼）。
 > **狀態**：M3 設計 spec / live 看板資料 M4-M5；assembly 隨 React 化再產出。
 

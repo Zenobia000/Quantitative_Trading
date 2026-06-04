@@ -371,7 +371,7 @@
 | 單元測試覆蓋率 | **93.77%**（#48-#53 merged 786 pass / 4 skip；`--cov-fail-under` gate 80） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 21（+019 v3 進場重設 / 020 候選 D 中小型 universe / **021 前後端 REST 契約合一**） | 持續 |
+| ADR 數量 | 22（+020 候選 D 中小型 universe / 021 前後端 REST 契約合一 / **022 多策略艦隊 lite**） | 持續 |
 | 文檔完整度 | ~97%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / **25 前後端 REST 契約合一（ADR-021）**） | 100% |
 
 ### 技術債（M2 待處理）
