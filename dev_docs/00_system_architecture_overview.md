@@ -103,7 +103,7 @@ frontend/src/
 | `features/system/` | system_data、system_alerts | 2 |
 | `features/home/` | home_overview（root `/` cockpit）| 1 |
 
-Assembly Master Prompt 14 份已存在，4 份（sweep/validate_gate/promote/system_*）+ 補強 3 頁（home/fleet/trade-review）隨 React 化補。
+Assembly Master Prompt **17 份已齊全**（`assembly/<page>_integrated.md`，每頁一份），可直接餵 Lovable；前端開發北極星見 `frontend/GOAL.md`。
 
 ---
 
