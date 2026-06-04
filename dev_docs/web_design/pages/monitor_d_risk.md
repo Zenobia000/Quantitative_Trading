@@ -15,7 +15,7 @@
 - **target_users**:
   - 主要：策略操盤手 / 風控人員（交易時段高頻巡檢，每日多次）
   - 次要：策略開發者（回測後檢視風險表現）
-- **entry_point**: 主儀表板側邊導航「風控」分頁，或 Status badge CRITICAL 告警通知的跳轉連結
+- **entry_point**: 側邊導覽「Monitor → 風控指標」；或 Status badge CRITICAL 告警通知的跳轉連結
 - **expected_time_on_page**: 巡檢模式 30-90 秒；事件 drill-down 模式 3-5 分鐘
 
 ---

@@ -16,7 +16,7 @@
 - **target_users**:
   - 主要：策略交易者 / 自營操盤手（盤中每日多次查看）
   - 次要：策略開發者（盤後分析訊號→成交轉換與延遲）
-- **entry_point**: 左側 Sidebar「訊號日誌」項目 / 從面板 A（總覽）的待處理訊號數字 drill-down 進入
+- **entry_point**: 側邊導覽「Monitor → 訊號日誌」；或從面板 A（總覽）的待處理訊號數字 drill-down 進入
 - **expected_time_on_page**: 盤中 30 秒-2 分鐘快速巡檢；盤後分析 5-10 分鐘
 
 ---
