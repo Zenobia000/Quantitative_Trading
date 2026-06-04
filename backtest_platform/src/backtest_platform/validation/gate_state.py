@@ -89,6 +89,7 @@ class GateResult:
 
 
 # ADR-016 edge gate (K1/K2/K3) + ADR-019 §11 anti-overfit health checks.
+# (four-layer-specific: struct1_pct/churn_pct/avg_hold are entry-quality checks.)
 DEFAULT_GATE: tuple[Criterion, ...] = (
     Criterion("cagr", ">", 0.18, "edge", "K1 CAGR>18%"),
     Criterion("sharpe", ">", 1.0, "edge", "K2 Sharpe>1.0"),
@@ -96,6 +97,16 @@ DEFAULT_GATE: tuple[Criterion, ...] = (
     Criterion("struct1_pct", "<", 0.30, "health", "structure==1 中段進場<30%"),
     Criterion("churn_pct", "<", 0.20, "health", "churn<20%"),
     Criterion("avg_hold", ">=", 6.0, "health", "平均持有>=6 bar"),
+)
+
+# Momentum gate: the SAME strategy-agnostic edge criteria (K1/K2/K3) + a
+# momentum-appropriate health check (diversification) instead of the four-layer
+# entry-quality ones. Demonstrates the gate is data, not four-layer-bound.
+MOMENTUM_GATE: tuple[Criterion, ...] = (
+    Criterion("cagr", ">", 0.18, "edge", "K1 CAGR>18%"),
+    Criterion("sharpe", ">", 1.0, "edge", "K2 Sharpe>1.0"),
+    Criterion("slippage_sharpe", ">", 1.0, "edge", "K3 滑點 0.3% 下 Sharpe>1.0"),
+    Criterion("avg_holdings", ">=", 5.0, "health", "平均持有檔數>=5 (分散，非單壓)"),
 )
 
 
