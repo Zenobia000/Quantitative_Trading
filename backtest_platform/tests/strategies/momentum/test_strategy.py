@@ -7,6 +7,7 @@ import pytest
 
 from backtest_platform.strategies.momentum.strategy import (
     MomentumConfig,
+    _vol_target,
     backtest_momentum,
 )
 
@@ -68,6 +69,21 @@ def test_empty_window_returns_empty():
     res = backtest_momentum(_panel(), MomentumConfig(), "2010-01-01", "2010-06-30")
     assert res.daily_returns.empty
     assert res.n_rebalances == 0
+
+
+def test_vol_target_de_risks_high_vol_without_levering():
+    rng = np.random.default_rng(0)
+    r = pd.Series(rng.normal(0.0, 0.03, 300))  # ~3%/day ≈ 47% annual, well above target
+    scaled = _vol_target(r, target_annual=0.15, lookback=20, max_lev=1.0)
+    # after warmup, realized vol is cut toward target
+    assert scaled.iloc[40:].std() < r.iloc[40:].std()
+    # max_lev=1.0 → only de-risk, never amplify a daily move
+    assert (scaled.abs() <= r.abs() + 1e-12).all()
+
+
+def test_vol_target_off_by_default():
+    cfg = MomentumConfig()
+    assert cfg.vol_target_annual is None  # vanilla unless explicitly enabled
 
 
 def test_winsorizes_data_error_spike():

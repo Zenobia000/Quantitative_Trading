@@ -43,6 +43,14 @@ class MomentumConfig(BaseModel):
     max_daily_return: float = Field(
         0.5, gt=0, le=2.0, description="winsorize 超過此絕對值的日報酬 (資料缺口/未調整防護)"
     )
+    # --- crash control (vol-targeting; off by default = vanilla momentum) ---
+    vol_target_annual: float | None = Field(
+        None, description="年化目標波動；設定則按 trailing 波動縮放曝險（馴 momentum crash）。None=關"
+    )
+    vol_lookback: int = Field(20, ge=5, le=120, description="trailing 波動估計窗 (交易日)")
+    max_leverage: float = Field(
+        1.0, gt=0, le=3.0, description="vol-target 曝險上限（1.0=僅 de-risk 不加槓桿）"
+    )
 
     def with_extra_slippage(self, slip: float) -> "MomentumConfig":
         """A copy with ``2*slip`` extra round-trip cost — for the K3 slippage Sharpe."""
@@ -69,6 +77,21 @@ def _rebalance_dates(index: pd.DatetimeIndex) -> list[pd.Timestamp]:
     """First trading day of each (year, month) present in ``index``."""
     s = pd.Series(index, index=index)
     return [grp.index[0] for _, grp in s.groupby([index.year, index.month])]
+
+
+def _vol_target(returns: pd.Series, target_annual: float, lookback: int, max_lev: float) -> pd.Series:
+    """Scale daily returns toward a target annual vol using *trailing* realized vol.
+
+    ``scale_t = clip(target_daily / realized_vol_{t-1}, max=max_lev)`` — uses only
+    information up to ``t-1`` (no look-ahead), and with ``max_lev=1.0`` only ever
+    *cuts* exposure (de-risks) when vol spikes — the principled momentum-crash
+    control. Warmup (vol not yet estimable) → scale 1.0.
+    """
+    target_daily = target_annual / np.sqrt(TRADING_DAYS)
+    realized = returns.rolling(lookback).std(ddof=0).shift(1)
+    scale = (target_daily / realized).clip(upper=max_lev)
+    scale = scale.where(realized.notna() & (realized > 0), other=1.0).clip(upper=max_lev)
+    return returns * scale
 
 
 def backtest_momentum(
@@ -119,6 +142,8 @@ def backtest_momentum(
     if not segs:
         return MomentumResult(pd.Series(dtype=float), 0, 0.0, 0.0)
     daily = pd.concat(segs).groupby(level=0).first()  # overlapping rebalance day → first
+    if cfg.vol_target_annual is not None:
+        daily = _vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
     return MomentumResult(
         daily_returns=daily,
         n_rebalances=len(segs),
