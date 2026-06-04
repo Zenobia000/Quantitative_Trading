@@ -16,7 +16,7 @@
 - **target_users**:
   - 主要：量化策略開發者 / 研究員（每日多次查看回測結果）
   - 次要：投資決策者（週期性檢視策略表現）
-- **entry_point**: 全域側邊導覽「績效總覽」項；或從面板列表卡片進入；或面板 C 返回。
+- **entry_point**: 側邊導覽「Monitor → 績效總覽」；或面板列表卡片進入；或面板 C 返回；或 Cmd-K「跳績效」。
 - **expected_time_on_page**: 3–8 分鐘（讀 KPI → 觀察 equity / drawdown → 調整 rolling window → drill-down）
 
 ---

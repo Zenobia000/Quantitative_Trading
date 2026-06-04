@@ -16,7 +16,7 @@
 - **target_users**:
   - 主要：策略交易者 / 自營操盤手（盤中每日多次查看）
   - 次要：策略開發者（盤後分析訊號→成交轉換與延遲）
-- **entry_point**: 左側 Sidebar「訊號日誌」項目 / 從面板 A（總覽）的待處理訊號數字 drill-down 進入
+- **entry_point**: 側邊導覽「Monitor → 訊號日誌」；從面板 A（總覽）的待處理訊號數字 drill-down 進入；或 Cmd-K「跳訊號」
 - **expected_time_on_page**: 盤中 30 秒-2 分鐘快速巡檢；盤後分析 5-10 分鐘
 
 ---
@@ -132,7 +132,7 @@
 | 斷點 | 佈局 | 差異說明 |
 |------|------|---------|
 | Desktop (≥1280px) | filter 橫列 + 全寬 table + timeline + funnel 2 欄 | 完整體驗，Sidebar 展開 |
-| Tablet (768-1023px) | 單欄堆疊；funnel 與 latency KPI 改上下排列 | Sidebar 收合為 icon |
+| Tablet (768-1023px) | 單欄堆疊；funnel 與 latency KPI 改上下排列 | sidebar→drawer（@<1024px，兩態一致，不用 icon-rail） |
 | Mobile (<768px) | 單欄堆疊；DataTable → Card 列表（Time/Symbol/Action/Status 摘要），點卡展開 reason；timeline 改可橫向捲動精簡軌；Sidebar → drawer | table→card & sidebar→drawer @<1024px |
 
 ### 資料更新策略
