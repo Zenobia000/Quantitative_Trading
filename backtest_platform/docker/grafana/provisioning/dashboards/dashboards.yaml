@@ -1,0 +1,15 @@
+# Grafana dashboard provisioning — auto-load the F/G/H/I system-health dashboards
+# from the mounted dir. doc 20 §3.7.
+apiVersion: 1
+
+providers:
+  - name: backtest-platform-system
+    orgId: 1
+    folder: System Health
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

@@ -129,7 +129,7 @@
 | 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；待 5.A.6 portfolio |
 | 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
 | 7.0 Paper+實盤 | 110h | 40h | 36% | ✅ v0.5 Wave D（7.A.1 PaperBroker + 7.C.1 Risk Gate 12 條 + 7.C.2 3 級熔斷，PR #38）；7.B Shioaji / 7.D Prefect ⏳ |
-| 8.0 監控與儀表板 | 80h | 38h | 47% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB；待 8.A.1/8.A.2 面板 / 8.B Grafana / 8.D.2 Prometheus |
+| 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 110h | 92% | 持續 |
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
@@ -305,8 +305,8 @@
 | 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | — | 16h | ⏳ | — | M3 |
 | 8.A.2 | 面板 D+E（React 版，ADR-015） | — | 12h | ⏳ | — | M5 |
 | 8.A.3 | Dashboard REST API 層（FastAPI；ADR-015 / 21_data_contract §8） | — | 10h | ✅ v0.6 | 2026-06-02 | `api/`（app 工廠 + runs/gate/metrics/presets 4 router，11 端點，統一信封，100% cov）。**提前交付**（原 M3）；研究迴圈讀寫面已上，監控/風控面板端點待 Wave D 合入後補（見 doc 06 §9.4） |
-| 8.B.1 | Grafana 4 個系統面板 (F-I) | — | 12h | ⏳ | — | M4 |
-| 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | — | 4h | ⏳ | — | M4 |
+| 8.B.1 | Grafana 4 個系統面板 (F-I) | — | 12h | 🟡 | 2026-06-04 | `docker/grafana/dashboards/0{1-4}_*.json`（F ETL / G API quota / H 排程 / I 資源，Flux 對 influx_writer measurements）+ 15 結構驗證測試；live import reviewer-verified；node_exporter/data_quality/api_error emitter 待補（follow-up）|
+| 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | — | 4h | ✅ | 2026-06-04 | `docker/grafana/provisioning/`（InfluxDB datasource 自動載入 + dashboard provider）+ docker-compose 加 **influxdb:2.7 服務**（補齊缺的 metrics DB）+ grafana provisioning mount |
 | 8.C.1 | Discord notifier base | — | 4h | ✅ | 2026-05-31 | — |
 | 8.C.2 | Discord 3 級告警規則引擎 | — | 6h | ✅ v0.5 | — | `monitoring/alert_rules.py`（Critical/High/Info + 去重 30min + 靜默窗 TWT） |
 | 8.C.3 | Discord 整合測試 | — | 2h | ✅ | — | unit tests 12 個 |

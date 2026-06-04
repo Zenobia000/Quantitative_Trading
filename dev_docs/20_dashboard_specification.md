@@ -476,15 +476,26 @@ page = st.sidebar.selectbox("Panel", ["A. 績效總覽", "B. 部位狀態", ...]
 | DB 連線池 | `pg_exporter` | active > 80% pool size |
 | Container restart | `cAdvisor` | restart_count > 0 / day |
 
-### 3.7 Dashboard JSON 結構
+### 3.7 Dashboard JSON 結構 ✅（已建，2026-06-04）
+
+實際落地於 `backtest_platform/docker/grafana/`（容器 provisioning 配置歸 `docker/`，不入 src package），Grafana 啟動自動載入：
 
 ```
-dashboard/grafana_dashboards/
-├── 01_etl_health.json
-├── 02_api_quota.json
-├── 03_scheduler.json
-└── 04_system_resources.json
+backtest_platform/docker/grafana/
+├── provisioning/
+│   ├── datasources/influxdb.yaml      # InfluxDB datasource（uid influxdb-metrics，Flux）
+│   └── dashboards/dashboards.yaml     # dashboard provider（自動載入下方 JSON）
+└── dashboards/
+    ├── 01_etl_health.json             # F · ETL 健康（etl_run duration/成功率/last_data_ts）
+    ├── 02_api_quota.json              # G · API quota（api_quota remaining_mb / api_health connected,latency）
+    ├── 03_scheduler.json             # H · 排程（scheduler_run ok state-timeline + duration by step）
+    └── 04_system_resources.json       # I · 系統資源（system cpu/mem/disk gauge）
 ```
+
+- docker-compose 加 **influxdb:2.7** 服務（補齊缺的 metrics DB）+ grafana provisioning mount + `depends_on`。
+- Flux query 對齊 `monitoring/influx_writer.py` emit 的 measurements（`etl_run`/`api_quota`/`api_health`/`scheduler_run`/`system`）。
+- **結構驗證**：`tests/monitoring/test_grafana_dashboards.py`（15 測試：JSON 合法 + 必填鍵 + uid 唯一 + 每 panel 綁 datasource+Flux+threshold + provisioning ref）。
+- **待補（follow-up）**：panel I 需 `node_exporter`、panel F 缺資料偵測需 `data_quality`、panel G 錯誤計數需 `api_error` 三個 emitter 尚未由 app 寫出；**live Grafana import 為 reviewer 手動驗證**（本環境無 Grafana）。
 
 ---
 
