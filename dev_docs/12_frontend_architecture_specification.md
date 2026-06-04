@@ -14,7 +14,7 @@
 > | LCP / INP / CLS 數字目標 | 12（本檔）§4 |
 > | 響應式斷點、a11y 標準 | 12（本檔）§5 |
 > | 專案 file 組織、測試框架 | 12（本檔）§6 |
-> | API client 技術選型 | 12（本檔）§7；契約 `21_data_contract.md` |
+> | API client 技術選型 | 12（本檔）§7；**契約 `25_fe_be_rest_contract.md`** |
 > | 哪些**頁面**存在、頁面職責 | `web_design/pages/{research_0N,monitor_a~d,system_*}.md` |
 > | 使用者旅程、導航結構、三區 IA | `web_design/03_uiux_benchmark_and_reinforcement_plan.md` §4.7 / §5.2 |
 > | 可貼 Lovable 的組裝 Prompt | `web_design/assembly/<page>_integrated.md` |
@@ -192,15 +192,15 @@ frontend/                # ADR-015：dashboard 策略績效層由 Streamlit 轉�
 
 ### API 通訊規範
 
-- 後端：**FastAPI REST API**（v0.6 已落地，覆蓋 research loop）；契約見 `21_data_contract.md`。
-- 統一 **API Client 封裝**（不直接 fetch）；請求/回應型別由 **OpenAPI 自動生成 TS**。
-- **統一信封格式**：`{ success, data, error, pagination }`（對齊 `rules/patterns.md`）。
-- 統一錯誤處理：section 級 inline error + 重試，不整頁崩潰；422 逐欄 inline（如 RunConfig schema）。
+- 後端：**FastAPI REST API**（v0.6 已落地 11 條，覆蓋 research loop）；**契約唯一真相源 = [`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**（ADR-021；非 21，21 §8 僅 Monitor A–E 且已降級）。
+- 統一 **API Client 封裝**（不直接 fetch）；請求/回應型別由 **OpenAPI → TS（`openapi-typescript`）自動生成**。**gate：型別生成僅在契約 union 進 FastAPI app 後才完整**（25 §7）——在此之前明確區分 stub vs shipped 端點，不對 phantom 型別寫。
+- **統一信封格式**：`{ success, data, error, meta }`（`error` 為結構化 `{code,message,detail}`，`meta` 帶分頁/TTL；對齊 25 §1.1，**非 `pagination`**）。
+- 統一錯誤處理：section 級 inline error + 重試，不整頁崩潰；422 逐欄 inline（如 RunConfig schema，錯誤碼 enum 見 25 §2）。
 
 ### 認證與授權
 
-- **單人自託管平台**：認證從簡（本機 / 內網）。page 規格中的 401/403 → 導向登入為防呆，非多角色 RBAC。
-- 若導入：Token 存 httpOnly Cookie / Memory；路由守衛以 middleware 實作。
+- **單人自託管平台**：認證 = **static Bearer**（day-one 預留 header slot，對齊 25 §4）。page 規格中的 401/403 → 導向登入為防呆，非多角色 RBAC。
+- Token 存 httpOnly Cookie / Memory；路由守衛以 middleware 實作；`/health` 永遠開放。
 - **秘密絕不入前端 bundle**：`FINLAB_API_TOKEN` / `DISCORD_*` 等僅後端持有（`rules/security.md`）。
 
 ---

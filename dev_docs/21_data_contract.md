@@ -690,9 +690,12 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 
 ## 8. Dashboard REST API 契約（ADR-015）
 
+> ⚠️ **降級 banner（ADR-021，2026-06-04）**：本節的 **envelope / base-path（`/api/dashboard`）/ 分頁（keyset cursor）/ auth** 慣例**已被 [`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md) supersede**——統一契約改用裸 root `/monitor/*`、offset 分頁、`{success,data,error,meta}` envelope。
+> 本節**保留為 Monitor A–E 的 data-source map**（哪張表 + 哪個 calc 餵哪個面板端點，§8.3–§8.6），是 25 §6.2 Monitor 端點的**上游 feeder**，但**不再定義 REST shape**。新增/改面板端點請改 25 §6.2 + §8.7 TTL 表餵 25 §5.1。
+>
 > **背景**：[ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) 將策略績效層（面板 A–E）由 Streamlit 直連 SQL 升級為 React。React 不能直連 TimescaleDB，故需一層唯讀 REST API 將 §4 各表轉為 JSON 供前端消費。
 > **範圍**：僅面板 A–E（策略績效層）。Grafana（F–I）走 InfluxQL，Discord 走規則引擎，皆**不經本 API**。
-> **實作**：FastAPI（或既有後端擴充），唯讀（GET）；讀 TimescaleDB（ADR-002）。對應前端規格見 `web_design/pages/02_panel_{a-e}.md` 的 `[DATA & API]`。
+> **實作**：FastAPI（或既有後端擴充），唯讀（GET）；讀 TimescaleDB（ADR-002）。對應前端規格見 `web_design/pages/monitor_{a-d}.md` 的 `[DATA & API]`（路徑以 25 §6.2 為準）。
 
 ### 8.1 通用約定
 

@@ -8,6 +8,7 @@
 >
 > **2026-06-02 更新（二）**：大廠 UI/UX deep-research 對標完成 → **監控優先 → 研究迴圈優先 pivot（ADR-018）**：Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate 工作流；新增 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 平台對標 + 10 維度差距 + 7 流程圖 + roadmap）；ADR 數量 17→18；16 WBS 升 v2.6（§8.G 研究迴圈 UX）
 > **2026-06-03 更新**：研究迴圈 CLI 補 `validate`+`promote-check`（8.G.5 封頂）；large-cap v3 IS FAIL → **escalate 候選 D（ADR-020 提案中）**：換 point-in-time 中小型動能 universe（rank 51-300、反 survivorship），機制凍結、資料 spike（FinLab 進階券商分點）為 go/no-go gating；新增設計 spec `specs/2026-06-03-candidate-d-smallcap-universe-design.md`；ADR 數量 19→20
+> **2026-06-04 更新**：前後端契約優先盤點（FE 14 頁需求 ↔ FastAPI 11 條供給 ↔ 既有契約）→ **REST 契約合一（ADR-021）**：三處分裂（06 §9 / 21 §8 / per-page）併入新建 **25_fe_be_rest_contract.md**（71 端點 registry + 單一 envelope/錯誤碼/分頁/裸 root/Bearer/realtime + OpenAPI→TS）；06 §9 / 21 §8 / 20 / 12 §7 加降級 banner；ADR 數量 20→21
 
 ---
 
@@ -48,8 +49,7 @@
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
 | 11 | [code_review_and_refactoring_guide.md](./11_code_review_and_refactoring_guide.md) | 程式碼審查指南 |
-
-（12 / 17 前端模板 — 不適用，本專案後端為主，前端 Phase 2 才啟動）
+| 12 | [frontend_architecture_specification.md](./12_frontend_architecture_specification.md) | 前端架構（React/TS stack、分層、效能/a11y 量化）；IA 真相源在 `web_design/`，契約在 25（2026-06-04 對齊現實啟用）|
 
 ### 階段 5：安全與部署
 
@@ -80,6 +80,7 @@
 | 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 + CI/CD YAML 草案 | **擴充** [03](./03_behavior_driven_development_guide.md)（03 §6 加金字塔摘要 + 指向 22）|
 | 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 + docker-compose | **擴充** [14 §1](./14_deployment_and_operations_guide.md)（14 為 SOP，23 為拓撲設計）|
 | 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 12 條 ex-ante 規則 + 3 級熔斷狀態機 + SOP | **擴充** [13 §J](./13_security_and_readiness_checklists.md)（13 §J 為摘要 + 指向 24）|
+| 25 | [fe_be_rest_contract.md](./25_fe_be_rest_contract.md) | **前後端 REST 契約唯一真相源**（71 端點 registry + 單一 envelope/錯誤碼/分頁/auth/realtime + OpenAPI→TS bridge，ADR-021）| **合一** 06 §9 + 21 §8 + per-page `[DATA & API]`（三者降為 feeder by reference）|
 | — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） | 獨立 |
 
 #### 階段 7 新增 ADR
@@ -102,6 +103,7 @@
 | [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) | 監控優先 → 研究迴圈優先：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | **重定位** ADR-009/ADR-015 產物（不取代分層/設計系統）；UX 化 ADR-017 |
 | [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) | v3 進場重設：參數化分級放寬（必含層+可選，非純 N-of-4 — L2⊂L3）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline；反過擬合硬約束（v0.1 不 sweep、進場數非 edge） | ADR-017 的 M0 進場 hypothesis 定稿；v0.1 策略側 |
 | [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) | **候選 D（提案中）**：large-cap v3 IS FAIL → escalate 換 point-in-time 中小型動能 universe（rank 51-300、季 rebalance、反 survivorship）；機制凍結、成本上調；資料 spike（FinLab 進階券商分點 ~250 檔）為 go/no-go gating | ADR-017 §5 退場路徑落地；ADR-019 機制不動 |
+| [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) | **前後端 REST 契約合一**：三處分裂（06 §9 / 21 §8 / per-page）→ 單一契約 doc 25 + OpenAPI 機器真相；envelope error 字串→物件、offset 分頁、裸 root、single-user Bearer、polling+單一 WS、Monitor stub | **supersede** ADR-015 §4/§5 + ADR-018 契約落點指派 |
 
 ---
 
