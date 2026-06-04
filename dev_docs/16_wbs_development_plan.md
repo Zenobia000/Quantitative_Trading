@@ -359,7 +359,7 @@
 1. 券商分點欄位全 0（FinMind 免費版無；M2 評估 FinLab 是否補齊）
 2. ETL 沒寫 DB（目前只寫 parquet；M2 啟用 db_writer）
 3. SwingHigh 用 rolling max 近似 XQ pivot（需抽樣驗證 < 1% 差異）
-4. lock file 未引入（M2 啟動後 `uv lock` 產出 `uv.lock` 入版控；ADR-012）<!-- env-drift 診斷與解決見 PR #47（chore/uv-lock-and-env-repair）獨佔此項，避免雙 PR 改同一行 -->
+4. ~~lock file 未引入~~ → **✅ 已解決（2026-06-04）**：實際上 `uv.lock` 早已存在，但因 pyproject `pytest>=8.0` 無上界把 pytest 釘在 9.0.3（pytest 9 移除 `Package.obj` → pytest-asyncio 1.4.0 在 collectstart 仍呼叫 → 全 `tests/<pkg>/` collection 中斷），且 `.venv` 停在 zipline-reloaded 3.0.4（對 numpy 1 編譯，與 numpy 2 ABI 斷裂）+ 缺 `api`(fastapi)/`engines`(vectorbt) extras。修：pyproject pin `pytest>=8.3,<9`（+`pytest-asyncio<2`）+ relock（釘死 pytest 8.4.2 / zipline 3.1.1 / numpy 2 / vectorbt 1.0 / fastapi 0.136.3）+ env sync → 全 suite **729 pass / 4 skip / coverage 93.54%（gate 80）一鍵可驗證**（ADR-012；自主開發 verify-green 前置）
 
 ### 已解決的技術債（v1.0 列為待解，現已 fix）
 

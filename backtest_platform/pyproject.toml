@@ -78,11 +78,13 @@ monitoring = [
     "httpx>=0.27",
 ]
 dev = [
-    "pytest>=8.0",
+    # pytest pinned <9: pytest-asyncio 1.x still calls Package.obj at collectstart,
+    # which pytest 9 removed → "AttributeError: 'Package' object has no attribute
+    # 'obj'" breaks collection of the tests/<pkg>/ sub-packages. Pin until
+    # pytest-asyncio ships a pytest-9-compatible release (tracked, tech-debt #4).
+    "pytest>=8.3,<9",
     "pytest-cov>=4.1",
-    # pytest-asyncio <0.24 calls Package.obj which pytest 9 removed —
-    # causes "AttributeError: 'Package' object has no attribute 'obj'" at collection.
-    "pytest-asyncio>=0.24",
+    "pytest-asyncio>=0.24,<2",
     "ruff>=0.3",
     "mypy>=1.9",
 ]
