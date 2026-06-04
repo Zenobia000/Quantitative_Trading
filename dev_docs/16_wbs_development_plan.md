@@ -1,6 +1,7 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v2.9 | **更新：** 2026-06-02 | **狀態：** M1 ✅ + **v0.2–v0.6 後端 waves ✅**（v0.2 統計驗證 pipeline / v0.3 研究迴圈 + gate machine / v0.5 risk + 監控 + paper broker / v0.6 REST API）。四層共振 v3 進場雙窗口 IS gate FAIL（ADR-017；v3.1a/v3.1b 兩方向皆無強跨窗 edge，ADR-019）→ **策略 edge 未證；改採「平台優先」**：先把策略無關聯的可重用後端平台（validation / research / risk / monitoring / API）建完，待出現候選策略即可直接驗證。**前端（v0.4）與實盤（v1.0）仍 gated 於真實 edge 證明**。
+> **版本：** v3.0 | **更新：** 2026-06-04 | **狀態：** M1 ✅ + **v0.2–v0.6 後端 waves ✅**（v0.2 統計驗證 pipeline / v0.3 研究迴圈 + gate machine / v0.5 risk + 監控 + paper broker / v0.6 REST API）。四層共振 v3 進場雙窗口 IS gate FAIL（ADR-017；v3.1a/v3.1b 兩方向皆無強跨窗 edge，ADR-019）→ **策略 edge 未證；改採「平台優先」**：先把策略無關聯的可重用後端平台（validation / research / risk / monitoring / API）建完，待出現候選策略即可直接驗證。**前端（v0.4）與實盤（v1.0）仍 gated 於真實 edge 證明**。
+> **v3.0 新增（2026-06-04）**：前後端契約優先盤點（FE 14 頁 ~71 端點 ↔ 後端 11 條）→ **REST 契約合一（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）**：新建 `25_fe_be_rest_contract.md` 為契約唯一真相源；新增**模組 8.H 前後端 REST 契約落地**（M3.0 合一閘 → M3.1-M3.4 便宜接線 → M3.5/M3.6/M4 三 CRITICAL blocker）；ADR 20→21。
 > **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
 > **v2.7 新增（2026-06-02）**：反發散切版 — §6 新增**版本 Roadmap**（v0.1 essential MVP〔M0 v3 進場 + IS gate as code 最小後端〕→ v0.2 OOS/WFA/PBO/DSR → v0.3 研究後端 → v0.4 研究前端 → v0.5 paper → v1.0 live）；§7 Sprint 4-12 對齊版本展開（`scrum_board.json` 真相源同步、`sync_wbs.py` 重生）；**鐵律：v3 edge 未證實前不做前端/重功能**。
 >
@@ -338,6 +339,24 @@
 
 **模組小計**：~76h（已完成 ~49h ≈ 64%）| 後端契約 ~80%（8.G.0 對標 + 8.G.3 gate_state/gate_machine + 8.G.4 trials→DSR + 8.G.5 CLI 全套〔run-is/runs/sweep/compare/validate/promote-check〕✅；剩 8.G.2 RunConfig OOS/sweep 鎖死 + 8.G.1 runs 主表 DDL）；前端 8.G.6–8.G.8 0%（edge 未證前延後）
 
+### 模組 8.H 前後端 REST 契約落地（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）— 新增
+
+> 2026-06-04 契約優先盤點：FE 14 頁需求 ~71 端點 ↔ 後端已實作 11 條 → 54 缺。契約合一至 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**（端點 registry + 就緒度真相）。**便宜 `ready` 工作 front-load，3 個 CRITICAL blocker 押後，Monitor 區（needs-data）排最後**。端點明細見 25 §6/§8；本表為狀態真相。
+
+| ID | 任務 | 估時 | 狀態 | 完成日 | 備註 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 8.H.0 | 契約合一盤點 + doc 25 + ADR-021 + 06/21/20/12 banner | 8h | ✅ | 2026-06-04 | workflow `wf_e27bec66-9c6`（20 agents）；12/12 缺口對抗式驗證確認 |
+| 8.H.1 | **M3.0 契約合一閘**：`envelope.py` error 字串→`{code,message,detail}`、`app.py` Bearer dep、修 `/runs` window→is_start/is_end null bug、接 openapi-typescript、regression test | 6h | ⏳ | — | 零新邏輯；後續一切前置 |
+| 8.H.2 | **M3.1 便宜 config/catalog 讀路由**：`/research/universe-filters`·`/runs/estimate`·`/system/risk/*`·`/system/alerts/{rules,channels,test}`·`/presets/{name}` enrich | 8h | ⏳ | — | gate.py pattern；解鎖 run_02/sys_alerts(讀)/mon_d(config) |
+| 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | ⏳ | — | 解鎖 run_04/05、mon_a 回測半 |
+| 8.H.4 | **M3.3 strategy registry + 側存**：`/research/strategies*`·`/research/saved-views`·`/runs/tag`（projection over ledger，9.G.1 runs 主表落地） | 8h | ⏳ | — | 解鎖 run_01/03 |
+| 8.H.5 | **M3.4 trials/DSR guardrail 持久化**：`/runs/trials`·`/research/trials/increment`（接 8.G.4 TrialsCounter 持久化） | 4h | ⏳ | — | 解鎖 run_03/05 |
+| 8.H.6 | **M3.5 async job（CRITICAL #2）+ bundle/DQ**：`jobs/` 模組、`POST /runs` async、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | 16h | ⏳ | — | 解鎖 run_06/sys_data/run_02 async |
+| 8.H.7 | **M3.6 validation+promotion service（CRITICAL #3）**：抽 `promotion_service.py`、持久化 validation_status/stage + immutable promotion_audit、`/research/validate/*`·`/research/promote/*` | 16h | ⏳ | — | 解鎖 run_07/08 |
+| 8.H.8 | **M4 live-telemetry daemon（CRITICAL #1, needs-data）**：`runtime/` paper daemon、實作 `upsert_signals/orders/fills`、`market_reader`、全 `/monitor/*`、editable alerts | 24h | ⏳ | — | 解鎖 mon_a/b/c/d、sys_alerts 編輯；WS `/ws/positions/live` 仍 M5 |
+
+**模組小計**：~96h（已完成 ~8h ≈ 8%）| M3.0 為合一閘，其餘 ready 工作（8.H.2/8.H.3）僅依賴 M3.0，3 個 CRITICAL blocker（8.H.6/8.H.7/8.H.8）押後；**前端建置 gated 於 v3 edge 證明（與 8.G 同律）**
+
 ---
 
 ## 4. 進度摘要
@@ -351,8 +370,8 @@
 | 單元測試覆蓋率 | **92.34%**（v0.2–v0.6 merged 714 pass / 4 skip；`--cov-fail-under` gate 80） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 19（+017 IS gate FAIL → 回 M0 / **018 監控→研究迴圈 pivot** / **019 v3 進場重設：兩方向無 edge**） | 持續 |
-| 文檔完整度 | ~96%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / 21 API 契約） | 100% |
+| ADR 數量 | 21（+019 v3 進場重設 / 020 候選 D 中小型 universe / **021 前後端 REST 契約合一**） | 持續 |
+| 文檔完整度 | ~97%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / **25 前後端 REST 契約合一（ADR-021）**） | 100% |
 
 ### 技術債（M2 待處理）
 

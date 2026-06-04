@@ -380,8 +380,11 @@ action, in_position
 
 ## 9. HTTP API（v0.6 Wave B，FastAPI）
 
+> ⚠️ **降級 banner（ADR-021，2026-06-04）**：本節是前後端 REST 契約的 **v0.6 已實作子集**（11 條路由），**不再是契約真相源**。
+> 完整契約（71 端點 registry、單一 envelope/錯誤碼/分頁/auth/realtime）見 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**；歧異一律以 25 為準。
+> 機器真相 = FastAPI `/docs` 的 OpenAPI。本節端點表（§9.3）仍為準確的已實作清單，但 **envelope `error` 自 v1.0 起升級為結構化 `{code,message,detail}`**（25 §1.1/§2）。
+>
 > 原 WBS 8.A.3（M3 / Sprint 11）任務，因「先把系統平台做完」策略提前於 v0.6 交付。
-> 契約源：[ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) + `21_data_contract.md` §8。
 > 模組：`src/backtest_platform/api/`（app 工廠 + 4 個 router；薄轉接層，零業務邏輯）。
 
 ### 9.1 啟動
@@ -404,7 +407,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 
 * `success`：布林狀態旗標
 * `data`：酬載（錯誤時 `null`）
-* `error`：人類可讀訊息（成功時 `null`）
+* `error`：成功時 `null`；錯誤時自 v1.0 起為結構化物件 `{code, message, detail}`（v0.6 為裸字串，向後相容升級，見 25 §2）
 * `meta`：分頁等中繼資料（`total` / `page` / `limit`），非列表端點為 `null`
 
 ### 9.3 端點
