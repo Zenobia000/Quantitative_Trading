@@ -179,7 +179,7 @@
 - **uses_api**: true
 - **資料來源**: `equity_snapshots`（策略權益/現金/回撤）+ `daily_bars`（0050 benchmark）。
 - **endpoints**:
-  - GET `/api/strategies` — 取得 strategy selector 清單（strategy_id + name）。
+  - GET `/monitor/strategies` — 取得 live strategy selector 清單（strategy_id + name；契約 25 §6.2，**Monitor 區用 `/monitor/strategies` 非 `/research/strategies`**）。
   - GET `/api/performance/equity?strategy_id={id}&start={d}&end={d}` — equity / cash / drawdown 日序列（drawdown 已預算）。
   - GET `/api/performance/kpi?strategy_id={id}&start={d}&end={d}` — KPI（quantstats 計算 Total Return / CAGR / Sharpe / MDD / Win Rate / Trades）。
   - GET `/api/performance/benchmark?symbol=0050&start={d}&end={d}` — 0050 日序列（前端 normalize 同起點）。

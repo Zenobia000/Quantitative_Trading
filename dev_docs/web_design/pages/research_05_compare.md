@@ -155,7 +155,7 @@
 - **uses_api**: true
 - **主要資料表**: `runs` + `equity_snapshots`（run-scoped）。
 - **endpoints**:
-  - GET `/api/research/compare?run_ids=a,b,c` — 各 run KPI + equity 序列 + 參數，供疊圖/表/parcoords。
+  - GET `/runs/compare?run_ids=a,b,c` — 各 run KPI + equity 序列 + 參數，供疊圖/表/parcoords（契約 25 §6.1；**非 `/research/compare`**，compare 屬 runs 子資源）。
   - GET `/api/research/runs/trials?param_space=` — 累計試驗數 + DSR + power gauge。
   - POST `/api/research/trials/increment` — 比較動作計次（餵 DSR deflate）。
 - **error_cases**:
