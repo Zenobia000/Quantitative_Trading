@@ -118,6 +118,7 @@
 3. hover MDD 折線 → tooltip 顯示命中熔斷層級
 4. 點擊事件表某列 → drill-down drawer 顯示該事件 context → 關閉返回
 5. 點擊 RefreshButton 或 TTL 到期 → 重新抓取並就地更新（無全頁 reload）
+6. triage 結論為「結構性退化」（非市場雜訊）→ 經全域 Cmd-K 切入 `/research/validate` 對該策略重啟驗證迴圈（監控 → 研究 context 切換，對應 `03_uiux_benchmark_and_reinforcement_plan.md` §4.6 triage + research_07 entry_point）。
 
 ### RWD 行為差異
 

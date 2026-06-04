@@ -113,6 +113,7 @@
   - TrialsBadge: Badge / required / 「此參數空間累計試驗 N 次｜當前 DSR x.xx」（餵防過擬合）。
   - SubmitButton: Button Primary（白 pill）/ required / 觸發 RunConfig schema 驗證 → 異步提交。
   - SubmitGuard: Inline warning / optional / N 過大時警示「config 數過多，建議收窄 range」。
+  - CancelButton: Button Ghost / required / 取消並返回來源（預設 `/research/runs`）；表單有未存變更時跳二次確認，避免誤失輸入（補本頁明確返回路徑，非僅靠瀏覽器 back）。
 - **states**:
   - default: 估算即時更新，Submit 可點。
   - loading: Submit 轉 spinner，禁重複提交。
@@ -126,7 +127,7 @@
 
 ### 主要互動流程
 
-1. 進入頁面 → 空表單（或 baseline 預填）→ 即時估算 N=1 configs。
+1. 進入頁面 → 空表單，或帶 `?baseline=<run_id|strategy_id>` query param 時以該 run / 策略最新版預填表單（hypothesis / 13 參數 / 成本）→ 即時估算 N=1 configs。此 `baseline` 契約為 Run Report「Iterate」、策略庫 / Promote「Derive 衍生變體」的共同 route 入口。
 2. 任一參數切 range/step → 估算 N 重算（笛卡爾積），TrialsBadge 預示提交後試驗數。
 3. 點 Submit → RunConfig Pydantic schema 驗證：失敗→inline 逐欄紅框留本頁；通過→寫 `run_configs`、產 run_id（git-sha+bundle+序號）、status=queued。
 4. 提交成功 → 跳轉 Run Report `/research/runs/:id`（loading/queue banner 態），或返回 Runs Table 看 queue。

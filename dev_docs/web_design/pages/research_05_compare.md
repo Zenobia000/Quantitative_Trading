@@ -55,8 +55,8 @@
 - **elements**:
   - RunChips: Chip row / required / 參與比較的 run（可移除）；baseline chip 高亮 pin icon。
   - SetBaselineSelect: Select / required / 指定哪個 run 為 baseline（delta 基準）。
-  - AddRunButton: Button Ghost / optional / 回 Runs Table 加選。
-  - GoSweepButton: Button Ghost / optional / 「改掃描參數」→ `/research/sweep`。
+  - AddRunButton: Button Ghost / optional / 回 Runs Table 加選；**帶當前 run_ids 回填** → `/research/runs?compare=<run_ids>`（Runs Table 預選現有比較集，續加不重選，避免 compare 脈絡丟失）。
+  - GoSweepButton: Button Ghost / optional / 「改掃描參數」→ `/research/sweep?from=<baseline_run_id>`（帶 baseline run 的參數空間進 Sweep，保留比較脈絡）。
 - **states**:
   - default: 顯示 ≥2 run chips + baseline。
   - empty: <2 run → 「請至少選 2 個 run 比較」+ 回 Runs Table CTA。

@@ -98,7 +98,7 @@
   - PromoteButton: Button Primary（白 pill）/ required / 全綠才亮的單一晉升 CTA（如「晉升 Paper」/「部署 Live」）；含不可逆二次確認 modal。
   - DemoteButton: Button Ghost / optional / 降級（Live→Paper）。
   - RetireButton: Button Ghost / optional / 退役（→Retired，凍結唯讀 run report）。
-  - DeriveButton: Button Ghost / optional（Retired 時）/ 以舊版為 baseline 衍生新變體 → New Run。
+  - DeriveButton: Button Ghost / optional（Retired 時）/ 以舊版為 baseline 衍生新變體 → `/research/runs/new?baseline=<strategy_id>`（New Run 以該策略最新版預填，route 契約見 research_02 §互動流程 1）。
 - **states**:
   - default: 全綠時 PromoteButton 亮。
   - disabled: 未過門檻 → PromoteButton disabled + tooltip 列阻擋原因。
