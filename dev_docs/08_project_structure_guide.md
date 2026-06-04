@@ -67,7 +67,8 @@ src/backtest_platform/
 │   ├── finmind_etl.py            # FinMind 拉取 + normalize + CLI（fallback 來源）
 │   ├── adjustment.py             # 前復權因子計算（FinMind 用；FinLab 已預調整）
 │   ├── db_writer.py              # TimescaleDB idempotent upsert
-│   └── universe.py               # 標的池過濾
+│   ├── universe.py               # 標的池過濾（v2.md 2.2）
+│   └── universe_builder.py       # ★ 候選 D：point-in-time 中小型 universe builder（ADR-020，純函式）
 │
 ├── strategies/                   # ★ M2 改名 — 多策略 namespace
 │   ├── __init__.py               # （未來：strategy registry）
@@ -168,7 +169,8 @@ tests/
 │   ├── test_finmind_etl.py
 │   ├── test_adjustment.py
 │   ├── test_db_writer.py         # 含 @integration mark
-│   └── test_universe.py
+│   ├── test_universe.py
+│   └── test_universe_builder.py  # ★ 候選 D builder（14 合成測試，hermetic）
 │
 └── strategies/                   # ★ 對應 src/ 改名
     ├── __init__.py

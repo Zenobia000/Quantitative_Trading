@@ -46,8 +46,9 @@ v0.1 候選 D 只跑一組先驗預設、不在雙窗 IS sweep；進場數非 ed
 
 1. ✅ 設計 spec（`specs/2026-06-03-candidate-d-smallcap-universe-design.md`）
 2. ✅ 本 ADR 草案
-3. ⏳ 資料 spike（需使用者 token）→ go/no-go
-4. ⏳ 🟢 後：universe builder TDD（hermetic）→ 中小型 ingest → 雙窗 IS → gate review → 本 ADR 補實證 + 升「已接受/已拒絕」
+3. ✅ **universe builder hermetic TDD**（2026-06-04，`data/universe_builder.py` + 14 合成測試）— spec §8 允許在資料 spike 前先建：point-in-time 選股 + 反 survivorship 三鐵律已釘死，與資料解耦。
+4. ⏳ 資料 spike（需使用者 token）→ go/no-go。**前置診斷（免費）**：先用現有 FinMind 三大法人量化 chip 層邊際貢獻（IC / ablation），chip 無訊號即不買 FinLab，回 M0；有訊號才付費補券商分點。
+5. ⏳ 🟢 後：成本 preset + 中小型 ingest → 雙窗 IS（既有 `run_is`）→ gate review → 本 ADR 補實證 + 升「已接受/已拒絕」
 
 ## 6. 待補（IS 跑完後）
 
