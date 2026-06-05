@@ -6,6 +6,7 @@ import type { ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
 import { Placeholder } from '@/components/Placeholder'
+import { PendingPage } from '@/components/PendingPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
@@ -51,10 +52,10 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <Placeholder title="首頁 · 控制塔" route="/" spec="home_overview" /> },
+      { index: true, element: <PendingPage title="首頁 · 控制塔" route="/" spec="home_overview" /> },
       ...ROUTES.map((r) => ({
         path: r.path,
-        element: REAL[r.path] ?? <Placeholder title={r.title} route={`/${r.path}`} spec={r.spec} />,
+        element: REAL[r.path] ?? <PendingPage title={r.title} route={`/${r.path}`} spec={r.spec} />,
       })),
       { path: '*', element: <Placeholder title="找不到頁面" route="404" spec="—" /> },
     ],
