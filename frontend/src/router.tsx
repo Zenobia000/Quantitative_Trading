@@ -12,9 +12,11 @@ import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
 import { NewRunPage } from '@/features/research/pages/NewRunPage'
 import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
+import { StrategyLibraryPage } from '@/features/research/pages/StrategyLibraryPage'
 
 // Phase 2 已建的實頁（其餘 PendingPage）
 const REAL: Record<string, ReactElement> = {
+  'research/strategies': <StrategyLibraryPage />,
   'research/runs/new': <NewRunPage />,
   'research/runs': <RunsTablePage />,
   'research/runs/:id': <RunReportPage />,
