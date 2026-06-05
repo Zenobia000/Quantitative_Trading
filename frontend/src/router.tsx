@@ -10,9 +10,11 @@ import { PendingPage } from '@/components/PendingPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
+import { NewRunPage } from '@/features/research/pages/NewRunPage'
 
-// Phase 2 已建的實頁（其餘暫 Placeholder）
+// Phase 2 已建的實頁（其餘 PendingPage）
 const REAL: Record<string, ReactElement> = {
+  'research/runs/new': <NewRunPage />,
   'research/runs': <RunsTablePage />,
   'research/runs/:id': <RunReportPage />,
   'research/compare': <ComparePage />,
