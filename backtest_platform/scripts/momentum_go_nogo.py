@@ -42,13 +42,19 @@ def _universe() -> list[str]:
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--rebalance", default="monthly", choices=["monthly", "quarterly", "semiannual"],
+                    help="再平衡頻率（降頻=砍成本拖累，cost-binding 時的槓桿）")
+    a = ap.parse_args()
+
     uni = _universe()
     prices = price_panel(uni)
     print(f"universe={len(uni)} (survivorship-aware: survivors + delisted)")
     print(f"FIXED config lb=252 skip=21 top=0.33 | cost={REALISTIC_COST:.1%} round-trip (spread) | "
-          f"span {SPAN[0]}..{SPAN[1]}\n")
+          f"rebalance={a.rebalance} | span {SPAN[0]}..{SPAN[1]}\n")
 
-    cfg = MomentumConfig(**FIXED, cost_round_rate=REALISTIC_COST, cost_mode="spread")
+    cfg = MomentumConfig(**FIXED, cost_round_rate=REALISTIC_COST, cost_mode="spread", rebalance=a.rebalance)
     res = backtest_momentum(prices, cfg, SPAN[0], SPAN[1])
     d = res.daily_returns
     slip = backtest_momentum(prices, cfg.with_extra_slippage(0.003), SPAN[0], SPAN[1]).daily_returns
@@ -71,7 +77,7 @@ def main() -> None:
     print(f"  mean OOS Sharpe={mean_oos:.3f}  ({sum(s > 1.0 for s in oos)}/{len(oos)} folds > 1.0)")
 
     configs = [MomentumConfig(lookback_days=lb, skip_days=sk, top_fraction=tf,
-                              cost_round_rate=REALISTIC_COST, cost_mode="spread")
+                              cost_round_rate=REALISTIC_COST, cost_mode="spread", rebalance=a.rebalance)
                for lb in LOOKBACKS for sk in SKIPS for tf in TOP_FRACS]
     mat = pd.DataFrame(
         {f"c{i}": backtest_momentum(prices, c, SPAN[0], SPAN[1]).daily_returns

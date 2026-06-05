@@ -44,6 +44,10 @@ class MomentumConfig(BaseModel):
         "lump", pattern="^(lump|spread)$",
         description="lump=再平衡當天一次扣；spread=攤提到持有期每日（較實際，建議 go/no-go 用）",
     )
+    rebalance: str = Field(
+        "monthly", pattern="^(monthly|quarterly|semiannual)$",
+        description="再平衡頻率；quarterly/semiannual 降周轉→砍交易成本拖累（成本是 binding 限制時的槓桿）",
+    )
     max_daily_return: float = Field(
         0.5, gt=0, le=2.0, description="winsorize 超過此絕對值的日報酬 (資料缺口/未調整防護)"
     )
@@ -77,10 +81,20 @@ def _clean_returns(prices: pd.DataFrame, max_daily: float) -> pd.DataFrame:
     return r.where(r.abs() <= max_daily)
 
 
-def _rebalance_dates(index: pd.DatetimeIndex) -> list[pd.Timestamp]:
-    """First trading day of each (year, month) present in ``index``."""
+def _rebalance_dates(index: pd.DatetimeIndex, freq: str = "monthly") -> list[pd.Timestamp]:
+    """First trading day of each period (month / quarter / half-year) in ``index``.
+
+    Lower frequency = fewer rebalances = less turnover = less transaction-cost drag
+    (the lever when cost is the binding constraint).
+    """
     s = pd.Series(index, index=index)
-    return [grp.index[0] for _, grp in s.groupby([index.year, index.month])]
+    if freq == "quarterly":
+        key = [index.year, index.quarter]
+    elif freq == "semiannual":
+        key = [index.year, (index.month - 1) // 6]
+    else:  # monthly
+        key = [index.year, index.month]
+    return [grp.index[0] for _, grp in s.groupby(key)]
 
 
 def _vol_target(returns: pd.Series, target_annual: float, lookback: int, max_lev: float) -> pd.Series:
@@ -117,7 +131,7 @@ def backtest_momentum(
     if win.empty:
         return MomentumResult(pd.Series(dtype=float), 0, 0.0, 0.0)
 
-    rebal = _rebalance_dates(win.index)
+    rebal = _rebalance_dates(win.index, cfg.rebalance)
     segs: list[pd.Series] = []
     holdings: list[int] = []
     turnovers: list[float] = []

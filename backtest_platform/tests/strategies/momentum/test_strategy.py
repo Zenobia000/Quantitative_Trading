@@ -101,6 +101,19 @@ def test_cost_mode_rejects_bad_value():
         MomentumConfig(cost_mode="bogus")
 
 
+def test_quarterly_rebalances_less_than_monthly():
+    panel = _panel()
+    m = backtest_momentum(panel, MomentumConfig(top_fraction=0.4, rebalance="monthly"), "2019-01-01", "2019-12-31")
+    q = backtest_momentum(panel, MomentumConfig(top_fraction=0.4, rebalance="quarterly"), "2019-01-01", "2019-12-31")
+    assert q.n_rebalances < m.n_rebalances  # fewer rebalances = less turnover/cost
+    assert q.n_rebalances <= 5               # ~4 quarters in a year
+
+
+def test_rebalance_rejects_bad_value():
+    with pytest.raises(Exception):
+        MomentumConfig(rebalance="weekly")
+
+
 def test_winsorizes_data_error_spike():
     panel = _panel()
     # inject a 5x price spike (un-adjusted-split style) then revert
