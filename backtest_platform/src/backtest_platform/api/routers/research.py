@@ -67,6 +67,11 @@ def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def _pending(data: Any, ttl: int = 300) -> Envelope:
+    """Typed-empty envelope for research features needing new persistence/logic."""
+    return ok(data, meta={"data_source": "pending", "ttl": ttl})
+
+
 @router.get("/strategies", response_model=Envelope, tags=["research"])
 def list_strategies(
     page: int = Query(1, ge=1),
@@ -79,3 +84,69 @@ def list_strategies(
     start = (page - 1) * limit
     window = strategies[start : start + limit]
     return ok(window, meta=page_meta(total, page, limit))
+
+
+@router.get("/strategies/{strategy_id}/versions", response_model=Envelope)
+def strategy_versions(strategy_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
+    """Version timeline for a strategy — runs of this preset, newest first (real projection)."""
+    recs = [r for r in read_runs(runs_path) if (r.get("preset") or "—") == strategy_id]
+    versions = [
+        {
+            "version": r.get("preset"),
+            "run_id": r.get("run_id"),
+            "hypothesis": r.get("hypothesis"),
+            "gate_status": r.get("gate_status"),
+            "is_start": r.get("is_start"),
+            "is_end": r.get("is_end"),
+        }
+        for r in recs[::-1]
+    ]
+    return ok(versions, meta={"ttl": 300})
+
+
+# ---- research features needing new persistence/logic (typed stubs) ------
+@router.get("/universe-filters", response_model=Envelope)
+def universe_filters() -> Envelope:
+    return _pending({"industries": [], "cap_buckets": [], "liquidity": []})
+
+
+@router.get("/saved-views", response_model=Envelope)
+def saved_views() -> Envelope:
+    return _pending([])
+
+
+@router.post("/saved-views", response_model=Envelope)
+def saved_views_create() -> Envelope:
+    return _pending({"id": "stub"})
+
+
+@router.post("/trials/increment", response_model=Envelope)
+def trials_increment() -> Envelope:
+    return _pending({"cumulative_trials": None})
+
+
+# Validate gate state machine (M3.6, needs persistence)
+@router.get("/validate/{run_id}/gate-state", response_model=Envelope)
+def gate_state(run_id: str) -> Envelope:
+    return _pending({"run_id": run_id, "validation_status": None, "stage": None})
+
+
+@router.get("/validate/{run_id}/wfa", response_model=Envelope)
+def validate_wfa(run_id: str) -> Envelope:
+    return _pending({"folds": [], "scatter": []})
+
+
+@router.get("/validate/{run_id}/redline", response_model=Envelope)
+def validate_redline(run_id: str) -> Envelope:
+    return _pending({"pbo": None, "dsr_matrix": []})
+
+
+# Promote state machine (M3.6, needs persistence)
+@router.get("/promote/{strategy_id}", response_model=Envelope)
+def promote_state(strategy_id: str) -> Envelope:
+    return _pending({"strategy_id": strategy_id, "stage": "draft", "history": [], "gates": []})
+
+
+@router.get("/promote/{strategy_id}/audit", response_model=Envelope)
+def promote_audit(strategy_id: str) -> Envelope:
+    return _pending([])
