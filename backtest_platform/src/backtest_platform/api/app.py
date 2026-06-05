@@ -19,7 +19,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from backtest_platform.api.envelope import Envelope, fail, ok
-from backtest_platform.api.routers import gate, metrics, presets, runs
+from backtest_platform.api.routers import gate, metrics, presets, research, runs
 
 API_VERSION = "0.6.0"
 
@@ -46,6 +46,7 @@ def create_app() -> FastAPI:
     app.include_router(gate.router)
     app.include_router(metrics.router)
     app.include_router(presets.router)
+    app.include_router(research.router)
 
     @app.exception_handler(HTTPException)
     async def _http_exception(request: Request, exc: HTTPException) -> JSONResponse:
