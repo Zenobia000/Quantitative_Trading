@@ -2,9 +2,16 @@
  * 路由表。Phase 0 全部指向 Placeholder；Phase 2 逐頁替換為實頁。
  * 路徑對齊各 page 規格的 route_path（dev_docs/web_design/pages/）。
  */
+import type { ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
 import { Placeholder } from '@/components/Placeholder'
+import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
+
+// Phase 2 已建的實頁（其餘暫 Placeholder）
+const REAL: Record<string, ReactElement> = {
+  'research/runs': <RunsTablePage />,
+}
 
 interface RouteDef {
   path: string
@@ -43,7 +50,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Placeholder title="首頁 · 控制塔" route="/" spec="home_overview" /> },
       ...ROUTES.map((r) => ({
         path: r.path,
-        element: <Placeholder title={r.title} route={`/${r.path}`} spec={r.spec} />,
+        element: REAL[r.path] ?? <Placeholder title={r.title} route={`/${r.path}`} spec={r.spec} />,
       })),
       { path: '*', element: <Placeholder title="找不到頁面" route="404" spec="—" /> },
     ],
