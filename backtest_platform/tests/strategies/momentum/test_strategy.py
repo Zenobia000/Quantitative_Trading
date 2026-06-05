@@ -86,6 +86,34 @@ def test_vol_target_off_by_default():
     assert cfg.vol_target_annual is None  # vanilla unless explicitly enabled
 
 
+def test_cost_mode_spread_matches_lump_total_drag():
+    panel = _panel()
+    _wealth = lambda r: (1 + r.daily_returns).prod()
+    free = _wealth(backtest_momentum(panel, MomentumConfig(top_fraction=0.4, cost_round_rate=0.0), "2019-06-01", "2019-12-31"))
+    lump = _wealth(backtest_momentum(panel, MomentumConfig(top_fraction=0.4, cost_round_rate=0.02, cost_mode="lump"), "2019-06-01", "2019-12-31"))
+    spread = _wealth(backtest_momentum(panel, MomentumConfig(top_fraction=0.4, cost_round_rate=0.02, cost_mode="spread"), "2019-06-01", "2019-12-31"))
+    assert lump < free and spread < free          # both cost the strategy
+    assert abs(lump - spread) < 0.02 * free       # same total cost → ~same final wealth
+
+
+def test_cost_mode_rejects_bad_value():
+    with pytest.raises(Exception):
+        MomentumConfig(cost_mode="bogus")
+
+
+def test_quarterly_rebalances_less_than_monthly():
+    panel = _panel()
+    m = backtest_momentum(panel, MomentumConfig(top_fraction=0.4, rebalance="monthly"), "2019-01-01", "2019-12-31")
+    q = backtest_momentum(panel, MomentumConfig(top_fraction=0.4, rebalance="quarterly"), "2019-01-01", "2019-12-31")
+    assert q.n_rebalances < m.n_rebalances  # fewer rebalances = less turnover/cost
+    assert q.n_rebalances <= 5               # ~4 quarters in a year
+
+
+def test_rebalance_rejects_bad_value():
+    with pytest.raises(Exception):
+        MomentumConfig(rebalance="weekly")
+
+
 def test_winsorizes_data_error_spike():
     panel = _panel()
     # inject a 5x price spike (un-adjusted-split style) then revert
