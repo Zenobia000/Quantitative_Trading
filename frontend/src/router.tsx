@@ -7,10 +7,12 @@ import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
 import { Placeholder } from '@/components/Placeholder'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
+import { RunReportPage } from '@/features/research/pages/RunReportPage'
 
 // Phase 2 已建的實頁（其餘暫 Placeholder）
 const REAL: Record<string, ReactElement> = {
   'research/runs': <RunsTablePage />,
+  'research/runs/:id': <RunReportPage />,
 }
 
 interface RouteDef {
