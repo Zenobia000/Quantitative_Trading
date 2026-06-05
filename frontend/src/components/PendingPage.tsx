@@ -10,7 +10,11 @@ export function PendingPage({ title, route, spec }: { title: string; route: stri
   const sections = PAGE_SECTIONS[spec] ?? []
   return (
     <div>
-      <PageHeader title={title} route={route} subtitle="後端端點尚未接線——以下為頁面 section 結構（pending）" />
+      <PageHeader
+        title={title}
+        route={route}
+        subtitle="REST 端點已接線（回 typed-empty）；live 資料待 M4 producer —— 以下為頁面 section 結構"
+      />
       <div className="flex flex-col gap-2">
         {sections.length === 0 && (
           <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">
@@ -21,7 +25,7 @@ export function PendingPage({ title, route, spec }: { title: string; route: stri
           <section key={s} className="rounded-lg border border-border bg-surface p-3">
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-text-secondary">{s}</span>
-              <StatusBadge tone="muted">待後端</StatusBadge>
+              <StatusBadge tone="muted">pending · M4</StatusBadge>
             </div>
           </section>
         ))}

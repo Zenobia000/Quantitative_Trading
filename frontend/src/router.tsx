@@ -13,6 +13,7 @@ import { ComparePage } from '@/features/research/pages/ComparePage'
 import { NewRunPage } from '@/features/research/pages/NewRunPage'
 import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
 import { StrategyLibraryPage } from '@/features/research/pages/StrategyLibraryPage'
+import { HomePage } from '@/features/home/pages/HomePage'
 
 // Phase 2 已建的實頁（其餘 PendingPage）
 const REAL: Record<string, ReactElement> = {
@@ -58,7 +59,7 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <PendingPage title="首頁 · 控制塔" route="/" spec="home_overview" /> },
+      { index: true, element: <HomePage /> },
       ...ROUTES.map((r) => ({
         path: r.path,
         element: REAL[r.path] ?? <PendingPage title={r.title} route={`/${r.path}`} spec={r.spec} />,
