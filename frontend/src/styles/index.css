@@ -1,0 +1,30 @@
+@import './tokens.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* 數值一律 tabular-nums（Geist Mono 由 .font-mono 套用） */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* focus-visible 單色白環（非彩色 ring） */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}

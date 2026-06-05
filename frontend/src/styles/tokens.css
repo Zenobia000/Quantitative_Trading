@@ -1,0 +1,32 @@
+/*
+ * Grok 單色 dark v2.0 — Design Tokens
+ * 真相源：dev_docs/web_design/global/02_backtest_platform_brand_system.md
+ * 規則：無彩色品牌色；唯一功能性彩色 = 漲跌 gain/loss（配 ↑↓）。無陰影，flat 1px border。
+ */
+:root {
+  /* 背景（dark-first） */
+  --bg-base: #0f0f0f;
+  --bg-surface: #1a1a1a;
+  --bg-input: #1e1e1e;
+  --bg-code: #161616;
+
+  /* 邊框（flat 1px 分層，取代陰影） */
+  --border-default: #2a2a2a;
+
+  /* 文字（明度階，無彩色） */
+  --text-primary: #f5f5f5;
+  --text-secondary: rgba(245, 245, 245, 0.65);
+  --text-muted: rgba(245, 245, 245, 0.55);
+
+  /* 功能色：漲跌（唯一彩色，配 ↑↓ 雙編碼） */
+  --gain: #22c55e;
+  --loss: #f87171;
+  --loss-aaa: #fca5a5; /* loss 需 AAA 對比的關鍵數值 */
+  --warning: #e9a60c;
+  --error: #ef4444;
+
+  /* focus：單色白環（非彩色） */
+  --focus-ring: rgba(245, 245, 245, 0.7);
+
+  color-scheme: dark;
+}

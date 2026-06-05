@@ -16,8 +16,11 @@
 | **前後端 REST 契約**（envelope / 5 前綴 / TTL / auth / 端點帳本）| `dev_docs/25_fe_be_rest_contract.md`（OpenAPI 為機器真相）|
 | 設計 token（Grok 單色）| `dev_docs/web_design/global/02_backtest_platform_brand_system.md` |
 | 三區 IA / 旅程 / sidebar | `dev_docs/web_design/03_uiux_benchmark_and_reinforcement_plan.md` §4.7 / §5.2 |
-| 每頁規格 | `dev_docs/web_design/pages/<page>.md` |
+| 每頁規格（細節：sections/元件/四態/RWD）| `dev_docs/web_design/pages/<page>.md` |
 | 可貼的組裝 Master Prompt（17 份齊全）| `dev_docs/web_design/assembly/<page>_integrated.md` |
+| **視覺稿 / 版面構圖（每頁 frame 佈局）** | `dev_docs/web_design/pages/design.pen`（Pencil canvas JSON，22 frame、token 化 Grok 單色；**Phase 2 建頁的視覺真相**）|
+
+> **三者分工**：`assembly/` 給結構與行為（要做什麼）、`design.pen` 給**視覺佈局/構圖/間距/層級**（長什麼樣）、`pages/<page>.md` 給細節規格（四態/copy/RWD）。建頁時三者對齊；版面有歧異以 `design.pen` 對應 frame 為準。
 | 後端 | `backtest_platform/src/backtest_platform/api/`（跑 `uvicorn backtest_platform.api.app:app`，契約在 `GET /openapi.json`）|
 
 ---
@@ -78,7 +81,8 @@ frontend/src/
 跑後端抓 `/openapi.json` 存 `frontend/openapi.json` → `openapi-typescript` 產 `src/types/api.gen.ts`。每 zone 一個 typed API 模組（只包既有端點，標 shipped vs pending 依 doc 25 帳本）。寫 3–5 個 TanStack Query hook 打**真實 shipped 端點**驗證 envelope 解包。
 
 ### Phase 2 — 逐區建頁（順序：research → system → monitor → home）
-一次一頁，照 `assembly/<page>_integrated.md`；接 Phase 1 typed hook；端點 pending 就渲染規格 empty/pending 態。順序理由：research 區真實資料最多 → system → monitor（多為 deferred-stub）→ home（依賴前三區的 BFF 聚合，最後做）。
+一次一頁，**三源對齊**：`assembly/<page>_integrated.md`（結構/行為）+ `design.pen` 對應 frame（視覺佈局/構圖/間距）+ `pages/<page>.md`（細節/四態/RWD）；接 Phase 1 typed hook；端點 pending 就渲染 empty/pending 態。順序理由：research 區真實資料最多 → system → monitor（多為 deferred-stub）→ home（依賴前三區的 BFF 聚合，最後做）。
+> design.pen 是 JSON canvas，可程式讀取對應 frame（frame name = 頁名，如 `Research · Runs Table`）取其子元素佈局/座標/token，據以還原版面。
 
 ---
 
