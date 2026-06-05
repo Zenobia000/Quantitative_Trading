@@ -40,6 +40,10 @@ class MomentumConfig(BaseModel):
     cost_round_rate: float = Field(
         0.00671, ge=0, le=0.05, description="round-trip 成本 (StrategyConfig.cost_round_rate)"
     )
+    cost_mode: str = Field(
+        "lump", pattern="^(lump|spread)$",
+        description="lump=再平衡當天一次扣；spread=攤提到持有期每日（較實際，建議 go/no-go 用）",
+    )
     max_daily_return: float = Field(
         0.5, gt=0, le=2.0, description="winsorize 超過此絕對值的日報酬 (資料缺口/未調整防護)"
     )
@@ -128,12 +132,16 @@ def backtest_momentum(
         seg = rets.loc[rb:nxt, held].mean(axis=1).copy()
         turnover = len(set(held) ^ prev) / max(len(held), 1)
         if len(seg):
-            # NOTE (Sharpe-optimistic, follow-up): charging the round-trip cost as a
-            # single lump-sum on the rebalance day dents CAGR but barely touches the
-            # daily-return volatility (the Sharpe denominator) — so Sharpe is near
-            # cost-immune here. Realistic intraday-spread/impact modeling would spread
-            # the drag. Judge cost-sensitivity via CAGR, not Sharpe, until refined.
-            seg.iloc[0] = seg.iloc[0] - cfg.cost_round_rate * turnover
+            total_cost = cfg.cost_round_rate * turnover
+            # ``spread`` amortizes the round-trip cost over the holding period (more
+            # realistic — you don't lose it all on day 1); ``lump`` charges it on the
+            # rebalance day. Either way a *deterministic* cost shifts mean return, not
+            # daily volatility, so Sharpe stays relatively cost-insensitive by design —
+            # judge cost-sensitivity via CAGR / net return, not Sharpe.
+            if cfg.cost_mode == "spread":
+                seg = seg - total_cost / len(seg)
+            else:
+                seg.iloc[0] = seg.iloc[0] - total_cost
         segs.append(seg)
         holdings.append(len(held))
         turnovers.append(turnover)
