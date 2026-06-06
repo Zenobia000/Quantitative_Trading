@@ -32,3 +32,28 @@ def test_strategies_pagination(client, write_runs, sample_runs):
 
 def test_strategies_invalid_page_422(client):
     assert client.get("/research/strategies", params={"page": 0}).status_code == 422
+
+
+# ---- /runs/estimate (sweep grid cardinality) ----------------------------
+
+def test_estimate_grid_cardinality(client):
+    body = client.get("/runs/estimate", params={"box_period": "40,60,80", "confirm_days": "1,2", "preset": "v3"}).json()
+    assert body["data"]["n_configs"] == 6  # 3 × 2（preset 不計入軸）
+    assert body["data"]["est_minutes"] == 3.0  # 6 × 0.5
+    assert body["data"]["axes"] == {"box_period": 3, "confirm_days": 2}
+
+
+def test_estimate_empty_grid_is_one(client):
+    body = client.get("/runs/estimate").json()
+    assert body["data"]["n_configs"] == 1
+
+
+# ---- /research/universe-filters (real config) ---------------------------
+
+def test_universe_filters_real_config(client):
+    body = client.get("/research/universe-filters").json()
+    d = body["data"]
+    assert d["markets"] == ["TWSE", "TPEX"]
+    assert d["min_market_cap"] == 5e9
+    assert d["price_range"] == [10.0, 500.0]
+    assert "market_cap_too_low" in d["exclude_reasons"]

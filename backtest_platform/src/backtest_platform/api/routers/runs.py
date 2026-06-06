@@ -11,10 +11,11 @@ Route order matters: the literal ``/compare`` is declared before the
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 
 from backtest_platform.api.deps import RunExecutor, get_run_executor, get_runs_path
@@ -91,6 +92,30 @@ def compare(
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=f"baseline run not found: {exc}") from None
     return ok(_serialize_compare(rep))
+
+
+#: Heuristic per-config IS-run cost for the pre-submit sweep estimate (minutes).
+_EST_MINUTES_PER_CONFIG = 0.5
+
+
+@router.get("/estimate", response_model=Envelope)
+def estimate(request: Request) -> Envelope:
+    """Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.
+
+    Grid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``
+    → 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same
+    grid; we compute the cardinality directly (product of axis lengths) so no base
+    config is required just to count. ``preset`` is ignored as an axis.
+    """
+    axes = {k: v.split(",") for k, v in request.query_params.items() if k != "preset" and v}
+    n_configs = math.prod(len(vals) for vals in axes.values()) if axes else 1
+    return ok(
+        {
+            "n_configs": n_configs,
+            "est_minutes": round(n_configs * _EST_MINUTES_PER_CONFIG, 1),
+            "axes": {k: len(v) for k, v in axes.items()},
+        }
+    )
 
 
 @router.get("/{run_id}", response_model=Envelope)

@@ -104,10 +104,36 @@ def strategy_versions(strategy_id: str, runs_path: Path = Depends(get_runs_path)
     return ok(versions, meta={"ttl": 300})
 
 
-# ---- research features needing new persistence/logic (typed stubs) ------
+# ---- universe filter spec (real, config-driven) -------------------------
 @router.get("/universe-filters", response_model=Envelope)
 def universe_filters() -> Envelope:
-    return _pending({"industries": [], "cap_buckets": [], "liquidity": []})
+    """Supported universe filters from ``UniverseConfig.default()`` (real config).
+
+    Markets / capital / liquidity / price thresholds + exclusion reasons are
+    config-driven and returned as-is. ``industries`` is data-derived (needs the
+    loaded universe metadata) — empty until the bundle is ingested.
+    """
+    from backtest_platform.data.universe import UniverseConfig
+
+    cfg = UniverseConfig.default()
+    return ok(
+        {
+            "markets": ["TWSE", "TPEX"],
+            "min_market_cap": cfg.min_market_cap,
+            "min_avg_volume_lots": cfg.min_avg_volume_lots,
+            "min_avg_amount": cfg.min_avg_amount,
+            "price_range": [cfg.min_price, cfg.max_price],
+            "min_listed_days": cfg.min_listed_days,
+            "exclude_governance_grades": list(cfg.exclude_governance_grades),
+            "exclude_reasons": [
+                "etf", "warrant", "convertible_bond", "attention_stock", "full_delivery",
+                "wrong_market", "market_cap_too_low", "volume_too_low", "amount_too_low",
+                "price_below_floor", "price_above_cap", "newly_listed", "bad_governance", "ex_dividend_quiet",
+            ],
+            "industries": [],  # data-derived（待 bundle ingest）
+        },
+        meta={"ttl": 600},
+    )
 
 
 @router.get("/saved-views", response_model=Envelope)
