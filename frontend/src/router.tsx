@@ -15,6 +15,7 @@ import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
 import { StrategyLibraryPage } from '@/features/research/pages/StrategyLibraryPage'
 import { PromotePage } from '@/features/research/pages/PromotePage'
 import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
+import { SweepPage } from '@/features/research/pages/SweepPage'
 import { HomePage } from '@/features/home/pages/HomePage'
 
 // 有完整真實資料的實頁
@@ -26,12 +27,12 @@ const REAL: Record<string, ReactElement> = {
   'research/runs/:id/trades': <TradeReviewPage />,
   'research/compare': <ComparePage />,
   'research/validate': <ValidateGatePage />,
+  'research/sweep': <SweepPage />,
   'research/promote/:strategyId': <PromotePage />,
 }
 
 // 其餘頁：接真實端點（多為 typed-empty stub / M4 deferred）→ WiredPage 渲染四態
 const ENDPOINT: Record<string, string | null> = {
-  'research/sweep': null, // 由 POST job 驅動，無單一 GET 主端點
   monitor: '/monitor/fleet',
   'monitor/performance': '/monitor/performance/kpi',
   'monitor/positions': '/monitor/positions/snapshot',

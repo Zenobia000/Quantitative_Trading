@@ -180,6 +180,28 @@
         }
       }
     },
+    "/runs/estimate": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Estimate",
+        "description": "Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.\n\nGrid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``\n→ 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same\ngrid; we compute the cardinality directly (product of axis lengths) so no base\nconfig is required just to count. ``preset`` is ignored as an axis.",
+        "operationId": "estimate_runs_estimate_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/runs/{run_id}": {
       "get": {
         "tags": [
@@ -543,6 +565,7 @@
           "research"
         ],
         "summary": "Universe Filters",
+        "description": "Supported universe filters from ``UniverseConfig.default()`` (real config).\n\nMarkets / capital / liquidity / price thresholds + exclusion reasons are\nconfig-driven and returned as-is. ``industries`` is data-derived (needs the\nloaded universe metadata) — empty until the bundle is ingested.",
         "operationId": "universe_filters_research_universe_filters_get",
         "responses": {
           "200": {
