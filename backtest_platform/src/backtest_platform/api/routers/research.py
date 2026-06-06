@@ -52,8 +52,9 @@ def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
     out: list[dict[str, Any]] = []
     for preset, recs in sorted(groups.items()):
-        statuses = [_validation_status(r.get("gate_status")) for r in recs]
-        validation_status = "is_pass" if "is_pass" in statuses else statuses[0] if statuses else "draft"
+        statuses = {_validation_status(r.get("gate_status")) for r in recs}
+        # 確定性優先序（避免 order-dependent）：任一 run is_pass → 策略 is_pass；否則 is_fail；否則 draft
+        validation_status = next((s for s in ("is_pass", "is_fail", "draft") if s in statuses), "draft")
         out.append(
             {
                 "strategy_id": preset,
