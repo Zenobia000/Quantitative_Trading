@@ -6,20 +6,39 @@ import type { ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
 import { Placeholder } from '@/components/Placeholder'
-import { PendingPage } from '@/components/PendingPage'
+import { WiredPage } from '@/components/WiredPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
 import { NewRunPage } from '@/features/research/pages/NewRunPage'
 import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
+import { StrategyLibraryPage } from '@/features/research/pages/StrategyLibraryPage'
+import { PromotePage } from '@/features/research/pages/PromotePage'
+import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
+import { HomePage } from '@/features/home/pages/HomePage'
 
-// Phase 2 已建的實頁（其餘 PendingPage）
+// 有完整真實資料的實頁
 const REAL: Record<string, ReactElement> = {
+  'research/strategies': <StrategyLibraryPage />,
   'research/runs/new': <NewRunPage />,
   'research/runs': <RunsTablePage />,
   'research/runs/:id': <RunReportPage />,
+  'research/runs/:id/trades': <TradeReviewPage />,
   'research/compare': <ComparePage />,
   'research/validate': <ValidateGatePage />,
+  'research/promote/:strategyId': <PromotePage />,
+}
+
+// 其餘頁：接真實端點（多為 typed-empty stub / M4 deferred）→ WiredPage 渲染四態
+const ENDPOINT: Record<string, string | null> = {
+  'research/sweep': null, // 由 POST job 驅動，無單一 GET 主端點
+  monitor: '/monitor/fleet',
+  'monitor/performance': '/monitor/performance/kpi',
+  'monitor/positions': '/monitor/positions/snapshot',
+  'monitor/signals': '/monitor/signals',
+  'monitor/risk': '/monitor/risk/metrics',
+  'system/data': '/system/bundles',
+  'system/alerts': '/system/alerts/rules',
 }
 
 interface RouteDef {
@@ -56,10 +75,17 @@ export const router = createBrowserRouter([
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <PendingPage title="首頁 · 控制塔" route="/" spec="home_overview" /> },
+      { index: true, element: <HomePage /> },
       ...ROUTES.map((r) => ({
         path: r.path,
-        element: REAL[r.path] ?? <PendingPage title={r.title} route={`/${r.path}`} spec={r.spec} />,
+        element: REAL[r.path] ?? (
+          <WiredPage
+            title={r.title}
+            route={`/${r.path}`}
+            spec={r.spec}
+            endpoint={r.path in ENDPOINT ? ENDPOINT[r.path] : null}
+          />
+        ),
       })),
       { path: '*', element: <Placeholder title="找不到頁面" route="404" spec="—" /> },
     ],
