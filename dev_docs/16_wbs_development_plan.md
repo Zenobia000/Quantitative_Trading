@@ -128,7 +128,7 @@
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
 | 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；5.A.6 portfolio IS 已執行（雙窗口全負 → ADR-016 K1/K2/K3 FAIL → 退場 ADR-017），全工作包落地 |
-| 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
+| 6.0 統計驗證 | 180h | 68h | 38% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）+ 6.1.3 健檢表（health_indicators 13 指標三級燈號）；剩 6.5.x DOE（待候選策略）|
 | 7.0 Paper+實盤 | 110h | 48h | 44% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI（fail-fast staged flow，Prefect-optional）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
 | 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ · 8.H.1 ✅ · 8.H.2 🟡 | **8.H.1 合一閘已關（PR #74）**；**REST 契約合一定版**（doc 25 + ADR-021，2026-06-04）；**58 端點已部署上線**（PR #71/#72：5 zone router + `/runs/estimate` + `/research/universe-filters` 真接，其餘 typed-stub `pending_m4`）。**8.H.1 contract-compliance gate（URGENT，所有並行 stream 前置關卡）**：`envelope.error` `str→{code,message,detail}` + 2 exception handler 映 ADR-021 code + per-endpoint `response_model`（~25 Pydantic `Envelope[T]`）+ regen `api.gen.ts` 刪前端手寫 view-model + OpenAPI-TS drift 回歸測。8.H.6 async jobs + 8.H.8 telemetry daemon 仍待 M3.0；**前端重頁 gated 於 v3 edge（同 8.G）** |
@@ -266,9 +266,9 @@
 |:--|:--|:--|:--:|:--:|:--|:--|
 | 6.1.1 | metrics.py 30+ 指標 enum + functions | — | 16h | ✅ v0.2 | — | `validation/metrics.py`（A/B/C/E 類 12 函式，對照 18 §4，45 tests） |
 | 6.1.2 | quantstats 報表整合 | — | 8h | ✅ v0.3 | — | `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful） |
-| 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | — | 4h | ⏳ | — | — |
+| 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | — | 4h | ✅ | 2026-06-07 | `validation/health_indicators.py`：13 指標三級燈號（綠/黃/紅，閾值 data 化逐字轉自 v2.md §4.3.1）+ higher/lower/range 方向 + engine metric 別名（maxdd/win/avg_hold）+ na 處理；`GET /research/validate/{id}/health` 投影 run metrics（15 tests）|
 | 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | — | (已估) | ✅ v0.2 | 2026-06-02 | `validation/wfa.py`（walk_forward_splits，rolling/anchored，purge+embargo） |
-| 6.2.2 | WFA 結果視覺化 | — | 8h | ⏳ | — | 接 dashboard 面板 E |
+| 6.2.2 | WFA 結果視覺化 | — | 8h | 🟡 | 2026-06-07 | **fold 窗 ✅**：`GET /research/validate/{id}/wfa` 用 `walk_forward_splits` 從 run 窗算真實 fold（v2.md §4.4.1 IS252/OOS63 rolling）+ §4.4.1 通過標準 metadata；前端 `api/wfa.ts` + `useValidateWfa` hook。剩 IS-vs-OOS scatter（per-fold 回測，parquet-gated）+ 圖表元件接 ValidateGate run-scoped |
 | 6.3.1 | PBO 自寫（避 pypbo AGPL） | — | 16h | ✅ v0.2 | — | `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過） |
 | 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
 | 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |
