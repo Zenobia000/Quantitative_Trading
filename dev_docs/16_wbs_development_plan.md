@@ -293,7 +293,7 @@
 | 7.C.3 | Risk metrics 即時計算 | — | 8h | ⏳ | — | — |
 | 7.D.1 | Prefect daily flow 每日排程 | — | 8h | 🟡 | 2026-06-04 | `orchestration/daily_flow.py` fail-fast staged 引擎（ETL→signals→risk→orders→log，collaborator 注入）+ **Prefect-optional**（`as_prefect_flow`：未裝 prefect 則 inline fallback，prefect 非硬依賴）|
 | 7.D.2 | orchestration/cli.py 完整 | — | 8h | 🟡 | 2026-06-04 | `orchestration/cli.py` run〔--dry-run/--real〕+ list-stages；dry-run 跑 no-op demo 管線（安全），real 套 build_daily_stages；18 測試、模組 94% cov |
-| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | ⏳ | — | engine/CLI 已備（7.D.1/2），待接真實 ETL/signals/RiskGate/PaperBroker collaborators |
+| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | 🟡 | 2026-06-07 | **端到端整合測試 ✅**：`test_chain_integration.py` 用真實 RiskGate（12 規則）+ PaperBroker（模擬撮合）跑 ETL→signals→risk→orders→log，驗 fills 落帳/cash 扣減/風控拒單 halt before orders/缺 collaborator 乾淨失敗（3 tests，非 stub）。剩 real ETL/signals 接 parquet + CLI `--real` 接線 |
 
 **模組小計**：~110h
 
