@@ -115,13 +115,15 @@ def _metrics(strat: pd.Series, strat_slip: pd.Series, trades: list[dict], n_buys
 def _run_is_core(
     cfg: RunConfig,
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
-) -> tuple[dict, pd.Series]:
-    """The IS portfolio sim. Returns ``(metrics, portfolio daily-returns series)``.
+) -> tuple[dict, pd.Series, list[dict]]:
+    """The IS portfolio sim. Returns ``(metrics, daily-returns series, trades)``.
 
     The returns series is the positional mean of the per-stock daily returns —
     the *same* series the metrics are computed from — exposed so a caller can
-    render a tear sheet / plot without re-running the sim. Empty Series when no
-    stock had >= 30 bars in the window.
+    render a tear sheet / plot without re-running the sim. ``trades`` is the
+    aggregated per-trade list ({ret, hold, entry_structure}) the trade-quality
+    metrics are derived from. Empty Series / empty list when no stock had
+    >= 30 bars in the window.
     """
     base = get_preset(cfg.preset)
     slip = base.model_copy(update={"slip_rate": _SLIP_STRESS})
@@ -135,12 +137,12 @@ def _run_is_core(
         all_trades.extend(_trades(sig, base))
         n_buys += int((sig["action"] == "buy").sum())
     if not norm_returns:
-        return {"trades": 0, "closed": 0, "bars": 0}, pd.Series(dtype=float)
+        return {"trades": 0, "closed": 0, "bars": 0}, pd.Series(dtype=float), []
     port = pd.concat(norm_returns, axis=1).mean(axis=1)
     port_slip = pd.concat(slip_returns, axis=1).mean(axis=1)
     out = _metrics(port, port_slip, all_trades, n_buys)
     out["bars"] = len(port)
-    return out, port
+    return out, port, all_trades
 
 
 def run_is(
@@ -164,6 +166,18 @@ def run_is_returns(
     return _run_is_core(cfg, loader)[1]
 
 
+def run_is_trades(
+    cfg: RunConfig,
+    loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
+) -> list[dict]:
+    """Per-trade list ({ret, hold, entry_structure}) for a RunConfig.
+
+    The same trades the E (trade-quality) metrics are derived from; an empty
+    list when the window yields no closed trades.
+    """
+    return _run_is_core(cfg, loader)[2]
+
+
 def run_and_judge(
     cfg: RunConfig,
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
@@ -184,7 +198,7 @@ def run_and_judge_with_returns(
     alongside it lets a caller that wants both (e.g. ``run-is --tearsheet``) avoid
     running the sim twice.
     """
-    metrics, returns = _run_is_core(cfg, loader)
+    metrics, returns, _trades_list = _run_is_core(cfg, loader)
     result: GateResult = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
     record = {
         "run_id": cfg.run_id,
@@ -199,3 +213,51 @@ def run_and_judge_with_returns(
         "gate_summary": result.summary(),
     }
     return record, returns
+
+
+def equity_drawdown(returns: pd.Series) -> tuple[list[float], list[float]]:
+    """Cumulative equity + running drawdown from a daily-returns series.
+
+    ``equity[i] = prod(1 + returns[:i+1])`` (starts near 1.0); ``drawdown[i]``
+    is the signed fraction below the running peak (<= 0). Empty in → empty out.
+    """
+    if returns is None or len(returns) == 0:
+        return [], []
+    eq = (1.0 + returns.astype(float)).cumprod()
+    dd = eq / eq.cummax() - 1.0
+    return [float(x) for x in eq], [float(x) for x in dd]
+
+
+def run_and_judge_persist(
+    cfg: RunConfig,
+    loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
+    gate=None,
+    series_dir=None,
+) -> dict:
+    """run_and_judge + persist the per-run equity/drawdown/trades sidecar.
+
+    The API run-executor (``deps.get_run_executor``) so a triggered run also
+    populates ``run_series_store`` for ``GET /runs/{id}/equity`` · ``/trades``
+    without a second sim pass. Returns the ledger record (same shape as
+    ``run_and_judge``); the heavy series go to the sidecar, not the ledger line.
+    """
+    from backtest_platform.research import run_series_store
+
+    metrics, returns, trades = _run_is_core(cfg, loader)
+    result: GateResult = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
+    record = {
+        "run_id": cfg.run_id,
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "hypothesis": cfg.hypothesis,
+        "preset": cfg.preset,
+        "engine": cfg.engine,
+        "stocks": list(cfg.stocks),
+        "window": [cfg.is_start.isoformat(), cfg.is_end.isoformat()],
+        "metrics": metrics,
+        "gate_status": result.status.value,
+        "gate_summary": result.summary(),
+    }
+    equity, drawdown = equity_drawdown(returns)
+    kwargs = {} if series_dir is None else {"series_dir": series_dir}
+    run_series_store.write_series(cfg.run_id, equity, drawdown, trades, **kwargs)
+    return record

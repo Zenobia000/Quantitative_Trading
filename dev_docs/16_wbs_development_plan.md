@@ -349,7 +349,7 @@
 | 8.H.0 | 契約合一盤點 + doc 25 + ADR-021 + 06/21/20/12 banner | 8h | ✅ | 2026-06-04 | workflow `wf_e27bec66-9c6`（20 agents）；12/12 缺口對抗式驗證確認 |
 | 8.H.1 | **M3.0 契約合一閘**：`envelope.py` error 字串→`{code,message,detail}`、`app.py` Bearer dep、修 `/runs` window→is_start/is_end null bug、接 openapi-typescript、regression test | 6h | ⏳ | — | 零新邏輯；後續一切前置 |
 | 8.H.2 | **M3.1 便宜 config/catalog 讀路由**：`/research/universe-filters`·`/runs/estimate`·`/system/risk/*`·`/system/alerts/{rules,channels,test}`·`/presets/{name}` enrich | 8h | ⏳ | — | gate.py pattern；解鎖 run_02/sys_alerts(讀)/mon_d(config) |
-| 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | ⏳ | — | 解鎖 run_04/05、mon_a 回測半 |
+| 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | 🟡 | 2026-06-07 | **equity/trades ✅**：per-run sidecar（`run_series_store`）+ `run_and_judge_persist` executor 寫入 + `runs_series.py` 讀（12 tests）；解鎖 run_04/05、mon_a 回測半。剩 compare `?run_ids` 子集模式 |
 | 8.H.4 | **M3.3 strategy registry + 側存**：`/research/strategies*`·`/research/saved-views`·`/runs/tag`（projection over ledger，9.G.1 runs 主表落地） | 8h | ⏳ | — | 解鎖 run_01/03 |
 | 8.H.5 | **M3.4 trials/DSR guardrail 持久化**：`/runs/trials`·`/research/trials/increment`（接 8.G.4 TrialsCounter 持久化） | 4h | ⏳ | — | 解鎖 run_03/05 |
 | 8.H.6 | **M3.5 async job（CRITICAL #2）+ bundle/DQ**：`jobs/` 模組、`POST /runs` async、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | 16h | ⏳ | — | 解鎖 run_06/sys_data/run_02 async |
