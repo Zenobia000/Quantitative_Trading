@@ -62,5 +62,7 @@ def test_trials_penalty_flows_through_to_deployable():
     result = backtest_momentum(prices, MomentumConfig(), start="2017-01-01", end="2020-12-31")
     # honest DSR with many searched configs deflates vs a single-trial claim
     one = full_validation_report(result.daily_returns, n_trials=1, n_iter=150)
-    many = full_validation_report(result.daily_returns, n_trials=1000, n_iter=150)
+    many = full_validation_report(
+        result.daily_returns, n_trials=1000, sharpe_variance=0.002, n_iter=150
+    )
     assert many["robustness"]["deflated_sharpe"] <= one["robustness"]["deflated_sharpe"]
