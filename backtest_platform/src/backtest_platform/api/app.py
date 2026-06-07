@@ -23,6 +23,18 @@ from backtest_platform.api.routers import gate, home, metrics, monitor, presets,
 
 API_VERSION = "0.6.0"
 
+#: HTTP status → contract error code (doc 25 §2, one-to-one). Anything unmapped
+#: (incl. 500) falls back to ``INTERNAL``.
+_STATUS_TO_CODE: dict[int, str] = {
+    400: "BAD_REQUEST",
+    401: "UNAUTHORIZED",
+    404: "NOT_FOUND",
+    409: "IS_GATE_NOT_PASSED",
+    422: "VALIDATION_ERROR",
+    423: "OOS_VAULT_LOCKED",
+    504: "QUERY_TIMEOUT",
+}
+
 
 def _format_validation_errors(errors: Sequence[dict[str, Any]]) -> str:
     """Collapse pydantic/FastAPI validation errors into one readable string."""
@@ -31,6 +43,14 @@ def _format_validation_errors(errors: Sequence[dict[str, Any]]) -> str:
         loc = ".".join(str(p) for p in err.get("loc", ()))
         parts.append(f"{loc}: {err.get('msg')}" if loc else str(err.get("msg")))
     return "; ".join(parts)
+
+
+def _validation_detail(errors: Sequence[dict[str, Any]]) -> list[dict[str, str]]:
+    """Per-field ``[{loc, msg}]`` detail for VALIDATION_ERROR (doc 25 §2)."""
+    return [
+        {"loc": ".".join(str(p) for p in err.get("loc", ())), "msg": str(err.get("msg"))}
+        for err in errors
+    ]
 
 
 def create_app() -> FastAPI:
@@ -53,9 +73,17 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(HTTPException)
     async def _http_exception(request: Request, exc: HTTPException) -> JSONResponse:
+        code = _STATUS_TO_CODE.get(exc.status_code, "INTERNAL")
+        # A dict detail (e.g. {"resource", "id"}) becomes the structured ``detail``;
+        # its optional ``message`` key is lifted out as the human-readable message.
+        if isinstance(exc.detail, dict):
+            message = str(exc.detail.get("message", code.replace("_", " ").lower()))
+            detail = {k: v for k, v in exc.detail.items() if k != "message"} or None
+        else:
+            message, detail = str(exc.detail), None
         return JSONResponse(
             status_code=exc.status_code,
-            content=fail(str(exc.detail)).model_dump(),
+            content=fail(message, code=code, detail=detail).model_dump(),
         )
 
     @app.exception_handler(RequestValidationError)
@@ -64,7 +92,19 @@ def create_app() -> FastAPI:
     ) -> JSONResponse:
         return JSONResponse(
             status_code=422,
-            content=fail(_format_validation_errors(exc.errors())).model_dump(),
+            content=fail(
+                _format_validation_errors(exc.errors()),
+                code="VALIDATION_ERROR",
+                detail=_validation_detail(exc.errors()),
+            ).model_dump(),
+        )
+
+    @app.exception_handler(Exception)
+    async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
+        # Global fallback: never leak stack/secrets (rules/security.md §錯誤訊息).
+        return JSONResponse(
+            status_code=500,
+            content=fail("internal server error", code="INTERNAL").model_dump(),
         )
 
     return app

@@ -1066,6 +1066,18 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * ApiError
+         * @description Structured error body shared by every failure response.
+         */
+        ApiError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Detail */
+            detail?: unknown | null;
+        };
+        /**
          * Envelope
          * @description The single response shape shared by every endpoint.
          */
@@ -1074,8 +1086,7 @@ export interface components {
             success: boolean;
             /** Data */
             data?: unknown | null;
-            /** Error */
-            error?: string | null;
+            error?: components["schemas"]["ApiError"] | null;
             /** Meta */
             meta?: {
                 [key: string]: unknown;

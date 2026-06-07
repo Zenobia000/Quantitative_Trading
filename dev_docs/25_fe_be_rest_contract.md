@@ -51,12 +51,12 @@
 }
 ```
 
-**v0.6 → v1.0 唯一變更**：`error` 由「裸字串」**升級為結構化物件** `{code, message, detail}`（§2）。這是**向後相容的擴充**：
+**v0.6 → v1.0 唯一變更**：`error` 由「裸字串」**升級為結構化物件** `{code, message, detail}`（§2）。✅ **已實作（8.H.1，PR feat/contract-gate）**，向後相容的擴充：
 
 - `ok(data, meta)` → `success=true, error=null`（簽章不變）。
-- `fail(message, code=…, detail=…)` → 內部包成 `{code, message, detail}`；舊呼叫 `fail("xxx")` 自動帶 `code=INTERNAL`（或由 exception handler 推導），**呼叫端不需改**。
-- `app.py` 的兩個 exception handler 改一次（HTTPException、RequestValidationError → 填對應 `code`）。
-- **行為不變，只有 error 子形狀變**；M3.0 加 regression test 驗證 11 條已實作端點。
+- `fail(message, code="INTERNAL", detail=None)` → 內部包成 `ApiError{code, message, detail}`；舊呼叫 `fail("xxx")` 自動帶 `code=INTERNAL`，**呼叫端不需改**。
+- `app.py` 三個 exception handler：`HTTPException`（status→code 映 `_STATUS_TO_CODE`，dict detail 透傳）、`RequestValidationError`（`VALIDATION_ERROR` + `detail=[{loc,msg}]`）、新增 `Exception` 全域 fallback（`INTERNAL`，不洩漏 stack）。
+- **行為不變，只有 error 子形狀變**；regression test `tests/api/test_contract_envelope.py` 釘死 code 映射 + per-field detail；OpenAPI 重生 → `frontend/src/types/api.gen.ts` 含 `ApiError`。
 
 > 鐵律：永不回裸 `{"detail": ...}`；404／422／500 都長得跟成功回應同一個信封形狀。
 
@@ -104,7 +104,7 @@
 | 504 | `QUERY_TIMEOUT` | 後端查詢/計算逾時 | `{op}` | 重查詢（sweep heatmap、telemetry）|
 | 500 | `INTERNAL` | 未預期錯誤 | `null`（**不洩漏 stack/秘密**，`rules/security.md`）| 全域 fallback |
 
-> **v0.6 對應**：現行 handler 把 HTTPException→`fail(str(detail))`、422→單字串。M3.0 升級為：依 status 對映上表 `code`，422 的 `_format_validation_errors` 改填 `detail=[{loc,msg}]` 陣列（保留人類可讀 `message`）。
+> ✅ **已實作（8.H.1）**：handler 依 status 對映上表 `code`（`_STATUS_TO_CODE`），422 填 `detail=[{loc,msg}]` 陣列（保留人類可讀 `message`），dict `HTTPException.detail` 透傳為結構化 `detail`，未映 status 落 `INTERNAL`。
 
 ---
 
