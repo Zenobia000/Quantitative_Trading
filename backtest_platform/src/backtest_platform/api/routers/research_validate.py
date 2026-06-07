@@ -8,6 +8,7 @@ remains typed-empty until its persistence lands.
 """
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends
@@ -17,8 +18,29 @@ from backtest_platform.api.envelope import Envelope, ok, pending
 from backtest_platform.research import promotion_service
 from backtest_platform.research.runs_store import read_runs
 from backtest_platform.validation.health_indicators import health_check
+from backtest_platform.validation.wfa import walk_forward_splits
 
 router = APIRouter(prefix="/research/validate", tags=["research"])
+
+# v2.md §4.4.1 canonical WFA config: IS 252d + OOS 63d, rolling 63d.
+_WFA_IS_DAYS = 252
+_WFA_OOS_DAYS = 63
+# §4.4.1 通過標準 (surfaced as metadata so the FE shows the bar next to the folds).
+_WFA_CRITERIA = {
+    "oos_sharpe_vs_is": "OOS Sharpe > IS Sharpe × 0.6",
+    "oos_positive_window_pct": "OOS 報酬>0 的 windows 比例 > 60%",
+    "oos_maxdd_vs_is": "OOS 平均 MaxDD < IS 平均 MaxDD × 1.5",
+}
+
+
+def _run_window(run_id: str, runs_path: Path) -> tuple[date, date] | None:
+    """The [is_start, is_end] span recorded for a run, or None if absent."""
+    for rec in read_runs(runs_path):
+        if str(rec.get("run_id")) == run_id:
+            win = rec.get("window") or [rec.get("is_start"), rec.get("is_end")]
+            if win and win[0] and win[1]:
+                return date.fromisoformat(str(win[0])), date.fromisoformat(str(win[1]))
+    return None
 
 
 @router.get("/{run_id}/gate-state", response_model=Envelope)
@@ -43,8 +65,34 @@ def validate_health(run_id: str, runs_path: Path = Depends(get_runs_path)) -> En
 
 
 @router.get("/{run_id}/wfa", response_model=Envelope)
-def validate_wfa(run_id: str) -> Envelope:
-    return pending({"folds": [], "scatter": []})
+def validate_wfa(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
+    """Walk-forward folds for a run (v2.md §4.4.1: IS 252d + OOS 63d, rolling 63d).
+
+    Fold date-windows are computed data-free from the run's span via
+    ``walk_forward_splits``. The IS-vs-OOS performance ``scatter`` needs a backtest
+    per fold (parquet) and stays empty until that runs — so a real ``folds`` list
+    ships now while ``scatter`` is honestly marked pending.
+    """
+    window = _run_window(run_id, runs_path)
+    if window is None:
+        return pending({"folds": [], "scatter": [], "criteria": _WFA_CRITERIA})
+    start, end = window
+    folds = walk_forward_splits(start, end, is_days=_WFA_IS_DAYS, oos_days=_WFA_OOS_DAYS)
+    fold_rows = [
+        {
+            "fold": i,
+            "is_start": f.is_start.isoformat(),
+            "is_end": f.is_end.isoformat(),
+            "oos_start": f.oos_start.isoformat(),
+            "oos_end": f.oos_end.isoformat(),
+        }
+        for i, f in enumerate(folds)
+    ]
+    # folds = real (data-free); scatter (per-fold IS/OOS perf) is parquet-gated.
+    return ok(
+        {"folds": fold_rows, "scatter": [], "criteria": _WFA_CRITERIA},
+        meta={"data_source": "partial", "scatter": "pending"},
+    )
 
 
 @router.get("/{run_id}/redline", response_model=Envelope)

@@ -268,7 +268,7 @@
 | 6.1.2 | quantstats 報表整合 | — | 8h | ✅ v0.3 | — | `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful） |
 | 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | — | 4h | ✅ | 2026-06-07 | `validation/health_indicators.py`：13 指標三級燈號（綠/黃/紅，閾值 data 化逐字轉自 v2.md §4.3.1）+ higher/lower/range 方向 + engine metric 別名（maxdd/win/avg_hold）+ na 處理；`GET /research/validate/{id}/health` 投影 run metrics（15 tests）|
 | 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | — | (已估) | ✅ v0.2 | 2026-06-02 | `validation/wfa.py`（walk_forward_splits，rolling/anchored，purge+embargo） |
-| 6.2.2 | WFA 結果視覺化 | — | 8h | ⏳ | — | 接 dashboard 面板 E |
+| 6.2.2 | WFA 結果視覺化 | — | 8h | 🟡 | 2026-06-07 | **fold 窗 ✅**：`GET /research/validate/{id}/wfa` 用 `walk_forward_splits` 從 run 窗算真實 fold（v2.md §4.4.1 IS252/OOS63 rolling）+ §4.4.1 通過標準 metadata；前端 `api/wfa.ts` + `useValidateWfa` hook。剩 IS-vs-OOS scatter（per-fold 回測，parquet-gated）+ 圖表元件接 ValidateGate run-scoped |
 | 6.3.1 | PBO 自寫（避 pypbo AGPL） | — | 16h | ✅ v0.2 | — | `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過） |
 | 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
 | 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |

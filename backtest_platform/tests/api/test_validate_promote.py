@@ -65,3 +65,25 @@ def test_validate_health_unknown_run_all_na(client, write_runs, sample_runs):
     write_runs(sample_runs)
     body = client.get("/research/validate/ghost/health").json()
     assert body["data"]["counts"]["na"] == 13
+
+
+def test_validate_wfa_folds_from_run_window(client, write_runs, sample_runs):
+    write_runs(sample_runs)
+    # aaa111 window 2015-01-01..2020-12-31 (~6yr) → multiple IS252/OOS63 folds
+    body = client.get("/research/validate/aaa111/wfa").json()
+    assert body["success"] is True
+    folds = body["data"]["folds"]
+    assert len(folds) > 1
+    # each fold respects is_start < is_end <= oos_start < oos_end
+    f0 = folds[0]
+    assert f0["is_start"] < f0["is_end"] <= f0["oos_start"] < f0["oos_end"]
+    assert body["data"]["scatter"] == []  # per-fold perf parquet-gated
+    assert body["meta"]["scatter"] == "pending"
+    assert "criteria" in body["data"]
+
+
+def test_validate_wfa_unknown_run_pending(client, write_runs, sample_runs):
+    write_runs(sample_runs)
+    body = client.get("/research/validate/ghost/wfa").json()
+    assert body["data"]["folds"] == []
+    assert body["meta"]["data_source"] == "pending"
