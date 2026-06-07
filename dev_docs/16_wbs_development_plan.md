@@ -131,7 +131,7 @@
 | 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
 | 7.0 Paper+實盤 | 110h | 48h | 44% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI（fail-fast staged flow，Prefect-optional）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
-| 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ · 8.H.1 ⏳ **URGENT** | **REST 契約合一定版**（doc 25 + ADR-021，2026-06-04）；**58 端點已部署上線**（PR #71/#72：5 zone router + `/runs/estimate` + `/research/universe-filters` 真接，其餘 typed-stub `pending_m4`）。**8.H.1 contract-compliance gate（URGENT，所有並行 stream 前置關卡）**：`envelope.error` `str→{code,message,detail}` + 2 exception handler 映 ADR-021 code + per-endpoint `response_model`（~25 Pydantic `Envelope[T]`）+ regen `api.gen.ts` 刪前端手寫 view-model + OpenAPI-TS drift 回歸測。8.H.6 async jobs + 8.H.8 telemetry daemon 仍待 M3.0；**前端重頁 gated 於 v3 edge（同 8.G）** |
+| 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ · 8.H.1 ✅ · 8.H.2 🟡 | **8.H.1 合一閘已關（PR #74）**；**REST 契約合一定版**（doc 25 + ADR-021，2026-06-04）；**58 端點已部署上線**（PR #71/#72：5 zone router + `/runs/estimate` + `/research/universe-filters` 真接，其餘 typed-stub `pending_m4`）。**8.H.1 contract-compliance gate（URGENT，所有並行 stream 前置關卡）**：`envelope.error` `str→{code,message,detail}` + 2 exception handler 映 ADR-021 code + per-endpoint `response_model`（~25 Pydantic `Envelope[T]`）+ regen `api.gen.ts` 刪前端手寫 view-model + OpenAPI-TS drift 回歸測。8.H.6 async jobs + 8.H.8 telemetry daemon 仍待 M3.0；**前端重頁 gated 於 v3 edge（同 8.G）** |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 83 端點 registry，含 3 新頁）|
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
@@ -335,10 +335,10 @@
 | 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |
 | 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) + validate + promote-check(v0.6) ✅ | — | 8h | ✅ v0.6 | 2026-06-03 | `research/cli.py` run-is〔+`--tearsheet`〕/runs/sweep/compare/**validate**/**promote-check**；`validate`=接 `ValidationGate` 推進 IS→WFA→OOS 工作流 gate（IS 階段）+ OOS sealed-vault 狀態；`promote-check`=唯讀晉升閘，讀 `validation_status`（顯式欄優先，否則推導 IS 狀態），僅 APPROVED 才 ELIGIBLE 否則列待完成階段（防未驗證策略上線）。模組封頂 |
 | 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | — | 6h | ⏳ | — | M0/M2 |
-| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | ⏳ | — | M3 |
+| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | 🟡 | 2026-06-07 | **7 頁已 shipped 接真實 API**（StrategyLibrary/NewRun/RunsTable/RunReport/Compare/Sweep/ValidateGate，均含 .test.tsx）；剩 Cmd-K 命令面板 |
 | 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | — | 10h | ⏳ | — | M5 |
 
-**模組小計**：~76h（已完成 ~49h ≈ 64%）| 後端契約 ~80%（8.G.0 對標 + 8.G.3 gate_state/gate_machine + 8.G.4 trials→DSR + 8.G.5 CLI 全套〔run-is/runs/sweep/compare/validate/promote-check〕✅；剩 8.G.2 RunConfig OOS/sweep 鎖死 + 8.G.1 runs 主表 DDL）；前端 8.G.6–8.G.8 0%（edge 未證前延後）
+**模組小計**：~76h（已完成 ~63h ≈ 83%）| 後端契約 ~80%（8.G.0 對標 + 8.G.3 gate_state/gate_machine + 8.G.4 trials→DSR + 8.G.5 CLI 全套〔run-is/runs/sweep/compare/validate/promote-check〕✅；剩 8.G.2 RunConfig OOS/sweep 鎖死 + 8.G.1 runs 主表 DDL）；**前端 8.G.7 research 工作區 7 頁已 shipped（platform-first pivot 期間建置，非延後）**，剩 8.G.6 token 擴充 + 8.G.8 Promotion stepper + Cmd-K
 
 ### 模組 8.H 前後端 REST 契約落地（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）— 新增
 
@@ -347,8 +347,8 @@
 | ID | 任務 | 估時 | 狀態 | 完成日 | 備註 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 8.H.0 | 契約合一盤點 + doc 25 + ADR-021 + 06/21/20/12 banner | 8h | ✅ | 2026-06-04 | workflow `wf_e27bec66-9c6`（20 agents）；12/12 缺口對抗式驗證確認 |
-| 8.H.1 | **M3.0 契約合一閘**：`envelope.py` error 字串→`{code,message,detail}`、`app.py` Bearer dep、修 `/runs` window→is_start/is_end null bug、接 openapi-typescript、regression test | 6h | ⏳ | — | 零新邏輯；後續一切前置 |
-| 8.H.2 | **M3.1 便宜 config/catalog 讀路由**：`/research/universe-filters`·`/runs/estimate`·`/system/risk/*`·`/system/alerts/{rules,channels,test}`·`/presets/{name}` enrich | 8h | ⏳ | — | gate.py pattern；解鎖 run_02/sys_alerts(讀)/mon_d(config) |
+| 8.H.1 | **M3.0 契約合一閘**：`envelope.py` error 字串→`{code,message,detail}`、`app.py` Bearer dep、修 `/runs` window→is_start/is_end null bug、接 openapi-typescript、regression test | 6h | ✅ | 2026-06-07 | **PR #74** `feat/contract-gate`：`ApiError{code,message,detail}` 物件 + 3 exception handler + `test_contract_envelope.py` regression |
+| 8.H.2 | **M3.1 便宜 config/catalog 讀路由**：`/research/universe-filters`·`/runs/estimate`·`/system/risk/*`·`/system/alerts/{rules,channels,test}`·`/presets/{name}` enrich | 8h | 🟡 | — | `/research/universe-filters` + `/runs/estimate` ✅（PR #72，Sweep 頁已接）；剩 `/system/risk/*`·`/system/alerts/*`·`/presets/{name}` enrich |
 | 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | ⏳ | — | 解鎖 run_04/05、mon_a 回測半 |
 | 8.H.4 | **M3.3 strategy registry + 側存**：`/research/strategies*`·`/research/saved-views`·`/runs/tag`（projection over ledger，9.G.1 runs 主表落地） | 8h | ⏳ | — | 解鎖 run_01/03 |
 | 8.H.5 | **M3.4 trials/DSR guardrail 持久化**：`/runs/trials`·`/research/trials/increment`（接 8.G.4 TrialsCounter 持久化） | 4h | ⏳ | — | 解鎖 run_03/05 |
@@ -356,7 +356,7 @@
 | 8.H.7 | **M3.6 validation+promotion service（CRITICAL #3）**：抽 `promotion_service.py`、持久化 validation_status/stage + immutable promotion_audit、`/research/validate/*`·`/research/promote/*` | 16h | ⏳ | — | 解鎖 run_07/08 |
 | 8.H.8 | **M4 live-telemetry daemon（CRITICAL #1, needs-data）**：`runtime/` paper daemon、實作 `upsert_signals/orders/fills`、`market_reader`、全 `/monitor/*`、editable alerts | 24h | ⏳ | — | 解鎖 mon_a/b/c/d、sys_alerts 編輯；WS `/ws/positions/live` 仍 M5 |
 
-**模組小計**：~96h（已完成 ~8h ≈ 8%）| M3.0 為合一閘，其餘 ready 工作（8.H.2/8.H.3）僅依賴 M3.0，3 個 CRITICAL blocker（8.H.6/8.H.7/8.H.8）押後；**前端建置 gated 於 v3 edge 證明（與 8.G 同律）**
+**模組小計**：~96h（已完成 ~14h ≈ 15%：8.H.0 ✅ + 8.H.1 ✅ + 8.H.2 半）| M3.0 合一閘 ✅（PR #74）→ ready 工作（8.H.2 剩半/8.H.3）已解鎖可平行，3 個 CRITICAL blocker（8.H.6/8.H.7/8.H.8）為研究迴圈關鍵路徑；**Monitor 區（8.H.8 needs-data）排最後**
 
 ---
 
