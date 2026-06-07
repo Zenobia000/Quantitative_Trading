@@ -183,6 +183,70 @@ def upsert_positions(
 
 
 # ---------------------------------------------------------------------------
+# runs main table upsert — 8.G.1 (Run single-source-of-truth)
+# ---------------------------------------------------------------------------
+# Column order mirrors init.sql `runs` DDL. run_id is the deterministic 12-char
+# RunConfig hash (PK); created_at defaults in the DB. JSONB columns carry the
+# run's lineage/result payloads.
+_RUNS_COLS = (
+    "run_id",
+    "hypothesis",
+    "preset",
+    "engine",
+    "stocks",
+    "is_start",
+    "is_end",
+    "git_sha",
+    "bundle_ref",
+    "cost_assumptions",
+    "params",
+    "metrics",
+    "status",
+    "trials_count",
+)
+# Immutable on conflict — identity + creation stamp never change on a re-run.
+_RUNS_IMMUTABLE_COLS = ("run_id", "created_at")
+# JSONB columns — serialized to json text (PostgreSQL text→jsonb assignment cast).
+_RUNS_JSON_COLS = ("stocks", "cost_assumptions", "params", "metrics")
+
+
+def upsert_runs(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
+    """Upsert run records into the `runs` main table (ON CONFLICT run_id DO UPDATE).
+
+    A re-run of the same RunConfig (same deterministic run_id) updates the
+    mutable result columns (status / metrics / trials_count / ...) while keeping
+    run_id and created_at intact. JSONB columns accept dict/list and are
+    json-serialized here. Empty list returns 0 without opening a connection.
+    """
+    if not rows:
+        return 0
+
+    cfg = cfg or DBConfig.from_env()
+    import json
+
+    from psycopg2.extras import execute_values  # type: ignore[import-not-found]
+
+    update_cols = [c for c in _RUNS_COLS if c not in _RUNS_IMMUTABLE_COLS]
+    set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+    sql = (
+        f"INSERT INTO runs ({', '.join(_RUNS_COLS)}) VALUES %s "
+        f"ON CONFLICT (run_id) DO UPDATE SET {set_clause}"
+    )
+
+    def _cell(col: str, value: Any) -> Any:
+        if col in _RUNS_JSON_COLS and value is not None:
+            return json.dumps(value, ensure_ascii=False, default=str)
+        return value
+
+    tuples = [tuple(_cell(col, row.get(col)) for col in _RUNS_COLS) for row in rows]
+
+    with _connection(cfg) as conn, conn.cursor() as cur:
+        execute_values(cur, sql, tuples, page_size=500)
+    logger.info("upsert_runs wrote {} rows", len(rows))
+    return len(rows)
+
+
+# ---------------------------------------------------------------------------
 # M4 stubs — signals / orders / fills writers.
 #
 # These tables exist in init.sql but the high-level writers wait for the

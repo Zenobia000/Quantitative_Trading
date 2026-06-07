@@ -293,7 +293,7 @@
 | 7.C.3 | Risk metrics 即時計算 | — | 8h | ⏳ | — | — |
 | 7.D.1 | Prefect daily flow 每日排程 | — | 8h | 🟡 | 2026-06-04 | `orchestration/daily_flow.py` fail-fast staged 引擎（ETL→signals→risk→orders→log，collaborator 注入）+ **Prefect-optional**（`as_prefect_flow`：未裝 prefect 則 inline fallback，prefect 非硬依賴）|
 | 7.D.2 | orchestration/cli.py 完整 | — | 8h | 🟡 | 2026-06-04 | `orchestration/cli.py` run〔--dry-run/--real〕+ list-stages；dry-run 跑 no-op demo 管線（安全），real 套 build_daily_stages；18 測試、模組 94% cov |
-| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | ⏳ | — | engine/CLI 已備（7.D.1/2），待接真實 ETL/signals/RiskGate/PaperBroker collaborators |
+| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | 🟡 | 2026-06-07 | **端到端整合測試 ✅**：`test_chain_integration.py` 用真實 RiskGate（12 規則）+ PaperBroker（模擬撮合）跑 ETL→signals→risk→orders→log，驗 fills 落帳/cash 扣減/風控拒單 halt before orders/缺 collaborator 乾淨失敗（3 tests，非 stub）。剩 real ETL/signals 接 parquet + CLI `--real` 接線 |
 
 **模組小計**：~110h
 
@@ -329,7 +329,7 @@
 | 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
 |:--|:--|:--|:--:|:--:|:--|:--|
 | 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | — | 8h | ✅ | 2026-06-02 | — |
-| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | — | 6h | ⏳ | — | M0/M2 |
+| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | — | 6h | 🟡 v0.1-min | 2026-06-07 | **v0.1-min ✅**：`runs` 主表 DDL（init.sql + migration 002）+ `db_writer.upsert_runs()`（冪等 ON CONFLICT run_id，JSONB 血緣欄，13 tests）+ doc 21 §4.2b。**剩 v0.2-full**：4 張時序表回補 run_id FK（migration 003，需先 backfill 孤兒 run_id）|
 | 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | — | 6h | 🟡 v0.1-min | 2026-06-02 | `research/run_config.py`（IS 區間 + 成本 + engine + hypothesis 強制欄已實作）；OOS 鎖死 / range-step sweep / hypothesis 系統鎖死延後 v0.2 |
 | 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | — | 8h | ✅ v0.1+v0.3 | — | M0/M2；`gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
 | 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |
@@ -349,14 +349,14 @@
 | 8.H.0 | 契約合一盤點 + doc 25 + ADR-021 + 06/21/20/12 banner | 8h | ✅ | 2026-06-04 | workflow `wf_e27bec66-9c6`（20 agents）；12/12 缺口對抗式驗證確認 |
 | 8.H.1 | **M3.0 契約合一閘**：`envelope.py` error 字串→`{code,message,detail}`、`app.py` Bearer dep、修 `/runs` window→is_start/is_end null bug、接 openapi-typescript、regression test | 6h | ✅ | 2026-06-07 | **PR #74** `feat/contract-gate`：`ApiError{code,message,detail}` 物件 + 3 exception handler + `test_contract_envelope.py` regression |
 | 8.H.2 | **M3.1 便宜 config/catalog 讀路由**：`/research/universe-filters`·`/runs/estimate`·`/system/risk/*`·`/system/alerts/{rules,channels,test}`·`/presets/{name}` enrich | 8h | 🟡 | — | `/research/universe-filters` + `/runs/estimate` ✅（PR #72，Sweep 頁已接）；剩 `/system/risk/*`·`/system/alerts/*`·`/presets/{name}` enrich |
-| 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | ⏳ | — | 解鎖 run_04/05、mon_a 回測半 |
-| 8.H.4 | **M3.3 strategy registry + 側存**：`/research/strategies*`·`/research/saved-views`·`/runs/tag`（projection over ledger，9.G.1 runs 主表落地） | 8h | ⏳ | — | 解鎖 run_01/03 |
-| 8.H.5 | **M3.4 trials/DSR guardrail 持久化**：`/runs/trials`·`/research/trials/increment`（接 8.G.4 TrialsCounter 持久化） | 4h | ⏳ | — | 解鎖 run_03/05 |
-| 8.H.6 | **M3.5 async job（CRITICAL #2）+ bundle/DQ**：`jobs/` 模組、`POST /runs` async、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | 16h | ⏳ | — | 解鎖 run_06/sys_data/run_02 async |
-| 8.H.7 | **M3.6 validation+promotion service（CRITICAL #3）**：抽 `promotion_service.py`、持久化 validation_status/stage + immutable promotion_audit、`/research/validate/*`·`/research/promote/*` | 16h | ⏳ | — | 解鎖 run_07/08 |
+| 8.H.3 | **M3.2 暴露已算 series**：`/runs/{id}/equity`·`/runs/{id}/trades`·compare `?run_ids`（切 `run_and_judge_with_returns` 持久化） | 6h | 🟡 | 2026-06-07 | **equity/trades ✅**：per-run sidecar（`run_series_store`）+ `run_and_judge_persist` executor 寫入 + `runs_series.py` 讀（12 tests）；解鎖 run_04/05、mon_a 回測半。剩 compare `?run_ids` 子集模式 |
+| 8.H.4 | **M3.3 strategy registry + 側存**：`/research/strategies*`·`/research/saved-views`·`/runs/tag`（projection over ledger，9.G.1 runs 主表落地） | 8h | 🟡 | 2026-06-07 | `/research/strategies*` 既有 ✅；**saved-views CRUD + /runs/tag ✅**（`saved_views_store` + `run_tags_store` JSONL，request model 內聚於 router，13 tests）；解鎖 run_01/03 |
+| 8.H.5 | **M3.4 trials/DSR guardrail 持久化**：`/runs/trials`·`/research/trials/increment`（接 8.G.4 TrialsCounter 持久化） | 4h | ✅ | 2026-06-07 | `trials_counter_store`（per-param-space 累計 JSON，包 `TrialsCounter` 驗證）+ `/research/trials/increment` 真接；解鎖 run_03/05 |
+| 8.H.6 | **M3.5 async job（CRITICAL #2）+ bundle/DQ**：`jobs/` 模組、`POST /runs` async、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | 16h | 🟡 | 2026-06-07 | **`jobs/` 模組 ✅**（dependency-free in-process：models/job_store JSONL/job_runner sync `run_job`+threaded `submit`，queued→running→done\|failed，11 tests）+ `/research/sweep` POST async（grid-expansion plan）+ `/{id}/status` 真接。剩 `POST /runs` 改 async、`/runs/{id}/log`、`/system/{bundles,ingest}` 接 jobs（POST /runs 維持 sync 不破壞既有）|
+| 8.H.7 | **M3.6 validation+promotion service（CRITICAL #3）**：抽 `promotion_service.py`、持久化 validation_status/stage + immutable promotion_audit、`/research/validate/*`·`/research/promote/*` | 16h | 🟡 | 2026-06-07 | **核心 ✅**：`promotion_service` + event-sourced `validation_store`/`promotion_store`（append-only = immutable audit）；`/validate/{id}/gate-state` 真接、`/promote/{id}` GET/POST 嚴格 draft→paper→live 順序閘 + audit（26 tests）+ 前端 PromotePage 接線。剩 `/validate/{id}/wfa`(S7)·`/redline`(PBO/DSR matrix) |
 | 8.H.8 | **M4 live-telemetry daemon（CRITICAL #1, needs-data）**：`runtime/` paper daemon、實作 `upsert_signals/orders/fills`、`market_reader`、全 `/monitor/*`、editable alerts | 24h | ⏳ | — | 解鎖 mon_a/b/c/d、sys_alerts 編輯；WS `/ws/positions/live` 仍 M5 |
 
-**模組小計**：~96h（已完成 ~14h ≈ 15%：8.H.0 ✅ + 8.H.1 ✅ + 8.H.2 半）| M3.0 合一閘 ✅（PR #74）→ ready 工作（8.H.2 剩半/8.H.3）已解鎖可平行，3 個 CRITICAL blocker（8.H.6/8.H.7/8.H.8）為研究迴圈關鍵路徑；**Monitor 區（8.H.8 needs-data）排最後**
+**模組小計**：~96h（已完成 ~58h ≈ 60%：8.H.0/8.H.1/8.H.5 ✅ + 8.H.2/8.H.3/8.H.4/8.H.6/8.H.7 🟡）| M3.0 合一閘 ✅（PR #74）+ **研究迴圈後端 PR #76**（拆縫 + S2 async jobs / S3 promotion service / S4 series / S5 registry-trials，dependency-free stores + event-sourced audit）；剩 8.H.6 `POST /runs` async 化 + 8.H.8 M4 live-telemetry daemon（needs-data）；**Monitor 區（8.H.8 needs-data）排最後**
 
 ---
 

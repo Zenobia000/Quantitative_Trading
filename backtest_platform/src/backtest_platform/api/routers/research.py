@@ -4,8 +4,13 @@ The ledger (``research.runs_store``) is the single source of truth; this router
 derives *strategy*-level views from it without any new persistence. A "strategy"
 is keyed by ``preset`` (v2 / v3 / …) — every run carries one, so grouping the
 append-only ledger by preset yields a roster with best-KPI, validation status and
-run counts. Stateful research features (saved-views, validate/promote state
-machines, sweep jobs) need new persistence and are intentionally NOT wired here.
+run counts.
+
+Stateful research features were split into sibling routers in the M3
+parallelization seam (so each work-stream owns a disjoint file):
+``research_validate`` / ``research_promote`` (S3), ``research_registry`` (S5,
+saved-views + trials), ``research_sweep`` (S2). This module keeps only the
+stateless read projections (strategy roster + config-driven universe filters).
 """
 from __future__ import annotations
 
@@ -66,11 +71,6 @@ def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return out
-
-
-def _pending(data: Any, ttl: int = 300) -> Envelope:
-    """Typed-empty envelope for research features needing new persistence/logic."""
-    return ok(data, meta={"data_source": "pending", "ttl": ttl})
 
 
 @router.get("/strategies", response_model=Envelope, tags=["research"])
@@ -135,45 +135,3 @@ def universe_filters() -> Envelope:
         },
         meta={"ttl": 600},
     )
-
-
-@router.get("/saved-views", response_model=Envelope)
-def saved_views() -> Envelope:
-    return _pending([])
-
-
-@router.post("/saved-views", response_model=Envelope)
-def saved_views_create() -> Envelope:
-    return _pending({"id": "stub"})
-
-
-@router.post("/trials/increment", response_model=Envelope)
-def trials_increment() -> Envelope:
-    return _pending({"cumulative_trials": None})
-
-
-# Validate gate state machine (M3.6, needs persistence)
-@router.get("/validate/{run_id}/gate-state", response_model=Envelope)
-def gate_state(run_id: str) -> Envelope:
-    return _pending({"run_id": run_id, "validation_status": None, "stage": None})
-
-
-@router.get("/validate/{run_id}/wfa", response_model=Envelope)
-def validate_wfa(run_id: str) -> Envelope:
-    return _pending({"folds": [], "scatter": []})
-
-
-@router.get("/validate/{run_id}/redline", response_model=Envelope)
-def validate_redline(run_id: str) -> Envelope:
-    return _pending({"pbo": None, "dsr_matrix": []})
-
-
-# Promote state machine (M3.6, needs persistence)
-@router.get("/promote/{strategy_id}", response_model=Envelope)
-def promote_state(strategy_id: str) -> Envelope:
-    return _pending({"strategy_id": strategy_id, "stage": "draft", "history": [], "gates": []})
-
-
-@router.get("/promote/{strategy_id}/audit", response_model=Envelope)
-def promote_audit(strategy_id: str) -> Envelope:
-    return _pending([])

@@ -8,12 +8,16 @@ import numpy as np
 import pandas as pd
 
 from backtest_platform.research.is_harness import (
+    equity_drawdown,
     run_and_judge,
+    run_and_judge_persist,
     run_and_judge_with_returns,
     run_is,
     run_is_returns,
+    run_is_trades,
 )
 from backtest_platform.research.run_config import RunConfig
+from backtest_platform.research.run_series_store import read_series
 
 
 def _synthetic_loader(sid: str) -> pd.DataFrame:
@@ -94,3 +98,38 @@ def test_run_and_judge_with_returns_single_pass() -> None:
     # returns aligns with the record's bar count
     assert isinstance(returns, pd.Series)
     assert len(returns) == rec["metrics"]["bars"]
+
+
+# ---- S4: trades + equity/drawdown + persist sidecar ---------------------
+
+def test_run_is_trades_shape() -> None:
+    trades = run_is_trades(_cfg(), loader=_synthetic_loader)
+    assert isinstance(trades, list)
+    # closed-trade count must match the metric the gate reads
+    assert len(trades) == run_is(_cfg(), loader=_synthetic_loader)["closed"]
+    if trades:
+        assert {"ret", "hold", "entry_structure"} <= set(trades[0])
+
+
+def test_equity_drawdown_from_returns() -> None:
+    returns = run_is_returns(_cfg(), loader=_synthetic_loader)
+    equity, drawdown = equity_drawdown(returns)
+    assert len(equity) == len(drawdown) == len(returns)
+    assert all(d <= 1e-9 for d in drawdown)  # drawdown is <= 0
+    assert all(isinstance(x, float) for x in equity)
+
+
+def test_equity_drawdown_empty() -> None:
+    assert equity_drawdown(pd.Series(dtype=float)) == ([], [])
+
+
+def test_run_and_judge_persist_writes_sidecar(tmp_path) -> None:
+    cfg = _cfg(hypothesis="persist series")
+    rec = run_and_judge_persist(cfg, loader=_synthetic_loader, series_dir=tmp_path)
+    # record is the same shape as run_and_judge (heavy series go to the sidecar)
+    assert rec["run_id"] == cfg.run_id
+    assert "equity" not in rec  # ledger line stays lean
+    series = read_series(cfg.run_id, series_dir=tmp_path)
+    assert series is not None
+    assert len(series["equity"]) == rec["metrics"]["bars"]
+    assert isinstance(series["trades"], list)

@@ -356,6 +356,7 @@ zipline 透過 `~/.zipline/extension.py` 找 bundle；本專案改採「import �
 | 11 | `validation_runs` | | | ✅ | | | regular | PBO/DSR/WFA |
 | 12 | `data_quality_log` | ✅ | | | | | regular | DQ 異常 |
 | 13 | `alerts` | | | | ✅ | | hypertable | 告警記錄 |
+| 14 | `runs` | | | ✅ | | | regular | Run 主表（single source of truth）|
 
 ### 4.2 M1 既有四表（簡化引用，完整 DDL 見 `dashboard/db_schema.sql`）
 
@@ -377,6 +378,36 @@ CREATE INDEX ON daily_bars (stock_id, trade_date DESC);
 
 -- institutional_flows, broker_chips, universe 略（M1 已存在）
 ```
+
+### 4.2b 新增表 — runs（M3，8.G.1）
+
+Run 作為一級物件的主表：把散落的 `reports/perf__/summary__` 報表與四張時序表上的孤兒 `run_id` 收口成單一具血緣的真相源。`run_id` = `research/run_config.py` 的決定性 12 字元 hash（非 wall-clock），同一 RunConfig 重跑可冪等 upsert（更新 status/metrics/trials，保留 run_id/created_at）。
+
+```sql
+CREATE TABLE runs (
+    run_id            TEXT PRIMARY KEY,        -- 決定性 RunConfig hash
+    hypothesis        TEXT NOT NULL,           -- 預先註冊（反過擬合）
+    preset            TEXT NOT NULL,           -- 策略 preset (v2 / v3 / ...)
+    engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
+    stocks            JSONB NOT NULL,          -- 此 run 的 universe
+    is_start          DATE NOT NULL,
+    is_end            DATE NOT NULL,
+    git_sha           TEXT,                    -- 程式碼血緣
+    bundle_ref        TEXT,                    -- 資料 bundle 血緣
+    cost_assumptions  JSONB,                   -- 手續費 / 稅 / 滑點
+    params            JSONB,                   -- 進出場參數
+    metrics           JSONB,                   -- 結果摘要 (cagr / sharpe / ...)
+    status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
+    trials_count      INTEGER NOT NULL DEFAULT 0,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT runs_window_ck CHECK (is_start < is_end),
+    CONSTRAINT runs_status_ck CHECK (status IN ('created','running','done','failed'))
+);
+CREATE INDEX ON runs (preset, created_at DESC);
+CREATE INDEX ON runs (status, created_at DESC);
+```
+
+> **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。四張時序表（equity_snapshots / positions / signals / risk_metrics）回補 `run_id → runs(run_id)` FK 屬 v0.2-full（migration 003，需先 backfill 每個孤兒 run_id 對應的 `runs` 列）。寫入器見 `data/db_writer.py:upsert_runs`；migration 見 `docker/timescaledb/migrations/002_add_runs_table.sql`。
 
 ### 4.3 新增表 — equity_snapshots（M2）
 

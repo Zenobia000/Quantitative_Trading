@@ -1,0 +1,48 @@
+"""S3 endpoints — /research/validate/{id}/gate-state, /research/promote/{id} (+audit).
+
+Isolated by pointing the stores' module-level DEFAULT paths at tmp_path.
+"""
+from __future__ import annotations
+
+import pytest
+
+from backtest_platform.research import promotion_service, promotion_store, validation_store
+
+
+@pytest.fixture
+def isolate_stores(tmp_path, monkeypatch):
+    monkeypatch.setattr(validation_store, "DEFAULT_VALIDATION_PATH", tmp_path / "val.jsonl")
+    monkeypatch.setattr(promotion_store, "DEFAULT_PROMOTION_PATH", tmp_path / "promo.jsonl")
+
+
+def test_gate_state_empty_then_recorded(client, isolate_stores):
+    body = client.get("/research/validate/r1/gate-state").json()
+    assert body["success"] is True
+    assert body["data"]["validation_status"] is None
+    # drive a transition through the service (same default path)
+    promotion_service.record_is_result(
+        "r1",
+        {"cagr": 0.25, "sharpe": 1.3, "slippage_sharpe": 1.1,
+         "struct1_pct": 0.1, "churn_pct": 0.1, "avg_hold": 8.0},
+    )
+    body = client.get("/research/validate/r1/gate-state").json()
+    assert body["data"]["validation_status"] == "is_pass"
+    assert len(body["data"]["history"]) == 1
+
+
+def test_promote_advance_and_audit(client, isolate_stores):
+    assert client.get("/research/promote/s1").json()["data"]["stage"] == "draft"
+    r = client.post("/research/promote/s1", json={"to_stage": "paper", "note": "ok"})
+    assert r.status_code == 200 and r.json()["data"]["stage"] == "paper"
+    audit = client.get("/research/promote/s1/audit").json()["data"]
+    assert audit[0]["stage"] == "paper" and audit[0]["note"] == "ok"
+
+
+def test_promote_illegal_skip_422(client, isolate_stores):
+    assert client.post("/research/promote/s2", json={"to_stage": "live"}).status_code == 422
+
+
+def test_validate_wfa_redline_still_pending(client, isolate_stores):
+    for sub in ("wfa", "redline"):
+        body = client.get(f"/research/validate/r1/{sub}").json()
+        assert body["meta"]["data_source"] == "pending"

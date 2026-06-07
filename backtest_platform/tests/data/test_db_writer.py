@@ -163,6 +163,80 @@ def test_upsert_fills_stub_raises_not_implemented() -> None:
         upsert_fills([{"fill_id": "x"}])
 
 
+# ---------------------------------------------------------------------------
+# 8.G.1 — runs main table upsert (Run single-source-of-truth)
+# ---------------------------------------------------------------------------
+
+
+def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
+    """runs uses ON CONFLICT (run_id) DO UPDATE; run_id/created_at stay immutable."""
+    from backtest_platform.data.db_writer import upsert_runs
+
+    cur = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+
+    rows = [
+        {
+            "run_id": "a1b2c3d4e5f6",
+            "hypothesis": "v3 entry beats v2 on 2330 IS window",
+            "preset": "v3",
+            "engine": "sim",
+            "stocks": ["2330", "2317"],
+            "is_start": date(2020, 1, 1),
+            "is_end": date(2024, 12, 31),
+            "git_sha": "deadbeef",
+            "bundle_ref": "finmind@2024-12-31",
+            "cost_assumptions": {"fee": 0.001425, "tax": 0.003},
+            "params": {"min_structure": 2},
+            "metrics": {"cagr": -0.018, "sharpe": -0.2},
+            "status": "done",
+            "trials_count": 1,
+        }
+    ]
+
+    with patch(
+        "backtest_platform.data.db_writer._connection"
+    ) as mock_conn_ctx, patch(
+        "psycopg2.extras.execute_values"
+    ) as mock_exec:
+        mock_conn_ctx.return_value.__enter__.return_value = conn
+        n = upsert_runs(rows)
+
+    assert n == 1
+    assert mock_exec.call_count == 1
+    sql = mock_exec.call_args.args[1]
+    tuples = mock_exec.call_args.args[2]
+    assert sql.startswith("INSERT INTO runs")
+    assert "ON CONFLICT (run_id) DO UPDATE SET" in sql
+    # Immutable columns must NOT be in SET clause
+    for forbidden in ("run_id = EXCLUDED.run_id", "created_at = EXCLUDED.created_at"):
+        assert forbidden not in sql, f"forbidden SET clause: {forbidden}"
+    # Mutable columns must be in SET clause (re-runs update status/metrics/trials)
+    for required in (
+        "status = EXCLUDED.status",
+        "metrics = EXCLUDED.metrics",
+        "trials_count = EXCLUDED.trials_count",
+    ):
+        assert required in sql, f"missing SET clause: {required}"
+    # JSONB columns must be serialized to json text (psycopg2 text→jsonb assignment cast)
+    row = tuples[0]
+    cols = sql[sql.index("(") + 1 : sql.index(")")].split(", ")
+    by_col = dict(zip(cols, row))
+    assert by_col["stocks"] == '["2330", "2317"]'
+    assert by_col["metrics"] == '{"cagr": -0.018, "sharpe": -0.2}'
+    assert by_col["hypothesis"] == "v3 entry beats v2 on 2330 IS window"
+
+
+def test_upsert_runs_empty_returns_zero() -> None:
+    from backtest_platform.data.db_writer import upsert_runs
+
+    with patch("backtest_platform.data.db_writer._connection") as mock_conn_ctx:
+        n = upsert_runs([])
+    assert n == 0
+    mock_conn_ctx.assert_not_called()
+
+
 @pytest.mark.integration
 def test_real_upsert_idempotent() -> None:
     """Round-trip against a live TimescaleDB. Skipped unless env says it's up."""

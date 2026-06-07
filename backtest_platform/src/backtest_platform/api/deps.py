@@ -32,11 +32,14 @@ def get_runs_path() -> Path:
 
 
 def get_run_executor() -> RunExecutor:
-    """Return the real IS executor (``run_and_judge``), imported lazily.
+    """Return the real IS executor (``run_and_judge_persist``), imported lazily.
 
     Tests override this dependency with a stub so triggering a run never touches
-    parquet/zipline; production resolves the genuine research-loop executor.
+    parquet/zipline; production resolves the genuine research-loop executor. The
+    persisting variant also writes the per-run equity/drawdown/trades sidecar
+    (``run_series_store``) so ``GET /runs/{id}/equity`` · ``/trades`` have data
+    without a second sim pass.
     """
-    from backtest_platform.research.is_harness import run_and_judge
+    from backtest_platform.research.is_harness import run_and_judge_persist
 
-    return run_and_judge
+    return run_and_judge_persist

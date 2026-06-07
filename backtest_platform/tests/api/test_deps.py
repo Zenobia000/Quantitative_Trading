@@ -25,6 +25,6 @@ def test_get_runs_path_honours_env(monkeypatch, tmp_path):
 
 
 def test_get_run_executor_returns_real_runner():
-    from backtest_platform.research.is_harness import run_and_judge
+    from backtest_platform.research.is_harness import run_and_judge_persist
 
-    assert get_run_executor() is run_and_judge
+    assert get_run_executor() is run_and_judge_persist

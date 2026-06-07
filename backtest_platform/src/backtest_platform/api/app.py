@@ -19,7 +19,22 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from backtest_platform.api.envelope import Envelope, fail, ok
-from backtest_platform.api.routers import gate, home, metrics, monitor, presets, research, runs, system
+from backtest_platform.api.routers import (
+    gate,
+    home,
+    metrics,
+    monitor,
+    presets,
+    research,
+    research_promote,
+    research_registry,
+    research_sweep,
+    research_validate,
+    runs,
+    runs_series,
+    runs_tags,
+    system,
+)
 
 API_VERSION = "0.6.0"
 
@@ -63,10 +78,16 @@ def create_app() -> FastAPI:
         return ok({"status": "ok", "version": API_VERSION})
 
     app.include_router(runs.router)
+    app.include_router(runs_series.router)  # M3 seam: S4 computed series (8.H.3)
+    app.include_router(runs_tags.router)  # M3 seam: S5 run tagging (8.H.4)
     app.include_router(gate.router)
     app.include_router(metrics.router)
     app.include_router(presets.router)
     app.include_router(research.router)
+    app.include_router(research_validate.router)  # M3 seam: S3 validate (8.H.7)
+    app.include_router(research_promote.router)  # M3 seam: S3 promote (8.H.7)
+    app.include_router(research_registry.router)  # M3 seam: S5 saved-views/trials (8.H.4/5)
+    app.include_router(research_sweep.router)  # M3 seam: S2 async sweep (8.H.6)
     app.include_router(monitor.router)
     app.include_router(system.router)
     app.include_router(home.router)

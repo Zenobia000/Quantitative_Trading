@@ -90,6 +90,36 @@ CREATE INDEX IF NOT EXISTS idx_trades_stock_time ON trades (stock_id, signal_tim
 CREATE INDEX IF NOT EXISTS idx_trades_signal_type ON trades (signal_type, signal_time DESC);
 
 -- ============================================================
+-- M3 §4.x — runs : the Run as a first-class object (single source of truth).
+-- Collects what used to be scattered reports/perf__/summary__ orphan files and
+-- the orphan run_id columns on the time-series tables into one lineage-bearing
+-- table. run_id = deterministic 12-char RunConfig hash (research/run_config.py).
+-- v0.1-min scope (8.G.1): table only; retroactive FK from equity_snapshots /
+-- positions / signals / risk_metrics is the v0.2-full migration.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS runs (
+    run_id            TEXT PRIMARY KEY,        -- deterministic RunConfig hash
+    hypothesis        TEXT NOT NULL,           -- pre-registered (anti-overfit)
+    preset            TEXT NOT NULL,           -- strategy preset (v2 / v3 / ...)
+    engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
+    stocks            JSONB NOT NULL,          -- universe for this run
+    is_start          DATE NOT NULL,
+    is_end            DATE NOT NULL,
+    git_sha           TEXT,                    -- code lineage
+    bundle_ref        TEXT,                    -- data bundle lineage
+    cost_assumptions  JSONB,                   -- fee / tax / slippage
+    params            JSONB,                   -- entry / exit params
+    metrics           JSONB,                   -- result summary (cagr / sharpe / ...)
+    status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
+    trials_count      INTEGER NOT NULL DEFAULT 0,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT runs_window_ck CHECK (is_start < is_end),
+    CONSTRAINT runs_status_ck CHECK (status IN ('created', 'running', 'done', 'failed'))
+);
+CREATE INDEX IF NOT EXISTS idx_runs_preset_created ON runs (preset, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_runs_status ON runs (status, created_at DESC);
+
+-- ============================================================
 -- M2 §4.3 — equity_snapshots : per-run portfolio equity curve.
 -- Composite PK = (snapshot_time, strategy_id, run_id) lets backtest
 -- + paper + live share table without collision.
