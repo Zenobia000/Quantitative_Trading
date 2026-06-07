@@ -127,7 +127,7 @@
 | 2.0 系統架構 | 80h | 80h | 100% | ✅ M1 完成 + M2 重組完成 |
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
-| 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；待 5.A.6 portfolio |
+| 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；5.A.6 portfolio IS 已執行（雙窗口全負 → ADR-016 K1/K2/K3 FAIL → 退場 ADR-017），全工作包落地 |
 | 6.0 統計驗證 | 180h | 64h | 36% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（待候選策略）|
 | 7.0 Paper+實盤 | 110h | 48h | 44% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI（fail-fast staged flow，Prefect-optional）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
@@ -256,7 +256,7 @@
 | 5.C.1 | Engine Protocol 抽象 | ARCH | 4h | ✅ v0.3 | — | `engines/protocol.py`（Engine Protocol + SimEngine 實作；zipline/vectorbt stub） |
 | 5.D.1 | engines/ Click CLI | DEV | 4h | ✅ | 2026-06-01 | commit c980a44，Sprint 1 Day 6-7 收尾 + README |
 
-**模組小計**：~100h | Sprint 1 ~30h + Sprint 2 ~30h + Sprint 3 5.A.7.a helper 4h + 5.A.7.b CLI/live ingest 2h = 66h（66%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套 + ADR-014 + `ingest_universe` helper（PR #15）+ `ingest` CLI 子命令 + **live 10 檔 ingest（R14 關閉，7 個 cache-gated 驗證測試解 skip）**；**剩餘關鍵路徑：5.A.6 multi-stock aggregator + portfolio IS 回測**
+**模組小計**：~100h | Sprint 1 ~30h + Sprint 2 ~30h + Sprint 3 5.A.7.a helper 4h + 5.A.7.b CLI/live ingest 2h = 66h（66%）— 主骨架 + bundle + Algorithm + Taiwan controls + CLI + wrapper bug fix + validation 三件套 + ADR-014 + `ingest_universe` helper（PR #15）+ `ingest` CLI 子命令 + **live 10 檔 ingest（R14 關閉，7 個 cache-gated 驗證測試解 skip）**；**5.A.6 portfolio IS 已執行（gate FAIL → ADR-017，非待辦）；模組全工作包落地，34% 缺口為策略無 edge 卡關非引擎缺料**
 
 ---
 
