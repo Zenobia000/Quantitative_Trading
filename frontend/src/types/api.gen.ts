@@ -71,6 +71,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/estimate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estimate
+         * @description Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.
+         *
+         *     Grid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``
+         *     → 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same
+         *     grid; we compute the cardinality directly (product of axis lengths) so no base
+         *     config is required just to count. ``preset`` is ignored as an axis.
+         */
+        get: operations["estimate_runs_estimate_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{run_id}": {
         parameters: {
             query?: never;
@@ -261,7 +286,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Universe Filters */
+        /**
+         * Universe Filters
+         * @description Supported universe filters from ``UniverseConfig.default()`` (real config).
+         *
+         *     Markets / capital / liquidity / price thresholds + exclusion reasons are
+         *     config-driven and returned as-is. ``industries`` is data-derived (needs the
+         *     loaded universe metadata) — empty until the bundle is ingested.
+         */
         get: operations["universe_filters_research_universe_filters_get"];
         put?: never;
         post?: never;
@@ -1271,6 +1303,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    estimate_runs_estimate_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
                 };
             };
         };
