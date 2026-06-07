@@ -276,7 +276,7 @@
 | 6.4.2 | Monte Carlo trade permutation | — | 8h | ✅ v0.2 | — | `validation/resampling.py` permutation p-value |
 | 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | ⏳ | — | M3 大頭 |
 
-**模組小計**：~180h（已完成 64h ≈ 36%）| **v0.2–v0.3 統計驗證 pipeline 後端 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials，對照 18 §4 + López de Prado，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（策略執行，待有候選）
+**模組小計**：~180h（已完成 72h ≈ 40%）| **驗證工具鏈 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials + 6.1.3 健檢表〔health_indicators 13 指標三級燈號〕，對照 18 §4 + v2.md §4.3.1 + López de Prado，202 tests）；剩 6.2.2 WFA scatter+圖表（partial）/ 6.5.x DOE（~100h，策略執行，待有候選）
 
 ---
 
