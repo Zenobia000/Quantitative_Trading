@@ -335,8 +335,8 @@
 | 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |
 | 8.G.5 | CLI：run-is/runs(v0.1) + sweep/compare(v0.3) + validate + promote-check(v0.6) ✅ | — | 8h | ✅ v0.6 | 2026-06-03 | `research/cli.py` run-is〔+`--tearsheet`〕/runs/sweep/compare/**validate**/**promote-check**；`validate`=接 `ValidationGate` 推進 IS→WFA→OOS 工作流 gate（IS 階段）+ OOS sealed-vault 狀態；`promote-check`=唯讀晉升閘，讀 `validation_status`（顯式欄優先，否則推導 IS 狀態），僅 APPROVED 才 ELIGIBLE 否則列待完成階段（防未驗證策略上線）。模組封頂 |
 | 8.G.6 | 設計系統 token 擴充（categorical/diverging/sequential 受控色盤）+ 研究級元件規格（CodeEditor / ResearchTable / CompareChart / FirstRunEmptyState / Cmd-K） | — | 6h | ⏳ | — | M0/M2 |
-| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | 🟡 | 2026-06-07 | **7 頁已 shipped 接真實 API**（StrategyLibrary/NewRun/RunsTable/RunReport/Compare/Sweep/ValidateGate，均含 .test.tsx）；剩 Cmd-K 命令面板 |
-| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | — | 10h | ⏳ | — | M5 |
+| 8.G.7 | 前端 Research 工作區（/research/runs · /runs/new · /runs/:id Run Report · /compare · /sweep · /validate）+ Cmd-K | — | 20h | 🟡 | 2026-06-07 | **9 頁已 shipped 接真實 API**（StrategyLibrary/NewRun/RunsTable/RunReport/Compare/Sweep/ValidateGate + **PromotePage**（晉升狀態機）+ **TradeReviewPage**（逐筆 + 權益摘要，接 /runs/{id}/trades·equity），均含 .test.tsx）；剩 Cmd-K 命令面板 |
+| 8.G.8 | 前端 Promotion stepper（/research/promote）+ A–E 改 /monitor/* 子視圖 + Panel E 重定位 Validate gate | — | 10h | 🟡 | 2026-06-07 | **Promotion stepper ✅**（PromotePage 接 8.H.7 promotion_service：stepper + advance mutation + immutable audit）；剩 A–E 改 /monitor/* 子視圖 + Panel E 重定位（M5，needs daemon data）|
 
 **模組小計**：~76h（已完成 ~63h ≈ 83%）| 後端契約 ~80%（8.G.0 對標 + 8.G.3 gate_state/gate_machine + 8.G.4 trials→DSR + 8.G.5 CLI 全套〔run-is/runs/sweep/compare/validate/promote-check〕✅；剩 8.G.2 RunConfig OOS/sweep 鎖死 + 8.G.1 runs 主表 DDL）；**前端 8.G.7 research 工作區 7 頁已 shipped（platform-first pivot 期間建置，非延後）**，剩 8.G.6 token 擴充 + 8.G.8 Promotion stepper + Cmd-K
 
