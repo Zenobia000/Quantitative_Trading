@@ -44,3 +44,25 @@ DSR）下，三大法人資金流因子在台股大型股 IS+OOS 雙過 ADR-016 
 WFA + PBO 三關未過。下一步＝擴 universe（含下市）+ WFA + PBO，全綠才談部署。
 
 腳本 `scripts/inst_flow_doe.py`；策略 `strategies/inst_flow/strategy.py`。
+
+---
+
+## GO 關卡（寬 universe 40 檔 + WFA + PBO，2026-06-07，PR #87）
+
+承首輪 IS+OOS 雙過，跑部署前三道關卡（`scripts/inst_flow_go_gates.py`，固定 config
+quarterly/lb60/foreign）：
+
+| 關卡 | 結果 | 門檻 | 判 |
+|:--|:--|:--|:--:|
+| **WFA**（12 rolling folds）| median OOS Sharpe **1.41** · OOS>0 **92%** · OOS>1.0 **67%** | median>1.0 + >0≥60% | ✅ |
+| **PBO**（24-config CSCV S=8）| **11.4%** | <30% | ✅ |
+| 全期固定 config（40 檔）| CAGR **18.9%** · Sharpe **1.11** | >18% / >1.0 | ✅ |
+
+**三關全過** → 條件式 GO（[ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md)）。
+WFA 12 個 rolling OOS 窗 median 1.41、92% 為正——非單一 OOS 窗運氣；PBO 11.4% 低度
+過擬合。**平台首個 IS+OOS+WFA+PBO 全過的 candidate。**
+
+### 仍未繳清（GO 前最後）
+- **survivorship-clean**：40 檔皆現存（大型股偏誤小但仍需含下市股複驗 WFA/PBO）。
+- **CAGR 18.9% 邊際**、**MaxDD ~31% 偏高** → 部署需風控設計。
+- 通過 survivorship-clean 後 → paper（實際執行摩擦）→ 小倉位實盤（ADR-016 sign-off）。
