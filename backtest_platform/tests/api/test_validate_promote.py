@@ -46,3 +46,22 @@ def test_validate_wfa_redline_still_pending(client, isolate_stores):
     for sub in ("wfa", "redline"):
         body = client.get(f"/research/validate/r1/{sub}").json()
         assert body["meta"]["data_source"] == "pending"
+
+
+def test_validate_health_projects_v2_bands(client, write_runs, sample_runs):
+    write_runs(sample_runs)
+    # bbb222: cagr 0.12 → yellow (8-18%), sharpe 0.90 → yellow (0.5-1.0)
+    body = client.get("/research/validate/bbb222/health").json()
+    assert body["success"] is True
+    rows = {r["key"]: r for r in body["data"]["rows"]}
+    assert len(body["data"]["rows"]) == 13
+    assert rows["cagr"]["light"] == "yellow"
+    assert rows["sharpe"]["light"] == "yellow"
+    assert rows["sortino"]["light"] == "na"  # not in the run's metrics
+    assert body["data"]["all_green"] is False
+
+
+def test_validate_health_unknown_run_all_na(client, write_runs, sample_runs):
+    write_runs(sample_runs)
+    body = client.get("/research/validate/ghost/health").json()
+    assert body["data"]["counts"]["na"] == 13
