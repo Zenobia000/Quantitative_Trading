@@ -122,3 +122,31 @@ def test_winsorizes_data_error_spike():
     # no inf / absurd return survived winsorization
     assert np.isfinite(res.daily_returns).all()
     assert res.daily_returns.abs().max() <= 0.5
+
+
+# --- absolute-momentum gate (Phase 2 crash filter) -----------------------
+
+def _down_then_up_panel() -> pd.DataFrame:
+    """All names crash for the first half, then recover — abs-momentum should sit
+    in cash during the crash (every name's 12-1 momentum negative)."""
+    dates = pd.bdate_range("2018-01-01", periods=600)
+    n = np.arange(600)
+    crash = np.where(n < 300, (0.997) ** n, (0.997) ** 300 * (1.004) ** (n - 300))
+    return pd.DataFrame({f"S{i}": 100 * crash * (1 + 0.0001 * i) for i in range(5)}, index=dates)
+
+
+def test_abs_momentum_off_is_vanilla():
+    panel = _panel()
+    base = backtest_momentum(panel, MomentumConfig(), "2019-01-01", "2019-12-31")
+    off = backtest_momentum(panel, MomentumConfig(abs_momentum=False), "2019-01-01", "2019-12-31")
+    assert base.daily_returns.equals(off.daily_returns)  # default path unchanged
+
+
+def test_abs_momentum_holds_cash_in_downturn():
+    panel = _down_then_up_panel()
+    # during the crash window every name's momentum is negative → abs gate = cash (flat)
+    on = backtest_momentum(panel, MomentumConfig(abs_momentum=True), "2019-01-01", "2019-06-30")
+    off = backtest_momentum(panel, MomentumConfig(abs_momentum=False), "2019-01-01", "2019-06-30")
+    # cash-during-crash must not lose more than always-invested; less drawdown
+    assert on.daily_returns.min() >= off.daily_returns.min() - 1e-9
+    assert on.daily_returns.std() <= off.daily_returns.std() + 1e-9

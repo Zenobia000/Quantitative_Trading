@@ -59,6 +59,11 @@ class MomentumConfig(BaseModel):
     max_leverage: float = Field(
         1.0, gt=0, le=3.0, description="vol-target 曝險上限（1.0=僅 de-risk 不加槓桿）"
     )
+    abs_momentum: bool = Field(
+        False,
+        description="絕對動能濾網：僅持有自身 12-1 momentum>0 的贏家，全為負則持現金"
+        "（Antonacci dual momentum 崩盤過濾；off=純相對動能）",
+    )
 
     def with_extra_slippage(self, slip: float) -> "MomentumConfig":
         """A copy with ``2*slip`` extra round-trip cost — for the K3 slippage Sharpe."""
@@ -143,19 +148,26 @@ def backtest_momentum(
             continue
         k = max(1, int(len(ranked) * cfg.top_fraction))
         held = list(ranked.index[:k])
-        seg = rets.loc[rb:nxt, held].mean(axis=1).copy()
-        turnover = len(set(held) ^ prev) / max(len(held), 1)
-        if len(seg):
-            total_cost = cfg.cost_round_rate * turnover
-            # ``spread`` amortizes the round-trip cost over the holding period (more
-            # realistic — you don't lose it all on day 1); ``lump`` charges it on the
-            # rebalance day. Either way a *deterministic* cost shifts mean return, not
-            # daily volatility, so Sharpe stays relatively cost-insensitive by design —
-            # judge cost-sensitivity via CAGR / net return, not Sharpe.
-            if cfg.cost_mode == "spread":
-                seg = seg - total_cost / len(seg)
-            else:
-                seg.iloc[0] = seg.iloc[0] - total_cost
+        if cfg.abs_momentum:
+            held = [name for name in held if ranked[name] > 0]  # absolute-momentum gate
+        if held:
+            seg = rets.loc[rb:nxt, held].mean(axis=1).copy()
+            turnover = len(set(held) ^ prev) / max(len(held), 1)
+            if len(seg):
+                total_cost = cfg.cost_round_rate * turnover
+                # ``spread`` amortizes the round-trip cost over the holding period (more
+                # realistic — you don't lose it all on day 1); ``lump`` charges it on the
+                # rebalance day. Either way a *deterministic* cost shifts mean return, not
+                # daily volatility, so Sharpe stays relatively cost-insensitive by design —
+                # judge cost-sensitivity via CAGR / net return, not Sharpe.
+                if cfg.cost_mode == "spread":
+                    seg = seg - total_cost / len(seg)
+                else:
+                    seg.iloc[0] = seg.iloc[0] - total_cost
+        else:
+            # abs-momentum gated every name out → hold cash (flat) this segment
+            seg = pd.Series(0.0, index=rets.loc[rb:nxt].index)
+            turnover = 1.0 if prev else 0.0
         segs.append(seg)
         holdings.append(len(held))
         turnovers.append(turnover)
