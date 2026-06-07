@@ -50,8 +50,16 @@ def test_deterministic_under_same_seed():
 def test_n_trials_deflates_dsr():
     # searching more configs lowers the Deflated Sharpe (selection-bias penalty)
     base = full_validation_report(_series(0.0008, 0.009), n_trials=1, n_iter=100)
-    many = full_validation_report(_series(0.0008, 0.009), n_trials=500, n_iter=100)
+    many = full_validation_report(
+        _series(0.0008, 0.009), n_trials=500, sharpe_variance=0.002, n_iter=100
+    )
     assert many["robustness"]["deflated_sharpe"] <= base["robustness"]["deflated_sharpe"]
+
+
+def test_multi_trial_requires_sharpe_variance():
+    # cannot honestly deflate for selection bias without the cross-trial variance
+    with pytest.raises(ValueError, match="sharpe_variance"):
+        full_validation_report(_series(0.0008, 0.009), n_trials=8, n_iter=50)
 
 
 def test_too_few_observations_raises():

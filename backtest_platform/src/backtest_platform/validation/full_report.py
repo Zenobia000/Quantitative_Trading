@@ -43,7 +43,7 @@ def full_validation_report(
     daily_returns: pd.Series,
     *,
     n_trials: int = 1,
-    sharpe_variance: float = 0.5,
+    sharpe_variance: float | None = None,
     n_iter: int = 1000,
     seed: int = 0,
 ) -> dict:
@@ -57,8 +57,11 @@ def full_validation_report(
         How many configurations were searched (drives the DSR deflation). Pass the
         real sweep count so the Deflated Sharpe is honest, not optimistic.
     sharpe_variance:
-        Cross-trial variance of the Sharpe estimates ``V[SR_n]`` for the DSR
-        deflation benchmark.
+        Cross-trial variance of the **per-period** Sharpe estimates ``V[SR_n]``
+        for the DSR deflation benchmark — must match the per-period Sharpe units
+        (NOT annualized). **Required when ``n_trials > 1``** (you cannot honestly
+        deflate for selection bias without the spread of the searched trials);
+        ignored when ``n_trials == 1`` (the expected-max benchmark is 0).
     n_iter, seed:
         Bootstrap / Monte-Carlo iterations and RNG seed (deterministic report).
 
@@ -73,6 +76,11 @@ def full_validation_report(
     arr = arr[np.isfinite(arr)]
     if arr.size < 2:
         raise ValueError("daily_returns must have >= 2 finite observations")
+    if n_trials > 1 and sharpe_variance is None:
+        raise ValueError(
+            "sharpe_variance (cross-trial, per-period units) is required when "
+            "n_trials > 1 — DSR cannot honestly deflate selection bias without it"
+        )
     s = pd.Series(arr)
 
     ann_sharpe = M.sharpe(s)
@@ -100,7 +108,7 @@ def full_validation_report(
         n_obs=arr.size,
         skew=float(s.skew()),
         kurtosis=float(s.kurtosis()) + 3.0,  # pandas excess → raw (3 for Gaussian)
-        sharpe_variance=sharpe_variance,
+        sharpe_variance=sharpe_variance if sharpe_variance is not None else 0.0,
     )
     robustness = {
         "sharpe_ci": {"lo": lo, "hi": hi, "point": point, "ci": 0.95},

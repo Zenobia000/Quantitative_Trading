@@ -274,7 +274,7 @@
 | 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
 | 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |
 | 6.4.2 | Monte Carlo trade permutation | — | 8h | ✅ v0.2 | — | `validation/resampling.py` permutation p-value |
-| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | 🟡 | 2026-06-07 | **runner ✅**：`validation/full_report.py` 一次組合 metrics+§4.3.1 健檢+bootstrap CI+MC edge p-value+DSR（per-period/raw-kurtosis 慣例正確、seeded 可重現、self-judge deployable vs ADR-016）；**端到端證實可用**——真實 momentum 策略 → full report 跨通（合成資料，9 tests）。剩：live universe ingest + 正式跑 DOE 1-10 + WFA/PBO sweep 層（需 per-config 回測） |
+| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | 🟡 | 2026-06-07 | **runner ✅ + 真實資料 DOE 跑通 ✅**：`validation/full_report.py`（metrics+§4.3.1 健檢+bootstrap+MC+DSR，self-judge）+ `scripts/momentum_doe_revalidation.py` 在 **live FinMind ingest 的 10 檔大型股**上跑 8-config DOE sweep（誠實跨試驗 DSR）→ 動能最佳 CAGR 19.6%/Sharpe 0.92/**DSR 0.96（非過擬合）**→ NO-GO（差 Sharpe 0.08，ADR-023 一致）。修正 DSR 單位 bug（per-period 變異數）。詳見 `momentum_doe_revalidation_result_2026-06-07.md`。剩：DOE 1-10 全套（factor IC/交互/WFA per-fold sweep）+ Phase 2 動能強化 |
 
 **模組小計**：~180h（已完成 72h ≈ 40%）| **驗證工具鏈 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials + 6.1.3 健檢表〔health_indicators 13 指標三級燈號〕，對照 18 §4 + v2.md §4.3.1 + López de Prado，202 tests）；剩 6.2.2 WFA scatter+圖表（partial）/ 6.5.x DOE（~100h，策略執行，待有候選）
 
