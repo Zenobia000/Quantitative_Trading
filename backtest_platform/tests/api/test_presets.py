@@ -26,4 +26,5 @@ def test_unknown_preset_returns_404_envelope(client):
     body = resp.json()
     assert body["success"] is False
     assert body["data"] is None
-    assert "does-not-exist" in body["error"]
+    assert body["error"]["code"] == "NOT_FOUND"
+    assert "does-not-exist" in body["error"]["message"]
