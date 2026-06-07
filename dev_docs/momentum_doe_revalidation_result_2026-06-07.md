@@ -68,3 +68,36 @@
 來自 **universe 太窄**（10 檔大型股；動能需要橫斷面廣度）。Phase 2 ② = 擴大乾淨
 universe（中小型動能溢酬更強），預期是把 Sharpe 推過 1.0 的主要槓桿。
 - **Phase 2 ② 待辦**：擴 universe（point-in-time 中小型 + 反 survivorship）後重跑 DOE。
+
+---
+
+## Phase 2 ②：擴 universe（40 檔 liquid TWSE）（2026-06-07）
+
+驗證「breadth 是 binding constraint」假設：10→40 檔 liquid TWSE，同 DOE（16 configs）
++ abs-momentum，統一 harness。腳本 `scripts/momentum_doe_wide_universe.py`。
+
+| reb | vt | lb | abs | CAGR | Sharpe | MaxDD | DSR | deploy |
+|:--|:--|:--|:--|--:|--:|--:|--:|:--:|
+| monthly | None | 126 | True | **19.8%** | **1.13** | 31.4% | **0.97** | ✅ |
+| monthly | None | 126 | False | 16.3% | 0.98 | 31.4% | 0.93 | ❌ |
+
+**最佳首度三閘全過**（CAGR 19.8%>18% ✅、Sharpe 1.13>1.0 ✅、DSR 0.97>0.95 ✅）→ 表面 GO。
+**breadth 確為 binding constraint**：10→40 檔，最佳 Sharpe 0.97→1.13。
+
+### ⚠️ 但這不是真 GO —— 兩道誠實稅未繳
+
+1. **生存者偏誤（致命）**：本次 40 檔皆**現存股**（無下市）。動能回測對下市輸家最敏感
+   ——R9 已實證 survivorship-clean（209 檔含 ~80 下市）最終 OOS Sharpe **0.63–0.86 → NO-GO**
+   （`momentum_survivorship_clean_result` / `momentum_go_nogo_result`）。本 1.13 是**survivorship
+   膨脹的天花板**，非真實可部署數字。
+2. **IS-only**：1.13 是 IS 窗（2016-2020）內樣本；ADR-016 部署要 **OOS Sharpe>1.0 + WFA + PBO**。
+   本次 DSR 0.97 只 deflate 本 DOE 的 16 trials，未含跨階段累積試驗、未含 OOS。
+
+### 收斂判讀（守 ADR-016，不自欺）
+
+Phase 2 完整量化了缺口的來源：**動能在「乾淨橫斷面廣度」下 IS 能過 1.0，但 R9 已測得
+survivorship+OOS 稅把它打回 0.63–0.86**。兩者拼起來＝**動能仍 NO-GO**，與 ADR-023 一致；
+Phase 2 的貢獻是用統一 harness 端到端**精確定位**「差在哪、breadth 是真槓桿、稅是 survivorship+OOS」。
+
+**真 GO 的唯一路徑**：survivorship-clean（含下市）+ OOS/WFA/PBO 全綠的寬 universe ——
+R9 既有證據強烈指向過不了。除非有新 edge 來源（非動能 family），否則守 ADR-016 = 不部署。
