@@ -27,11 +27,12 @@ from backtest_platform.validation.full_report import full_validation_report
 
 IS_START, IS_END = date(2016, 1, 1), date(2020, 12, 31)
 
-# DOE grid — rebalance freq × crash-control × lookback (8 configs = 8 trials).
+# DOE grid — rebalance × vol-target × lookback × abs-momentum (16 configs = 16 trials).
 GRID = {
     "rebalance": ["monthly", "quarterly"],
     "vol_target_annual": [None, 0.15],
     "lookback_days": [126, 252],
+    "abs_momentum": [False, True],
 }
 
 
@@ -71,7 +72,7 @@ def main() -> None:
         m, rob = rep["metrics"], rep["robustness"]
         rows.append({
             "rebalance": cfg.rebalance, "vol_target": cfg.vol_target_annual,
-            "lookback": cfg.lookback_days,
+            "lookback": cfg.lookback_days, "abs_mom": cfg.abs_momentum,
             "cagr": m["cagr"], "sharpe": m["sharpe"], "maxdd": m["max_drawdown"],
             "dsr": rob["deflated_sharpe"], "mc_p": rob["mc_edge_pvalue"],
             "greens": rep["health"]["counts"]["green"], "deployable": rep["deployable"],
@@ -79,20 +80,20 @@ def main() -> None:
 
     rows.sort(key=lambda r: r["sharpe"], reverse=True)
     print(f"\n=== DOE momentum re-validation ({n_trials} configs, honest DSR) ===")
-    print(f"{'reb':<10}{'vt':<6}{'lb':<5}{'CAGR':>8}{'Sharpe':>8}{'MaxDD':>8}{'DSR':>7}{'green':>7}{'deploy':>8}")
+    print(f"{'reb':<10}{'vt':<6}{'lb':<5}{'abs':<6}{'CAGR':>8}{'Sharpe':>8}{'MaxDD':>8}{'DSR':>7}{'green':>7}{'deploy':>8}")
     for r in rows:
-        print(f"{r['rebalance']:<10}{str(r['vol_target']):<6}{r['lookback']:<5}"
+        print(f"{r['rebalance']:<10}{str(r['vol_target']):<6}{r['lookback']:<5}{str(r['abs_mom']):<6}"
               f"{r['cagr']*100:>7.1f}%{r['sharpe']:>8.2f}{r['maxdd']*100:>7.1f}%"
               f"{r['dsr']:>7.2f}{r['greens']:>7}{str(r['deployable']):>8}")
 
     best = rows[0]
     verdict = "GO" if best["deployable"] else "NO-GO"
-    print(f"\nBest by Sharpe: {best['rebalance']}/vt={best['vol_target']}/lb={best['lookback']} "
-          f"→ Sharpe {best['sharpe']:.2f}, DSR {best['dsr']:.2f} → {verdict}")
+    print(f"\nBest by Sharpe: {best['rebalance']}/vt={best['vol_target']}/lb={best['lookback']}"
+          f"/abs={best['abs_mom']} → Sharpe {best['sharpe']:.2f}, DSR {best['dsr']:.2f} → {verdict}")
 
     # record the best config to the runs ledger (lineage)
     append_run({
-        "run_id": f"momentum-doe-{best['rebalance']}-vt{best['vol_target']}-lb{best['lookback']}",
+        "run_id": f"momentum-doe-{best['rebalance']}-vt{best['vol_target']}-lb{best['lookback']}-abs{best['abs_mom']}",
         "preset": "momentum",
         "hypothesis": "DOE sweep over DEFAULT_UNIVERSE 2016-2020 via full_validation_report",
         "gate_status": "PASS" if best["deployable"] else "FAIL",
