@@ -274,7 +274,7 @@
 | 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
 | 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |
 | 6.4.2 | Monte Carlo trade permutation | — | 8h | ✅ v0.2 | — | `validation/resampling.py` permutation p-value |
-| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | ⏳ | — | M3 大頭 |
+| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | 🟡 | 2026-06-07 | **runner ✅**：`validation/full_report.py` 一次組合 metrics+§4.3.1 健檢+bootstrap CI+MC edge p-value+DSR（per-period/raw-kurtosis 慣例正確、seeded 可重現、self-judge deployable vs ADR-016）；**端到端證實可用**——真實 momentum 策略 → full report 跨通（合成資料，9 tests）。剩：live universe ingest + 正式跑 DOE 1-10 + WFA/PBO sweep 層（需 per-config 回測） |
 
 **模組小計**：~180h（已完成 64h ≈ 36%）| **v0.2–v0.3 統計驗證 pipeline 後端 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials，對照 18 §4 + López de Prado，187 tests）；剩 6.1.3 健檢表 / 6.5.x DOE（策略執行，待有候選）
 
