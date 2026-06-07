@@ -1,18 +1,56 @@
 """``/research/sweep`` — async sweep jobs (M3.5, owner: S2).
 
-Pre-created in the M3 parallelization seam (registered in app.py) so the async
-job runner (8.H.6) fills these in its own file without touching app.py. Typed-empty
-until the ``jobs/`` module persists job lifecycle (queued→running→done|failed).
+Submits a parameter-grid expansion as a background job (``jobs`` package) so the
+research loop never blocks: POST returns a ``job_id``, GET polls status. v1 runs
+the grid-expansion (the deterministic, data-free sweep *plan* the Sweep page
+consumes pre-run) as the job body; per-config backtest execution (needs the
+parquet loader) is the deferred heavy step.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+import itertools
+import json
+from typing import Any
 
-from backtest_platform.api.envelope import Envelope, pending
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
+
+from backtest_platform.api.envelope import Envelope, ok, pending
+from backtest_platform.jobs import job_store, submit
 
 router = APIRouter(prefix="/research/sweep", tags=["research"])
 
 
+class SweepRequest(BaseModel):
+    """A parameter grid to expand into the sweep plan."""
+
+    model_config = {"extra": "forbid"}
+
+    grid: dict[str, list[Any]] = Field(..., description="axis name → candidate values")
+
+
+def _expand_plan(grid: dict[str, list[Any]]) -> dict[str, Any]:
+    """Cartesian product of the grid → {n_configs, combos} (data-free plan)."""
+    if not grid:
+        return {"n_configs": 1, "combos": [{}]}
+    names = list(grid)
+    combos = [dict(zip(names, vals)) for vals in itertools.product(*(grid[n] for n in names))]
+    return {"n_configs": len(combos), "combos": combos}
+
+
+@router.post("", response_model=Envelope, status_code=202)
+def submit_sweep(req: SweepRequest) -> Envelope:
+    """Enqueue a sweep-plan job; returns {job_id, status} (202 Accepted)."""
+    key = json.dumps(req.grid, sort_keys=True, default=str)
+    grid = req.grid
+    job = submit("sweep", key, lambda: _expand_plan(grid))
+    return ok({"job_id": job.job_id, "status": job.status.value})
+
+
 @router.get("/{job_id}/status", response_model=Envelope)
 def sweep_status(job_id: str) -> Envelope:
-    return pending({"job_id": job_id, "status": None, "progress": None})
+    """Poll a sweep job's status; typed-empty pending if the id is unknown."""
+    job = job_store.read_job(job_id)
+    if job is None:
+        return pending({"job_id": job_id, "status": None, "progress": None})
+    return ok(job.to_dict())
