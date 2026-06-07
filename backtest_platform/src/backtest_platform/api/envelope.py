@@ -67,3 +67,14 @@ def fail(
 def page_meta(total: int, page: int, limit: int) -> dict[str, int]:
     """Pagination metadata block for list endpoints."""
     return {"total": total, "page": page, "limit": limit}
+
+
+def pending(data: Any = None, ttl: int = 300) -> Envelope:
+    """Typed-empty success envelope for endpoints awaiting persistence/logic.
+
+    Carries the real response *shape* with ``meta.data_source = "pending"`` so the
+    frontend can wire against the contract before the backend feature lands. Shared
+    by the research/runs sub-routers split out in the M3 seam (research_validate /
+    research_promote / research_registry / research_sweep / runs_series / runs_tags).
+    """
+    return ok(data, meta={"data_source": "pending", "ttl": ttl})
