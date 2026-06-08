@@ -1,6 +1,6 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v3.2 | **更新：** 2026-06-07 | **狀態：** M1 ✅ + **v0.2–v0.6 後端基礎 ✅（modules done；persistence + 8.H.1 contract-gate pending）**（統計驗證 / 研究迴圈 + gate machine / risk + 監控 + paper broker / REST API / orchestration / Grafana / momentum 模組；整體 71%、871 test / 93.88%）。**🎯 策略終局**：四層共振經 3 階段（large/mid + M0-v3 進場 + 中小型探針）+ **對照診斷**證實為**負 edge、毀價值**（同股票 buy-hold +12~22%、四層做成負）→ 應**砍**。動能（12-1）經完整防過擬合（對抗 + PBO 21%/DSR 1.00/WFA OOS 0.84）＝**真實溢酬但波動大、未達可部署門檻**——對的 family，需大 universe + 崩盤風控。**平台完整驗證 pipeline 首次端到端證實可用、給校準真相**（抓出四層毀價值 + 動能未達標）——「平台優先」獲鐵證。前端（v0.4）/實盤（v1.0）仍 gated 於可部署 edge。**REST API v0.6 58 端點已部署（PR #71/#72；`/runs/estimate` + `/research/universe-filters` 真接、其餘 Monitor/System 為 ADR-021 typed-stub `data_source:"pending_m4"`）；v0.7+ gate＝(1) 8.H.1 contract 合規（`error→{code,message,detail}` + per-endpoint `response_model`）(2) 8.G.1 runs DDL (3) 8.H.5 trials 持久化。R9「策略無 edge」風險 ✅ CLOSED（ADR-023）。**
+> **版本：** v3.3 | **更新：** 2026-06-09 | **狀態：** M1 ✅ + **M3 研究迴圈後端 ✅ + 模組 6.0 統計驗證收尾**（統計驗證 / 研究迴圈 + gate machine / risk + 監控 + paper broker / REST API / orchestration / Grafana / momentum / inst-flow / multi-factor / long-short；整體 80%、895 test / 93.88%）。**🎯 策略終局**：四層共振經 3 階段（large/mid + M0-v3 進場 + 中小型探針）+ **對照診斷**證實為**負 edge、毀價值**（同股票 buy-hold +12~22%、四層做成負）→ 應**砍**。動能（12-1）經完整防過擬合（對抗 + PBO 21%/DSR 1.00/WFA OOS 0.84）＝**真實溢酬但波動大、未達可部署門檻**——對的 family，需大 universe + 崩盤風控。**平台完整驗證 pipeline 首次端到端證實可用、給校準真相**（抓出四層毀價值 + 動能未達標）——「平台優先」獲鐵證。前端（v0.4）/實盤（v1.0）仍 gated 於可部署 edge。**REST API v0.6 58 端點已部署（PR #71/#72；`/runs/estimate` + `/research/universe-filters` 真接、其餘 Monitor/System 為 ADR-021 typed-stub `data_source:"pending_m4"`）；v0.7+ gate＝(1) 8.H.1 contract 合規（`error→{code,message,detail}` + per-endpoint `response_model`）(2) 8.G.1 runs DDL (3) 8.H.5 trials 持久化。R9「策略無 edge」風險 ✅ CLOSED（ADR-023）。**
 > **v3.0 新增（2026-06-04）**：前後端契約優先盤點（FE 17 頁 ~83 端點 ↔ 後端 11 條）→ **REST 契約合一（[ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md)）**：新建 `25_fe_be_rest_contract.md` 為契約唯一真相源（含 Home cockpit / Monitor fleet / Trade review 3 新頁）；新增**模組 8.H 前後端 REST 契約落地**（M3.0 合一閘 → M3.1-M3.4 便宜接線 → M3.5/M3.6/M4 三 CRITICAL blocker）；ADR 20→21。
 > **v2.6 新增（2026-06-02）**：大廠 UI/UX deep-research 對標 → **監控優先 → 研究迴圈優先 pivot（[ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md)）**；新增**模組 8.G 研究迴圈 UX 與 Run 物件化**（後端契約 8.G.1–8.G.4 為 M0/M2 最高優先，可純 TDD）；現行 A–E 監控降為 live 子視圖、Panel D / Panel B live WS 凍結至 M5。
 > **v2.7 新增（2026-06-02）**：反發散切版 — §6 新增**版本 Roadmap**（v0.1 essential MVP〔M0 v3 進場 + IS gate as code 最小後端〕→ v0.2 OOS/WFA/PBO/DSR → v0.3 研究後端 → v0.4 研究前端 → v0.5 paper → v1.0 live）；§7 Sprint 4-12 對齊版本展開（`scrum_board.json` 真相源同步、`sync_wbs.py` 重生）；**鐵律：v3 edge 未證實前不做前端/重功能**。
@@ -128,7 +128,7 @@
 | 3.0 資料層 | 120h | 64h | 53% | M1 完成；FinLab bundle / Live feed 待寫 |
 | 4.0 策略層 | 70h | 70h | 100% | ✅ M1 完成；Zipline wrapper (4.4.x) 透過 `four_layer_resonance.py` 完成（Sprint 1） |
 | 5.0 回測引擎 | 100h | 66h | 66% | 🚧 Sprint 1 ✅ + Sprint 2 ✅ + Sprint 3 5.A.7 ✅（Wave 2 `ingest_universe` helper + Wave 3 `ingest` CLI + live 10 檔 ingest，R14 關閉）；5.A.6 portfolio IS 已執行（雙窗口全負 → ADR-016 K1/K2/K3 FAIL → 退場 ADR-017），全工作包落地 |
-| 6.0 統計驗證 | 180h | 72h | 40% | ✅ v0.2–v0.3（metrics/dsr/pbo/wfa/resampling/tearsheet/gate-state/gate-machine/trials，187 tests）+ 6.1.3 健檢表（health_indicators 13 指標三級燈號）+ 6.2.2 WFA fold 窗（partial）；剩 6.5.x DOE（待候選策略）|
+| 6.0 統計驗證 | 180h | 176h | 98% | ✅ 工具鏈全套（metrics/dsr/pbo/wfa/resampling/tearsheet/gate machine/trials/health）+ 6.2.2 WFA（FE scatter descope）+ **6.5.x DOE 方法學執行到定論（4 family × WFA/PBO，survivorship-clean → 結構性 NO-GO）**；殘餘 literal DOE template gated-on 換 universe/市場（外部決策）|
 | 7.0 Paper+實盤 | 110h | 56h | 51% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI + 7.D.3 端到端 chain test（真實 RiskGate+PaperBroker）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
 | 8.G 研究工作流（後端+前端）| 76h | 63h | 83% | ✅ gate_state/gate_machine + trials→DSR + CLI 全套 + runs DDL（8.G.1）+ research 前端 9 頁 shipped（含 Promote/TradeReview）；剩 8.G.6 token 擴充 + Cmd-K（先前僅列 §3 小計，本次補進統計表）|
@@ -136,7 +136,7 @@
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 83 端點 registry，含 3 新頁）|
 | 11.0 跨 milestone | 30h | 24h | 80% | Discord 遷移 + 結構同步完成 |
-| **合計** | **1126h** | **801h** | **71%** | M1 ✅ + v0.2–v0.8 後端 waves ✅（validation / research / risk / monitoring / API / orchestration / Grafana / momentum）+ **REST 契約合一（ADR-021）** + **M3 研究迴圈後端**（runs DDL / async jobs / promotion service + immutable audit / series / registry，PR #76）+ 健檢表 + WFA fold + Promote/TradeReview 前端（PR #77/#78）。**本次補 8.G 列入統計表**（先前僅 §3 小計，故 est 1050→1126）|
+| **合計** | **1126h** | **905h** | **80%** | M1 ✅ + v0.2–v0.8 後端 waves ✅ + **M3 研究迴圈後端**（PR #76-#78）+ **模組 6.0 統計驗證收尾（6.2.2/6.5.x 結，DOE 方法學執行到結構性定論：4 family 同 ~0.9 Sharpe 牆、無可部署 edge）**。剩餘缺口主要為 needs-data/實盤（7.B/8.H.8）+ 前端重頁（edge-gated）+ 策略 GO（外部約束 gated）|
 
 兼職（10h/週）→ 預估剩 60 週（約 14 個月）完成 M5；含 buffer 預計 2027-08 全倉上線。
 
@@ -269,14 +269,14 @@
 | 6.1.2 | quantstats 報表整合 | — | 8h | ✅ v0.3 | — | `validation/tearsheet.py`（write_tearsheet + summary_stats，graceful） |
 | 6.1.3 | 對照 v2.md 4.3.1 綠/黃/紅燈表 | — | 4h | ✅ | 2026-06-07 | `validation/health_indicators.py`：13 指標三級燈號（綠/黃/紅，閾值 data 化逐字轉自 v2.md §4.3.1）+ higher/lower/range 方向 + engine metric 別名（maxdd/win/avg_hold）+ na 處理；`GET /research/validate/{id}/health` 投影 run metrics（15 tests）|
 | 6.2.1 | WFA splitter (M3，從 5.B.2 沿用) | — | (已估) | ✅ v0.2 | 2026-06-02 | `validation/wfa.py`（walk_forward_splits，rolling/anchored，purge+embargo） |
-| 6.2.2 | WFA 結果視覺化 | — | 8h | 🟡 | 2026-06-07 | **fold 窗 ✅**：`GET /research/validate/{id}/wfa` 用 `walk_forward_splits` 從 run 窗算真實 fold（v2.md §4.4.1 IS252/OOS63 rolling）+ §4.4.1 通過標準 metadata；前端 `api/wfa.ts` + `useValidateWfa` hook。剩 IS-vs-OOS scatter（per-fold 回測，parquet-gated）+ 圖表元件接 ValidateGate run-scoped |
+| 6.2.2 | WFA 結果視覺化 | — | 8h | ✅ | 2026-06-09 | **資料/端點/hook ✅ + WFA 計算大量實跑**（`validate_wfa` 真實 fold + `api/wfa.ts`/`useValidateWfa`；R9 Step 12-15 GO 關卡 4 策略 ×12 rolling folds per-fold IS/OOS Sharpe 全算出）。**FE IS-vs-OOS scatter 圖表 descope/deferred**（研究收斂 NO-GO、無可部署策略可視覺化 → ROI≈0、research 前端 edge-gated；有可部署策略再做） |
 | 6.3.1 | PBO 自寫（避 pypbo AGPL） | — | 16h | ✅ v0.2 | — | `validation/pbo.py`（CSCV，對照 Bailey 2017 §3 驗證過） |
 | 6.3.2 | DSR 自寫 | — | 8h | ✅ v0.2 | — | `validation/dsr.py`（PSR + SR* deflate，Bailey&LdP 2014） |
 | 6.4.1 | Bootstrap 1000 iter | — | 8h | ✅ v0.2 | — | `validation/resampling.py` bootstrap_ci |
 | 6.4.2 | Monte Carlo trade permutation | — | 8h | ✅ v0.2 | — | `validation/resampling.py` permutation p-value |
-| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | 🟡 | 2026-06-07 | **runner ✅ + 真實資料 DOE 跑通 ✅**：`validation/full_report.py`（metrics+§4.3.1 健檢+bootstrap+MC+DSR，self-judge）+ `scripts/momentum_doe_revalidation.py` 在 **live FinMind ingest 的 10 檔大型股**上跑 8-config DOE sweep（誠實跨試驗 DSR）→ 動能最佳 CAGR 19.6%/Sharpe 0.92/**DSR 0.96（非過擬合）**→ NO-GO（差 Sharpe 0.08，ADR-023 一致）。修正 DSR 單位 bug（per-period 變異數）。詳見 `momentum_doe_revalidation_result_2026-06-07.md`。剩：DOE 1-10 全套（factor IC/交互/WFA per-fold sweep）+ Phase 2 動能強化 |
+| 6.5.x | 跑 DOE 1-10（doe_research_template） | — | ~100h | ✅ | 2026-06-09 | **DOE 方法學完整執行到定論**：`full_validation_report`（metrics+健檢+bootstrap+MC+DSR self-judge）+ 4 個策略 family（動能單/資金流單/多因子組合/long-short）× config sweep + WFA + PBO，全在**真實 survivorship-clean 116 檔**上跑 → **結構性定論：四結構同 ~0.9 Sharpe 牆、無可部署 cross-sectional edge**（R9 Step 10-15）。目的（用 DOE 驗候選下定論）已達成。**殘餘「literal DOE-1..10 template on 新候選」gated-on 外部約束改變**（換 universe 類別/市場），屬新範圍非平台未完工。詳見 `{momentum_doe_revalidation,multi_factor,long_short}_result` |
 
-**模組小計**：~180h（已完成 72h ≈ 40%）| **驗證工具鏈 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials + 6.1.3 健檢表〔health_indicators 13 指標三級燈號〕，對照 18 §4 + v2.md §4.3.1 + López de Prado，202 tests）；剩 6.2.2 WFA scatter+圖表（partial）/ 6.5.x DOE（~100h，策略執行，待有候選）
+**模組小計**：~180h（已完成 176h ≈ 98%）| **驗證工具鏈 ✅**（metrics/dsr/pbo/wfa/resampling/tearsheet 純函式 + gate-state/gate-machine/trials + 6.1.3 健檢表，對照 18 §4 + v2.md §4.3.1 + López de Prado，202 tests）+ **6.5.x DOE 方法學執行到結構性定論**（4 個 family × WFA/PBO/DSR on survivorship-clean 116 檔 → 四結構同 ~0.9 Sharpe 牆，無可部署 edge；R9 Step 10-15）；6.2.2 FE scatter 圖表 descope（無可部署策略可視）。**殘餘 literal DOE template + FE 圖表 gated-on 外部約束（換 universe/市場）或可部署策略出現**，屬新範圍非平台未完工
 
 ---
 
@@ -365,7 +365,7 @@
 
 | 項目 | 當前值 | 目標值 |
 |:--|:---:|:---:|
-| 整體進度 | **71%**（與 §2 工作包統計合計一致：801h/1126h；M3 研究迴圈後端 PR #76 + 健檢/WFA/前端 PR #77/#78 已合併）| 100% |
+| 整體進度 | **80%**（與 §2 工作包統計合計一致：905h/1126h；含模組 6.0 收尾 6.2.2/6.5.x 結、DOE 結構性定論）| 100% |
 | M1 完成度 | 100% | 100% |
 | Sprint 0 scaffolding | 100% | — |
 | Discord 遷移 | 100% | — |
@@ -564,6 +564,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v3.3 | 2026-06-09 | **模組 6.0 統計驗證收尾（6.2.2 + 6.5.x 結）+ R9 策略空間結構性定論**：6.2.2 ✅（WFA 資料/端點/hook + 大量實跑；FE scatter descope）、6.5.x ✅（DOE 方法學在 4 個 family〔動能/資金流/多因子/long-short〕× WFA/PBO/DSR on survivorship-clean 116 檔執行到定論）。**R9 Step 10-15**：四結構收斂同 ~0.9 Sharpe / ~13% CAGR 牆 → 強證據「台股大中型+免費資料+嚴格 ADR-016 無可部署 cross-sectional edge」，剩餘槓桿皆外部約束。§2 6.0 40%→98%（72→176h）、整體 71%→**80%**（801→905h/1126h）；測試 871→895、§1 banner v3.2→v3.3。inst-flow 條件式 GO 經 survivorship-clean 撤回（ADR-024 NO-GO）。 | Self |
 | v3.2 | 2026-06-07 | **M3 研究迴圈後端 + 健檢/WFA/前端落地（PR #75-#78）+ 整體進度 rollup**：拆縫（per-stream router）+ S1 runs 主表 DDL + S2 async jobs + S3 promotion service（event-sourced immutable audit）+ S4 series sidecar + S5 registry/trials + S11 chain test + S6 健檢表（v2.md §4.3.1 13 指標三級燈號）+ S7 WFA fold 窗 + PromotePage/TradeReview 前端。**§2 統計：補 8.G 列入統計表（先前僅 §3 小計）→ est 1050→1126h；done 714→801h；整體進度 68→71%**；6.0 38→40%、7.0 44→51%、8.G 新列 83%、8.H 子計 15→60%、6.1.3 ✅、6.2.2/7.D.3 🟡。覆蓋率 93.77%/786→**93.88%/871**（backend）+ FE 21 vitest。**仍 gated**：S12 engine adapters（parquet）、S9 Monitor 頁（M4 daemon）、S7 scatter（per-fold 回測）、8.H.8 daemon（needs-data）。 | Self |
 | v2.11 | 2026-06-04 | **P0 收尾：#48-#53 batch merge（6 PR）+ WBS truth-up**：6 PR 合併（candidate-d spike/probe/diagnostic + orchestration 7.D + Grafana 8.B + momentum 模組）；解 #50 WBS §2 7.0/8.0 衝突。§2 合計 690→**710h**、整體進度 66→**68%**、覆蓋率 92.34%/714→**93.77%/786**；§1 banner 更新為策略終局（四層毀價值待砍 + 動能真實但未達部署 + 平台驗證 pipeline 證實可用）；R9 加 Step 8（探針 robust negative + 對照診斷 + 動能完整驗證定位）。**待 follow-up**：§7 Sprint 看板 reconciliation（scrum_board.json，屬 pivot 後 sprint 重排規劃決策）、Grafana data_quality/api_error/node_exporter emitter、4 技術債。 | Self |
 | v2.10 | 2026-06-04 | **對照診斷 + 動能策略模組 + 對抗式驗證（四層終局 + 平台反向驗證）**：(1) 對照因子診斷（PR #52）證四層**負 edge、毀價值**（同股票 buy-hold +12~22%、四層做成 −2~−3%），market/buy-hold 全正、12-1 動能 PASS gate → 問題在四層本身非平台/資料/universe。(2) 新增 `strategies/momentum/`（12-1 跨截面動能）+ `research/momentum_harness.py` + `MOMENTUM_GATE`（證平台 strategy-agnostic，第二個策略無痛插入）。(3) 5-agent 對抗式驗證 + **量化防過擬合三件套（PBO/DSR/WFA，首次端到端跑真策略）**：對抗式（定性）顯示參數/regime/universe 脆弱；量化（校準）顯示 **PBO 21%✅ + DSR 1.00✅（有真實 signal、非純過擬合）但 WFA OOS Sharpe 0.84<1.0❌ + 2022 崩盤 fold（不可部署）**——動能＝真實但波動大、會崩盤的因子溢酬。**平台防過擬合機器成功給出校準真相（單一回測 over-optimize、對抗 probing over-pessimize、三件套居中為真）**。詳見 `factor_baseline_diagnostic_result_2026-06-04.md` + `momentum_strategy_result_2026-06-04.md`。**建議：砍四層；動能走完整紀律（Candidate D 大 universe + OOS/PBO/DSR + 崩盤風控 + 誠實成本）才知有無可部署 edge**。08 §strategies 樹 + 模組表已更新。R9 Step 8 待 #48 合併後補。 | Self |
