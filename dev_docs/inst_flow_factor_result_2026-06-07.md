@@ -66,3 +66,31 @@ WFA 12 個 rolling OOS 窗 median 1.41、92% 為正——非單一 OOS 窗運氣
 - **survivorship-clean**：40 檔皆現存（大型股偏誤小但仍需含下市股複驗 WFA/PBO）。
 - **CAGR 18.9% 邊際**、**MaxDD ~31% 偏高** → 部署需風控設計。
 - 通過 survivorship-clean 後 → paper（實際執行摩擦）→ 小倉位實盤（ADR-016 sign-off）。
+
+---
+
+## Survivorship-clean 複驗（116 檔 = 40 survivors + 76 下市，2026-06-08）：🔴 FAIL
+
+最後一道回測關卡。ingest 76 檔下市股（FinMind `TaiwanStockDelisting` 篩 89 → 76 成功，
+free tier；point-in-time 排序自動讓下市股交易期內納入、下市後消失）。`scripts/inst_flow_survivorship.py`。
+
+| 關卡 | 40 survivors (#87) | 116 survivorship-clean | 門檻 | 判 |
+|:--|:--:|:--:|:--:|:--:|
+| 全期 CAGR | 18.9% | **13.1%** | >18% | ❌ |
+| 全期 Sharpe | 1.11 | **0.90** | >1.0 | ❌ |
+| PBO | 11.4% | **42.9%** | <30% | ❌ |
+| WFA median OOS | 1.41 | 1.30 | >1.0 | ✅ |
+
+**判決：🔴 NO-GO。** 加入下市輸家後 headline 跌破所有絕對門檻、PBO 爆到 43%（config
+landscape 過擬合）。**survivor-only 40 檔的 GO 是生存者膨脹的假陽性** —— 與動能死法完全相同。
+
+### 但仍有訊號（誠實的 nuance）
+WFA fixed-config median OOS **1.30 仍 PASS**：若**事前承諾單一 config**（不在 landscape 選），
+它有真實 OOS edge。問題在 (1) config 選擇過擬合（PBO 43%）(2) headline 絕對值跌破門檻。
+→ 三大法人資金流是**真實但不夠強/不夠乾淨**的訊號，守 ADR-016 不部署。
+
+### 平台意義
+**平台再次做對它的工作**：survivor-only 看似 GO（1.11/18.9%），survivorship-clean 一照妖
+就現形（0.90/13.1%/PBO43%）。這正是 ADR-016 紀律的價值 —— 在真錢前擋下假陽性。動能與
+資金流兩個 family 都倒在同一道牆（survivorship+landscape 過擬合）→ 強烈提示：**台股這類
+單因子 long-only 在嚴格門檻下難達部署**；下一步應考慮多因子組合 / 不同結構（非再換單因子）。
