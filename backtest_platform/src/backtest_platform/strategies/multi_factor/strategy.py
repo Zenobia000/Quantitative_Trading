@@ -52,6 +52,16 @@ class MultiFactorConfig(BaseModel):
     vol_target_annual: float | None = Field(None)
     vol_lookback: int = Field(20, ge=5, le=120)
     max_leverage: float = Field(1.0, gt=0, le=3.0)
+    # --- long-short (market-neutral) overlay ---
+    long_short: bool = Field(
+        False,
+        description="dollar-neutral 多空：做多 top_fraction、放空 bottom short_fraction，"
+        "報酬=long_leg − short_leg（中性化 beta/市場天花板，放大 cross-sectional spread）",
+    )
+    short_fraction: float = Field(1 / 3, gt=0, le=1.0, description="放空底部 fraction（long_short 時）")
+    borrow_rate_annual: float = Field(
+        0.02, ge=0, le=0.2, description="放空年化借券成本（每日攤提到 short leg）"
+    )
 
     @field_validator("factors")
     @classmethod
@@ -120,6 +130,7 @@ def backtest_multi_factor(
 
     rebal = _rebalance_dates(win.index, cfg.rebalance)
     segs, holdings, turnovers, prev = [], [], [], set()
+    daily_borrow = cfg.borrow_rate_annual / TRADING_DAYS
     for i, rb in enumerate(rebal):
         nxt = rebal[i + 1] if i + 1 < len(rebal) else win.index[-1]
         if rb not in score.index:
@@ -128,19 +139,40 @@ def backtest_multi_factor(
         if ranked.empty:
             continue
         k = max(1, int(len(ranked) * cfg.top_fraction))
-        held = list(ranked.index[:k])
-        seg = rets.loc[rb:nxt, held].mean(axis=1).copy()
-        turnover = len(set(held) ^ prev) / max(len(held), 1)
-        if len(seg):
-            total_cost = cfg.cost_round_rate * turnover
-            if cfg.cost_mode == "spread":
-                seg = seg - total_cost / len(seg)
-            else:
-                seg.iloc[0] = seg.iloc[0] - total_cost
+        long_names = list(ranked.index[:k])
+
+        if cfg.long_short:
+            ks = max(1, int(len(ranked) * cfg.short_fraction))
+            short_names = list(ranked.index[-ks:])
+            long_leg = rets.loc[rb:nxt, long_names].mean(axis=1)
+            short_leg = rets.loc[rb:nxt, short_names].mean(axis=1)
+            seg = (long_leg - short_leg).copy()  # dollar-neutral spread
+            held_set = set(long_names) | set(short_names)
+            turnover = len(held_set ^ prev) / max(len(held_set), 1)
+            if len(seg):
+                # both legs trade → 2× turnover cost; borrow charged daily on the short leg
+                total_cost = cfg.cost_round_rate * turnover * 2.0
+                seg = seg - daily_borrow
+                if cfg.cost_mode == "spread":
+                    seg = seg - total_cost / len(seg)
+                else:
+                    seg.iloc[0] = seg.iloc[0] - total_cost
+            prev = held_set
+            n_held = len(held_set)
+        else:
+            seg = rets.loc[rb:nxt, long_names].mean(axis=1).copy()
+            turnover = len(set(long_names) ^ prev) / max(len(long_names), 1)
+            if len(seg):
+                total_cost = cfg.cost_round_rate * turnover
+                if cfg.cost_mode == "spread":
+                    seg = seg - total_cost / len(seg)
+                else:
+                    seg.iloc[0] = seg.iloc[0] - total_cost
+            prev = set(long_names)
+            n_held = len(long_names)
         segs.append(seg)
-        holdings.append(len(held))
+        holdings.append(n_held)
         turnovers.append(turnover)
-        prev = set(held)
 
     if not segs:
         return MultiFactorResult(pd.Series(dtype=float), 0, 0.0, 0.0)
