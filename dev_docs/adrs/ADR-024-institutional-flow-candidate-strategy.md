@@ -1,7 +1,14 @@
-# ADR-024: 三大法人資金流因子 — 候選策略（條件式 GO，待 survivorship-clean + paper）
+# ADR-024: 三大法人資金流因子 — 候選策略（🔴 survivorship-clean FAIL → NO-GO）
 
-> **狀態：** 提案中（條件式 GO）| **日期：** 2026-06-07 | **決策者：** Self
+> **狀態：** 🔴 NO-GO（2026-06-08，survivorship-clean 複驗未過；條件式 GO 撤回）| **日期：** 2026-06-07 | **決策者：** Self
 > **Related：** [ADR-016](./ADR-016-m2-acceptance-criteria.md)（部署門檻 CAGR>18%/Sharpe>1.0/DSR>0.95/PBO<30%）、[ADR-023](./ADR-023-momentum-no-go-hold-gate.md)（動能 NO-GO，釋放 capacity 換 family）
+>
+> **⚠️ 2026-06-08 更新（決定性）**：survivorship-clean 複驗（116 檔＝40 survivors + 76 下市，
+> `scripts/inst_flow_survivorship.py`）→ **FAIL**。加入下市輸家後：全期 CAGR 18.9%→**13.1%**(<18%)、
+> Sharpe 1.11→**0.90**(<1.0)、PBO 11.4%→**42.9%**(>30%)。WFA fixed-config median OOS 仍 1.30
+> （單一 a priori config 有真實 OOS edge），**但 config landscape 過擬合（PBO 43%）+ headline
+> 跌破絕對門檻**。**§3/§4 的條件式 GO 基於 survivor-only 40 檔，係生存者膨脹的假陽性** ——
+> 與動能死法相同（survivorship 是殺手）。**判決：NO-GO，撤回條件式 GO。** §3-§6 以下為歷程留存。
 
 ---
 
