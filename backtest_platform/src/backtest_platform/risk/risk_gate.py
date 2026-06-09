@@ -22,8 +22,8 @@ trivially unit-testable and reusable across backtest / paper / live runners.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import ClassVar
+from dataclasses import asdict, dataclass, field
+from typing import Any, ClassVar
 
 # Canonical BreakerState shared with risk.circuit_breaker (see risk/types.py):
 # the breaker latches to HALTED, so EX-012 must reject on HALTED (and L3).
@@ -401,6 +401,27 @@ class RiskGate:
             )
 
 
+def risk_spec(config: RiskGateConfig | None = None) -> dict[str, Any]:
+    """Structured, read-only description of the 12 ex-ante rules in evaluation
+    order plus the active thresholds.
+
+    Pure projection — no evaluation. Derived from the rule registry and
+    ``RiskGate.RULES_IN_ORDER`` so "what the gate checks" cannot drift from the
+    logic that enforces it. Backs ``GET /system/risk/spec`` (config, not live
+    telemetry — available without the M4 producer) and the CLI risk-spec view.
+    """
+    cfg = config or RiskGateConfig()
+    rules = [
+        {
+            "id": rid,
+            "order": i,
+            "description": (_RULES[rid].__doc__ or rid).strip().splitlines()[0],
+        }
+        for i, rid in enumerate(RiskGate.RULES_IN_ORDER, start=1)
+    ]
+    return {"rules": rules, "thresholds": asdict(cfg)}
+
+
 __all__ = [
     "AccountState",
     "BreakerState",
@@ -409,6 +430,7 @@ __all__ = [
     "RiskGate",
     "RiskGateConfig",
     "RiskGateResult",
+    "risk_spec",
     "check_ex001",
     "check_ex002",
     "check_ex003",
