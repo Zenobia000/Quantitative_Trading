@@ -13,10 +13,14 @@ from __future__ import annotations
 import pytest
 
 from backtest_platform.validation.gate_machine import (
+    IS_VERDICT_TO_STATUS,
     GateState,
     OOSSealedError,
     ValidationGate,
+    coerce_gate_state,
+    derive_is_state,
 )
+from backtest_platform.validation.gate_state import GateStatus
 
 # A metrics dict that clears the real DEFAULT_GATE (mirrors test_gate_state._PASS).
 _IS_PASS = {
@@ -302,3 +306,39 @@ def test_reset_reseals_oos_vault() -> None:
 
 def test_oos_sealed_error_is_runtime_error() -> None:
     assert issubclass(OOSSealedError, RuntimeError)
+
+
+# ---- canonical IS-status vocabulary bridge (code-audit 2026-06-10) -------- #
+
+def test_derive_is_state_matches_submit_is() -> None:
+    # the stateless derivation applies the same rule as the stateful machine
+    assert derive_is_state(_IS_PASS) is GateState.IS_PASS
+    assert derive_is_state(_IS_FAIL) is GateState.FAILED
+    assert derive_is_state({}) is GateState.FAILED  # INCOMPLETE → non-pass
+
+
+def test_coerce_gate_state_accepts_enum_vocabulary() -> None:
+    assert coerce_gate_state("IS_PASS") is GateState.IS_PASS
+    assert coerce_gate_state("APPROVED") is GateState.APPROVED
+    assert coerce_gate_state("FAILED") is GateState.FAILED
+
+
+def test_coerce_gate_state_accepts_persisted_verdict_vocabulary() -> None:
+    # the vocabulary promotion_service actually writes — previously dropped on the floor
+    assert coerce_gate_state("is_pass") is GateState.IS_PASS
+    assert coerce_gate_state("is_fail") is GateState.FAILED
+    assert coerce_gate_state("incomplete") is GateState.FAILED  # cannot-evaluate → non-pass
+
+
+def test_coerce_gate_state_unknown_or_empty_is_none() -> None:
+    assert coerce_gate_state(None) is None
+    assert coerce_gate_state("") is None
+    assert coerce_gate_state("garbage") is None
+
+
+def test_verdict_vocabulary_round_trips_writer_to_reader() -> None:
+    # the drift guard: every status promotion_service can WRITE must be a value
+    # the CLI can READ back to a coherent GateState — writer/reader cannot diverge.
+    assert coerce_gate_state(IS_VERDICT_TO_STATUS[GateStatus.PASS]) is GateState.IS_PASS
+    assert coerce_gate_state(IS_VERDICT_TO_STATUS[GateStatus.FAIL]) is GateState.FAILED
+    assert coerce_gate_state(IS_VERDICT_TO_STATUS[GateStatus.INCOMPLETE]) is GateState.FAILED
