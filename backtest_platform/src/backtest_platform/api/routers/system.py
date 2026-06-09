@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Query
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.monitoring.alert_rules import rules_spec as _alert_rules_spec
 from backtest_platform.risk.risk_gate import risk_spec as _risk_spec
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -43,7 +44,11 @@ def risk_evaluate() -> Envelope:
 # ---- alerts (sys_alerts) ------------------------------------------------
 @router.get("/alerts/rules", response_model=Envelope)
 def alert_rules() -> Envelope:
-    return _stub([], total=0)
+    """The built-in §4.2 alert rules (real config projection). Rule definitions
+    ship now; create/update (POST/PUT) and history stay pending on a rule store /
+    the M4 producer."""
+    rules = _alert_rules_spec()
+    return ok(rules, meta={"total": len(rules), "page": 1, "limit": 50, "ttl": 300})
 
 
 @router.get("/alerts/channels", response_model=Envelope)

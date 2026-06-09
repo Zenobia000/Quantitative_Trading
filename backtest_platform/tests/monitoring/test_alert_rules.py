@@ -14,9 +14,11 @@ import pytest
 
 from backtest_platform.monitoring.alert_rules import (
     DEDUPE_WINDOW,
+    RULES,
     Alert,
     AlertLevel,
     AlertRouter,
+    rules_spec,
     silent_hours,
 )
 
@@ -37,6 +39,16 @@ def _router(now: datetime = DAYTIME) -> AlertRouter:
 # ---------------------------------------------------------------------------
 # AlertLevel enum
 # ---------------------------------------------------------------------------
+
+
+def test_rules_spec_projects_every_rule_serializably() -> None:
+    spec = rules_spec()
+    assert len(spec) == len(RULES)  # cannot drift from the engine's table
+    assert {r["rule_id"] for r in spec} == {r.rule_id for r in RULES}
+    for row in spec:
+        assert set(row) == {"rule_id", "level", "title"}
+        assert row["level"] in {"CRITICAL", "HIGH", "INFO"}  # plain JSON, no callables
+        assert isinstance(row["title"], str)
 
 
 def test_alert_level_has_three_tiers() -> None:

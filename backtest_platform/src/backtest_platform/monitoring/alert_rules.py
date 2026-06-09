@@ -230,6 +230,18 @@ RULES: tuple[Rule, ...] = (
 )
 
 
+def rules_spec() -> list[dict[str, Any]]:
+    """Read-only projection of the built-in §4.2 alert rules (id / level / title).
+
+    Backs ``GET /system/alerts/rules``. Rule *definitions* are config, not live
+    telemetry, so they ship now — derived from the ``RULES`` table so the API
+    cannot drift from the engine. Alert *history* (actual firings) stays pending
+    on the M4 producer; the predicates/message builders are runtime-only and not
+    projected.
+    """
+    return [{"rule_id": r.rule_id, "level": r.level.value, "title": r.title} for r in RULES]
+
+
 def _default_clock() -> datetime:
     # Taiwan time (UTC+8, no DST) so the 22:00-08:00 silent window is correct by
     # default. Fixed offset avoids a tzdata dependency; callers may inject any clock.
