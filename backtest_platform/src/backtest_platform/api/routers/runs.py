@@ -44,6 +44,22 @@ def _summary(record: dict[str, Any]) -> dict[str, Any]:
     return {k: record.get(k) for k in _SUMMARY_KEYS}
 
 
+def _dedupe_latest(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collapse the append-only ledger to one record per run_id, latest append
+    winning, preserving first-appearance order (stable list ordering).
+
+    A re-run appends the same run_id again (e.g. the momentum DOE → 7 lines for 5
+    ids). The runs table is a registry view — one current row per run, not one row
+    per append. The raw ledger is untouched (lineage stays intact for compare/cli);
+    only the view projections dedupe. Duplicate rows also broke the FE table's
+    React keys (e2e endpoint-audit F5).
+    """
+    by_id: dict[str, dict[str, Any]] = {}
+    for r in records:
+        by_id[str(r.get("run_id"))] = r  # later append overwrites → latest wins
+    return list(by_id.values())
+
+
 def _serialize_compare(rep: CompareReport) -> dict[str, Any]:
     """Flatten a frozen ``CompareReport`` into JSON-friendly primitives."""
     return {
@@ -72,8 +88,8 @@ def list_runs(
     limit: int = Query(50, ge=1, le=500, description="page size"),
     runs_path: Path = Depends(get_runs_path),
 ) -> Envelope:
-    """Paginated list of run summaries (newest-first as stored in the ledger)."""
-    records = read_runs(runs_path)
+    """Paginated list of run summaries, one current row per run_id (latest wins)."""
+    records = _dedupe_latest(read_runs(runs_path))
     total = len(records)
     start = (page - 1) * limit
     items = [_summary(r) for r in records[start : start + limit]]
@@ -120,11 +136,14 @@ def estimate(request: Request) -> Envelope:
 
 @router.get("/{run_id}", response_model=Envelope)
 def get_run(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
-    """Full ledger record for one run; 404 if absent."""
+    """Full ledger record for one run (latest append wins); 404 if absent."""
+    match: dict[str, Any] | None = None
     for record in read_runs(runs_path):
         if str(record.get("run_id")) == run_id:
-            return ok(record)
-    raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+            match = record  # keep scanning → latest append wins, consistent with list
+    if match is None:
+        raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+    return ok(match)
 
 
 @router.post("", response_model=Envelope, status_code=201)

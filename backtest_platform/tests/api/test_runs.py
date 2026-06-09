@@ -35,6 +35,18 @@ def test_list_runs_invalid_page_422(client):
     assert client.get("/runs", params={"page": 0}).status_code == 422
 
 
+def test_list_runs_dedupes_duplicate_run_id(client, write_runs, sample_runs):
+    # append-only ledger: aaa111 re-run with an updated gate_status → latest wins,
+    # the table shows one current row per run_id (audit F5 root fix).
+    dup = dict(sample_runs[0], gate_status="PASS")
+    write_runs(sample_runs + [dup])  # 3 lines, 2 distinct run_ids
+    body = client.get("/runs").json()
+    assert body["meta"]["total"] == 2
+    rows = {item["run_id"]: item for item in body["data"]}
+    assert set(rows) == {"aaa111", "bbb222"}
+    assert rows["aaa111"]["gate_status"] == "PASS"  # latest append, not the original FAIL
+
+
 # ---- get ----------------------------------------------------------------
 
 def test_get_run_found_returns_full_record(client, write_runs, sample_runs):
@@ -48,6 +60,13 @@ def test_get_run_404(client):
     resp = client.get("/runs/nonexistent")
     assert resp.status_code == 404
     assert resp.json()["success"] is False
+
+
+def test_get_run_returns_latest_for_duplicate_run_id(client, write_runs, sample_runs):
+    dup = dict(sample_runs[0], gate_status="PASS")
+    write_runs(sample_runs + [dup])
+    body = client.get("/runs/aaa111").json()
+    assert body["data"]["gate_status"] == "PASS"  # latest append, consistent with list
 
 
 # ---- compare ------------------------------------------------------------
