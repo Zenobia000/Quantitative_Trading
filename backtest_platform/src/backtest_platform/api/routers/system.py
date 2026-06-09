@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Query
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.risk.risk_gate import risk_spec as _risk_spec
 
 router = APIRouter(prefix="/system", tags=["system"])
 
@@ -29,7 +30,9 @@ def _stub(data: Any, ttl: int = 300, *, total: int | None = None) -> Envelope:
 # ---- risk spec (sys_alerts / mon_d config) ------------------------------
 @router.get("/risk/spec", response_model=Envelope)
 def risk_spec() -> Envelope:
-    return _stub({"rules": []})
+    """The 12 ex-ante risk rules + active thresholds. Real config projection — this
+    is rule *definitions* (not live telemetry), so it ships now, not at the M4 daemon."""
+    return ok(_risk_spec())
 
 
 @router.post("/risk/evaluate", response_model=Envelope)

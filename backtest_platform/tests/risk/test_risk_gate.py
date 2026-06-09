@@ -19,6 +19,7 @@ from backtest_platform.risk.risk_gate import (
     RiskGate,
     RiskGateConfig,
     RiskGateResult,
+    risk_spec,
 )
 
 # --------------------------------------------------------------------------- #
@@ -536,3 +537,29 @@ def test_negative_qty_raises() -> None:
     gate = RiskGate(RiskGateConfig())
     with pytest.raises(ValueError):
         gate.check(_order(qty=-1), _account())
+
+
+# --------------------------------------------------------------------------- #
+# risk_spec — read-only projection backing GET /system/risk/spec               #
+# --------------------------------------------------------------------------- #
+
+def test_risk_spec_lists_all_twelve_rules_in_evaluation_order() -> None:
+    spec = risk_spec()
+    rules = spec["rules"]
+    assert [r["id"] for r in rules] == RiskGate.RULES_IN_ORDER  # cannot drift from logic
+    assert len(rules) == 12
+    assert [r["order"] for r in rules] == list(range(1, 13))
+    # EX-012 (circuit breaker) is first in §2.2 priority order
+    assert rules[0]["id"] == "EX-012"
+    assert rules[0]["description"]  # docstring first line, non-empty
+
+
+def test_risk_spec_exposes_active_thresholds() -> None:
+    spec = risk_spec()
+    assert spec["thresholds"]["portfolio_heat_max"] == 0.06  # EX-004 default
+    assert spec["thresholds"]["max_positions"] == 15  # EX-007 default
+
+
+def test_risk_spec_reflects_custom_config() -> None:
+    spec = risk_spec(RiskGateConfig(max_positions=8))
+    assert spec["thresholds"]["max_positions"] == 8
