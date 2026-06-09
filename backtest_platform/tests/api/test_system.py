@@ -15,3 +15,15 @@ def test_risk_spec_returns_real_rules_not_pending(client):
     assert len(data["rules"]) == 12
     assert data["rules"][0]["id"] == "EX-012"  # §2.2 order: circuit breaker first
     assert data["thresholds"]["max_positions"] == 15
+
+
+def test_alert_rules_returns_real_builtin_rules_not_pending(client):
+    body = client.get("/system/alerts/rules").json()
+    assert body["success"] is True
+    assert (body.get("meta") or {}).get("data_source") != "pending"
+    rules = body["data"]
+    assert len(rules) > 0
+    assert body["meta"]["total"] == len(rules)
+    sample = rules[0]
+    assert set(sample) == {"rule_id", "level", "title"}
+    assert sample["level"] in {"CRITICAL", "HIGH", "INFO"}
