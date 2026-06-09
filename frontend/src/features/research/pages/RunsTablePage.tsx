@@ -42,7 +42,21 @@ function fmtMetric(v: unknown): string {
 export function RunsTablePage() {
   const navigate = useNavigate()
   const { data, isLoading, isError, error, refetch, isFetching } = useRuns()
-  const rows: RunRow[] = data?.data ?? []
+  // The ledger is append-only, so the same run_id can appear multiple times
+  // (e.g. a DOE re-run). A runs table is one-row-per-run — dedupe by run_id
+  // (keep first = newest, ledger is newest-first). Also kills the duplicate
+  // React key warning (e2e endpoint-audit F5). Backend ledger hygiene (dropping
+  // duplicate appends) is a separate follow-up.
+  const rows: RunRow[] = useMemo(() => {
+    const seen = new Set<string>()
+    const out: RunRow[] = []
+    for (const r of data?.data ?? []) {
+      if (seen.has(r.run_id)) continue
+      seen.add(r.run_id)
+      out.push(r)
+    }
+    return out
+  }, [data])
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const metricCols = useMemo(() => {
