@@ -94,6 +94,24 @@ def test_compare_empty_ledger(client):
     assert data["comparisons"] == []
 
 
+def test_compare_run_ids_subset_compares_only_selected(client, write_runs, sample_runs):
+    # three in the ledger; the frontend multi-select picks two → only those compare
+    third = dict(sample_runs[1], run_id="ccc333", preset="v3.2")
+    write_runs(sample_runs + [third])
+    data = client.get(
+        "/runs/compare", params={"run_ids": "aaa111,ccc333", "baseline": "aaa111"}
+    ).json()["data"]
+    assert data["baseline_id"] == "aaa111"
+    assert {c["run_id"] for c in data["comparisons"]} == {"aaa111", "ccc333"}  # bbb222 excluded
+
+
+def test_compare_run_ids_unknown_member_404(client, write_runs, sample_runs):
+    write_runs(sample_runs)
+    resp = client.get("/runs/compare", params={"run_ids": "aaa111,nope999"})
+    assert resp.status_code == 404
+    assert "nope999" in resp.json()["error"]["message"]
+
+
 # ---- trigger (POST) -----------------------------------------------------
 
 _VALID_PAYLOAD = {

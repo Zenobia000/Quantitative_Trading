@@ -99,10 +99,25 @@ def list_runs(
 @router.get("/compare", response_model=Envelope)
 def compare(
     baseline: str | None = Query(None, description="run_id to diff against"),
+    run_ids: str | None = Query(
+        None, description="comma list — compare only this subset (else the whole ledger)"
+    ),
     runs_path: Path = Depends(get_runs_path),
 ) -> Envelope:
-    """Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency."""
-    records = read_runs(runs_path)
+    """Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.
+
+    ``run_ids`` restricts the comparison to a chosen subset (the frontend's
+    multi-select → ``?run_ids=a,b,c``); absent, the whole ledger is compared. The
+    subset is deduped to one current row per run_id and kept in requested order.
+    """
+    records = _dedupe_latest(read_runs(runs_path))
+    if run_ids:
+        wanted = [s for s in (x.strip() for x in run_ids.split(",")) if s]
+        by_id = {str(r.get("run_id")): r for r in records}
+        missing = [w for w in wanted if w not in by_id]
+        if missing:
+            raise HTTPException(status_code=404, detail=f"run_ids not found: {missing}")
+        records = [by_id[w] for w in wanted]
     try:
         rep = compare_runs(records, baseline_id=baseline)
     except KeyError as exc:
