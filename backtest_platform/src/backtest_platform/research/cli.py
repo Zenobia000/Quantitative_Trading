@@ -17,7 +17,12 @@ import click
 from backtest_platform.research.is_harness import run_and_judge_with_returns
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH, append_run, read_runs
-from backtest_platform.validation.gate_machine import GateState, ValidationGate
+from backtest_platform.validation.gate_machine import (
+    GateState,
+    ValidationGate,
+    coerce_gate_state,
+    derive_is_state,
+)
 from backtest_platform.validation.tearsheet import write_tearsheet
 
 
@@ -162,18 +167,17 @@ _PROMOTION_PHASES: tuple[tuple[GateState, str], ...] = (
 def _resolve_validation_status(rec: dict) -> GateState:
     """A run's furthest-cleared workflow state.
 
-    An explicit ``validation_status`` (written once v0.2 wires WFA/OOS into the
-    ledger) is authoritative. Absent that, v0.1 records carry only the IS verdict,
-    so we re-derive it through ``ValidationGate`` (single threshold source): IS
-    PASS → IS_PASS, else FAILED. Never fabricates progress past what is recorded.
+    An explicit ``validation_status`` is authoritative — ``coerce_gate_state``
+    honours BOTH the GateState enum form and the persisted verdict vocabulary
+    (``is_pass`` …) promotion_service writes, so the CLI no longer silently
+    ignores a recorded verdict it cannot parse. Absent (or unrecognised), v0.1
+    records carry only IS metrics, so we re-derive via ``derive_is_state`` (the
+    same single threshold source). Never fabricates progress past what is recorded.
     """
-    raw = rec.get("validation_status")
-    if raw:
-        try:
-            return GateState(raw)
-        except ValueError:
-            pass
-    return ValidationGate().submit_is(rec.get("metrics") or {})
+    state = coerce_gate_state(rec.get("validation_status"))
+    if state is not None:
+        return state
+    return derive_is_state(rec.get("metrics") or {})
 
 
 def _outstanding_phases(state: GateState) -> list[str]:

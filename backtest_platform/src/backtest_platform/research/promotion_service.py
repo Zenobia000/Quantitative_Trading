@@ -18,21 +18,30 @@ from collections.abc import Mapping
 from typing import Any
 
 from backtest_platform.research import promotion_store, validation_store
-from backtest_platform.validation.gate_state import evaluate_gate
+from backtest_platform.validation.gate_machine import IS_VERDICT_TO_STATUS
+from backtest_platform.validation.gate_state import GateStatus, evaluate_gate
 
 #: Ordered promotion ladder. Index = ordinal; forward-by-one only.
 PROMOTION_STAGES: tuple[str, ...] = ("draft", "paper", "live")
 
+#: IS verdict → promotion stage. Only a full PASS validates; FAIL/INCOMPLETE stay draft.
+_STAGE_BY_VERDICT: dict[GateStatus, str] = {
+    GateStatus.PASS: "is_validated",
+    GateStatus.FAIL: "draft",
+    GateStatus.INCOMPLETE: "draft",
+}
+
 
 def _is_status(metrics: Mapping[str, float], gate=None) -> tuple[str, str]:
-    """Map an IS gate verdict to (validation_status, stage)."""
+    """Map an IS gate verdict to (validation_status, stage).
+
+    The status string comes from the shared ``IS_VERDICT_TO_STATUS`` bridge so
+    the CLI (which reads it back via ``coerce_gate_state``) and this writer share
+    one vocabulary — they cannot drift (code-audit 2026-06-10).
+    """
     result = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
-    status = result.status.value  # PASS | FAIL | INCOMPLETE
-    if status == "PASS":
-        return "is_pass", "is_validated"
-    if status == "FAIL":
-        return "is_fail", "draft"
-    return "incomplete", "draft"
+    verdict = result.status  # GateStatus.PASS | FAIL | INCOMPLETE
+    return IS_VERDICT_TO_STATUS[verdict], _STAGE_BY_VERDICT[verdict]
 
 
 def record_is_result(

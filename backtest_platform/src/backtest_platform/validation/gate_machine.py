@@ -39,6 +39,7 @@ from backtest_platform.validation.gate_state import (
     DEFAULT_GATE,
     Criterion,
     GateResult,
+    GateStatus,
     evaluate_gate,
 )
 
@@ -69,6 +70,62 @@ _ORDER: dict[GateState, int] = {
     GateState.OOS_PASS: 3,
     GateState.APPROVED: 4,
 }
+
+
+# --------------------------------------------------------------------------- #
+# Canonical IS-status vocabulary bridge (code-audit 2026-06-10)
+# --------------------------------------------------------------------------- #
+# Two layers talk about "did IS pass": the persisted ``validation_status``
+# (lowercase verdict vocab written by promotion_service / the API) and the
+# workflow ``GateState``. These maps are the SINGLE place the vocabularies meet,
+# kept inverse-consistent so the CLI (reads) and promotion_service (writes) can
+# never drift into the silent mismatch the audit found — the CLI was parsing a
+# persisted ``"is_pass"`` string as ``GateState(raw)`` and falling through on
+# every value, ignoring the recorded verdict.
+
+#: IS gate verdict → persisted validation_status string (promotion / API vocab).
+IS_VERDICT_TO_STATUS: dict[GateStatus, str] = {
+    GateStatus.PASS: "is_pass",
+    GateStatus.FAIL: "is_fail",
+    GateStatus.INCOMPLETE: "incomplete",
+}
+
+#: Persisted validation_status (verdict OR later-phase vocab) → workflow GateState.
+#: INCOMPLETE collapses to FAILED — a gate you cannot fully evaluate is not a pass.
+_STATUS_TO_STATE: dict[str, GateState] = {
+    "is_pass": GateState.IS_PASS,
+    "is_fail": GateState.FAILED,
+    "incomplete": GateState.FAILED,
+    "wfa_pass": GateState.WFA_PASS,
+    "oos_pass": GateState.OOS_PASS,
+    "approved": GateState.APPROVED,
+}
+
+
+def _is_state_from_result(result: GateResult) -> GateState:
+    """The one IS-verdict rule: gate PASS → IS_PASS, else (FAIL/INCOMPLETE) FAILED."""
+    return GateState.IS_PASS if result.passed else GateState.FAILED
+
+
+def derive_is_state(
+    metrics: Mapping[str, float], gate: tuple[Criterion, ...] = DEFAULT_GATE
+) -> GateState:
+    """Stateless IS derivation from metrics — the same rule ``submit_is`` applies,
+    for callers (e.g. the CLI) that need the verdict without a stateful machine."""
+    return _is_state_from_result(evaluate_gate(metrics, gate))
+
+
+def coerce_gate_state(raw: str | None) -> GateState | None:
+    """Map a persisted ``validation_status`` to a ``GateState``, accepting BOTH the
+    GateState enum form (``IS_PASS`` …) and the persisted verdict form
+    (``is_pass`` / ``is_fail`` / ``incomplete`` …). Unknown / empty → ``None`` so
+    the caller re-derives from metrics rather than guessing past the record."""
+    if not raw:
+        return None
+    try:
+        return GateState(raw)
+    except ValueError:
+        return _STATUS_TO_STATE.get(raw.lower())
 
 
 class OOSSealedError(RuntimeError):
@@ -124,7 +181,7 @@ class ValidationGate:
         self._require(GateState.PENDING, "submit_is")
         result = evaluate_gate(metrics, self._gate)
         self._last_is_result = result
-        self._state = GateState.IS_PASS if result.passed else GateState.FAILED
+        self._state = _is_state_from_result(result)
         return self._state
 
     def submit_wfa(self, passed: bool) -> GateState:

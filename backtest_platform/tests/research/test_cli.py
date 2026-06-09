@@ -193,6 +193,25 @@ def test_promote_check_explicit_status_overrides_derivation(tmp_path):
     assert "approve" in res.output
 
 
+def test_promote_check_honors_persisted_lowercase_verdict(tmp_path):
+    # Regression (code-audit 2026-06-10): promotion_service writes validation_status
+    # in the lowercase verdict vocabulary ("is_pass"). The CLI used to parse it as a
+    # GateState enum, fail, and silently re-derive from metrics — here the metrics
+    # FAIL, so the bug would have shown FAILED. With coerce_gate_state the persisted
+    # is_pass is honored → IS_PASS (and the recorded verdict is NOT overridden by the
+    # contradicting metrics).
+    ledger = tmp_path / "runs.jsonl"
+    _write_ledger(ledger, [{
+        "run_id": "lp1", "preset": "v2", "hypothesis": "h",
+        "metrics": _FAIL_METRICS, "validation_status": "is_pass",
+    }])
+    res = CliRunner().invoke(cli, ["promote-check", "--run-id", "lp1", "--runs-path", str(ledger)])
+    assert res.exit_code == 0, res.output
+    assert "VALIDATION STATUS: IS_PASS" in res.output
+    assert "VALIDATION STATUS: FAILED" not in res.output
+    assert "NOT ELIGIBLE" in res.output
+
+
 def test_promote_check_unknown_run_id_errors(tmp_path):
     ledger = tmp_path / "runs.jsonl"
     _write_ledger(ledger, [])
