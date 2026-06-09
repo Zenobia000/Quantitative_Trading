@@ -19,6 +19,12 @@ export default defineConfig({
       '/system': 'http://localhost:8000',
       '/home': 'http://localhost:8000',
       '/health': 'http://localhost:8000',
+      // bare-root prefixes that also serve real endpoints (doc 25). Without these,
+      // FE fetches to /gate/spec etc. hit the SPA fallback (HTML/404) — see e2e
+      // endpoint-audit F1: /research/validate was dead on /gate/spec 404.
+      '/gate': 'http://localhost:8000',
+      '/presets': 'http://localhost:8000',
+      '/metrics': 'http://localhost:8000',
       '/ws': { target: 'ws://localhost:8000', ws: true },
     },
   },
