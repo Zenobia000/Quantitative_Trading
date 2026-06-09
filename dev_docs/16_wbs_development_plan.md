@@ -131,7 +131,7 @@
 | 6.0 統計驗證 | 180h | 176h | 98% | ✅ 工具鏈全套（metrics/dsr/pbo/wfa/resampling/tearsheet/gate machine/trials/health）+ 6.2.2 WFA（FE scatter descope）+ **6.5.x DOE 方法學執行到定論（4 family × WFA/PBO，survivorship-clean → 結構性 NO-GO）**；殘餘 literal DOE template gated-on 換 universe/市場（外部決策）|
 | 7.0 Paper+實盤 | 110h | 56h | 51% | ✅ v0.5 Wave D（PaperBroker + Risk Gate 12 條 + 3 級熔斷，PR #38）+ 7.D orchestration 引擎/CLI + 7.D.3 端到端 chain test（真實 RiskGate+PaperBroker）；7.B Shioaji / 7.D real 接線 ⏳ |
 | 8.0 監控與儀表板 | 80h | 50h | 63% | ✅ 8.A.0 設計系統 + 8.A.3 REST API v0.6 + 8.C Discord 完整 + 8.D.1 InfluxDB + 8.B Grafana（4 面板 + 自動 provisioning + influxdb 服務）；待 8.A.1/8.A.2 React 面板 / 8.D.2 Prometheus |
-| 8.G 研究工作流（後端+前端）| 76h | 63h | 83% | ✅ gate_state/gate_machine + trials→DSR + CLI 全套 + runs DDL（8.G.1）+ research 前端 9 頁 shipped（含 Promote/TradeReview）；剩 8.G.6 token 擴充 + Cmd-K（先前僅列 §3 小計，本次補進統計表）|
+| 8.G 研究工作流（後端+前端）| 76h | 63h | 83% | ✅ gate_state/gate_machine + trials→DSR + CLI 全套 + runs DDL（8.G.1）+ research 前端 9 頁 shipped（含 Promote/TradeReview）；剩 8.G.6 token 擴充 + Cmd-K。**⚠️ 技術債（code-audit 2026-06-10）：gate-state 權威三叉——cli `_resolve_validation_status` 用 `GateState(raw)` enum 解析，promotion_service 寫小寫 `is_pass/is_fail/incomplete`，詞彙不通 → cli 靜默忽略持久化 status。待統一單一權威 evaluator（refactor/gate-state-authority）**|
 | 8.H 前後端契約落地 (ADR-021) | —（endpoint 工時併入 8.A.3/8.G/7.A）| 8h | 8.H.0 ✅ · 8.H.1 ✅ · 8.H.2 🟡 | **8.H.1 合一閘已關（PR #74）**；**REST 契約合一定版**（doc 25 + ADR-021，2026-06-04）；**58 端點已部署上線**（PR #71/#72：5 zone router + `/runs/estimate` + `/research/universe-filters` 真接，其餘 typed-stub `pending_m4`）。**8.H.1 contract-compliance gate（URGENT，所有並行 stream 前置關卡）**：`envelope.error` `str→{code,message,detail}` + 2 exception handler 映 ADR-021 code + per-endpoint `response_model`（~25 Pydantic `Envelope[T]`）+ regen `api.gen.ts` 刪前端手寫 view-model + OpenAPI-TS drift 回歸測。8.H.6 async jobs + 8.H.8 telemetry daemon 仍待 M3.0；**前端重頁 gated 於 v3 edge（同 8.G）** |
 | 9.0 測試品質 | 80h | 64h | 80% | Stream D Wave 2 完成 2026-06-02：新增 73 個測試（29 algorithms + 18 cli + 10 pipeline + 16 schemas + 11 finmind_etl extension）→ 190 pass / 1 skip，coverage 66%→93.74%，`--cov-fail-under` 65→**80** ratchet |
 | 10.0 文檔 | 120h | 114h | 95% | 持續；+ **doc 25 前後端 REST 契約合一 + ADR-021**（2026-06-04，三處分裂併一 + 83 端點 registry，含 3 新頁）|
@@ -307,7 +307,7 @@
 | 8.A.0 | 儀表板 Design System + 5 面板規格 + Assembly + REST API 契約 (ADR-015) | — | 12h | ✅ | 2026-06-01 | — |
 | 8.A.1 | 面板 A+B+C（React 版，ADR-015；Streamlit MVP 為過渡） | — | 16h | ⏳ | — | M3 |
 | 8.A.2 | 面板 D+E（React 版，ADR-015） | — | 12h | ⏳ | — | M5 |
-| 8.A.3 | Dashboard REST API 層（FastAPI；ADR-015 / 21_data_contract §8） | — | 10h | ✅ v0.6 | 2026-06-02 | `api/`（app 工廠 + runs/gate/metrics/presets 4 router，11 端點，統一信封，100% cov）。**提前交付**（原 M3）；研究迴圈讀寫面已上，監控/風控面板端點待 Wave D 合入後補（見 doc 06 §9.4） |
+| 8.A.3 | Dashboard REST API 層（FastAPI；ADR-015 / 21_data_contract §8） | — | 10h | ✅ v0.6 | 2026-06-02 | `api/`（app 工廠 + runs/gate/metrics/presets 4 router，11 端點 @v0.6，統一信封，100% cov）。**提前交付**（原 M3）；研究迴圈讀寫面已上。**現況（code-audit 2026-06-10）：8.H 接線後 api/ 已達 15 router / 58 端點 / 64 test（PR #71/#72，對齊 §1 banner），原「11 端點」為 v0.6 當下數字** |
 | 8.B.1 | Grafana 4 個系統面板 (F-I) | — | 12h | 🟡 | 2026-06-04 | `docker/grafana/dashboards/0{1-4}_*.json`（F ETL / G API quota / H 排程 / I 資源，Flux 對 influx_writer measurements）+ 15 結構驗證測試；live import reviewer-verified；node_exporter/data_quality/api_error emitter 待補（follow-up）|
 | 8.B.2 | Grafana datasource (InfluxDB + TimescaleDB) | — | 4h | ✅ | 2026-06-04 | `docker/grafana/provisioning/`（InfluxDB datasource 自動載入 + dashboard provider）+ docker-compose 加 **influxdb:2.7 服務**（補齊缺的 metrics DB）+ grafana provisioning mount |
 | 8.C.1 | Discord notifier base | — | 4h | ✅ | 2026-05-31 | — |
@@ -319,7 +319,7 @@
 | 8.E.2 | GCS upload script | — | 4h | ⏳ | — | M5 |
 | 8.F.1 | 災難恢復演練 | — | 8h | ⏳ | — | M5 |
 
-**模組小計**：~102h | 進度 ~37%（Discord 完整〔notifier + 3 級規則引擎 + 整合測試〕+ InfluxDB writer + 儀表板設計階段：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) + **8.A.3 REST API 層 v0.6 提前交付**〔FastAPI 11 端點、100% 覆蓋〕）
+**模組小計**：~102h | 進度 ~37%（Discord 完整〔notifier + 3 級規則引擎 + 整合測試〕+ InfluxDB writer + 儀表板設計階段：Design System / 5 面板規格 / Assembly / REST API 契約，見 [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) + **8.A.3 REST API 層 v0.6 提前交付**〔FastAPI v0.6 11 端點 → 現 15 router / 58 端點（8.H 接線）、100% 覆蓋〕）
 
 ---
 
