@@ -13,6 +13,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.response_models import SavedView, TrialsData
 from backtest_platform.research import saved_views_store, trials_counter_store
 
 router = APIRouter(prefix="/research", tags=["research"])
@@ -36,17 +37,17 @@ class TrialsIncrement(BaseModel):
     count: int = Field(1, ge=1, description="trials to add")
 
 
-@router.get("/saved-views", response_model=Envelope)
+@router.get("/saved-views", response_model=Envelope[list[SavedView]])
 def saved_views() -> Envelope:
     return ok(saved_views_store.list_views())
 
 
-@router.post("/saved-views", response_model=Envelope, status_code=201)
+@router.post("/saved-views", response_model=Envelope[SavedView], status_code=201)
 def saved_views_create(req: SavedViewCreate) -> Envelope:
     return ok(saved_views_store.create_view(req.name, req.query))
 
 
-@router.post("/trials/increment", response_model=Envelope)
+@router.post("/trials/increment", response_model=Envelope[TrialsData])
 def trials_increment(req: TrialsIncrement) -> Envelope:
     total = trials_counter_store.increment(req.param_space, req.count)
     return ok({"cumulative_trials": total})

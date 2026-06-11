@@ -14,13 +14,14 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.response_models import GateEvalData, GateSpecData
 from backtest_platform.api.schemas import GateEvaluateRequest
 from backtest_platform.validation.gate_state import DEFAULT_GATE, evaluate_gate
 
 router = APIRouter(prefix="/gate", tags=["gate"])
 
 
-@router.get("/spec", response_model=Envelope)
+@router.get("/spec", response_model=Envelope[GateSpecData])
 def gate_spec() -> Envelope:
     """Return the default gate's criteria (key / op / threshold / kind / label)."""
     criteria = [
@@ -36,7 +37,7 @@ def gate_spec() -> Envelope:
     return ok({"criteria": criteria})
 
 
-@router.post("/evaluate", response_model=Envelope)
+@router.post("/evaluate", response_model=Envelope[GateEvalData])
 def gate_evaluate(req: GateEvaluateRequest) -> Envelope:
     """Judge a metrics dict against the default gate."""
     result = evaluate_gate(req.metrics)

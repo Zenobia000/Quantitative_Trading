@@ -10,12 +10,21 @@ from __future__ import annotations
 
 def test_typed_models_are_in_openapi_components(client):
     schemas = client.get("/openapi.json").json()["components"]["schemas"]
-    for model in ("RunSummary", "RunRecord", "SweepEstimate", "CompareReportData"):
+    for model in (
+        # batch 1 — runs
+        "RunSummary", "RunRecord", "SweepEstimate", "CompareReportData",
+        # batch 2 — research / gate / metrics / presets / system config
+        "GateSpecData", "MetricsData", "PresetsListData", "StrategyRow",
+        "UniverseFiltersData", "SavedView", "TrialsData", "PromotionStateData",
+        "RiskSpecData", "AlertRuleRow",
+    ):
         assert model in schemas, f"{model} missing from OpenAPI components"
     # the contract field is declared (typed), not erased
     assert "run_id" in schemas["RunSummary"]["properties"]
+    assert "criteria" in schemas["GateSpecData"]["properties"]
     # extra='allow' → additionalProperties kept so undeclared fields pass through
     assert schemas["RunSummary"].get("additionalProperties") is not False
+    assert schemas["StrategyRow"].get("additionalProperties") is not False
 
 
 def test_runs_endpoints_reference_typed_envelopes(client):
