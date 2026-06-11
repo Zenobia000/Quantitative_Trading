@@ -33,7 +33,7 @@ export interface paths {
         };
         /**
          * List Runs
-         * @description Paginated list of run summaries (newest-first as stored in the ledger).
+         * @description Paginated list of run summaries, one current row per run_id (latest wins).
          */
         get: operations["list_runs_runs_get"];
         put?: never;
@@ -61,6 +61,10 @@ export interface paths {
         /**
          * Compare
          * @description Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.
+         *
+         *     ``run_ids`` restricts the comparison to a chosen subset (the frontend's
+         *     multi-select → ``?run_ids=a,b,c``); absent, the whole ledger is compared. The
+         *     subset is deduped to one current row per run_id and kept in requested order.
          */
         get: operations["compare_runs_compare_get"];
         put?: never;
@@ -105,11 +109,68 @@ export interface paths {
         };
         /**
          * Get Run
-         * @description Full ledger record for one run; 404 if absent.
+         * @description Full ledger record for one run (latest append wins); 404 if absent.
          */
         get: operations["get_run_runs__run_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/equity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Equity
+         * @description Equity curve + running drawdown for one run (from the series sidecar).
+         */
+        get: operations["run_equity_runs__run_id__equity_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/trades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Trades
+         * @description Per-trade list ({ret, hold, entry_structure}) for one run.
+         */
+        get: operations["run_trades_runs__run_id__trades_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/tag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tag Run */
+        post: operations["tag_run_runs_tag_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -303,6 +364,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/validate/{run_id}/gate-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gate State
+         * @description Current validation status + stage + transition history for a run.
+         */
+        get: operations["gate_state_research_validate__run_id__gate_state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/validate/{run_id}/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate Health
+         * @description 13-indicator green/yellow/red health table (v2.md §4.3.1) for a run.
+         *
+         *     Projects the run's stored metrics onto the §4.3.1 bands. A run absent from the
+         *     ledger (or carrying no metrics) yields a health report of all ``na``.
+         */
+        get: operations["validate_health_research_validate__run_id__health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/validate/{run_id}/wfa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Validate Wfa
+         * @description Walk-forward folds for a run (v2.md §4.4.1: IS 252d + OOS 63d, rolling 63d).
+         *
+         *     Fold date-windows are computed data-free from the run's span via
+         *     ``walk_forward_splits``. The IS-vs-OOS performance ``scatter`` needs a backtest
+         *     per fold (parquet) and stays empty until that runs — so a real ``folds`` list
+         *     ships now while ``scatter`` is honestly marked pending.
+         */
+        get: operations["validate_wfa_research_validate__run_id__wfa_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/validate/{run_id}/redline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Validate Redline */
+        get: operations["validate_redline_research_validate__run_id__redline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/promote/{strategy_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Promote State
+         * @description Current promotion stage + per-stage reached flags + audit trail.
+         */
+        get: operations["promote_state_research_promote__strategy_id__get"];
+        put?: never;
+        /**
+         * Promote Advance
+         * @description Advance one stage forward; 422 on an illegal skip / regress / unknown stage.
+         */
+        post: operations["promote_advance_research_promote__strategy_id__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/promote/{strategy_id}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Promote Audit
+         * @description Immutable promotion audit trail for a strategy.
+         */
+        get: operations["promote_audit_research_promote__strategy_id__audit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/research/saved-views": {
         parameters: {
             query?: never;
@@ -338,83 +528,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/research/validate/{run_id}/gate-state": {
+    "/research/sweep": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Gate State */
-        get: operations["gate_state_research_validate__run_id__gate_state_get"];
+        get?: never;
         put?: never;
-        post?: never;
+        /**
+         * Submit Sweep
+         * @description Enqueue a sweep-plan job; returns {job_id, status} (202 Accepted).
+         */
+        post: operations["submit_sweep_research_sweep_post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/research/validate/{run_id}/wfa": {
+    "/research/sweep/{job_id}/status": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Validate Wfa */
-        get: operations["validate_wfa_research_validate__run_id__wfa_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/research/validate/{run_id}/redline": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Validate Redline */
-        get: operations["validate_redline_research_validate__run_id__redline_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/research/promote/{strategy_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Promote State */
-        get: operations["promote_state_research_promote__strategy_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/research/promote/{strategy_id}/audit": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Promote Audit */
-        get: operations["promote_audit_research_promote__strategy_id__audit_get"];
+        /**
+         * Sweep Status
+         * @description Poll a sweep job's status; typed-empty pending if the id is unknown.
+         */
+        get: operations["sweep_status_research_sweep__job_id__status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -804,7 +949,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Risk Spec */
+        /**
+         * Risk Spec
+         * @description The 12 ex-ante risk rules + active thresholds. Real config projection — this
+         *     is rule *definitions* (not live telemetry), so it ships now, not at the M4 daemon.
+         */
         get: operations["risk_spec_system_risk_spec_get"];
         put?: never;
         post?: never;
@@ -838,7 +987,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Alert Rules */
+        /**
+         * Alert Rules
+         * @description The built-in §4.2 alert rules (real config projection). Rule definitions
+         *     ship now; create/update (POST/PUT) and history stay pending on a rule store /
+         *     the M4 producer.
+         */
         get: operations["alert_rules_system_alerts_rules_get"];
         /** Alert Rules Put */
         put: operations["alert_rules_put_system_alerts_rules_put"];
@@ -1065,6 +1219,17 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AlertRuleRow */
+        AlertRuleRow: {
+            /** Rule Id */
+            rule_id: string;
+            /** Level */
+            level?: string | null;
+            /** Title */
+            title?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /**
          * ApiError
          * @description Structured error body shared by every failure response.
@@ -1078,8 +1243,36 @@ export interface components {
             detail?: unknown | null;
         };
         /**
+         * CompareReportData
+         * @description ``GET /runs/compare`` — per-metric delta vs baseline + ranks + sign.
+         */
+        CompareReportData: {
+            /** Baseline Id */
+            baseline_id?: string | null;
+            /** Metric Keys */
+            metric_keys?: string[];
+            /** Sign Consistent */
+            sign_consistent?: {
+                [key: string]: unknown;
+            };
+            /** Rankings */
+            rankings?: {
+                [key: string]: unknown;
+            };
+            /** Comparisons */
+            comparisons?: components["schemas"]["RunComparisonRow"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
          * Envelope
          * @description The single response shape shared by every endpoint.
+         *
+         *     Generic over the ``data`` payload: ``response_model=Envelope[RunRow]`` types
+         *     the OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.
+         *     Unparametrised ``Envelope`` ≡ ``Envelope[Any]`` — the ``ok``/``fail``/``pending``
+         *     helpers and any endpoint without a specific shape keep working untyped, with
+         *     no field loss.
          */
         Envelope: {
             /** Success */
@@ -1091,6 +1284,237 @@ export interface components {
             meta?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** Envelope[CompareReportData] */
+        Envelope_CompareReportData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["CompareReportData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[GateEvalData] */
+        Envelope_GateEvalData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["GateEvalData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[GateSpecData] */
+        Envelope_GateSpecData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["GateSpecData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[MetricsData] */
+        Envelope_MetricsData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["MetricsData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[PresetData] */
+        Envelope_PresetData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["PresetData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[PresetsListData] */
+        Envelope_PresetsListData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["PresetsListData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[PromotionStateData] */
+        Envelope_PromotionStateData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["PromotionStateData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[RiskSpecData] */
+        Envelope_RiskSpecData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["RiskSpecData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[RunRecord] */
+        Envelope_RunRecord_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["RunRecord"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[SavedView] */
+        Envelope_SavedView_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["SavedView"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[SweepEstimate] */
+        Envelope_SweepEstimate_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["SweepEstimate"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[TrialsData] */
+        Envelope_TrialsData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["TrialsData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[UniverseFiltersData] */
+        Envelope_UniverseFiltersData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["UniverseFiltersData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[AlertRuleRow]] */
+        Envelope_list_AlertRuleRow__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["AlertRuleRow"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[PromotionEvent]] */
+        Envelope_list_PromotionEvent__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["PromotionEvent"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[RunSummary]] */
+        Envelope_list_RunSummary__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["RunSummary"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[SavedView]] */
+        Envelope_list_SavedView__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["SavedView"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[StrategyRow]] */
+        Envelope_list_StrategyRow__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["StrategyRow"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /**
+         * GateCriterion
+         * @description One ADR-016/019 gate criterion (``GET /gate/spec``).
+         */
+        GateCriterion: {
+            /** Key */
+            key: string;
+            /** Op */
+            op: string;
+            /** Threshold */
+            threshold: number;
+            /** Kind */
+            kind?: string | null;
+            /** Label */
+            label?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * GateEvalData
+         * @description ``POST /gate/evaluate`` verdict; per-criterion detail via extra='allow'.
+         */
+        GateEvalData: {
+            /** Status */
+            status?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * GateEvaluateRequest
@@ -1105,10 +1529,25 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** GateSpecData */
+        GateSpecData: {
+            /** Criteria */
+            criteria?: components["schemas"]["GateCriterion"][];
+        } & {
+            [key: string]: unknown;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * MetricsData
+         * @description ``POST /metrics/{summary,trades}`` — metric keys vary by request; the named
+         *     object is enough for typing, extra='allow' carries the computed values.
+         */
+        MetricsData: {
+            [key: string]: unknown;
         };
         /**
          * MetricsSummaryRequest
@@ -1126,6 +1565,121 @@ export interface components {
              * @default 0
              */
             risk_free: number;
+        };
+        /**
+         * PresetData
+         * @description One preset's StrategyConfig dump (``GET /presets/{name}``); shape varies.
+         */
+        PresetData: {
+            [key: string]: unknown;
+        };
+        /** PresetsListData */
+        PresetsListData: {
+            /** Presets */
+            presets?: string[];
+            /** Configs */
+            configs?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * PromoteRequest
+         * @description Advance a strategy one stage forward.
+         */
+        PromoteRequest: {
+            /**
+             * To Stage
+             * @description next stage: paper | live
+             */
+            to_stage: string;
+            /**
+             * Note
+             * @description why (recorded in the immutable audit)
+             * @default
+             */
+            note: string;
+            /**
+             * Actor
+             * @description who triggered the promotion
+             * @default system
+             */
+            actor: string;
+        };
+        /**
+         * PromotionEvent
+         * @description One immutable promotion audit event (``GET /research/promote/{id}/audit``).
+         */
+        PromotionEvent: {
+            [key: string]: unknown;
+        };
+        /** PromotionStateData */
+        PromotionStateData: {
+            /** Strategy Id */
+            strategy_id: string;
+            /** Stage */
+            stage?: string | null;
+            /** Gates */
+            gates?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** History */
+            history?: {
+                [key: string]: unknown;
+            }[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** RiskRule */
+        RiskRule: {
+            /** Id */
+            id: string;
+            /** Order */
+            order?: number | null;
+            /** Description */
+            description?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** RiskSpecData */
+        RiskSpecData: {
+            /** Rules */
+            rules?: components["schemas"]["RiskRule"][];
+            /** Thresholds */
+            thresholds?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * RunComparisonRow
+         * @description One run's reading in a compare report.
+         */
+        RunComparisonRow: {
+            /** Run Id */
+            run_id: string;
+            /** Is Baseline */
+            is_baseline: boolean;
+            /** Metrics */
+            metrics?: {
+                [key: string]: unknown;
+            };
+            /** Delta */
+            delta?: {
+                [key: string]: unknown;
+            };
+            /** Rank */
+            rank?: {
+                [key: string]: unknown;
+            };
+            /** Gate Status */
+            gate_status?: string | null;
+            /** Hypothesis */
+            hypothesis?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /**
          * RunCreateRequest
@@ -1165,6 +1719,127 @@ export interface components {
             engine: string;
         };
         /**
+         * RunRecord
+         * @description A full ledger record (``GET /runs/{id}`` / ``POST /runs``). Shape varies by
+         *     run; only the identity field is guaranteed, the rest pass through.
+         */
+        RunRecord: {
+            /** Run Id */
+            run_id: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * RunSummary
+         * @description One row of ``GET /runs`` (``_SUMMARY_KEYS`` projection).
+         */
+        RunSummary: {
+            /** Run Id */
+            run_id: string;
+            /** Preset */
+            preset?: string | null;
+            /** Gate Status */
+            gate_status?: string | null;
+            /** Hypothesis */
+            hypothesis?: string | null;
+            /** Metrics */
+            metrics?: {
+                [key: string]: unknown;
+            } | null;
+            /** Is Start */
+            is_start?: string | null;
+            /** Is End */
+            is_end?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * RunTagRequest
+         * @description Replace the tag set on a run.
+         */
+        RunTagRequest: {
+            /** Run Id */
+            run_id: string;
+            /** Tags */
+            tags?: string[];
+        };
+        /** SavedView */
+        SavedView: {
+            /** Id */
+            id: string;
+            /** Name */
+            name?: string | null;
+            /** Query */
+            query?: {
+                [key: string]: unknown;
+            } | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SavedViewCreate
+         * @description A named Runs-Table view (columns + filters), mirroring the FE URL state.
+         */
+        SavedViewCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Query
+             * @description columns / filters state
+             */
+            query?: {
+                [key: string]: unknown;
+            };
+        };
+        /** StrategyRow */
+        StrategyRow: {
+            /** Strategy Id */
+            strategy_id: string;
+            /** Version */
+            version?: string | null;
+            /** Validation Status */
+            validation_status?: string | null;
+            /** Stage */
+            stage?: string | null;
+            /** Runs Count */
+            runs_count?: number | null;
+            /** Best Kpi */
+            best_kpi?: {
+                [key: string]: unknown;
+            } | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SweepEstimate
+         * @description ``GET /runs/estimate`` — grid cardinality + time estimate.
+         */
+        SweepEstimate: {
+            /** N Configs */
+            n_configs: number;
+            /** Est Minutes */
+            est_minutes: number;
+            /** Axes */
+            axes?: {
+                [key: string]: number;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SweepRequest
+         * @description A parameter grid to expand into the sweep plan.
+         */
+        SweepRequest: {
+            /**
+             * Grid
+             * @description axis name → candidate values
+             */
+            grid: {
+                [key: string]: unknown[];
+            };
+        };
+        /**
          * TradeMetricsRequest
          * @description Compute the E (trade-quality) metrics over a list of trade records.
          */
@@ -1176,6 +1851,37 @@ export interface components {
             trades: {
                 [key: string]: unknown;
             }[];
+        };
+        /** TrialsData */
+        TrialsData: {
+            /** Cumulative Trials */
+            cumulative_trials: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * TrialsIncrement
+         * @description Record N additional trials searched over a param-space (DSR deflation).
+         */
+        TrialsIncrement: {
+            /**
+             * Param Space
+             * @description param-space dict (or stable key string)
+             */
+            param_space: unknown;
+            /**
+             * Count
+             * @description trials to add
+             * @default 1
+             */
+            count: number;
+        };
+        /** UniverseFiltersData */
+        UniverseFiltersData: {
+            /** Markets */
+            markets?: string[];
+        } & {
+            [key: string]: unknown;
         };
         /** ValidationError */
         ValidationError: {
@@ -1239,7 +1945,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_list_RunSummary__"];
                 };
             };
             /** @description Validation Error */
@@ -1272,7 +1978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_RunRecord_"];
                 };
             };
             /** @description Validation Error */
@@ -1291,6 +1997,8 @@ export interface operations {
             query?: {
                 /** @description run_id to diff against */
                 baseline?: string | null;
+                /** @description comma list — compare only this subset (else the whole ledger) */
+                run_ids?: string | null;
             };
             header?: never;
             path?: never;
@@ -1304,7 +2012,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_CompareReportData_"];
                 };
             };
             /** @description Validation Error */
@@ -1333,7 +2041,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_SweepEstimate_"];
                 };
             };
         };
@@ -1348,6 +2056,101 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RunRecord_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_equity_runs__run_id__equity_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_trades_runs__run_id__trades_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tag_run_runs_tag_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunTagRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -1384,7 +2187,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_GateSpecData_"];
                 };
             };
         };
@@ -1408,7 +2211,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_GateEvalData_"];
                 };
             };
             /** @description Validation Error */
@@ -1441,7 +2244,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_MetricsData_"];
                 };
             };
             /** @description Validation Error */
@@ -1474,7 +2277,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_MetricsData_"];
                 };
             };
             /** @description Validation Error */
@@ -1503,7 +2306,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_PresetsListData_"];
                 };
             };
         };
@@ -1525,7 +2328,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_PresetData_"];
                 };
             };
             /** @description Validation Error */
@@ -1557,7 +2360,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_list_StrategyRow__"];
                 };
             };
             /** @description Validation Error */
@@ -1617,72 +2420,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
-                };
-            };
-        };
-    };
-    saved_views_research_saved_views_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Envelope"];
-                };
-            };
-        };
-    };
-    saved_views_create_research_saved_views_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Envelope"];
-                };
-            };
-        };
-    };
-    trials_increment_research_trials_increment_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_UniverseFiltersData_"];
                 };
             };
         };
     };
     gate_state_research_validate__run_id__gate_state_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validate_health_research_validate__run_id__health_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1792,6 +2566,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    "application/json": components["schemas"]["Envelope_PromotionStateData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    promote_advance_research_promote__strategy_id__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromoteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
                     "application/json": components["schemas"]["Envelope"];
                 };
             };
@@ -1812,6 +2621,156 @@ export interface operations {
             header?: never;
             path: {
                 strategy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_PromotionEvent__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_research_saved_views_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_SavedView__"];
+                };
+            };
+        };
+    };
+    saved_views_create_research_saved_views_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedViewCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_SavedView_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trials_increment_research_trials_increment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrialsIncrement"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_TrialsData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_sweep_research_sweep_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SweepRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sweep_status_research_sweep__job_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
             };
             cookie?: never;
         };
@@ -2338,7 +3297,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_RiskSpecData_"];
                 };
             };
         };
@@ -2378,7 +3337,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_list_AlertRuleRow__"];
                 };
             };
         };

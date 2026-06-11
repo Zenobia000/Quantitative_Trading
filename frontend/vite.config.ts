@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from 'vite'
 import type { ProxyOptions } from 'vite'
+import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import type { IncomingMessage } from 'node:http'
@@ -38,5 +39,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // e2e/ holds Playwright specs (run via `npm run test:e2e`), not vitest — vitest
+    // would try to collect them and fail on Playwright's test() runner.
+    exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 })

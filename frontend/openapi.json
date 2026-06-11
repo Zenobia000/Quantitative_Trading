@@ -33,7 +33,7 @@
           "runs"
         ],
         "summary": "List Runs",
-        "description": "Paginated list of run summaries (newest-first as stored in the ledger).",
+        "description": "Paginated list of run summaries, one current row per run_id (latest wins).",
         "operationId": "list_runs_runs_get",
         "parameters": [
           {
@@ -70,7 +70,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_list_RunSummary__"
                 }
               }
             }
@@ -110,7 +110,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_RunRecord_"
                 }
               }
             }
@@ -134,7 +134,7 @@
           "runs"
         ],
         "summary": "Compare",
-        "description": "Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.",
+        "description": "Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.\n\n``run_ids`` restricts the comparison to a chosen subset (the frontend's\nmulti-select → ``?run_ids=a,b,c``); absent, the whole ledger is compared. The\nsubset is deduped to one current row per run_id and kept in requested order.",
         "operationId": "compare_runs_compare_get",
         "parameters": [
           {
@@ -154,6 +154,24 @@
               "title": "Baseline"
             },
             "description": "run_id to diff against"
+          },
+          {
+            "name": "run_ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "comma list — compare only this subset (else the whole ledger)",
+              "title": "Run Ids"
+            },
+            "description": "comma list — compare only this subset (else the whole ledger)"
           }
         ],
         "responses": {
@@ -162,7 +180,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_CompareReportData_"
                 }
               }
             }
@@ -194,7 +212,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_SweepEstimate_"
                 }
               }
             }
@@ -208,7 +226,7 @@
           "runs"
         ],
         "summary": "Get Run",
-        "description": "Full ledger record for one run; 404 if absent.",
+        "description": "Full ledger record for one run (latest append wins); 404 if absent.",
         "operationId": "get_run_runs__run_id__get",
         "parameters": [
           {
@@ -221,6 +239,133 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RunRecord_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run_id}/equity": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Equity",
+        "description": "Equity curve + running drawdown for one run (from the series sidecar).",
+        "operationId": "run_equity_runs__run_id__equity_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run_id}/trades": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Trades",
+        "description": "Per-trade list ({ret, hold, entry_structure}) for one run.",
+        "operationId": "run_trades_runs__run_id__trades_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/tag": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Tag Run",
+        "operationId": "tag_run_runs_tag_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunTagRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -259,7 +404,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_GateSpecData_"
                 }
               }
             }
@@ -291,7 +436,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_GateEvalData_"
                 }
               }
             }
@@ -333,7 +478,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_MetricsData_"
                 }
               }
             }
@@ -375,7 +520,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_MetricsData_"
                 }
               }
             }
@@ -407,7 +552,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_PresetsListData_"
                 }
               }
             }
@@ -440,7 +585,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_PresetData_"
                 }
               }
             }
@@ -498,7 +643,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_list_StrategyRow__"
                 }
               }
             }
@@ -573,68 +718,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research/saved-views": {
-      "get": {
-        "tags": [
-          "research"
-        ],
-        "summary": "Saved Views",
-        "operationId": "saved_views_research_saved_views_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "research"
-        ],
-        "summary": "Saved Views Create",
-        "operationId": "saved_views_create_research_saved_views_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/research/trials/increment": {
-      "post": {
-        "tags": [
-          "research"
-        ],
-        "summary": "Trials Increment",
-        "operationId": "trials_increment_research_trials_increment_post",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_UniverseFiltersData_"
                 }
               }
             }
@@ -648,7 +732,51 @@
           "research"
         ],
         "summary": "Gate State",
+        "description": "Current validation status + stage + transition history for a run.",
         "operationId": "gate_state_research_validate__run_id__gate_state_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/validate/{run_id}/health": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Validate Health",
+        "description": "13-indicator green/yellow/red health table (v2.md §4.3.1) for a run.\n\nProjects the run's stored metrics onto the §4.3.1 bands. A run absent from the\nledger (or carrying no metrics) yields a health report of all ``na``.",
+        "operationId": "validate_health_research_validate__run_id__health_get",
         "parameters": [
           {
             "name": "run_id",
@@ -690,6 +818,7 @@
           "research"
         ],
         "summary": "Validate Wfa",
+        "description": "Walk-forward folds for a run (v2.md §4.4.1: IS 252d + OOS 63d, rolling 63d).\n\nFold date-windows are computed data-free from the run's span via\n``walk_forward_splits``. The IS-vs-OOS performance ``scatter`` needs a backtest\nper fold (parquet) and stays empty until that runs — so a real ``folds`` list\nships now while ``scatter`` is honestly marked pending.",
         "operationId": "validate_wfa_research_validate__run_id__wfa_get",
         "parameters": [
           {
@@ -774,6 +903,7 @@
           "research"
         ],
         "summary": "Promote State",
+        "description": "Current promotion stage + per-stage reached flags + audit trail.",
         "operationId": "promote_state_research_promote__strategy_id__get",
         "parameters": [
           {
@@ -786,6 +916,57 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_PromotionStateData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Promote Advance",
+        "description": "Advance one stage forward; 422 on an illegal skip / regress / unknown stage.",
+        "operationId": "promote_advance_research_promote__strategy_id__post",
+        "parameters": [
+          {
+            "name": "strategy_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromoteRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -816,6 +997,7 @@
           "research"
         ],
         "summary": "Promote Audit",
+        "description": "Immutable promotion audit trail for a strategy.",
         "operationId": "promote_audit_research_promote__strategy_id__audit_get",
         "parameters": [
           {
@@ -825,6 +1007,192 @@
             "schema": {
               "type": "string",
               "title": "Strategy Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_PromotionEvent__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/saved-views": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Saved Views",
+        "operationId": "saved_views_research_saved_views_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_SavedView__"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Saved Views Create",
+        "operationId": "saved_views_create_research_saved_views_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SavedViewCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_SavedView_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/trials/increment": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Trials Increment",
+        "operationId": "trials_increment_research_trials_increment_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrialsIncrement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_TrialsData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/sweep": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Submit Sweep",
+        "description": "Enqueue a sweep-plan job; returns {job_id, status} (202 Accepted).",
+        "operationId": "submit_sweep_research_sweep_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SweepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/sweep/{job_id}/status": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Sweep Status",
+        "description": "Poll a sweep job's status; typed-empty pending if the id is unknown.",
+        "operationId": "sweep_status_research_sweep__job_id__status_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
             }
           }
         ],
@@ -1432,6 +1800,7 @@
           "system"
         ],
         "summary": "Risk Spec",
+        "description": "The 12 ex-ante risk rules + active thresholds. Real config projection — this\nis rule *definitions* (not live telemetry), so it ships now, not at the M4 daemon.",
         "operationId": "risk_spec_system_risk_spec_get",
         "responses": {
           "200": {
@@ -1439,7 +1808,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_RiskSpecData_"
                 }
               }
             }
@@ -1474,6 +1843,7 @@
           "system"
         ],
         "summary": "Alert Rules",
+        "description": "The built-in §4.2 alert rules (real config projection). Rule definitions\nship now; create/update (POST/PUT) and history stay pending on a rule store /\nthe M4 producer.",
         "operationId": "alert_rules_system_alerts_rules_get",
         "responses": {
           "200": {
@@ -1481,7 +1851,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_list_AlertRuleRow__"
                 }
               }
             }
@@ -1936,6 +2306,42 @@
   },
   "components": {
     "schemas": {
+      "AlertRuleRow": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "rule_id"
+        ],
+        "title": "AlertRuleRow"
+      },
       "ApiError": {
         "properties": {
           "code": {
@@ -1963,6 +2369,49 @@
         ],
         "title": "ApiError",
         "description": "Structured error body shared by every failure response."
+      },
+      "CompareReportData": {
+        "properties": {
+          "baseline_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Id"
+          },
+          "metric_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Metric Keys"
+          },
+          "sign_consistent": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sign Consistent"
+          },
+          "rankings": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rankings"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/RunComparisonRow"
+            },
+            "type": "array",
+            "title": "Comparisons"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "CompareReportData",
+        "description": "``GET /runs/compare`` — per-metric delta vs baseline + ranks + sign."
       },
       "Envelope": {
         "properties": {
@@ -2007,7 +2456,903 @@
           "success"
         ],
         "title": "Envelope",
-        "description": "The single response shape shared by every endpoint."
+        "description": "The single response shape shared by every endpoint.\n\nGeneric over the ``data`` payload: ``response_model=Envelope[RunRow]`` types\nthe OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.\nUnparametrised ``Envelope`` ≡ ``Envelope[Any]`` — the ``ok``/``fail``/``pending``\nhelpers and any endpoint without a specific shape keep working untyped, with\nno field loss."
+      },
+      "Envelope_CompareReportData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompareReportData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[CompareReportData]"
+      },
+      "Envelope_GateEvalData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GateEvalData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[GateEvalData]"
+      },
+      "Envelope_GateSpecData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GateSpecData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[GateSpecData]"
+      },
+      "Envelope_MetricsData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[MetricsData]"
+      },
+      "Envelope_PresetData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresetData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[PresetData]"
+      },
+      "Envelope_PresetsListData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PresetsListData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[PresetsListData]"
+      },
+      "Envelope_PromotionStateData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PromotionStateData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[PromotionStateData]"
+      },
+      "Envelope_RiskSpecData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskSpecData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[RiskSpecData]"
+      },
+      "Envelope_RunRecord_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[RunRecord]"
+      },
+      "Envelope_SavedView_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SavedView"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[SavedView]"
+      },
+      "Envelope_SweepEstimate_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SweepEstimate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[SweepEstimate]"
+      },
+      "Envelope_TrialsData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrialsData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[TrialsData]"
+      },
+      "Envelope_UniverseFiltersData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UniverseFiltersData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[UniverseFiltersData]"
+      },
+      "Envelope_list_AlertRuleRow__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AlertRuleRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[AlertRuleRow]]"
+      },
+      "Envelope_list_PromotionEvent__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PromotionEvent"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[PromotionEvent]]"
+      },
+      "Envelope_list_RunSummary__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RunSummary"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[RunSummary]]"
+      },
+      "Envelope_list_SavedView__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SavedView"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[SavedView]]"
+      },
+      "Envelope_list_StrategyRow__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StrategyRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[StrategyRow]]"
+      },
+      "GateCriterion": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "op": {
+            "type": "string",
+            "title": "Op"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "key",
+          "op",
+          "threshold"
+        ],
+        "title": "GateCriterion",
+        "description": "One ADR-016/019 gate criterion (``GET /gate/spec``)."
+      },
+      "GateEvalData": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "GateEvalData",
+        "description": "``POST /gate/evaluate`` verdict; per-criterion detail via extra='allow'."
       },
       "GateEvaluateRequest": {
         "properties": {
@@ -2028,6 +3373,20 @@
         "title": "GateEvaluateRequest",
         "description": "Judge an arbitrary metrics dict against the審判庭 (ADR-016 + ADR-019)."
       },
+      "GateSpecData": {
+        "properties": {
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/GateCriterion"
+            },
+            "type": "array",
+            "title": "Criteria"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "GateSpecData"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2040,6 +3399,13 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "MetricsData": {
+        "properties": {},
+        "additionalProperties": true,
+        "type": "object",
+        "title": "MetricsData",
+        "description": "``POST /metrics/{summary,trades}`` — metric keys vary by request; the named\nobject is enough for typing, extra='allow' carries the computed values."
       },
       "MetricsSummaryRequest": {
         "properties": {
@@ -2066,6 +3432,234 @@
         ],
         "title": "MetricsSummaryRequest",
         "description": "Compute the A/B/C performance metrics over a daily-returns series."
+      },
+      "PresetData": {
+        "properties": {},
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PresetData",
+        "description": "One preset's StrategyConfig dump (``GET /presets/{name}``); shape varies."
+      },
+      "PresetsListData": {
+        "properties": {
+          "presets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Presets"
+          },
+          "configs": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Configs"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PresetsListData"
+      },
+      "PromoteRequest": {
+        "properties": {
+          "to_stage": {
+            "type": "string",
+            "title": "To Stage",
+            "description": "next stage: paper | live"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "description": "why (recorded in the immutable audit)",
+            "default": ""
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor",
+            "description": "who triggered the promotion",
+            "default": "system"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "to_stage"
+        ],
+        "title": "PromoteRequest",
+        "description": "Advance a strategy one stage forward."
+      },
+      "PromotionEvent": {
+        "properties": {},
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PromotionEvent",
+        "description": "One immutable promotion audit event (``GET /research/promote/{id}/audit``)."
+      },
+      "PromotionStateData": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "gates": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gates"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "strategy_id"
+        ],
+        "title": "PromotionStateData"
+      },
+      "RiskRule": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Order"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "RiskRule"
+      },
+      "RiskSpecData": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RiskRule"
+            },
+            "type": "array",
+            "title": "Rules"
+          },
+          "thresholds": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Thresholds"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "RiskSpecData"
+      },
+      "RunComparisonRow": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "is_baseline": {
+            "type": "boolean",
+            "title": "Is Baseline"
+          },
+          "metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metrics"
+          },
+          "delta": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Delta"
+          },
+          "rank": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Rank"
+          },
+          "gate_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gate Status"
+          },
+          "hypothesis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hypothesis"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id",
+          "is_baseline"
+        ],
+        "title": "RunComparisonRow",
+        "description": "One run's reading in a compare report."
       },
       "RunCreateRequest": {
         "properties": {
@@ -2118,6 +3712,302 @@
         "title": "RunCreateRequest",
         "description": "Trigger one IS run — the HTTP form of a ``RunConfig`` (validated downstream)."
       },
+      "RunRecord": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunRecord",
+        "description": "A full ledger record (``GET /runs/{id}`` / ``POST /runs``). Shape varies by\nrun; only the identity field is guaranteed, the rest pass through."
+      },
+      "RunSummary": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset"
+          },
+          "gate_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gate Status"
+          },
+          "hypothesis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hypothesis"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metrics"
+          },
+          "is_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Start"
+          },
+          "is_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is End"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunSummary",
+        "description": "One row of ``GET /runs`` (``_SUMMARY_KEYS`` projection)."
+      },
+      "RunTagRequest": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Run Id"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunTagRequest",
+        "description": "Replace the tag set on a run."
+      },
+      "SavedView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "SavedView"
+      },
+      "SavedViewCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          },
+          "query": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Query",
+            "description": "columns / filters state"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "SavedViewCreate",
+        "description": "A named Runs-Table view (columns + filters), mirroring the FE URL state."
+      },
+      "StrategyRow": {
+        "properties": {
+          "strategy_id": {
+            "type": "string",
+            "title": "Strategy Id"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "validation_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Status"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "runs_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runs Count"
+          },
+          "best_kpi": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Kpi"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "strategy_id"
+        ],
+        "title": "StrategyRow"
+      },
+      "SweepEstimate": {
+        "properties": {
+          "n_configs": {
+            "type": "integer",
+            "title": "N Configs"
+          },
+          "est_minutes": {
+            "type": "number",
+            "title": "Est Minutes"
+          },
+          "axes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Axes"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "n_configs",
+          "est_minutes"
+        ],
+        "title": "SweepEstimate",
+        "description": "``GET /runs/estimate`` — grid cardinality + time estimate."
+      },
+      "SweepRequest": {
+        "properties": {
+          "grid": {
+            "additionalProperties": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Grid",
+            "description": "axis name → candidate values"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "grid"
+        ],
+        "title": "SweepRequest",
+        "description": "A parameter grid to expand into the sweep plan."
+      },
       "TradeMetricsRequest": {
         "properties": {
           "trades": {
@@ -2138,6 +4028,56 @@
         ],
         "title": "TradeMetricsRequest",
         "description": "Compute the E (trade-quality) metrics over a list of trade records."
+      },
+      "TrialsData": {
+        "properties": {
+          "cumulative_trials": {
+            "type": "integer",
+            "title": "Cumulative Trials"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "cumulative_trials"
+        ],
+        "title": "TrialsData"
+      },
+      "TrialsIncrement": {
+        "properties": {
+          "param_space": {
+            "title": "Param Space",
+            "description": "param-space dict (or stable key string)"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Count",
+            "description": "trials to add",
+            "default": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "param_space"
+        ],
+        "title": "TrialsIncrement",
+        "description": "Record N additional trials searched over a param-space (DSR deflation)."
+      },
+      "UniverseFiltersData": {
+        "properties": {
+          "markets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Markets"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "UniverseFiltersData"
       },
       "ValidationError": {
         "properties": {
