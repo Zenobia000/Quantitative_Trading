@@ -18,9 +18,11 @@ status↔code mapping lives in ``app.py``; ``fail`` defaults ``code`` to
 """
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
+
+T = TypeVar("T")
 
 
 class ApiError(BaseModel):
@@ -31,11 +33,18 @@ class ApiError(BaseModel):
     detail: Any | None = None
 
 
-class Envelope(BaseModel):
-    """The single response shape shared by every endpoint."""
+class Envelope(BaseModel, Generic[T]):
+    """The single response shape shared by every endpoint.
+
+    Generic over the ``data`` payload: ``response_model=Envelope[RunRow]`` types
+    the OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.
+    Unparametrised ``Envelope`` ≡ ``Envelope[Any]`` — the ``ok``/``fail``/``pending``
+    helpers and any endpoint without a specific shape keep working untyped, with
+    no field loss.
+    """
 
     success: bool
-    data: Any | None = None
+    data: T | None = None
     error: ApiError | None = None
     meta: dict[str, Any] | None = None
 
