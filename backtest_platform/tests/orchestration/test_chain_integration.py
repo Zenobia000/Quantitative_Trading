@@ -9,13 +9,8 @@ waves compose; only the data feed is synthetic (no parquet / no real broker).
 from __future__ import annotations
 
 from backtest_platform.adapters.brokers.paper_broker import PaperBroker
-from backtest_platform.orchestration.daily_flow import build_daily_stages, run_flow
-from backtest_platform.orchestration.daily_flow import FlowContext
-from backtest_platform.risk.risk_gate import (
-    AccountState,
-    Order,
-    RiskGate,
-)
+from backtest_platform.orchestration.collaborators import make_place, make_risk_check
+from backtest_platform.orchestration.daily_flow import FlowContext, build_daily_stages, run_flow
 
 _EQUITY = 1_000_000.0
 
@@ -30,43 +25,15 @@ def _signals() -> list[dict]:
     ]
 
 
-def _risk_check_factory(broker: PaperBroker):
-    """Real RiskGate: approve only if every signal clears all 12 rules."""
-    gate = RiskGate()
-
-    def check(signals: list[dict]) -> tuple[bool, str]:
-        account = AccountState(equity=_EQUITY, cash=broker.cash, positions=())
-        for s in signals:
-            order = Order(
-                stock_id=s["stock_id"], side=s["side"], qty=s["qty"], price=s["price"],
-                industry=s.get("industry", ""), stop_loss=s.get("stop_loss", 0.0),
-                prev_close=s.get("prev_close", 0.0), avg_volume_20d=s.get("avg_volume_20d", 0.0),
-            )
-            result = gate.check(order, account)
-            if not result.allowed:
-                return False, f"{s['stock_id']} rejected: {result.rejections}"
-        return True, f"{len(signals)} orders approved"
-
-    return check
-
-
-def _place_factory(broker: PaperBroker):
-    """Real PaperBroker: submit each approved signal, return the fills."""
-    def place(signals: list[dict]) -> list:
-        return [broker.submit_order(s["stock_id"], s["side"], s["qty"], s["price"]) for s in signals]
-
-    return place
-
-
 def _chain_context(broker: PaperBroker, signals: list[dict]) -> FlowContext:
-    placed: list = []
+    # real risk + order collaborators come from the production module (7.D)
     return FlowContext(config={
         "universe": ["2330", "2317"],
         "ingest": lambda syms: {s: True for s in syms},
         "signal_fn": lambda ctx: signals,
-        "risk_check": _risk_check_factory(broker),
-        "place": _place_factory(broker),
-        "sink": lambda ctx: f"chain-run:{len(ctx.outputs.get('orders', placed))}",
+        "risk_check": make_risk_check(broker, equity=_EQUITY),
+        "place": make_place(broker),
+        "sink": lambda ctx: f"chain-run:{len(ctx.outputs.get('orders', []))}",
     })
 
 

@@ -6,9 +6,12 @@
 ``run --dry-run`` (default) executes the no-op demo pipeline — safe, touches no
 data/broker/network — and is the smoke test for the flow engine. ``run --real``
 runs the canonical ETL→signals→risk→orders→log pipeline; its collaborators are
-injected via ``FlowContext.config`` (live wiring is the 7.D.3 follow-up), so a
-bare ``--real`` run cleanly reports the first stage missing its collaborator
-rather than crashing.
+injected via ``FlowContext.config``. The real collaborators now exist
+(``orchestration.collaborators.build_paper_collaborators`` wires FinMind ingest +
+RiskGate + PaperBroker + the TimescaleDB sink); supply them programmatically along
+with a strategy ``signal_fn``. A bare CLI ``--real`` leaves config empty, so it
+reports the first stage missing its collaborator rather than crashing — *which*
+strategy to run (the signal_fn) is an edge/deployment decision, not infra.
 """
 from __future__ import annotations
 

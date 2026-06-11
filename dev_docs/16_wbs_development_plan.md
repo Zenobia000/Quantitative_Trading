@@ -285,7 +285,7 @@
 | 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
 |:--|:--|:--|:--:|:--:|:--|:--|
 | 7.A.1 | PaperBroker 模擬撮合 | — | 16h | ✅ v0.5 | — | `adapters/brokers/paper_broker.py`（fills/positions/cash/equity，strategy-agnostic） |
-| 7.A.2 | Paper trade log → TimescaleDB | — | 4h | 🟡 | 2026-06-11 | **持久化 writer 層 ✅**：`db_writer` 的 M4-stub（raise NotImplementedError）改實作——`upsert_signals`/`upsert_orders`（append-only event INSERT）+ `upsert_equity_snapshots`（UPSERT on PK）+ `upsert_fills`（無 fills 表→映 filled `orders`）+ 共用 `_execute_write` helper（部分還 audit 的 db_writer 重複債）；mock 單元測試（5）。剩 orchestration log sink 接線（併 7.D real wiring） |
+| 7.A.2 | Paper trade log → TimescaleDB | — | 4h | 🟡 | 2026-06-11 | **持久化 writer 層 ✅**：`db_writer` 的 M4-stub（raise NotImplementedError）改實作——`upsert_signals`/`upsert_orders`（append-only event INSERT）+ `upsert_equity_snapshots`（UPSERT on PK）+ `upsert_fills`（無 fills 表→映 filled `orders`）+ 共用 `_execute_write` helper（部分還 audit 的 db_writer 重複債）；mock 單元測試（5）。**log sink 接線 ✅（2026-06-12）：`collaborators.make_db_sink` 將 flow outputs（signals/fills）+ broker equity snapshot 持久化，clock/writer 可注入測試 → 7.A.2 落地（整合測待 live DB）** |
 | 7.A.3 | 3 個月 paper trading 跑 | — | (時間) | ⏳ | — | — |
 | 7.B.1 | ShioajiBroker 抄 TEJ 範例改 | — | 12h | ⏳ | — | sprint S4 後 |
 | 7.B.2 | 永豐金實盤接通 + 小倉位 | — | 16h | ⏳ | — | M5 |
@@ -294,7 +294,7 @@
 | 7.C.3 | Risk metrics 即時計算 | — | 8h | ⏳ | — | — |
 | 7.D.1 | Prefect daily flow 每日排程 | — | 8h | 🟡 | 2026-06-04 | `orchestration/daily_flow.py` fail-fast staged 引擎（ETL→signals→risk→orders→log，collaborator 注入）+ **Prefect-optional**（`as_prefect_flow`：未裝 prefect 則 inline fallback，prefect 非硬依賴）|
 | 7.D.2 | orchestration/cli.py 完整 | — | 8h | 🟡 | 2026-06-04 | `orchestration/cli.py` run〔--dry-run/--real〕+ list-stages；dry-run 跑 no-op demo 管線（安全），real 套 build_daily_stages；18 測試、模組 94% cov |
-| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | 🟡 | 2026-06-07 | **端到端整合測試 ✅**：`test_chain_integration.py` 用真實 RiskGate（12 規則）+ PaperBroker（模擬撮合）跑 ETL→signals→risk→orders→log，驗 fills 落帳/cash 扣減/風控拒單 halt before orders/缺 collaborator 乾淨失敗（3 tests，非 stub）。剩 real ETL/signals 接 parquet + CLI `--real` 接線 |
+| 7.D.3 | 訊號→下單→fills 完整鏈路測試（real collaborator 接線） | — | 16h | 🟡 | 2026-06-07 | **端到端整合測試 ✅**：`test_chain_integration.py` 用真實 RiskGate（12 規則）+ PaperBroker（模擬撮合）跑 ETL→signals→risk→orders→log，驗 fills 落帳/cash 扣減/風控拒單 halt before orders/缺 collaborator 乾淨失敗（3 tests，非 stub）。**real collaborators 落地 ✅（2026-06-12）：`orchestration/collaborators.py` 把 chain test 的 RiskGate/PaperBroker factory 提升為 production（`make_risk_check`/`make_place`）+ `make_ingest`（wrap FinMind `ingest_universe` → ok-map）+ `make_db_sink`（7.A.2 持久化）+ `build_paper_collaborators` 組裝；chain test 改用 production factory（去重）；CLI docstring 指向真實接線 seam。`signal_fn`（策略）為注入 seam＝gated 決策。剩：實際跑需 live FinMind+DB+可部署策略** |
 
 **模組小計**：~110h
 
