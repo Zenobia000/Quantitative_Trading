@@ -247,29 +247,105 @@ def upsert_runs(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
 
 
 # ---------------------------------------------------------------------------
-# M4 stubs — signals / orders / fills writers.
+# paper/live trade log writers — signals / orders / fills / equity (7.A.2)
 #
-# These tables exist in init.sql but the high-level writers wait for the
-# broker layer (M4) where signal_id / order_id round-trips matter. Importable
-# now so dashboard / orchestration code can wire dependencies without
-# circular imports; calling raises NotImplementedError to fail loudly.
+# These tables exist in init.sql; the writers persist a paper (or live) run's
+# output. signals/orders are append-only event logs (DB auto-gens the id, so a
+# plain INSERT is correct); equity_snapshots upserts on its time/strategy/run PK.
+# A "fill" has no table of its own — it persists as a filled row in `orders`.
 # ---------------------------------------------------------------------------
+def _execute_write(
+    table: str,
+    cols: tuple[str, ...],
+    rows: list[dict[str, Any]],
+    *,
+    conflict_cols: tuple[str, ...] | None = None,
+    json_cols: tuple[str, ...] = (),
+    cfg: DBConfig | None = None,
+) -> int:
+    """Shared row-dict writer: INSERT (optionally ON CONFLICT … DO UPDATE).
+
+    Missing keys default to SQL NULL; ``json_cols`` are json-serialized for JSONB
+    assignment. Empty ``rows`` returns 0 without opening a connection.
+    """
+    if not rows:
+        return 0
+
+    cfg = cfg or DBConfig.from_env()
+    import json
+
+    from psycopg2.extras import execute_values  # type: ignore[import-not-found]
+
+    sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES %s"
+    if conflict_cols:
+        update_cols = [c for c in cols if c not in conflict_cols]
+        set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+        sql += f" ON CONFLICT ({', '.join(conflict_cols)}) DO UPDATE SET {set_clause}"
+
+    def _cell(col: str, value: Any) -> Any:
+        if col in json_cols and value is not None:
+            return json.dumps(value, ensure_ascii=False, default=str)
+        return value
+
+    tuples = [tuple(_cell(c, row.get(c)) for c in cols) for row in rows]
+    with _connection(cfg) as conn, conn.cursor() as cur:
+        execute_values(cur, sql, tuples, page_size=500)
+    logger.info("wrote {} rows to {}", len(rows), table)
+    return len(rows)
+
+
+_SIGNALS_COLS = (
+    "signal_time", "strategy_id", "run_id", "stock_id", "action",
+    "priority", "reason_json", "submitted", "submitted_at",
+)
+_ORDERS_COLS = (
+    "created_at", "signal_id", "broker", "stock_id", "side", "order_type",
+    "quantity", "limit_price", "status", "broker_order_id",
+    "submitted_at", "completed_at", "error_msg",
+)
+_EQUITY_COLS = (
+    "snapshot_time", "strategy_id", "mode", "run_id", "equity", "cash",
+    "positions_value", "open_positions", "portfolio_heat", "drawdown",
+    "daily_return", "cumulative_return",
+)
+_EQUITY_PK = ("snapshot_time", "strategy_id", "run_id")
+
+
 def upsert_signals(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
-    raise NotImplementedError(
-        "upsert_signals is scheduled for M4 (broker integration). "
-        "Use direct SQL via _connection() if you need to write rows in the interim."
-    )
+    """Append signal events to `signals` (signal_id auto-gen; reason_json is JSONB)."""
+    return _execute_write("signals", _SIGNALS_COLS, rows, json_cols=("reason_json",), cfg=cfg)
 
 
 def upsert_orders(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
-    raise NotImplementedError(
-        "upsert_orders is scheduled for M4 (broker integration). "
-        "Use direct SQL via _connection() if you need to write rows in the interim."
-    )
+    """Append order records to `orders` (order_id auto-gen). A filled order carries
+    ``status='filled'`` + ``completed_at``."""
+    return _execute_write("orders", _ORDERS_COLS, rows, cfg=cfg)
+
+
+def upsert_equity_snapshots(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
+    """Upsert equity snapshots on PK(snapshot_time, strategy_id, run_id)."""
+    return _execute_write("equity_snapshots", _EQUITY_COLS, rows, conflict_cols=_EQUITY_PK, cfg=cfg)
 
 
 def upsert_fills(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
-    raise NotImplementedError(
-        "upsert_fills is scheduled for M4 (broker integration). "
-        "Use direct SQL via _connection() if you need to write rows in the interim."
-    )
+    """Persist broker fills. There is no `fills` table — a fill is a *filled* row
+    in `orders`, so each fill dict (stock_id / side / qty / price / filled_at,
+    broker defaults to 'paper') is mapped to an order and written via
+    ``upsert_orders``."""
+    orders = [
+        {
+            "created_at": f.get("filled_at"),
+            "completed_at": f.get("filled_at"),
+            "submitted_at": f.get("filled_at"),
+            "broker": f.get("broker", "paper"),
+            "stock_id": f.get("stock_id"),
+            "side": f.get("side"),
+            "order_type": f.get("order_type", "Market"),
+            "quantity": f.get("qty"),
+            "limit_price": f.get("price"),
+            "status": "filled",
+            "signal_id": f.get("signal_id"),
+        }
+        for f in rows
+    ]
+    return upsert_orders(orders, cfg=cfg)

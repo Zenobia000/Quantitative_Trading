@@ -285,7 +285,7 @@
 | 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
 |:--|:--|:--|:--:|:--:|:--|:--|
 | 7.A.1 | PaperBroker 模擬撮合 | — | 16h | ✅ v0.5 | — | `adapters/brokers/paper_broker.py`（fills/positions/cash/equity，strategy-agnostic） |
-| 7.A.2 | Paper trade log → TimescaleDB | — | 4h | ⏳ | — | — |
+| 7.A.2 | Paper trade log → TimescaleDB | — | 4h | 🟡 | 2026-06-11 | **持久化 writer 層 ✅**：`db_writer` 的 M4-stub（raise NotImplementedError）改實作——`upsert_signals`/`upsert_orders`（append-only event INSERT）+ `upsert_equity_snapshots`（UPSERT on PK）+ `upsert_fills`（無 fills 表→映 filled `orders`）+ 共用 `_execute_write` helper（部分還 audit 的 db_writer 重複債）；mock 單元測試（5）。剩 orchestration log sink 接線（併 7.D real wiring） |
 | 7.A.3 | 3 個月 paper trading 跑 | — | (時間) | ⏳ | — | — |
 | 7.B.1 | ShioajiBroker 抄 TEJ 範例改 | — | 12h | ⏳ | — | sprint S4 後 |
 | 7.B.2 | 永豐金實盤接通 + 小倉位 | — | 16h | ⏳ | — | M5 |

@@ -141,28 +141,6 @@ def test_upsert_positions_empty_returns_zero() -> None:
     mock_conn_ctx.assert_not_called()
 
 
-def test_upsert_signals_stub_raises_not_implemented() -> None:
-    """signals writer is M2 P2 / M4 — stub for forward-compat import."""
-    from backtest_platform.data.db_writer import upsert_signals
-
-    with pytest.raises(NotImplementedError, match="M4"):
-        upsert_signals([{"signal_id": "x"}])
-
-
-def test_upsert_orders_stub_raises_not_implemented() -> None:
-    from backtest_platform.data.db_writer import upsert_orders
-
-    with pytest.raises(NotImplementedError, match="M4"):
-        upsert_orders([{"order_id": "x"}])
-
-
-def test_upsert_fills_stub_raises_not_implemented() -> None:
-    from backtest_platform.data.db_writer import upsert_fills
-
-    with pytest.raises(NotImplementedError, match="M4"):
-        upsert_fills([{"fill_id": "x"}])
-
-
 # ---------------------------------------------------------------------------
 # 8.G.1 — runs main table upsert (Run single-source-of-truth)
 # ---------------------------------------------------------------------------
@@ -294,3 +272,95 @@ def test_real_upsert_idempotent() -> None:
     c1 = upsert_bundle(bundle)
     c2 = upsert_bundle(bundle)  # second run must not error
     assert c1 == c2 == {"daily_bars": 1, "institutional_flows": 1, "broker_chips": 1}
+
+
+# ---------------------------------------------------------------------------
+# paper/live trade-log writers (7.A.2) — signals / orders / equity / fills
+# ---------------------------------------------------------------------------
+def _capture_sql(fn, rows):
+    """Run a writer with _connection + execute_values mocked; return (n, sql, tuples)."""
+    cur = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+        "psycopg2.extras.execute_values"
+    ) as mock_exec:
+        mock_ctx.return_value.__enter__.return_value = conn
+        n = fn(rows)
+    sql = mock_exec.call_args.args[1] if mock_exec.call_count else None
+    tuples = mock_exec.call_args.args[2] if mock_exec.call_count else None
+    return n, sql, tuples
+
+
+def test_trade_log_writers_empty_returns_zero_without_connection() -> None:
+    from backtest_platform.data.db_writer import (
+        upsert_equity_snapshots,
+        upsert_fills,
+        upsert_orders,
+        upsert_signals,
+    )
+
+    for fn in (upsert_signals, upsert_orders, upsert_equity_snapshots, upsert_fills):
+        with patch("backtest_platform.data.db_writer._connection") as mock_ctx:
+            assert fn([]) == 0
+            mock_ctx.assert_not_called()
+
+
+def test_upsert_signals_inserts_with_jsonb_reason() -> None:
+    from backtest_platform.data.db_writer import upsert_signals
+
+    n, sql, tuples = _capture_sql(
+        upsert_signals,
+        [{"signal_time": "2026-06-11T09:00:00+08:00", "strategy_id": "momentum",
+          "run_id": "r1", "stock_id": "2330", "action": "buy", "priority": 7,
+          "reason_json": {"score": 0.9}}],
+    )
+    assert n == 1
+    assert sql.startswith("INSERT INTO signals")
+    assert "ON CONFLICT" not in sql  # append-only event log
+    # reason_json JSONB-serialized to a string
+    assert any(isinstance(v, str) and "score" in v for v in tuples[0])
+
+
+def test_upsert_orders_appends() -> None:
+    from backtest_platform.data.db_writer import upsert_orders
+
+    n, sql, _ = _capture_sql(
+        upsert_orders,
+        [{"created_at": "2026-06-11T09:00:00+08:00", "broker": "paper",
+          "stock_id": "2330", "side": "Buy", "order_type": "Market",
+          "quantity": 1000, "status": "filled"}],
+    )
+    assert n == 1
+    assert sql.startswith("INSERT INTO orders")
+    assert "ON CONFLICT" not in sql
+
+
+def test_upsert_equity_snapshots_upserts_on_pk() -> None:
+    from backtest_platform.data.db_writer import upsert_equity_snapshots
+
+    n, sql, _ = _capture_sql(
+        upsert_equity_snapshots,
+        [{"snapshot_time": "2026-06-11T13:30:00+08:00", "strategy_id": "momentum",
+          "mode": "paper", "run_id": "r1", "equity": 1_000_000, "cash": 500_000,
+          "positions_value": 500_000, "open_positions": 3}],
+    )
+    assert n == 1
+    assert sql.startswith("INSERT INTO equity_snapshots")
+    assert "ON CONFLICT (snapshot_time, strategy_id, run_id) DO UPDATE SET" in sql
+    assert "snapshot_time = EXCLUDED" not in sql  # PK not in SET
+
+
+def test_upsert_fills_maps_to_filled_orders() -> None:
+    from backtest_platform.data.db_writer import upsert_fills
+
+    n, sql, tuples = _capture_sql(
+        upsert_fills,
+        [{"stock_id": "2330", "side": "Buy", "qty": 1000, "price": 542.0,
+          "filled_at": "2026-06-11T09:01:00+08:00"}],
+    )
+    assert n == 1
+    assert sql.startswith("INSERT INTO orders")  # no fills table; a fill is a filled order
+    row = tuples[0]
+    assert "filled" in row  # status
+    assert 542.0 in row  # limit_price = fill price

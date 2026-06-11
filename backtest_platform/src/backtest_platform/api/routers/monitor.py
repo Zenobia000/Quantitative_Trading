@@ -1,8 +1,10 @@
 """``/monitor`` — Monitor-zone endpoints, shipped as **typed-empty stubs** (ADR-021 §5.4).
 
 Monitor B/C/D + the fleet board have no live data source until M4 (no hosted
-PaperBroker / CircuitBreaker daemon; ``upsert_signals/orders/fills`` are M4
-``NotImplementedError``). Per ADR-021, these endpoints ship now returning a typed
+PaperBroker / CircuitBreaker daemon driving them). The trade-log writers
+(``upsert_signals/orders/fills/equity_snapshots``) are implemented (7.A.2); what
+is still missing is the daemon that *runs* a paper strategy and feeds them. Per
+ADR-021, these endpoints ship now returning a typed
 *empty* envelope tagged ``meta.data_source="pending_m4"`` so the frontend can build
 against stable shapes and render an honest pending state — never fabricated data.
 When the M4 producers land, each stub body is replaced; the shape stays.
