@@ -20,6 +20,12 @@ from pydantic import ValidationError
 
 from backtest_platform.api.deps import RunExecutor, get_run_executor, get_runs_path
 from backtest_platform.api.envelope import Envelope, ok, page_meta
+from backtest_platform.api.response_models import (
+    CompareReportData,
+    RunRecord,
+    RunSummary,
+    SweepEstimate,
+)
 from backtest_platform.api.schemas import RunCreateRequest
 from backtest_platform.research.compare import CompareReport, compare_runs
 from backtest_platform.research.run_config import RunConfig
@@ -82,7 +88,7 @@ def _serialize_compare(rep: CompareReport) -> dict[str, Any]:
     }
 
 
-@router.get("", response_model=Envelope)
+@router.get("", response_model=Envelope[list[RunSummary]])
 def list_runs(
     page: int = Query(1, ge=1, description="1-based page index"),
     limit: int = Query(50, ge=1, le=500, description="page size"),
@@ -96,7 +102,7 @@ def list_runs(
     return ok(items, meta=page_meta(total, page, limit))
 
 
-@router.get("/compare", response_model=Envelope)
+@router.get("/compare", response_model=Envelope[CompareReportData])
 def compare(
     baseline: str | None = Query(None, description="run_id to diff against"),
     run_ids: str | None = Query(
@@ -129,7 +135,7 @@ def compare(
 _EST_MINUTES_PER_CONFIG = 0.5
 
 
-@router.get("/estimate", response_model=Envelope)
+@router.get("/estimate", response_model=Envelope[SweepEstimate])
 def estimate(request: Request) -> Envelope:
     """Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.
 
@@ -149,7 +155,7 @@ def estimate(request: Request) -> Envelope:
     )
 
 
-@router.get("/{run_id}", response_model=Envelope)
+@router.get("/{run_id}", response_model=Envelope[RunRecord])
 def get_run(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
     """Full ledger record for one run (latest append wins); 404 if absent."""
     match: dict[str, Any] | None = None
@@ -161,7 +167,7 @@ def get_run(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
     return ok(match)
 
 
-@router.post("", response_model=Envelope, status_code=201)
+@router.post("", response_model=Envelope[RunRecord], status_code=201)
 def create_run(
     req: RunCreateRequest,
     runs_path: Path = Depends(get_runs_path),
