@@ -68,3 +68,95 @@ class CompareReportData(_Data):
     sign_consistent: dict[str, Any] = Field(default_factory=dict)
     rankings: dict[str, Any] = Field(default_factory=dict)
     comparisons: list[RunComparisonRow] = Field(default_factory=list)
+
+
+# ---- gate ----------------------------------------------------------------- #
+class GateCriterion(_Data):
+    """One ADR-016/019 gate criterion (``GET /gate/spec``)."""
+
+    key: str
+    op: str
+    threshold: float
+    kind: str | None = None
+    label: str | None = None
+
+
+class GateSpecData(_Data):
+    criteria: list[GateCriterion] = Field(default_factory=list)
+
+
+class GateEvalData(_Data):
+    """``POST /gate/evaluate`` verdict; per-criterion detail via extra='allow'."""
+
+    status: str | None = None
+
+
+# ---- metrics -------------------------------------------------------------- #
+class MetricsData(_Data):
+    """``POST /metrics/{summary,trades}`` — metric keys vary by request; the named
+    object is enough for typing, extra='allow' carries the computed values."""
+
+
+# ---- presets -------------------------------------------------------------- #
+class PresetsListData(_Data):
+    presets: list[str] = Field(default_factory=list)
+    configs: dict[str, Any] = Field(default_factory=dict)
+
+
+class PresetData(_Data):
+    """One preset's StrategyConfig dump (``GET /presets/{name}``); shape varies."""
+
+
+# ---- research strategies / universe --------------------------------------- #
+class StrategyRow(_Data):
+    strategy_id: str
+    version: str | None = None
+    validation_status: str | None = None
+    stage: str | None = None
+    runs_count: int | None = None
+    best_kpi: dict[str, Any] | None = None
+
+
+class UniverseFiltersData(_Data):
+    markets: list[str] = Field(default_factory=list)
+
+
+# ---- research registry ---------------------------------------------------- #
+class SavedView(_Data):
+    id: str
+    name: str | None = None
+    query: dict[str, Any] | None = None
+
+
+class TrialsData(_Data):
+    cumulative_trials: int
+
+
+# ---- promotion ------------------------------------------------------------ #
+class PromotionStateData(_Data):
+    strategy_id: str
+    stage: str | None = None
+    gates: list[dict[str, Any]] | None = None
+    history: list[dict[str, Any]] | None = None
+
+
+class PromotionEvent(_Data):
+    """One immutable promotion audit event (``GET /research/promote/{id}/audit``)."""
+
+
+# ---- system config -------------------------------------------------------- #
+class RiskRule(_Data):
+    id: str
+    order: int | None = None
+    description: str | None = None
+
+
+class RiskSpecData(_Data):
+    rules: list[RiskRule] = Field(default_factory=list)
+    thresholds: dict[str, Any] = Field(default_factory=dict)
+
+
+class AlertRuleRow(_Data):
+    rule_id: str
+    level: str | None = None
+    title: str | None = None

@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, Query
 
 from backtest_platform.api.deps import get_runs_path
 from backtest_platform.api.envelope import Envelope, ok, page_meta
+from backtest_platform.api.response_models import StrategyRow, UniverseFiltersData
 from backtest_platform.research.runs_store import read_runs
 
 router = APIRouter(prefix="/research", tags=["research"])
@@ -73,7 +74,7 @@ def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-@router.get("/strategies", response_model=Envelope, tags=["research"])
+@router.get("/strategies", response_model=Envelope[list[StrategyRow]], tags=["research"])
 def list_strategies(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=200),
@@ -106,7 +107,7 @@ def strategy_versions(strategy_id: str, runs_path: Path = Depends(get_runs_path)
 
 
 # ---- universe filter spec (real, config-driven) -------------------------
-@router.get("/universe-filters", response_model=Envelope)
+@router.get("/universe-filters", response_model=Envelope[UniverseFiltersData])
 def universe_filters() -> Envelope:
     """Supported universe filters from ``UniverseConfig.default()`` (real config).
 

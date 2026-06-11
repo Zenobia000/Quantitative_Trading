@@ -10,13 +10,14 @@ import pandas as pd
 from fastapi import APIRouter, HTTPException
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.response_models import MetricsData
 from backtest_platform.api.schemas import MetricsSummaryRequest, TradeMetricsRequest
 from backtest_platform.validation import metrics as M
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])
 
 
-@router.post("/summary", response_model=Envelope)
+@router.post("/summary", response_model=Envelope[MetricsData])
 def metrics_summary(req: MetricsSummaryRequest) -> Envelope:
     """A/B/C metrics (total return, CAGR, drawdown, Sharpe, Sortino, Calmar)."""
     s = pd.Series(req.daily_returns, dtype=float)
@@ -33,7 +34,7 @@ def metrics_summary(req: MetricsSummaryRequest) -> Envelope:
     return ok(data)
 
 
-@router.post("/trades", response_model=Envelope)
+@router.post("/trades", response_model=Envelope[MetricsData])
 def metrics_trades(req: TradeMetricsRequest) -> Envelope:
     """E metrics (win rate, profit factor, avg hold, Kelly fraction).
 

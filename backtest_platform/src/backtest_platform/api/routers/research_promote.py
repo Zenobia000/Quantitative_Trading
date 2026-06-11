@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.response_models import PromotionEvent, PromotionStateData
 from backtest_platform.research import promotion_service
 
 router = APIRouter(prefix="/research/promote", tags=["research"])
@@ -26,7 +27,7 @@ class PromoteRequest(BaseModel):
     actor: str = Field("system", description="who triggered the promotion")
 
 
-@router.get("/{strategy_id}", response_model=Envelope)
+@router.get("/{strategy_id}", response_model=Envelope[PromotionStateData])
 def promote_state(strategy_id: str) -> Envelope:
     """Current promotion stage + per-stage reached flags + audit trail."""
     return ok(promotion_service.promotion_state(strategy_id))
@@ -43,7 +44,7 @@ def promote_advance(strategy_id: str, req: PromoteRequest) -> Envelope:
         raise HTTPException(status_code=422, detail=str(exc)) from None
 
 
-@router.get("/{strategy_id}/audit", response_model=Envelope)
+@router.get("/{strategy_id}/audit", response_model=Envelope[list[PromotionEvent]])
 def promote_audit(strategy_id: str) -> Envelope:
     """Immutable promotion audit trail for a strategy."""
     from backtest_platform.research import promotion_store
