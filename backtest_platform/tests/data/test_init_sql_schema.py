@@ -189,14 +189,18 @@ def test_orders_table_has_required_columns(init_sql: str) -> None:
         assert col in body, f"orders missing column {col}"
 
 
-def test_orders_signal_id_references_signals(init_sql: str) -> None:
+def test_orders_signal_id_is_plain_column_not_fk_to_hypertable(init_sql: str) -> None:
     body = _table_block(init_sql, "orders")
-    # FK declaration: signal_id UUID REFERENCES signals(signal_id)
-    assert re.search(
-        r"signal_id\s+UUID[^,]*REFERENCES\s+signals\s*\(\s*signal_id\s*\)",
+    # orders.signal_id links to signals by value but must NOT be a SQL foreign key:
+    # TimescaleDB 2.x rejects "foreign keys to hypertables", which aborts init.sql
+    # and drops every table declared after orders. The link is enforced in app code.
+    assert re.search(r"signal_id\s+UUID", body, re.IGNORECASE), \
+        "orders must keep a signal_id UUID column"
+    assert not re.search(
+        r"signal_id\s+UUID[^,]*REFERENCES\s+signals",
         body,
         re.IGNORECASE,
-    ), "orders.signal_id must REFERENCE signals(signal_id)"
+    ), "orders.signal_id must NOT be a FK to the signals hypertable (TimescaleDB rejects it)"
 
 
 def test_orders_is_hypertable(init_sql: str) -> None:

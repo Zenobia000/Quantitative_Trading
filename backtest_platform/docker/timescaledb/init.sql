@@ -206,15 +206,17 @@ CREATE INDEX IF NOT EXISTS idx_signals_reason_gin
     ON signals USING GIN (reason_json);
 
 -- ============================================================
--- M4 §4.6 — orders : broker order records. FK to signals.
--- Note: hypertables don't support cross-chunk FK to non-hypertables;
--- since signals is also hypertable, FK on signal_id is best-effort
--- (TimescaleDB 2.x allows it but doesn't enforce across chunks fully).
+-- M4 §4.6 — orders : broker order records. Links to signals by signal_id.
+-- NOTE: signal_id is a plain column, NOT a SQL foreign key. TimescaleDB 2.x
+-- raises "foreign keys to hypertables are not supported" (signals is a
+-- hypertable), which aborts init.sql and drops every table after it. The link
+-- is enforced in application code (db_writer) instead. Portable to plain
+-- managed Postgres (Neon/Supabase) where the same column works unchanged.
 -- ============================================================
 CREATE TABLE IF NOT EXISTS orders (
     order_id         UUID NOT NULL DEFAULT gen_random_uuid(),
     created_at       TIMESTAMPTZ NOT NULL,
-    signal_id        UUID REFERENCES signals(signal_id),
+    signal_id        UUID,
     broker           TEXT NOT NULL,  -- paper | shioaji
     stock_id         TEXT NOT NULL,
     side             TEXT NOT NULL,  -- Buy | Sell
