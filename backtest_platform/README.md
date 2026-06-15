@@ -36,7 +36,7 @@ backtest_platform/
 ├── src/backtest_platform/
 │   ├── config/                          # 策略參數
 │   ├── data/                            # M1 FinMind ETL (fallback adapter)
-│   ├── strategies/four_layer_resonance/ # 純函式策略 (改名自原 strategy/)
+│   ├── strategies/                      # common (共用回測機制, ADR-026) + inst_flow / momentum / four_layer_resonance
 │   ├── adapters/                        # 廠商接口 (data_bundle / data_feed / brokers)
 │   ├── engines/                         # vectorbt 副引擎
 │   ├── validation/                      # PBO / WFA / MC / 績效報表
@@ -44,8 +44,8 @@ backtest_platform/
 │   ├── monitoring/                      # metric emitter + Discord alerter
 │   ├── dashboard/                       # Streamlit + Grafana
 │   └── pipeline.py                      # M1 backward-compat shim
-├── tests/                               # pytest（44 M1 + 12 Discord）
-├── sprint_0_spikes/                     # M2 啟動 gate（6 spike + RUNBOOK）
+├── tests/                               # pytest
+├── legacy/                              # 封存驗證碼（ADR-026；spikes / multi_factor / 舊 scripts，不打包不進 CI）
 ├── docker/                              # docker-compose + initdb
 └── docs/                                # 工程文件
 ```
@@ -68,9 +68,9 @@ uv sync --extra sprint0
 # 4. 跑單元測試
 uv run pytest -v
 
-# 5. Sprint 0 spike (M2 啟動前)
-uv run python sprint_0_spikes/s1_tquant_hello_world.py
-# ...詳見 sprint_0_spikes/RUNBOOK.md
+# 5. Sprint 0 spike（已封存，僅供參考）
+uv run python legacy/spikes/s1_tquant_hello_world.py
+# ...詳見 legacy/spikes/RUNBOOK.md
 ```
 
 ## CLI（zipline_adapter）

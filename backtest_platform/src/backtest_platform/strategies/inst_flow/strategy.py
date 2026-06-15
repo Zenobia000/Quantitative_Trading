@@ -16,11 +16,10 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from backtest_platform.strategies.momentum.strategy import (
-    TRADING_DAYS,
-    _clean_returns,
-    _rebalance_dates,
-    _vol_target,
+from backtest_platform.strategies.common import (
+    clean_returns,
+    rebalance_dates,
+    vol_target,
 )
 
 _SOURCES = {
@@ -100,7 +99,7 @@ def backtest_inst_flow(
     history before ``start``.
     """
     px = close[close > 0]
-    rets = _clean_returns(px, cfg.max_daily_return)
+    rets = clean_returns(px, cfg.max_daily_return)
     score = flow_intensity(flow, volume, cfg.lookback_days)
     if cfg.signal_lag_days:
         # rank on net-buy known strictly BEFORE the rebalance day → no same-day
@@ -110,7 +109,7 @@ def backtest_inst_flow(
     if win.empty:
         return InstFlowResult(pd.Series(dtype=float), 0, 0.0, 0.0)
 
-    rebal = _rebalance_dates(win.index, cfg.rebalance)
+    rebal = rebalance_dates(win.index, cfg.rebalance)
     segs: list[pd.Series] = []
     holdings: list[int] = []
     turnovers: list[float] = []
@@ -147,7 +146,7 @@ def backtest_inst_flow(
         return InstFlowResult(pd.Series(dtype=float), 0, 0.0, 0.0)
     daily = pd.concat(segs).groupby(level=0).first()
     if cfg.vol_target_annual is not None:
-        daily = _vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
+        daily = vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
     return InstFlowResult(
         daily_returns=daily,
         n_rebalances=len(segs),

@@ -58,7 +58,6 @@ reports/
 # Docker volumes
 docker/volumes/
 
-# Sprint 0 spike outputs（每次跑會異動，不入庫，保留 .gitkeep 維持目錄）
-sprint_0_spikes/results/*
-!sprint_0_spikes/results/.gitkeep
+# Legacy spike outputs（已封存，跑分結果不入庫）
+legacy/spikes/results/
 data/zipline_bundles/

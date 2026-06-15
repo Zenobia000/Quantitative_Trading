@@ -106,8 +106,8 @@ def run_paper_replay(
 
 
 def replay_schedule(index: Any, freq: str = "quarterly") -> list[date]:
-    """Rebalance as-of dates from a price ``DatetimeIndex`` — reuses the strategy
+    """Rebalance as-of dates from a price ``DatetimeIndex`` — reuses the shared
     rebalance schedule so the daemon replays on the same cadence the factor trades."""
-    from backtest_platform.strategies.momentum.strategy import _rebalance_dates
+    from backtest_platform.strategies.common import rebalance_dates
 
-    return [ts.date() for ts in _rebalance_dates(index, freq)]
+    return [ts.date() for ts in rebalance_dates(index, freq)]

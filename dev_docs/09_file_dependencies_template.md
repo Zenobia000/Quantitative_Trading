@@ -24,6 +24,8 @@
 > 完整目錄結構詳見 [08_project_structure_guide.md](./08_project_structure_guide.md) v1.1。
 >
 > 待完整重寫的依賴圖排程：M2 Sprint 1 結束後（屆時 `adapters/`、`engines/` 有實際程式碼可畫）。
+>
+> **ADR-026 註記（2026-06-16）**：策略間的隱性依賴已消除。重構前 `inst_flow` / `multi_factor` / `runtime.paper_daemon` 反向 import `momentum.strategy` 的私有函式（`_clean_returns` / `_rebalance_dates` / `_vol_target`）— 一個策略挖另一個策略的 `_private` API，破壞封裝。現抽出中立共用層 `strategies/common`（`mechanics.py`，public：`TRADING_DAYS` / `clean_returns` / `rebalance_dates` / `vol_target`），所有策略 → `strategies/common`，**策略之間不再互相依賴**。`common` 屬 Domain 層，不依賴任何下層。詳見 [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md)。
 
 ---
 
@@ -255,6 +257,12 @@ from .indicators import ...
 # strategies/four_layer_resonance/scoring.py 不可
 # from backtest_platform.data import ...  ❌ Domain 不依賴 Infrastructure
 # from backtest_platform.adapters import ...  ❌ Domain 不依賴 Adapter
+
+# 嚴禁（ADR-026）— 策略之間不可互相 import，更不可挖對方私有函式
+# strategies/inst_flow/strategy.py 不可
+# from backtest_platform.strategies.momentum.strategy import _rebalance_dates  ❌ 跨策略挖 _private
+# 共用回測機制一律走中立層：
+# from backtest_platform.strategies.common import TRADING_DAYS, clean_returns, rebalance_dates, vol_target  ✅
 
 # 嚴禁
 # adapters/data_bundle/finlab_bundle.py 不可
