@@ -43,3 +43,16 @@ def get_run_executor() -> RunExecutor:
     from backtest_platform.research.is_harness import run_and_judge_persist
 
     return run_and_judge_persist
+
+
+def get_telemetry_reader() -> Any:
+    """Return the DB-backed telemetry reader (8.H.8), imported lazily.
+
+    Reads the daemon-produced paper/live telemetry (equity / positions) for the
+    Monitor zone. Tests override this with a fake reader; monitor endpoints fall
+    back to a typed-empty ``pending`` envelope when the reader fails (no DB yet),
+    so the API stays up without TimescaleDB and serves real data once present.
+    """
+    from backtest_platform.data.db_reader import TelemetryReader
+
+    return TelemetryReader()
