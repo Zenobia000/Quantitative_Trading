@@ -65,3 +65,49 @@ class TelemetryReader:
             }
             for r in rows
         ]
+
+    def recent_signals(self, *, limit: int = 50, strategy_id: str | None = None) -> list[dict[str, Any]]:
+        """Most-recent signals (newest first)."""
+        sql = ["SELECT signal_time, strategy_id, stock_id, action, priority, submitted FROM signals"]
+        params: list[Any] = []
+        if strategy_id:
+            sql.append("WHERE strategy_id = %s")
+            params.append(strategy_id)
+        sql.append("ORDER BY signal_time DESC LIMIT %s")
+        params.append(limit)
+        with _connection(self._cfg) as conn, conn.cursor() as cur:
+            cur.execute(" ".join(sql), params)
+            rows = cur.fetchall()
+        return [
+            {
+                "signal_time": r[0].isoformat(),
+                "strategy_id": r[1],
+                "stock_id": r[2],
+                "action": r[3],
+                "priority": int(r[4]),
+                "submitted": bool(r[5]),
+            }
+            for r in rows
+        ]
+
+    def recent_fills(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Most-recent order executions (newest first). The paper daemon records
+        fills as ``orders`` rows (7.A.2), so this reads ``orders``."""
+        sql = [
+            "SELECT created_at, stock_id, side, quantity, limit_price, status FROM orders"
+        ]
+        sql.append("ORDER BY created_at DESC LIMIT %s")
+        with _connection(self._cfg) as conn, conn.cursor() as cur:
+            cur.execute(" ".join(sql), [limit])
+            rows = cur.fetchall()
+        return [
+            {
+                "created_at": r[0].isoformat(),
+                "stock_id": r[1],
+                "side": r[2],
+                "quantity": int(r[3]),
+                "price": float(r[4]) if r[4] is not None else None,
+                "status": r[5],
+            }
+            for r in rows
+        ]

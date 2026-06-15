@@ -14,9 +14,11 @@ from backtest_platform.api.deps import get_telemetry_reader
 
 
 class _FakeReader:
-    def __init__(self, *, equity=None, positions=None, fail=False):
+    def __init__(self, *, equity=None, positions=None, signals=None, fills=None, fail=False):
         self._equity = equity or []
         self._positions = positions or []
+        self._signals = signals or []
+        self._fills = fills or []
         self._fail = fail
 
     def equity_series(self, **_kw):
@@ -28,6 +30,16 @@ class _FakeReader:
         if self._fail:
             raise RuntimeError("no DB connection")
         return self._positions
+
+    def recent_signals(self, **_kw):
+        if self._fail:
+            raise RuntimeError("no DB connection")
+        return self._signals
+
+    def recent_fills(self, **_kw):
+        if self._fail:
+            raise RuntimeError("no DB connection")
+        return self._fills
 
 
 def _client(reader: _FakeReader) -> TestClient:
@@ -67,7 +79,38 @@ def test_pos_snapshot_falls_back_to_pending_without_db():
     assert body["meta"]["data_source"] == "pending_m4"
 
 
-@pytest.mark.parametrize("path", ["/monitor/performance/equity", "/monitor/positions/snapshot"])
+def test_signals_serves_real_telemetry():
+    sig = [{
+        "signal_time": "2023-01-03T00:00:00", "strategy_id": "inst_flow",
+        "stock_id": "2330", "action": "buy", "priority": 2, "submitted": True,
+    }]
+    body = _client(_FakeReader(signals=sig)).get("/monitor/signals").json()
+    assert body["data"] == sig
+    assert body["meta"]["data_source"] == "timescaledb"
+    assert body["meta"]["total"] == 1
+
+
+def test_fills_serves_real_telemetry():
+    fills = [{
+        "created_at": "2023-01-03T00:00:00", "stock_id": "2330", "side": "Buy",
+        "quantity": 100, "price": 600.0, "status": "FILLED",
+    }]
+    body = _client(_FakeReader(fills=fills)).get("/monitor/fills").json()
+    assert body["data"] == fills
+    assert body["meta"]["data_source"] == "timescaledb"
+
+
+@pytest.mark.parametrize("path", ["/monitor/signals", "/monitor/fills"])
+def test_signals_fills_fall_back_to_pending_without_db(path):
+    body = _client(_FakeReader(fail=True)).get(path).json()
+    assert body["data"] == []
+    assert body["meta"]["data_source"] == "pending_m4"
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/monitor/performance/equity", "/monitor/positions/snapshot", "/monitor/signals", "/monitor/fills"],
+)
 def test_telemetry_endpoints_envelope_shape(path):
     body = _client(_FakeReader()).get(path).json()
     assert body["success"] is True
