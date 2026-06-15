@@ -1,6 +1,11 @@
 """``/runs`` — list / get / compare / trigger, against a temp ledger + stub executor."""
 from __future__ import annotations
 
+import time
+
+import pytest
+
+from backtest_platform.jobs import job_store
 
 # ---- list ---------------------------------------------------------------
 
@@ -152,3 +157,45 @@ def test_create_run_empty_stocks_422(client):
     payload = {**_VALID_PAYLOAD, "stocks": []}
     resp = client.post("/runs", json=payload)
     assert resp.status_code == 422
+
+
+# ---- async (8.H.6) ------------------------------------------------------
+
+@pytest.fixture
+def isolate_jobs(tmp_path, monkeypatch):
+    monkeypatch.setattr(job_store, "DEFAULT_JOBS_PATH", tmp_path / "jobs.jsonl")
+
+
+def _poll_log(client, job_id, timeout=5.0):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        body = client.get(f"/runs/{job_id}/log").json()
+        if body["data"].get("status") in ("done", "failed"):
+            return body["data"]
+        time.sleep(0.01)
+    raise AssertionError("async run did not finish in time")
+
+
+def test_create_run_async_submits_then_logs_done(client, runs_path, stub_executor, isolate_jobs):
+    resp = client.post("/runs/async", json=_VALID_PAYLOAD)
+    assert resp.status_code == 202
+    job_id = resp.json()["data"]["job_id"]
+    assert resp.json()["data"]["status"] == "queued"
+    final = _poll_log(client, job_id)
+    assert final["status"] == "done"
+    assert final["result"]["preset"] == "v3.1b"
+    assert len(stub_executor.calls) == 1
+    # the async job appended to the ledger → now listable (sync POST unaffected)
+    assert client.get("/runs").json()["meta"]["total"] == 1
+
+
+def test_run_log_unknown_is_pending(client, isolate_jobs):
+    body = client.get("/runs/ghost/log").json()
+    assert body["data"]["status"] is None
+    assert body["meta"]["data_source"] == "pending"
+
+
+def test_create_run_async_bad_preset_stays_422_sync(client, isolate_jobs):
+    payload = {**_VALID_PAYLOAD, "preset": "no-such-preset"}
+    resp = client.post("/runs/async", json=payload)
+    assert resp.status_code == 422  # config validation stays synchronous
