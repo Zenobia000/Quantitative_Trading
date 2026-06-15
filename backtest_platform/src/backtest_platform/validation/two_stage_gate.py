@@ -28,8 +28,11 @@ logic) so tuning one is a visible, recordable decision.
 """
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
+
+import pandas as pd
 
 # --------------------------------------------------------------------------- #
 # Truth-gate thresholds (data, not logic — see module docstring)
@@ -199,3 +202,29 @@ def evaluate_two_stage(
     truth = evaluate_truth_gate(truth_input)
     size = compute_position_size(sizing_input, sizing_cfg) if truth.is_real else 0.0
     return GateDecision(truth=truth, size=size)
+
+
+def fleet_correlation(candidate: pd.Series, fleet: Sequence[pd.Series]) -> float:
+    """Compute ``SizingInput.correlation_to_fleet`` from real return series.
+
+    Mean pairwise Pearson correlation of the ``candidate`` daily-return series vs
+    each live-fleet member, each aligned on its shared dates. An **empty fleet**
+    returns ``0.0`` — the first sleeve carries no diversification penalty (ADR-025
+    §sizing). Degenerate pairs (< 2 overlapping points, or a NaN correlation from a
+    constant series) are skipped; if none survive, returns ``0.0``.
+
+    This is the compute side of 8.G.10: feeding it the *actual* running fleet's
+    returns is gated on a live multi-strategy fleet (ADR-022), but the mapping
+    itself is exercised here against historical strategy returns.
+    """
+    if not fleet:
+        return 0.0
+    corrs: list[float] = []
+    for member in fleet:
+        joined = pd.concat([candidate, member], axis=1, join="inner").dropna()
+        if len(joined) < 2:
+            continue
+        c = joined.iloc[:, 0].corr(joined.iloc[:, 1])
+        if c == c:  # skip NaN (e.g. a constant series)
+            corrs.append(float(c))
+    return float(sum(corrs) / len(corrs)) if corrs else 0.0
