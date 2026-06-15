@@ -22,7 +22,7 @@ headline 撞**完全相同的牆**（~13%/0.90）。WFA fixed-config OOS 1.57 �
 單一 a priori config 的 OOS 更穩），但 (1) config landscape 過擬合更嚴重 (2) 絕對 headline
 不夠。
 
-## 🎯 Meta 結論：三結構同牆 → 約束是「結構×門檻」非「因子」
+## Meta 結論：三結構同牆 → 約束是「結構×門檻」非「因子」
 
 平台至今嚴格驗過**三個不同結構**，全倒在同一處：
 

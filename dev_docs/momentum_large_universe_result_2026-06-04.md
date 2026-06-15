@@ -20,7 +20,7 @@
 
 WFA 逐 fold OOS Sharpe（大）：1.61 / 1.05 / 2.27 / 1.97 / **−0.66** / 1.42。
 
-## 🎯 判決：universe **確實是** binding 限制——動能在大 universe **OOS-robust**
+## 判決：universe **確實是** binding 限制——動能在大 universe **OOS-robust**
 
 - **WFA（真 OOS 測試）從 0.84 → 1.28，跨門檻**；**OOS/IS 0.62 → 0.99**（IS 選出的 config 幾乎完美 generalize OOS）——這是 29 檔做不到的。
 - **動能崩盤被分散度馴服**（−1.26 → −0.66，砍半）——正合理論：更多檔 → 崩盤更可分散。

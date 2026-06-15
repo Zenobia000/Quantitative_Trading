@@ -114,17 +114,17 @@
 ### 產出：`differentiation.md`
 
 ```markdown
-## ✅ 值得學的（KEEP）
+## 值得學的（KEEP）
 - 設計決策 + 為什麼好 + 如何納入
 
-## ⚠️ 不適合的（DROP）
+## 不適合的（DROP）
 - 元素 + 為什麼不適合你的品牌/受眾
 
-## 🎨 品牌覆蓋（OVERRIDE）
+## 品牌覆蓋（OVERRIDE）
 - 來源 token → 你的 token 對照表
 - 主色從 #2563EB 改為 #7C3AED 等
 
-## 💡 改進機會（IMPROVE）
+## 改進機會（IMPROVE）
 - 你能做得更好的地方（accessibility、效能、互動）
 ```
 

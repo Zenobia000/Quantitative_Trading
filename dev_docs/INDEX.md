@@ -121,7 +121,7 @@
 | 路徑 | 用途 | 對應 |
 | :--- | :--- | :--- |
 | [web_design/README.md](./web_design/README.md) | 模組化 AI 網頁開發流水線總覽 | 獨立 |
-| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai 完整 UI 5 層分析（L0-L4 + extracted CSS vars / DOM / fonts） | 設計參考 |
+| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai UI 5 層設計分析（L0-L4；原始擷取產物 raw/extracted 已剪除） | 設計參考 |
 | [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
 | web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
 | [web_design/03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md) | **大廠量化/回測平台 UI/UX deep-research 對標**（10 平台）+ 10 維度差距分析 + 7 張 Mermaid 使用者旅程/流程圖 + 補強 roadmap（ADR-018 證據包） | ADR-018 / ADR-015 / 20 |
