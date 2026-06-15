@@ -8,23 +8,38 @@ ADR-021, these endpoints ship now returning a typed
 *empty* envelope tagged ``meta.data_source="pending_m4"`` so the frontend can build
 against stable shapes and render an honest pending state — never fabricated data.
 When the M4 producers land, each stub body is replaced; the shape stays.
+
+8.H.8 (2026-06-15): ``/performance/equity`` and ``/positions/snapshot`` now read
+**real** daemon-produced telemetry via an injected ``TelemetryReader`` (db_reader),
+falling back to the same typed-empty pending envelope when no DB/telemetry exists.
+The remaining endpoints stay stubs until their producers land.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 
+from backtest_platform.api.deps import get_telemetry_reader
 from backtest_platform.api.envelope import Envelope, ok
 
 router = APIRouter(prefix="/monitor", tags=["monitor"])
 
 _PENDING = "pending_m4"
+_LIVE = "timescaledb"
 
 
 def _stub(data: Any, ttl: int = 60, *, total: int | None = None) -> Envelope:
     """Typed-empty envelope marking an M4-deferred producer."""
     meta: dict[str, Any] = {"data_source": _PENDING, "ttl": ttl}
+    if total is not None:
+        meta |= {"total": total, "page": 1, "limit": 50}
+    return ok(data, meta=meta)
+
+
+def _served(data: Any, ttl: int, *, total: int | None = None) -> Envelope:
+    """Envelope for data read from real TimescaleDB telemetry (8.H.8)."""
+    meta: dict[str, Any] = {"data_source": _LIVE, "ttl": ttl}
     if total is not None:
         meta |= {"total": total, "page": 1, "limit": 50}
     return ok(data, meta=meta)
@@ -58,8 +73,14 @@ def fleet_action(strategy_id: str) -> Envelope:
 
 # ---- performance (monitor_a) --------------------------------------------
 @router.get("/performance/equity", response_model=Envelope)
-def perf_equity() -> Envelope:
-    return _stub([], ttl=300)
+def perf_equity(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
+    """Equity curve from real paper/live telemetry (8.H.8); typed-empty pending
+    when no DB / telemetry exists yet (graceful degradation)."""
+    try:
+        rows = reader.equity_series()
+    except Exception:
+        return _stub([], ttl=300)
+    return _served(rows, ttl=300, total=len(rows))
 
 
 @router.get("/performance/benchmark", response_model=Envelope)
@@ -79,8 +100,13 @@ def perf_kpi() -> Envelope:
 
 # ---- positions (monitor_b) ----------------------------------------------
 @router.get("/positions/snapshot", response_model=Envelope)
-def pos_snapshot() -> Envelope:
-    return _stub([])
+def pos_snapshot(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
+    """Open positions from real telemetry (8.H.8); pending fallback when no DB."""
+    try:
+        rows = reader.open_positions()
+    except Exception:
+        return _stub([])
+    return _served(rows, ttl=60, total=len(rows))
 
 
 @router.get("/positions/prices", response_model=Envelope)
