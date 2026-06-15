@@ -12,6 +12,7 @@
 > **2026-06-04 更新（二）**：Trade Review 去 four_layer_resonance 策略耦合（泛化為 reason_json 動態 N 因子歸因）；**多策略艦隊營運 lite（ADR-022）**：營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略），改寫 PRD「❌ 多策略管理」+ D-018；ADR 數量 21→22
 > **2026-06-09 更新**：R9 edge 掃描收斂 — 動能 NO-GO（ADR-023，守 ADR-016 + 四層廢止）、資金流 survivorship-clean NO-GO（ADR-024）；4 結構同 ~0.9 Sharpe 牆；ADR 數量 22→24
 > **2026-06-14 更新**：驗證機制設計修正 — **驗證閘從 binary 絕對通關改兩段式（ADR-025）**：真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；修正部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖；不翻案 ADR-023/024（死於真偽閘）；16 WBS 升 v3.4；ADR 數量 24→25
+> **2026-06-16 更新**：`backtest_platform` 結構整理（ADR-026）— 抽出 `strategies/common`（中立回測機制 `clean_returns`/`rebalance_dates`/`vol_target`/`TRADING_DAYS`），解 inst_flow/multi_factor/paper_daemon 反向挖 momentum 私有函式的 leaky abstraction，策略間零互相依賴；保留 momentum（乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/`；測試 989 passed / coverage 94%；ADR 數量 25→26
 
 ---
 
@@ -34,7 +35,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**22 份 ADR**：…017/018/019 + 2026-06-03 新增 020（候選 D）+ 2026-06-04 新增 021（REST 契約合一）/022（多策略艦隊 lite）） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**26 份 ADR**：…020（候選 D）/021（REST 契約合一）/022（多策略艦隊 lite）/023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -111,6 +112,7 @@
 | [ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) | **動能 NO-GO**：大 universe + survivorship-clean WFA OOS 0.63-0.86、final CAGR 7.1% 仍未過 ADR-016；守門檻不放寬 → 動能廢止、四層廢止、艦隊轉掃描下一候選 | 記錄 ADR-016 gate 對動能的執行結果 |
 | [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) | **三大法人資金流候選 → 🔴 survivorship-clean FAIL**：survivor-only 40 檔條件式 GO 係生存者膨脹假陽性；含下市股 116 檔複驗 CAGR 13.1%/Sharpe 0.90/PBO 42.9% → NO-GO，條件式 GO 撤回 | 記錄 ADR-016 gate 對資金流的執行結果 |
 | [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) | **驗證閘兩段化 + paper 前移**：修正 ADR-016 binary 絕對通關三缺陷（部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖）→ 真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；不翻案 ADR-023/024（死於真偽閘）| **amends** ADR-016（binary→兩段閘）|
+| [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) | **共用回測機制抽出 → `strategies/common`**：momentum 的私有 `_clean_returns`/`_rebalance_dates`/`_vol_target`/`TRADING_DAYS` 被 inst_flow/multi_factor/paper_daemon 反向 import（leaky abstraction）→ 抽成中立 public 層，策略間零互相依賴；保留 momentum（解耦後乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/` | — |
 
 ---
 

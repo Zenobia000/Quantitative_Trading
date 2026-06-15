@@ -3,6 +3,7 @@
 > **版本：** v1.1 | **更新：** 2026-05-31
 > **架構圖**：目錄對應 C4 **L3-A Application** 元件，見 [05_architecture_and_design_document.md §1.1](./05_architecture_and_design_document.md)
 > **v1.1 變更**：對齊 M2 重組（commit `ae869f5`）— `strategy/` 改名 `strategies/four_layer_resonance/`、新增 `adapters/` `orchestration/` `monitoring/` `dashboard/`、新增 `sprint_0_spikes/`、移除原規劃但未實作的 `live/`（功能併入 `adapters/brokers/`）
+> **v1.2 變更（2026-06-16, ADR-026）**：抽出 `strategies/common/`（中立回測機制單一真實來源，解策略間 leaky abstraction）；`multi_factor` / spikes（原 `sprint_0_spikes/`）/ 舊驗證 scripts 封存至 `legacy/`（src 外，不打包不進 CI）；刪除空目錄 `engines/zipline_adapter/adapters/`
 
 ---
 
@@ -29,18 +30,11 @@ backtest_platform/
 ├── reports/                      # CLI 輸出報表（gitignore）
 ├── src/backtest_platform/        # 原始碼（見下）
 ├── tests/                        # pytest（見下）
-├── sprint_0_spikes/              # M2 啟動前 6 spike + RUNBOOK（gate 通過後可刪）
-│   ├── RUNBOOK.md
-│   ├── s1_tquant_hello_world.py    # ❌ FAIL → ADR-013 切到 zipline-reloaded（spike 結果保留）
-│   ├── s2_m1_plug_zipline.py
-│   ├── s3_finlab_bundle_poc.py
-│   ├── s3_verify_bundle.py
-│   ├── s4_shioaji_sandbox.py
-│   ├── s5_finlab_live_polling.py
-│   ├── s6_seed_equity_data.py
-│   ├── s6_streamlit_dashboard.py
-│   ├── gate_review.py
-│   └── results/                  # spike 產出（gitignore）
+├── legacy/                       # ★ ADR-026 封存樹（src 外，不打包不進 CI）；契約見 legacy/README.md
+│   ├── README.md
+│   ├── strategies/multi_factor/  # 已從 src 搬出（零 production 引用的葉子策略實驗）+ 其測試
+│   ├── spikes/                   # 原 sprint_0_spikes/（M2 啟動前 6 spike + RUNBOOK + gate_review）已封存
+│   └── scripts/                  # 非 inst_flow_* 的一次性 momentum / DOE / candidate-D / factor-baseline 驗證腳本
 ├── .env.example                  # 環境變數樣板（含 FINLAB / TEJ / SHIOAJI / DISCORD / ...）
 ├── .gitignore
 ├── docker-compose.yml
@@ -72,14 +66,18 @@ src/backtest_platform/
 │
 ├── strategies/                   # ★ M2 改名 — 多策略 namespace
 │   ├── __init__.py               # （未來：strategy registry）
+│   ├── common/                   # ★ ADR-026 — 中立回測機制共用層（策略間零互相依賴）
+│   │   ├── __init__.py           # TRADING_DAYS / clean_returns / rebalance_dates / vol_target re-export
+│   │   └── mechanics.py          # 再平衡日曆 + 波動目標部位 + 報酬清洗（原 momentum 私有函式抽出）
 │   ├── four_layer_resonance/     # M1 四層共振策略（診斷證實負 edge，待砍）
 │   │   ├── __init__.py           # 對外 re-export (compute_scores, compute_signals, ...)
 │   │   ├── indicators.py         # RSI / KD / MACD / SwingHigh/Low
 │   │   ├── scoring.py            # compute_scores（四層計分）
 │   │   └── signals.py            # compute_signals + evaluate_bar
-│   └── momentum/                 # ★ v0.8 新增 — 跨截面 12-1 動能（Jegadeesh-Titman）
-│       ├── __init__.py           # MomentumConfig / backtest_momentum re-export
-│       └── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
+│   ├── momentum/                 # ★ v0.8 新增 — 跨截面 12-1 動能（Jegadeesh-Titman）；ADR-026 解耦後改依賴 common
+│   │   ├── __init__.py           # MomentumConfig / backtest_momentum re-export
+│   │   └── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
+│   └── inst_flow/                # ★ 正式 paper-ready 候選（ADR-024/025）；依賴 common（非反向挖 momentum）
 │
 ├── adapters/                     # ★ M2 新增 — 廠商接口層 (ADR-005/006/008)
 │   ├── __init__.py
@@ -316,5 +314,5 @@ dev_docs/                         # 工程文件（架構/規格/ADR/計劃）
 - 本結構是 **M2 起點**（M1 → M2 重組已完成，commit `ae869f5`）
 - 後續 milestone 依需擴充（特別是 `adapters/`、`monitoring/`、`dashboard/` 仍多為空骨架）
 - 頂層 sub-package 變更需 ADR（如 ADR-005~009 已記錄本次 M2 重組）
-- `sprint_0_spikes/` 在 Sprint 0 gate 通過後可刪除（已 commit）
+- `sprint_0_spikes/` 已於 ADR-026 封存至 `legacy/spikes/`（保留溯源，不打包不進 CI）
 - 一致性比嚴格遵守模式更重要

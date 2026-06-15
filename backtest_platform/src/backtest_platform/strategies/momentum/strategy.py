@@ -26,7 +26,11 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
-TRADING_DAYS = 252
+from backtest_platform.strategies.common import (
+    clean_returns,
+    rebalance_dates,
+    vol_target,
+)
 
 
 class MomentumConfig(BaseModel):
@@ -80,43 +84,6 @@ class MomentumResult:
     avg_turnover: float
 
 
-def _clean_returns(prices: pd.DataFrame, max_daily: float) -> pd.DataFrame:
-    """Daily returns with inf + >max_daily/day data-error jumps winsorized to NaN."""
-    r = prices.pct_change().replace([np.inf, -np.inf], np.nan)
-    return r.where(r.abs() <= max_daily)
-
-
-def _rebalance_dates(index: pd.DatetimeIndex, freq: str = "monthly") -> list[pd.Timestamp]:
-    """First trading day of each period (month / quarter / half-year) in ``index``.
-
-    Lower frequency = fewer rebalances = less turnover = less transaction-cost drag
-    (the lever when cost is the binding constraint).
-    """
-    s = pd.Series(index, index=index)
-    if freq == "quarterly":
-        key = [index.year, index.quarter]
-    elif freq == "semiannual":
-        key = [index.year, (index.month - 1) // 6]
-    else:  # monthly
-        key = [index.year, index.month]
-    return [grp.index[0] for _, grp in s.groupby(key)]
-
-
-def _vol_target(returns: pd.Series, target_annual: float, lookback: int, max_lev: float) -> pd.Series:
-    """Scale daily returns toward a target annual vol using *trailing* realized vol.
-
-    ``scale_t = clip(target_daily / realized_vol_{t-1}, max=max_lev)`` — uses only
-    information up to ``t-1`` (no look-ahead), and with ``max_lev=1.0`` only ever
-    *cuts* exposure (de-risks) when vol spikes — the principled momentum-crash
-    control. Warmup (vol not yet estimable) → scale 1.0.
-    """
-    target_daily = target_annual / np.sqrt(TRADING_DAYS)
-    realized = returns.rolling(lookback).std(ddof=0).shift(1)
-    scale = (target_daily / realized).clip(upper=max_lev)
-    scale = scale.where(realized.notna() & (realized > 0), other=1.0).clip(upper=max_lev)
-    return returns * scale
-
-
 def backtest_momentum(
     prices: pd.DataFrame,
     cfg: MomentumConfig,
@@ -130,13 +97,13 @@ def backtest_momentum(
     charged on each rebalance's turnover. Empty/insufficient data → empty result.
     """
     px = prices[prices > 0]  # non-positive closes = halt placeholders → drop
-    rets = _clean_returns(px, cfg.max_daily_return)
+    rets = clean_returns(px, cfg.max_daily_return)
     mom = px.shift(cfg.skip_days) / px.shift(cfg.lookback_days) - 1.0  # 12-1, per date
     win = rets.loc[str(start):str(end)]
     if win.empty:
         return MomentumResult(pd.Series(dtype=float), 0, 0.0, 0.0)
 
-    rebal = _rebalance_dates(win.index, cfg.rebalance)
+    rebal = rebalance_dates(win.index, cfg.rebalance)
     segs: list[pd.Series] = []
     holdings: list[int] = []
     turnovers: list[float] = []
@@ -177,7 +144,7 @@ def backtest_momentum(
         return MomentumResult(pd.Series(dtype=float), 0, 0.0, 0.0)
     daily = pd.concat(segs).groupby(level=0).first()  # overlapping rebalance day → first
     if cfg.vol_target_annual is not None:
-        daily = _vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
+        daily = vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
     return MomentumResult(
         daily_returns=daily,
         n_rebalances=len(segs),

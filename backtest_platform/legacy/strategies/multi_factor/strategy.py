@@ -21,11 +21,11 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field, field_validator
 
-from backtest_platform.strategies.momentum.strategy import (
+from backtest_platform.strategies.common import (
     TRADING_DAYS,
-    _clean_returns,
-    _rebalance_dates,
-    _vol_target,
+    clean_returns,
+    rebalance_dates,
+    vol_target,
 )
 
 _FACTORS = ("momentum", "inst_flow", "low_vol")
@@ -99,7 +99,7 @@ def composite_scores(
     cfg: MultiFactorConfig,
 ) -> pd.DataFrame:
     """Per-date composite z-score panel = equal-weight mean of factor z-scores."""
-    rets = _clean_returns(close[close > 0], cfg.max_daily_return)
+    rets = clean_returns(close[close > 0], cfg.max_daily_return)
     raw: dict[str, pd.DataFrame] = {}
     if "momentum" in cfg.factors:
         raw["momentum"] = close.shift(cfg.mom_skip) / close.shift(cfg.mom_lookback) - 1.0
@@ -122,13 +122,13 @@ def backtest_multi_factor(
     end: date | str,
 ) -> MultiFactorResult:
     """Long-top-fraction by composite z-score, rebalanced."""
-    rets = _clean_returns(close[close > 0], cfg.max_daily_return)
+    rets = clean_returns(close[close > 0], cfg.max_daily_return)
     score = composite_scores(close, flow, volume, cfg)
     win = rets.loc[str(start):str(end)]
     if win.empty:
         return MultiFactorResult(pd.Series(dtype=float), 0, 0.0, 0.0)
 
-    rebal = _rebalance_dates(win.index, cfg.rebalance)
+    rebal = rebalance_dates(win.index, cfg.rebalance)
     segs, holdings, turnovers, prev = [], [], [], set()
     daily_borrow = cfg.borrow_rate_annual / TRADING_DAYS
     for i, rb in enumerate(rebal):
@@ -178,7 +178,7 @@ def backtest_multi_factor(
         return MultiFactorResult(pd.Series(dtype=float), 0, 0.0, 0.0)
     daily = pd.concat(segs).groupby(level=0).first()
     if cfg.vol_target_annual is not None:
-        daily = _vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
+        daily = vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
     return MultiFactorResult(
         daily_returns=daily,
         n_rebalances=len(segs),
