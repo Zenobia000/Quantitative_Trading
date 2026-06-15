@@ -26,6 +26,8 @@
 > 待完整重寫的依賴圖排程：M2 Sprint 1 結束後（屆時 `adapters/`、`engines/` 有實際程式碼可畫）。
 >
 > **ADR-026 註記（2026-06-16）**：策略間的隱性依賴已消除。重構前 `inst_flow` / `multi_factor` / `runtime.paper_daemon` 反向 import `momentum.strategy` 的私有函式（`_clean_returns` / `_rebalance_dates` / `_vol_target`）— 一個策略挖另一個策略的 `_private` API，破壞封裝。現抽出中立共用層 `strategies/common`（`mechanics.py`，public：`TRADING_DAYS` / `clean_returns` / `rebalance_dates` / `vol_target`），所有策略 → `strategies/common`，**策略之間不再互相依賴**。`common` 屬 Domain 層，不依賴任何下層。詳見 [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md)。
+>
+> **ADR-027 註記（2026-06-16）**：策略與**平台**的硬綁已消除。重構前只有 four_layer 被引擎掛載、`engines.protocol.Engine.run` 焊死其 `StrategyConfig`、每策略一個 harness。現新增策略契約層 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + name→runner registry，Domain 層只依賴 pydantic/pandas）；**每隻策略自包含**——`strategies/<name>/runner.py` 實作契約並 `@register_strategy`，依賴 `strategies.common.panel` + `strategies.protocol` + `validation`（`strategies → validation` 無循環，已驗證 validation 不 import strategies）；four_layer 純 sim helper 下移 `strategies/four_layer_resonance/sim.py`；橫斷面共用建構抽 `strategies/common/panel.py`。`research/runners.py` 降為 **aggregator**（import 四隻 runner 觸發註冊 + re-export 舊名），`is_harness`/`momentum_harness` → `research/runners`（委派）。詳見 [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md)。
 
 ---
 
