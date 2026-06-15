@@ -2,7 +2,7 @@
 
 > 對齊 `00_foundations_spec.md` 結構
 > 來源：https://x.ai/ ｜ 擷取日期：2026-06-01
-> 資料基礎：`raw/css-vars-raw.json`(101 vars) + `raw/computed-styles.json` + `extracted/css-vars.json` + 三斷點截圖
+> 資料基礎：Playwright 擷取的 css-vars(101) / computed-styles / 三斷點截圖（原始 `raw/`、`extracted/` 產物已於 2026-06-15 剪除，本分析為萃取後保留版本）
 
 ---
 

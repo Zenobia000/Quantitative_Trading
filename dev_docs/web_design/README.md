@@ -1,6 +1,6 @@
-# 📚 Prompt Architect Pipeline - AI 網頁開發流水線
+# Prompt Architect Pipeline - AI 網頁開發流水線
 
-## 🎯 專案概述
+## 專案概述
 
 本系統採用模組化架構，將模糊的 PRD 或想法轉化為可執行、一致性高的 AI 開發指令集。核心流程：**選原型 → 查模組 → 準備 Tokens → 組裝 Prompt → AI 生成 → 驗收迭代**。
 
@@ -11,7 +11,7 @@
 - 透過 Pipeline Orchestrator 實現動態 Prompt 組裝
 - 提供結構化的開發審查流程
 
-## 📁 文檔結構
+## 文檔結構
 
 ```
 prompt_architect_pipeline/

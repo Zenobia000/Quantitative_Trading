@@ -36,7 +36,7 @@
 
 ---
 
-## ✅ 值得保留（KEEP）
+## 值得保留（KEEP）
 
 | 設計決策 | 為什麼好 | 如何納入 |
 |----------|----------|----------|
@@ -45,7 +45,7 @@
 
 至少 3 條。
 
-## ⚠️ 不適合（DROP）
+## 不適合（DROP）
 
 | 元素 | 為什麼不適合 |
 |------|--------------|
@@ -54,7 +54,7 @@
 
 至少 2 條。
 
-## 🎨 品牌覆蓋（OVERRIDE）
+## 品牌覆蓋（OVERRIDE）
 
 來源 Token → 你的 Token：
 
@@ -63,7 +63,7 @@
 | color.brand.primary | #2563EB | color.brand.primary | #7C3AED |
 | font.family.heading | Inter | font.family.heading | {你的選擇} |
 
-## 💡 改進機會（IMPROVE）
+## 改進機會（IMPROVE）
 
 至少 3 條 — 你能比來源網站做得更好的地方：
 
