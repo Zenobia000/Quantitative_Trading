@@ -71,16 +71,28 @@ def make_ingest(
     end: date,
     ingest_fn: Callable[[list[str]], dict[str, bool]] | None = None,
     cache_dir: Any = None,
+    source: str = "finlab",
 ) -> Callable[[list[str]], dict[str, bool]]:
-    """Real ETL collaborator wrapping the FinMind universe ingester → per-symbol ok
-    map. A custom ``ingest_fn`` may be injected (e.g. a cached-parquet check)."""
+    """Real ETL collaborator → per-symbol ok map.
+
+    ``source`` selects the data source: ``"finlab"`` (default, ADR-006 primary —
+    full history + survivorship-clean) or ``"finmind"`` (fallback). A custom
+    ``ingest_fn`` may be injected (e.g. a cached-parquet check) and wins over both.
+    """
     if ingest_fn is not None:
         return ingest_fn
 
     def ingest(symbols: list[str]) -> dict[str, bool]:
-        from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import ingest_universe
+        if source == "finlab":
+            from backtest_platform.data.finlab_source import ingest_universe_finlab
 
-        result = ingest_universe(list(symbols), start=start, end=end, cache_dir=cache_dir)
+            result = ingest_universe_finlab(list(symbols), start, end, cache_dir=cache_dir)
+        else:
+            from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import (
+                ingest_universe,
+            )
+
+            result = ingest_universe(list(symbols), start=start, end=end, cache_dir=cache_dir)
         failed = set(result.failed_symbols)
         return {s: s not in failed for s in symbols}
 

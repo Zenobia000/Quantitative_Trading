@@ -51,13 +51,23 @@ def test_make_place_books_real_fills() -> None:
     assert len(broker.trade_log) == 2
 
 
-def test_make_ingest_maps_failed_symbols(monkeypatch) -> None:
+def test_make_ingest_finmind_fallback_maps_failed_symbols(monkeypatch) -> None:
     fake_result = MagicMock(failed_symbols=["9999"])
     monkeypatch.setattr(
         "backtest_platform.engines.zipline_adapter.bundles.finmind_bundle.ingest_universe",
         lambda *a, **k: fake_result,
     )
-    ingest = make_ingest(start=date(2024, 1, 1), end=date(2024, 12, 31))
+    ingest = make_ingest(start=date(2024, 1, 1), end=date(2024, 12, 31), source="finmind")
+    assert ingest(["2330", "9999"]) == {"2330": True, "9999": False}
+
+
+def test_make_ingest_defaults_to_finlab(monkeypatch) -> None:
+    fake_result = MagicMock(failed_symbols=["9999"])
+    monkeypatch.setattr(
+        "backtest_platform.data.finlab_source.ingest_universe_finlab",
+        lambda *a, **k: fake_result,
+    )
+    ingest = make_ingest(start=date(2024, 1, 1), end=date(2024, 12, 31))  # default source
     assert ingest(["2330", "9999"]) == {"2330": True, "9999": False}
 
 
