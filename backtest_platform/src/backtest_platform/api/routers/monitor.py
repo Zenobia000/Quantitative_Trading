@@ -131,8 +131,17 @@ def pos_concentration() -> Envelope:
 
 # ---- signals (monitor_c) ------------------------------------------------
 @router.get("/signals", response_model=Envelope)
-def signals(page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=200)) -> Envelope:
-    return _stub([], ttl=30, total=0)
+def signals(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=200),
+    reader: Any = Depends(get_telemetry_reader),
+) -> Envelope:
+    """Recent signals from real telemetry (8.H.8); pending fallback when no DB."""
+    try:
+        rows = reader.recent_signals(limit=limit)
+    except Exception:
+        return _stub([], ttl=30, total=0)
+    return _served(rows, ttl=30, total=len(rows))
 
 
 @router.get("/signals/timeline", response_model=Envelope)
@@ -146,8 +155,16 @@ def signals_funnel() -> Envelope:
 
 
 @router.get("/fills", response_model=Envelope)
-def fills() -> Envelope:
-    return _stub([], ttl=300)
+def fills(
+    limit: int = Query(50, ge=1, le=200),
+    reader: Any = Depends(get_telemetry_reader),
+) -> Envelope:
+    """Recent order executions from real telemetry (8.H.8); pending fallback."""
+    try:
+        rows = reader.recent_fills(limit=limit)
+    except Exception:
+        return _stub([], ttl=300)
+    return _served(rows, ttl=300, total=len(rows))
 
 
 # ---- risk (monitor_d) ---------------------------------------------------
