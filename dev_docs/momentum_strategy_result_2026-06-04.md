@@ -55,7 +55,7 @@ WFA 逐 fold OOS Sharpe：1.41 / 0.63 / 0.94 / 2.50 / **−1.26（2022 動能崩
 
 1. **不要直接部署這個動能**（WFA OOS Sharpe 0.84 < 1.0、有崩盤 fold）——但**它不是純幻覺**（PBO/DSR 過，有真實溢酬）。
 2. **動能是對的 family**（真實 signal、萃到動能溢酬，不像四層毀價值），但此小倖存 universe 上**邊際 + 崩盤風險**未達可部署門檻。
-3. **找真 edge 的合法路徑（平台已備）**：用 **Candidate D point-in-time 大 universe（250 檔，survivorship-clean）** + **OOS/WFA 留出窗** + **PBO/DSR 量化過擬合** + **參數高原檢查** + **誠實成本**。跑完才知道動能有沒有「真的、跨樣本、可部署」的 edge。
+3. **找真 edge 的合法路徑（平台已備）**：用 Candidate D point-in-time 大 universe（250 檔，survivorship-clean） + OOS/WFA 留出窗 + PBO/DSR 量化過擬合 + 參數高原檢查 + 誠實成本。跑完才知道動能有沒有「真的、跨樣本、可部署」的 edge。
 4. **平台改進（agent 揪出）**：`strategy.py` 成本模型 Sharpe-optimistic（lump-sum），應改為更貼近現實的攤提/波動拖累——已加註，列 follow-up。
 
 ## 限制
