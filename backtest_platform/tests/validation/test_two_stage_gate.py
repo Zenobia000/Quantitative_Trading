@@ -27,6 +27,7 @@ from backtest_platform.validation.two_stage_gate import (
     compute_position_size,
     evaluate_truth_gate,
     evaluate_two_stage,
+    fleet_correlation,
 )
 
 # --------------------------------------------------------------------------- #
@@ -306,3 +307,40 @@ def test_truth_real_yields_sized_allocation() -> None:
     )
     assert decision.truth.is_real is True
     assert decision.size == pytest.approx(0.25 * 0.9)
+
+
+# --------------------------------------------------------------------------- #
+# fleet_correlation — computes SizingInput.correlation_to_fleet from returns (8.G.10)
+# --------------------------------------------------------------------------- #
+def _series(values, start="2020-01-01"):
+    import pandas as pd
+
+    return pd.Series(values, index=pd.date_range(start, periods=len(values), freq="B"))
+
+
+def test_fleet_correlation_empty_fleet_is_zero():
+    assert fleet_correlation(_series([0.01, -0.02, 0.03]), []) == 0.0
+
+
+def test_fleet_correlation_identical_series_is_one():
+    s = _series([0.01, -0.02, 0.03, 0.005, -0.01])
+    assert fleet_correlation(s, [s]) == pytest.approx(1.0)
+
+
+def test_fleet_correlation_anti_correlated_is_negative_one():
+    s = _series([0.01, -0.02, 0.03, 0.005, -0.01])
+    assert fleet_correlation(s, [-s]) == pytest.approx(-1.0)
+
+
+def test_fleet_correlation_averages_over_members_and_aligns_dates():
+    s = _series([0.01, -0.02, 0.03, 0.005, -0.01])
+    # one identical (corr 1), one anti (corr -1) → mean 0
+    assert fleet_correlation(s, [s, -s]) == pytest.approx(0.0)
+
+
+def test_fleet_correlation_skips_degenerate_constant_member():
+    import pandas as pd
+
+    s = _series([0.01, -0.02, 0.03, 0.005, -0.01])
+    constant = pd.Series(0.0, index=s.index)  # zero variance → NaN corr, skipped
+    assert fleet_correlation(s, [s, constant]) == pytest.approx(1.0)
