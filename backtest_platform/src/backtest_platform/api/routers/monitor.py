@@ -45,6 +45,42 @@ def _served(data: Any, ttl: int, *, total: int | None = None) -> Envelope:
     return ok(data, meta=meta)
 
 
+def _equity_kpis(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    """Derive headline KPIs from an equity series (reuses validation.metrics).
+
+    Returns zeros (plus current equity) for a series too short to annualise (< 2
+    points), so the Monitor KPI tile renders an honest early state."""
+    if len(rows) < 2:
+        return {
+            "current_equity": float(rows[-1]["equity"]) if rows else 0.0,
+            "total_return": 0.0, "cagr": 0.0, "sharpe": 0.0,
+            "max_drawdown": 0.0, "calmar": 0.0, "n_points": len(rows),
+        }
+    import pandas as pd
+
+    from backtest_platform.validation.metrics import (
+        cagr,
+        calmar,
+        max_drawdown,
+        sharpe,
+        total_return,
+    )
+
+    # KPIs are index-agnostic (metrics annualise via periods_per_year, not dates),
+    # so a plain ordered series avoids parsing the DB's mixed-precision ISO timestamps.
+    eq = pd.Series([float(r["equity"]) for r in rows])
+    ret = eq.pct_change().dropna()
+    return {
+        "current_equity": float(eq.iloc[-1]),
+        "total_return": round(float(total_return(ret)), 6),
+        "cagr": round(float(cagr(ret)), 6),
+        "sharpe": round(float(sharpe(ret)), 4),
+        "max_drawdown": round(float(max_drawdown(ret)), 6),
+        "calmar": round(float(calmar(ret)), 4),
+        "n_points": len(rows),
+    }
+
+
 # ---- fleet board (monitor_fleet) ----------------------------------------
 @router.get("/strategies", response_model=Envelope)
 def strategies() -> Envelope:
@@ -94,8 +130,14 @@ def perf_monthly() -> Envelope:
 
 
 @router.get("/performance/kpi", response_model=Envelope)
-def perf_kpi() -> Envelope:
-    return _stub({}, ttl=300)
+def perf_kpi(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
+    """Headline KPIs (return/CAGR/Sharpe/MDD/Calmar) derived from the real equity
+    series (8.H.8); typed-empty pending when no DB/telemetry."""
+    try:
+        kpis = _equity_kpis(reader.equity_series())
+    except Exception:
+        return _stub({}, ttl=300)
+    return _served(kpis, ttl=300)
 
 
 # ---- positions (monitor_b) ----------------------------------------------
