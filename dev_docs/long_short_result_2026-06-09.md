@@ -18,7 +18,7 @@
 因為拿掉的市場 beta 原本是正貢獻（long-only 報酬的主要 carry），而殘餘的 cross-sectional
 spread 本身只有 ~0.87 Sharpe。唯一改善是 MaxDD 31%→27%（beta 中性化降回撤）。
 
-## 🎯 收斂 meta 結論：四結構、同一道 ~0.9 Sharpe 牆
+## 收斂 meta 結論：四結構、同一道 ~0.9 Sharpe 牆
 
 | 結構 | 全期 Sharpe | 全期 CAGR | PBO |
 |:--|:--:|:--:|:--:|

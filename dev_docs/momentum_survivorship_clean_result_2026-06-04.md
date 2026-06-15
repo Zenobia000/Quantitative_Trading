@@ -23,7 +23,7 @@ survivorship 偏誤的來源＝universe 只含「活到今天」的股票，**�
 
 WFA 逐 fold OOS Sharpe：1.57 / 0.59 / 1.94 / 1.65 / **−0.54** / 1.21。
 
-## 🎯 判決：動能 edge **撐過 survivorship 修正**
+## 判決：動能 edge **撐過 survivorship 修正**
 
 - 加入下市輸家後，所有數字**如預期被拉低**（best Sharpe 0.99→0.89、WFA OOS 1.28→1.07、OOS/IS 0.99→0.91）——證實 survivorship **確實有在膨脹**結果。
 - **但三道防過擬合 gate 全數仍過**：PBO 29.2% ✅、DSR 1.00 ✅、WFA OOS 1.07 ✅（> 1.0）。

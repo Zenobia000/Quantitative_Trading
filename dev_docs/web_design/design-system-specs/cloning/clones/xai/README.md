@@ -61,13 +61,12 @@
 ```
 xai/
 ├── README.md                       ← 你在這裡
-├── raw/                            ← Playwright 原始擷取
-│   ├── screenshots/{mobile,tablet,desktop}.png
-│   ├── dom.html (252KB) · css-vars-raw.json (101) · computed-styles.json
-│   └── fonts.json · media-queries.json · capture-report.json
-├── extracted/  dom-tree · css-vars(freq) · media-queries · assets-inventory
 ├── analysis/   L0_foundations · L1_components · L2_patterns · L3_templates · L4_sitemap
 ├── differentiation.md
 ├── spec/inspired-design-system.md  ← 最終交付（可貼給 Claude Code/Lovable）
 └── validation.md
 ```
+
+> 註：`raw/`（Playwright 原始擷取：screenshots / dom.html / computed-styles 等）與
+> `extracted/`（dom-tree / css-vars / media-queries / assets-inventory）兩個機器產物目錄
+> 已於 2026-06-15 剪除（~2.9MB），僅保留萃取後的人讀分析。

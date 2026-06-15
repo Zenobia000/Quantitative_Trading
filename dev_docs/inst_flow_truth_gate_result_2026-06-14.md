@@ -24,7 +24,7 @@
 WFA OOS 逐 fold：1.62 / 1.80 / 0.69 / **−0.25** / 1.57 / 0.83 / 2.63 / 0.94 / **−0.51** / 1.03 / 2.57 / 2.14（10/12 > 0）。
 fixed config full-span：CAGR 13.1% / Sharpe 0.90。
 
-## 🎯 判決：TRUTH GATE = REAL → 配置閘目標倉位 25%
+## 判決：TRUTH GATE = REAL → 配置閘目標倉位 25%
 
 **資金流 fixed config 過真偽閘。** 配置閘以 OOS Sharpe 1.30（飽和於 reference 1.0）→ 目標權重 `max_weight = 25%`（首個 sleeve、零相關假設、full capacity）。
 
