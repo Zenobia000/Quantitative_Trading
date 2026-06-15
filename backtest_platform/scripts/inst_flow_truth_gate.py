@@ -56,18 +56,18 @@ GRID = {
 }
 
 
-def _all_symbols() -> list[str]:
+def _all_symbols(parquet_dir: str = "data/parquet") -> list[str]:
     return sorted(
         p.name.replace("daily_bars__", "").replace(".parquet", "")
-        for p in Path("data/parquet").glob("daily_bars__*.parquet")
+        for p in Path(parquet_dir).glob("daily_bars__*.parquet")
     )
 
 
-def _load(symbols):
+def _load(symbols, parquet_dir: str = "data/parquet"):
     close, vol, raw = {}, {}, {}
     for sid in symbols:
         try:
-            df = load_merged_parquet(sid)
+            df = load_merged_parquet(sid, parquet_dir=parquet_dir)
         except Exception:  # noqa: BLE001 — delisted may lack a dataset; skip cleanly
             continue
         if "foreign_buy" not in df or df["foreign_buy"].abs().sum() == 0:
@@ -88,15 +88,16 @@ def _per_period_sharpe(r: pd.Series) -> float:
     return float(arr.mean() / sd) if sd > 0 else 0.0
 
 
-def main() -> None:
-    syms = _all_symbols()
-    close, vol, raw = _load(syms)
+def main(*, parquet_dir: str = "data/parquet", span: tuple[date, date] | None = None) -> dict:
+    span_start, span_end = span or (SPAN_START, SPAN_END)
+    syms = _all_symbols(parquet_dir)
+    close, vol, raw = _load(syms, parquet_dir)
     flow = _flow(raw, FIXED.flow_cols)
     print(f"survivorship-clean universe: {close.shape[1]} names (survivors + delisted) "
           f"× {close.shape[0]} bars\n")
 
     # ---- WFA OOS breadth (fixed config) ----------------------------------- #
-    folds = walk_forward_splits(SPAN_START, SPAN_END, is_days=504, oos_days=252, step_days=252)
+    folds = walk_forward_splits(span_start, span_end, is_days=504, oos_days=252, step_days=252)
     oos = []
     for f in folds:
         r = backtest_inst_flow(close, flow, vol, FIXED, f.oos_start, f.oos_end).daily_returns
@@ -114,7 +115,7 @@ def main() -> None:
     per_period_sharpes, landscape_cols = [], {}
     for combo in itertools.product(*(GRID[k] for k in keys)):
         cfg = InstFlowConfig(**dict(zip(keys, combo)))
-        r = backtest_inst_flow(close, _flow(raw, cfg.flow_cols), vol, cfg, SPAN_START, SPAN_END).daily_returns
+        r = backtest_inst_flow(close, _flow(raw, cfg.flow_cols), vol, cfg, span_start, span_end).daily_returns
         if len(r) > 100:
             landscape_cols["/".join(map(str, combo))] = r
             per_period_sharpes.append(_per_period_sharpe(r))
@@ -127,7 +128,7 @@ def main() -> None:
           f"cross-trial per-period SR var {sharpe_variance:.4g}")
 
     # ---- DSR on the pre-registered fixed config (deflated by n_trials) ---- #
-    full = backtest_inst_flow(close, flow, vol, FIXED, SPAN_START, SPAN_END).daily_returns
+    full = backtest_inst_flow(close, flow, vol, FIXED, span_start, span_end).daily_returns
     report = full_validation_report(full, n_trials=n_trials, sharpe_variance=sharpe_variance)
     dsr = report["robustness"]["deflated_sharpe"]
     print(f"\nfixed config full-span: CAGR {cagr(full)*100:.1f}% / Sharpe {sharpe(full):.2f} "
@@ -135,7 +136,7 @@ def main() -> None:
 
     # ---- K3 slippage robustness ------------------------------------------- #
     slip_cfg = FIXED.with_extra_slippage(K3_SLIPPAGE_PER_LEG)
-    slip_r = backtest_inst_flow(close, flow, vol, slip_cfg, SPAN_START, SPAN_END).daily_returns
+    slip_r = backtest_inst_flow(close, flow, vol, slip_cfg, span_start, span_end).daily_returns
     slip_sharpe = sharpe(slip_r)
     print(f"K3 (+{K3_SLIPPAGE_PER_LEG:.1%}/leg slippage): Sharpe {slip_sharpe:.2f}")
 
@@ -154,6 +155,7 @@ def main() -> None:
         print(f"  - {reason}")
 
     # ---- SizingGate (only if REAL) ---------------------------------------- #
+    size = 0.0
     if truth.is_real:
         size = compute_position_size(
             SizingInput(oos_sharpe=median_oos, correlation_to_fleet=0.0, capacity_fraction=1.0, cagr=cagr(full))
@@ -166,6 +168,21 @@ def main() -> None:
         print("\n🔴 inst_flow dies at the truth gate — even the best candidate is "
               "not real under ADR-025. Next = new edge family (external).")
     print("=" * 68)
+
+    return {
+        "verdict": truth.verdict.value,
+        "n_names": int(close.shape[1]),
+        "n_bars": int(close.shape[0]),
+        "span": (str(span_start), str(span_end)),
+        "median_oos_sharpe": median_oos,
+        "oos_positive_frac": oos_positive_frac,
+        "landscape_pbo": landscape_pbo,
+        "dsr": dsr,
+        "full_cagr": float(cagr(full)),
+        "full_sharpe": float(sharpe(full)),
+        "slippage_sharpe": float(slip_sharpe),
+        "target_weight": float(size),
+    }
 
 
 if __name__ == "__main__":
