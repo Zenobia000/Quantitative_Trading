@@ -367,6 +367,50 @@ flowchart LR
 | Live 階段 L3_HALT | 強制回 Paper 3 個月 |
 | 連續 2 個月績效 < paper × 0.7 | 回前一階段 |
 
+### 8.4 配置閘 — 兩段驗證與目標倉位（[ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md)）
+
+§8.1–8.3 的升倉閘決定「**部署到目標倉位的多少比例**」（5%→20%→100% 的 ramp）。**目標倉位本身**由配置閘決定，位於升倉閘上游。實作見 `validation/two_stage_gate.py`（純函式，門檻為 data 常數）。
+
+ADR-025 把單一 binary 通關拆成兩段，避免「部署閘與研究迭代閘混用」「絕對 CAGR 對市場中性策略錯配」「沒 edge 不准 paper／不 paper 拿不到 live OOS」三缺陷。
+
+#### 第一段：真偽閘（Truth Gate）— binary hard-fail
+
+防自欺，擋過擬合 / 生存者膨脹假陽性。**沒過 = 假的，目標倉位 0，配置閘不執行。**
+
+| 判準 | 門檻（常數）| 適用 |
+| :--- | :--- | :--- |
+| survivorship-clean | 含下市股 point-in-time universe（強制）| 全部 |
+| 選股過擬合 PBO | `PBO_MAX = 0.30`（CSCV）| 以 IS 從 sweep **選** config 的策略 |
+| 單一 pre-registered config OOS | `WFA_OOS_POSITIVE_MIN = 0.60` + `DSR_MIN = 0.95` | hypothesis 預登記、**不重選** config 的策略 |
+| K3 滑點穩健 | `SLIPPAGE_SHARPE_MIN = 0.0`（0.3% per-leg 下 OOS 不崩號）| 全部 |
+
+> **關鍵**：landscape PBO 衡量「**選** config」的過擬合，**不適用於否定** pre-registered 單一 config（該用 OOS breadth + DSR 判）。這把資金流 fixed-config 的「WFA median OOS 1.30 但 landscape PBO 43%」正確拆開。
+
+#### 第二段：配置閘（Sizing Gate）— 連續，決定目標倉位
+
+過真偽閘後，按風險預算映射到**目標權重**（非 yes/no）：
+
+```
+size = max_weight × conviction × diversification × capacity
+  conviction      = min(OOS Sharpe / reference_sharpe, 1)   # 飽和於 reference
+  diversification = 1 − max(0, correlation_to_fleet)         # 負相關 ≈ 零相關，不懲罰
+  capacity        = clip(capacity_fraction, 0, 1)
+```
+
+- 預設 `max_weight = 0.25`、`reference_sharpe = 1.0`（`SizingConfig`，可調 data）。
+- **絕對 CAGR 降為參考**（`SizingInput.cagr` 攜帶但不入計算）：市場中性策略以 OOS Sharpe + 對艦隊邊際貢獻配置，不被 standalone CAGR 懲罰。
+- 0.9-Sharpe、零相關 sleeve → `0.25 × 0.9 × 1 × 1 = 0.225` 目標倉位（**真實小倉位，非淘汰**）。
+
+#### 與升倉閘銜接
+
+| 階段 | 倉位 |
+| :--- | :--- |
+| 配置閘輸出 | **目標** `max_weight`（如 0.225）|
+| §8.1 G1 Paper→Live 5% | 部署目標的微倉位（5% equity 上限內）收 live OOS |
+| §8.1 G2/G3 | ramp 至目標 `max_weight` × 升倉比例 |
+
+paper 期 live OOS 回饋配置閘：實際摩擦吃掉 edge → conviction 下修或退回真偽閘重判。
+
 ---
 
 ## 9. 緊急應變 SOP
@@ -544,3 +588,4 @@ class RiskConfig(BaseModel, frozen=True):
 | 版本 | 日期 | 變更 |
 | :--- | :--- | :--- |
 | v1.0 | 2026-05-31 | 初版（對應 plan §1 L5；擴充 13/14 風控細節） |
+| v1.1 | 2026-06-14 | 新增 §8.4 配置閘（真偽閘 + sizing 目標倉位，ADR-025 / `two_stage_gate.py`）；與 §8.1 升倉閘銜接 |

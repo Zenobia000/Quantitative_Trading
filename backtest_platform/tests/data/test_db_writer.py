@@ -274,6 +274,95 @@ def test_real_upsert_idempotent() -> None:
     assert c1 == c2 == {"daily_bars": 1, "institutional_flows": 1, "broker_chips": 1}
 
 
+@pytest.mark.integration
+def test_real_trade_log_writers_round_trip() -> None:
+    """signals / orders / equity / fills / positions / runs land in the LIVE schema.
+
+    7.A.2 was 🟡 because these writers only had mock coverage. Running them against
+    a real TimescaleDB surfaced a schema bug mocks cannot: init.sql declared
+    ``orders.signal_id REFERENCES signals(signal_id)``, but TimescaleDB 2.x rejects
+    FKs to a hypertable, aborting init.sql so orders/fills/risk_metrics/… never
+    created. This test now exercises those very tables, so the regression cannot
+    silently return.
+    """
+    import os
+
+    if not os.environ.get("POSTGRES_INTEGRATION"):
+        pytest.skip("set POSTGRES_INTEGRATION=1 to run against a live DB")
+
+    from datetime import datetime, timezone
+
+    import psycopg2  # type: ignore[import-not-found]
+
+    from backtest_platform.data.db_writer import (
+        DBConfig,
+        upsert_equity_snapshots,
+        upsert_fills,
+        upsert_orders,
+        upsert_positions,
+        upsert_runs,
+        upsert_signals,
+    )
+
+    cfg = DBConfig.from_env()
+    rid = "itest_tradelog"
+    sid = "ITEST"
+    ts = datetime(2024, 11, 1, 9, 30, tzinfo=timezone.utc)
+
+    # isolate: clear any prior run of this test so counts are deterministic
+    with psycopg2.connect(cfg.dsn()) as conn, conn.cursor() as cur:
+        for t in ("signals", "equity_snapshots", "positions", "runs"):
+            cur.execute(f"DELETE FROM {t} WHERE run_id = %s", (rid,))
+        cur.execute("DELETE FROM orders WHERE stock_id = %s", (sid,))
+        conn.commit()
+
+    assert upsert_signals([{
+        "signal_time": ts, "strategy_id": "inst_flow", "run_id": rid, "stock_id": sid,
+        "action": "buy", "priority": 2,
+        "reason_json": {"factor": "foreign_net_buy", "rank": 1},
+        "submitted": True, "submitted_at": ts,
+    }]) == 1
+
+    # orders — the table that did NOT exist before the init.sql fix
+    assert upsert_orders([{
+        "created_at": ts, "broker": "paper", "stock_id": sid, "side": "Buy",
+        "order_type": "Market", "quantity": 1000, "status": "filled",
+    }]) == 1
+
+    # equity snapshot upserts on PK(snapshot_time, strategy_id, run_id)
+    eq = {"snapshot_time": ts, "strategy_id": "inst_flow", "mode": "paper",
+          "run_id": rid, "equity": 1_000_000.0, "cash": 500_000.0,
+          "positions_value": 500_000.0, "open_positions": 1}
+    assert upsert_equity_snapshots([eq]) == 1
+    assert upsert_equity_snapshots([{**eq, "equity": 1_010_000.0}]) == 1  # upsert
+
+    # fills map to a filled order row
+    assert upsert_fills([{
+        "filled_at": ts, "stock_id": sid, "side": "Buy", "qty": 1000, "price": 800.0,
+    }]) == 1
+
+    assert upsert_positions([{
+        "strategy_id": "inst_flow", "run_id": rid, "stock_id": sid,
+        "opened_at": ts, "entry_price": 800.0, "quantity": 1000, "status": "open",
+    }]) == 1
+
+    assert upsert_runs([{
+        "run_id": rid, "hypothesis": "inst_flow paper", "preset": "inst_flow_fixed",
+        "engine": "sim", "stocks": [sid], "is_start": date(2015, 1, 1),
+        "is_end": date(2020, 12, 31), "status": "done", "trials_count": 24,
+    }]) == 1
+
+    # verify rows actually landed and equity upsert kept ONE row at the new value
+    with psycopg2.connect(cfg.dsn()) as conn, conn.cursor() as cur:
+        cur.execute("SELECT reason_json->>'factor' FROM signals WHERE run_id = %s", (rid,))
+        assert cur.fetchone()[0] == "foreign_net_buy"  # JSONB round-trip
+        cur.execute("SELECT equity FROM equity_snapshots WHERE run_id = %s", (rid,))
+        eq_rows = cur.fetchall()
+        assert len(eq_rows) == 1 and float(eq_rows[0][0]) == 1_010_000.0
+        cur.execute("SELECT count(*) FROM orders WHERE stock_id = %s", (sid,))
+        assert cur.fetchone()[0] == 2  # explicit order + fill-mapped order (append-only)
+
+
 # ---------------------------------------------------------------------------
 # paper/live trade-log writers (7.A.2) — signals / orders / equity / fills
 # ---------------------------------------------------------------------------
