@@ -10,6 +10,8 @@
 > **2026-06-03 更新**：研究迴圈 CLI 補 `validate`+`promote-check`（8.G.5 封頂）；large-cap v3 IS FAIL → **escalate 候選 D（ADR-020 提案中）**：換 point-in-time 中小型動能 universe（rank 51-300、反 survivorship），機制凍結、資料 spike（FinLab 進階券商分點）為 go/no-go gating；新增設計 spec `specs/2026-06-03-candidate-d-smallcap-universe-design.md`；ADR 數量 19→20
 > **2026-06-04 更新**：前後端契約優先盤點（FE 14 頁需求 ↔ FastAPI 11 條供給 ↔ 既有契約）→ **REST 契約合一（ADR-021）**：三處分裂（06 §9 / 21 §8 / per-page）併入新建 **25_fe_be_rest_contract.md**（71→83 端點 registry + 單一 envelope/錯誤碼/分頁/裸 root/Bearer/realtime + OpenAPI→TS）；06 §9 / 21 §8 / 20 / 12 §7 加降級 banner；ADR 數量 20→21
 > **2026-06-04 更新（二）**：Trade Review 去 four_layer_resonance 策略耦合（泛化為 reason_json 動態 N 因子歸因）；**多策略艦隊營運 lite（ADR-022）**：營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略），改寫 PRD「❌ 多策略管理」+ D-018；ADR 數量 21→22
+> **2026-06-09 更新**：R9 edge 掃描收斂 — 動能 NO-GO（ADR-023，守 ADR-016 + 四層廢止）、資金流 survivorship-clean NO-GO（ADR-024）；4 結構同 ~0.9 Sharpe 牆；ADR 數量 22→24
+> **2026-06-14 更新**：驗證機制設計修正 — **驗證閘從 binary 絕對通關改兩段式（ADR-025）**：真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；修正部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖；不翻案 ADR-023/024（死於真偽閘）；16 WBS 升 v3.4；ADR 數量 24→25
 
 ---
 
@@ -106,6 +108,9 @@
 | [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) | **候選 D（提案中）**：large-cap v3 IS FAIL → escalate 換 point-in-time 中小型動能 universe（rank 51-300、季 rebalance、反 survivorship）；機制凍結、成本上調；資料 spike（FinLab 進階券商分點 ~250 檔）為 go/no-go gating | ADR-017 §5 退場路徑落地；ADR-019 機制不動 |
 | [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) | **前後端 REST 契約合一**：三處分裂（06 §9 / 21 §8 / per-page）→ 單一契約 doc 25 + OpenAPI 機器真相；envelope error 字串→物件、offset 分頁、裸 root、single-user Bearer、polling+單一 WS、Monitor stub | **supersede** ADR-015 §4/§5 + ADR-018 契約落點指派 |
 | [ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md) | **多策略艦隊營運（lite）**：營運層擴張為同時監控/操作數隻已晉升策略 + 退化換掉（研究層仍單策略）；處置複用 ADR-018 晉升 audit；仍排除跨人 leaderboard/staking/完整 registry/多人簽核；gated 於 M4 + ≥1 可部署策略 | **部分放寬** 03 §5.3「刻意不做 champion/challenger」+ PRD「❌ 多策略管理」（D-018）|
+| [ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) | **動能 NO-GO**：大 universe + survivorship-clean WFA OOS 0.63-0.86、final CAGR 7.1% 仍未過 ADR-016；守門檻不放寬 → 動能廢止、四層廢止、艦隊轉掃描下一候選 | 記錄 ADR-016 gate 對動能的執行結果 |
+| [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) | **三大法人資金流候選 → 🔴 survivorship-clean FAIL**：survivor-only 40 檔條件式 GO 係生存者膨脹假陽性；含下市股 116 檔複驗 CAGR 13.1%/Sharpe 0.90/PBO 42.9% → NO-GO，條件式 GO 撤回 | 記錄 ADR-016 gate 對資金流的執行結果 |
+| [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) | **驗證閘兩段化 + paper 前移**：修正 ADR-016 binary 絕對通關三缺陷（部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖）→ 真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；不翻案 ADR-023/024（死於真偽閘）| **amends** ADR-016（binary→兩段閘）|
 
 ---
 

@@ -1,6 +1,7 @@
 # ADR-016: M2 acceptance KPI 凍結（CAGR / Sharpe / 滑點穩健性）
 
-> **狀態：** 已接受 | **日期：** 2026-06-01 | **決策者：** Self
+> **狀態：** 已接受（**2026-06-14 部分修正：binary 通關 → 兩段閘，見 [ADR-025](./ADR-025-two-stage-validation-gate-and-paper-promotion.md)**）| **日期：** 2026-06-01 | **決策者：** Self
+> **⚠️ 修正指引**：本 ADR 的三條門檻（K1/K2/K3）不廢，但 ADR-025 把它們從「單一 binary 通關」重新定位為「**真偽閘**（PBO/DSR/WFA/survivorship-clean，binary hard-fail）+ **配置閘**（Sharpe/相關性/容量 → 倉位，連續；絕對 CAGR 降為參考）」。§4「重新評估觸發」中『Sharpe 落在 0.9-1.0 → 需新 ADR』即由 ADR-025 回應。
 > **彙整來源：** [`01_workflow_manual.md` §6 transitions](../01_workflow_manual.md) + [`02_project_brief_and_prd.md` §成功指標](../02_project_brief_and_prd.md) + `strategy/v2.md` §4.3.1 綠/黃/紅燈表
 > **相關：** [ADR-013](./ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)（M2 主骨架）、[ADR-014](./ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md)（pandas 2 / vectorbt 升級）、[16 WBS §6 M2 acceptance](../16_wbs_development_plan.md#m2-acceptance綠燈門檻凍結於-adr-016)
 
