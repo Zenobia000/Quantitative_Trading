@@ -115,3 +115,31 @@ def test_telemetry_endpoints_envelope_shape(path):
     body = _client(_FakeReader()).get(path).json()
     assert body["success"] is True
     assert body["data"] == []  # empty telemetry → empty list, still 200
+
+
+def test_perf_kpi_computes_from_equity():
+    eq = [
+        {"t": f"2023-01-{d:02d}T00:00:00", "equity": v, "drawdown": 0.0}
+        for d, v in [(3, 10_000_000.0), (4, 10_100_000.0), (5, 10_050_000.0), (6, 10_200_000.0)]
+    ]
+    body = _client(_FakeReader(equity=eq)).get("/monitor/performance/kpi").json()
+    d = body["data"]
+    assert body["meta"]["data_source"] == "timescaledb"
+    assert d["current_equity"] == 10_200_000.0
+    assert d["n_points"] == 4
+    assert d["total_return"] == pytest.approx((10_200_000.0 / 10_000_000.0) - 1, rel=1e-6)
+    for k in ("cagr", "sharpe", "max_drawdown", "calmar"):
+        assert k in d
+
+
+def test_perf_kpi_short_series_returns_zeros():
+    eq = [{"t": "2023-01-03T00:00:00", "equity": 10_000_000.0, "drawdown": 0.0}]
+    d = _client(_FakeReader(equity=eq)).get("/monitor/performance/kpi").json()["data"]
+    assert d["current_equity"] == 10_000_000.0
+    assert d["cagr"] == 0.0 and d["n_points"] == 1
+
+
+def test_perf_kpi_pending_without_db():
+    body = _client(_FakeReader(fail=True)).get("/monitor/performance/kpi").json()
+    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["data"] == {}
