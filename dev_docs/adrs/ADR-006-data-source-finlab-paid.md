@@ -1,6 +1,8 @@
 # ADR-006: 資料源切換為付費 FinLab（FinMind 為 fallback）
 
-> **狀態：** 已接受 | **日期：** 2026-05-31 | **決策者：** Self
+> **狀態：** 已接受 ｜ **已實現（2026-06-15）** | **日期：** 2026-05-31 | **決策者：** Self
+
+> **補充（2026-06-15，realized）**：當初退回 FinMind 是因 FinLab `#free` 截 2018-12-28（spike S3）。使用者付費解鎖後實測 live FinLab：全史 **2007-04→今**、**2753 檔含 369 下市股（原生 survivorship-clean）**、三大法人買賣超 + `etl:adj_*` / `price:成交股數,成交金額` / `etl:market_value` 皆可得。實作 `data/finlab_source.py`（`ingest_universe_finlab` 批次 wide→**與 FinMind 相同**的 ETLBundle/parquet schema，downstream 全不動；`build_survivorship_universe`；`login()`）＋ `make_ingest(source="finlab"|"finmind")`：**FinLab 預設主源、FinMind 留 fallback**（本 ADR 原始決策落地）。狀態真相源見 [16 WBS](../16_wbs_development_plan.md) v3.8 / §2 模組 3.0 / 3.B.1。**Follow-up**：finlab 2.0 `login(api_token=)` 於 2026/08/01 棄用 → 屆時遷移至 `python -m finlab login`（headless 自動化路徑待定）。
 
 ---
 
