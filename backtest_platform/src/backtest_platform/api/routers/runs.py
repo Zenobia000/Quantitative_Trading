@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 
 from backtest_platform.api.deps import RunExecutor, get_run_executor, get_runs_path
-from backtest_platform.api.envelope import Envelope, ok, page_meta
+from backtest_platform.api.envelope import Envelope, ok, page_meta, pending
 from backtest_platform.api.response_models import (
     CompareReportData,
     RunRecord,
@@ -27,6 +27,7 @@ from backtest_platform.api.response_models import (
     SweepEstimate,
 )
 from backtest_platform.api.schemas import RunCreateRequest
+from backtest_platform.jobs import job_store, submit
 from backtest_platform.research.compare import CompareReport, compare_runs
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.research.runs_store import append_run, read_runs
@@ -193,3 +194,47 @@ def create_run(
     record = executor(cfg)
     append_run(record, runs_path)
     return ok(record)
+
+
+@router.post("/async", response_model=Envelope, status_code=202)
+def create_run_async(
+    req: RunCreateRequest,
+    runs_path: Path = Depends(get_runs_path),
+    executor: RunExecutor = Depends(get_run_executor),
+) -> Envelope:
+    """Async variant of ``POST /runs`` (8.H.6): validate the config up-front (422
+    stays synchronous), then enqueue judge-and-append as a job and return
+    ``{job_id, status}`` (202 Accepted). The sync ``POST /runs`` is unchanged;
+    poll :func:`run_log` for completion.
+    """
+    try:
+        cfg = RunConfig(
+            hypothesis=req.hypothesis,
+            preset=req.preset,
+            stocks=tuple(req.stocks),
+            is_start=req.is_start,
+            is_end=req.is_end,
+            engine=req.engine,
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+
+    def _judge_and_append() -> dict[str, Any]:
+        record = executor(cfg)
+        append_run(record, runs_path)
+        return record
+
+    key = f"{req.preset}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
+    job = submit("run", key, _judge_and_append)
+    return ok({"job_id": job.job_id, "status": job.status.value})
+
+
+@router.get("/{job_id}/log", response_model=Envelope)
+def run_log(job_id: str) -> Envelope:
+    """Async-run job log (8.H.6): lifecycle (status/progress) + terminal
+    result/error. A typed-empty ``pending`` envelope when the id is unknown
+    (mirrors the sweep status route)."""
+    job = job_store.read_job(job_id)
+    if job is None:
+        return pending({"job_id": job_id, "status": None, "progress": None})
+    return ok(job.to_dict())
