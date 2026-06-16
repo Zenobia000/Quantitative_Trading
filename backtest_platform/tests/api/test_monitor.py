@@ -14,12 +14,18 @@ from backtest_platform.api.deps import get_telemetry_reader
 
 
 class _FakeReader:
-    def __init__(self, *, equity=None, positions=None, signals=None, fills=None, fail=False):
+    def __init__(self, *, equity=None, positions=None, signals=None, fills=None, fleet=None, fail=False):
         self._equity = equity or []
         self._positions = positions or []
         self._signals = signals or []
         self._fills = fills or []
+        self._fleet = fleet or []
         self._fail = fail
+
+    def fleet_summary(self, **_kw):
+        if self._fail:
+            raise RuntimeError("no DB connection")
+        return self._fleet
 
     def equity_series(self, **_kw):
         if self._fail:
@@ -143,3 +149,38 @@ def test_perf_kpi_pending_without_db():
     body = _client(_FakeReader(fail=True)).get("/monitor/performance/kpi").json()
     assert body["meta"]["data_source"] == "pending_m4"
     assert body["data"] == {}
+
+
+# ---- fleet aggregate (8.H.8) --------------------------------------------
+
+_FLEET = [
+    {"strategy_id": "inst_flow", "equity": 10_130_000.0, "cash": 8_600_000.0, "open_positions": 3, "portfolio_heat": 0.12, "last_update": "2023-10-02T00:00:00"},
+    {"strategy_id": "momentum", "equity": 9_800_000.0, "cash": 9_000_000.0, "open_positions": 2, "portfolio_heat": 0.08, "last_update": "2023-10-02T00:00:00"},
+]
+
+
+def test_fleet_serves_latest_per_strategy():
+    body = _client(_FakeReader(fleet=_FLEET)).get("/monitor/fleet").json()
+    assert body["meta"]["data_source"] == "timescaledb"
+    assert {r["strategy_id"] for r in body["data"]} == {"inst_flow", "momentum"}
+    assert body["meta"]["total"] == 2
+
+
+def test_portfolio_summary_rolls_up_fleet():
+    data = _client(_FakeReader(fleet=_FLEET)).get("/monitor/portfolio-summary").json()["data"]
+    assert data["n_strategies"] == 2
+    assert data["total_equity"] == 19_930_000.0
+    assert data["total_open_positions"] == 5
+
+
+def test_fleet_pending_without_db():
+    body = _client(_FakeReader(fail=True)).get("/monitor/fleet").json()
+    assert body["data"] == []
+    assert body["meta"]["data_source"] == "pending_m4"
+
+
+def test_strategies_lists_registry_catalog():
+    # registry is populated by best-effort runner import → real production strategies
+    body = _client(_FakeReader()).get("/monitor/strategies").json()
+    names = {r["strategy_id"] for r in body["data"]}
+    assert "inst_flow" in names  # registered via @register_strategy

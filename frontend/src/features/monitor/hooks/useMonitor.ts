@@ -51,6 +51,21 @@ export const usePerfEquity = () => useEndpoint<EquityPoint[]>('/monitor/performa
 export const usePositions = () => useEndpoint<PositionRow[]>('/monitor/positions/snapshot', 60)
 export const useSignals = () => useEndpoint<SignalRow[]>('/monitor/signals', 30)
 export const useFills = () => useEndpoint<FillRow[]>('/monitor/fills', 300)
-export const useFleet = () => useEndpoint<unknown[]>('/monitor/fleet', 60)
-export const useStrategies = () => useEndpoint<unknown[]>('/monitor/strategies', 60)
+export interface FleetRow {
+  strategy_id: string
+  equity: number
+  cash: number
+  open_positions: number
+  portfolio_heat: number | null
+  last_update: string
+}
+export interface PortfolioSummary {
+  n_strategies?: number
+  total_equity?: number
+  total_open_positions?: number
+}
+
+export const useFleet = () => useEndpoint<FleetRow[]>('/monitor/fleet', 60)
+export const usePortfolioSummary = () => useEndpoint<PortfolioSummary>('/monitor/portfolio-summary', 60)
+export const useStrategies = () => useEndpoint<{ strategy_id: string }[]>('/monitor/strategies', 300)
 export const useRiskMetrics = () => useEndpoint<Record<string, unknown>>('/monitor/risk/metrics', 30)

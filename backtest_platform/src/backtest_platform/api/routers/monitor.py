@@ -83,19 +83,62 @@ def _equity_kpis(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 # ---- fleet board (monitor_fleet) ----------------------------------------
+def _registered_strategies() -> list[str]:
+    """Available strategy names from the ADR-027 registry. Best-effort imports the
+    production runners (registration is an import side-effect); empty if none load."""
+    from backtest_platform.strategies.protocol import list_strategies
+
+    for mod in (
+        "backtest_platform.strategies.inst_flow.runner",
+        "backtest_platform.strategies.momentum.runner",
+        "backtest_platform.strategies.four_layer_resonance.runner",
+    ):
+        try:
+            __import__(mod)
+        except Exception:
+            pass
+    return list_strategies()
+
+
 @router.get("/strategies", response_model=Envelope)
 def strategies() -> Envelope:
-    return _stub([])
+    """Registered strategy catalog (ADR-027 registry). Typed-empty pending if none."""
+    names = _registered_strategies()
+    if not names:
+        return _stub([])
+    return _served([{"strategy_id": n} for n in names], ttl=300, total=len(names))
 
 
 @router.get("/fleet", response_model=Envelope)
-def fleet() -> Envelope:
-    return _stub([])
+def fleet(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
+    """Live fleet board — latest equity per strategy from telemetry (8.H.8);
+    pending fallback when no DB/telemetry."""
+    try:
+        rows = reader.fleet_summary()
+    except Exception as exc:
+        logger.warning("monitor /fleet degraded (no telemetry?): {}", exc)
+        return _stub([])
+    return _served(rows, ttl=60, total=len(rows))
 
 
 @router.get("/portfolio-summary", response_model=Envelope)
-def portfolio_summary() -> Envelope:
-    return _stub({})
+def portfolio_summary(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
+    """Fleet roll-up — total equity / strategy count / open positions (8.H.8)."""
+    try:
+        rows = reader.fleet_summary()
+    except Exception as exc:
+        logger.warning("monitor /portfolio-summary degraded (no telemetry?): {}", exc)
+        return _stub({})
+    if not rows:
+        return _served({"n_strategies": 0, "total_equity": 0.0, "total_open_positions": 0}, ttl=60)
+    return _served(
+        {
+            "n_strategies": len(rows),
+            "total_equity": round(sum(float(r["equity"]) for r in rows), 2),
+            "total_open_positions": sum(int(r["open_positions"]) for r in rows),
+        },
+        ttl=60,
+    )
 
 
 @router.get("/correlation", response_model=Envelope)
