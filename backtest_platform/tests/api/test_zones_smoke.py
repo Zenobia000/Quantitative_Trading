@@ -33,7 +33,7 @@ def test_all_get_endpoints_return_envelope(client):
 
 @pytest.mark.parametrize(
     "path",
-    ["/monitor/fleet", "/monitor/risk/metrics", "/system/bundles", "/home/research-status"],
+    ["/monitor/correlation", "/monitor/risk/metrics", "/system/bundles", "/home/research-status"],
 )
 def test_pending_endpoints_tagged(client, path):
     """Deferred endpoints carry meta.data_source (pending) — 不假造資料。"""

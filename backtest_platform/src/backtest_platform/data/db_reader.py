@@ -40,6 +40,32 @@ class TelemetryReader:
             for r in rows
         ]
 
+    def fleet_summary(self, *, mode: str = "paper") -> list[dict[str, Any]]:
+        """Latest equity snapshot per strategy = the live fleet board (8.H.8).
+
+        ``DISTINCT ON (strategy_id) … ORDER BY strategy_id, snapshot_time DESC``
+        gives each strategy's most-recent row — the running fleet, telemetry-driven
+        (no strategy registry import needed)."""
+        sql = (
+            "SELECT DISTINCT ON (strategy_id) strategy_id, equity, cash, open_positions, "
+            "portfolio_heat, snapshot_time FROM equity_snapshots WHERE mode = %s "
+            "ORDER BY strategy_id, snapshot_time DESC"
+        )
+        with _connection(self._cfg) as conn, conn.cursor() as cur:
+            cur.execute(sql, [mode])
+            rows = cur.fetchall()
+        return [
+            {
+                "strategy_id": r[0],
+                "equity": float(r[1]),
+                "cash": float(r[2]),
+                "open_positions": int(r[3]),
+                "portfolio_heat": float(r[4]) if r[4] is not None else None,
+                "last_update": r[5].isoformat(),
+            }
+            for r in rows
+        ]
+
     def open_positions(self, *, strategy_id: str | None = None) -> list[dict[str, Any]]:
         """Currently-open positions (``closed_at IS NULL``)."""
         sql = [
