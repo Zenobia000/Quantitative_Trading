@@ -387,7 +387,8 @@ Run 作為一級物件的主表：把散落的 `reports/perf__/summary__` 報表
 CREATE TABLE runs (
     run_id            TEXT PRIMARY KEY,        -- 決定性 RunConfig hash
     hypothesis        TEXT NOT NULL,           -- 預先註冊（反過擬合）
-    preset            TEXT NOT NULL,           -- 策略 preset (v2 / v3 / ...)
+    strategy          TEXT NOT NULL,           -- 註冊策略名稱 (ADR-028, 取代 preset)
+    params            JSONB NOT NULL DEFAULT '{}',  -- 策略參數快照
     engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
     stocks            JSONB NOT NULL,          -- 此 run 的 universe
     is_start          DATE NOT NULL,
@@ -403,7 +404,7 @@ CREATE TABLE runs (
     CONSTRAINT runs_window_ck CHECK (is_start < is_end),
     CONSTRAINT runs_status_ck CHECK (status IN ('created','running','done','failed'))
 );
-CREATE INDEX ON runs (preset, created_at DESC);
+CREATE INDEX ON runs (strategy, created_at DESC);
 CREATE INDEX ON runs (status, created_at DESC);
 ```
 

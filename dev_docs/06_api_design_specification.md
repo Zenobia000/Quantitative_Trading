@@ -1,6 +1,6 @@
 # API 設計規範 — backtest_platform
 
-> **版本：** v1.4 | **更新：** 2026-06-03 | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **研究迴圈 CLI（§3.5：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate / promote-check）** + **v0.6 HTTP API（FastAPI，§9）**
+> **版本：** v1.5 | **更新：** 2026-06-16 (ADR-028: preset→strategy+params dispatch) | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **研究迴圈 CLI（§3.5：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate / promote-check）** + **v0.6 HTTP API（FastAPI，§9）**
 
 ---
 
@@ -10,7 +10,7 @@
 
 1. **CLI（Click）** — 端到端操作（ETL / zipline 回測 / **研究迴圈 `research.cli`：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate / promote-check**，詳見 §3.5）
 2. **Python API** — 程式內呼叫（pure functions + Pydantic models）
-3. **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate審判庭 / metrics / presets），詳見 §9。原規劃 M3（8.A.3）才做，因平台優先策略提前交付。
+3. **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate審判庭 / metrics / strategies），詳見 §9。原規劃 M3（8.A.3）才做，因平台優先策略提前交付。
 
 ---
 
@@ -112,12 +112,12 @@ Click group，子命令 `ingest` / `backtest-run` / `list-bundles`。執行需�
 ```bash
 # 跑一次 IS run（強制 hypothesis 預登記）→ 判 gate → 落 runs ledger
 uv run python -m backtest_platform.research.cli run-is \
-    --preset v3.1b --hypothesis "雙窗是否同號為正" \
+    --strategy four_layer --params '{}' --hypothesis "雙窗是否同號為正" \
     --stocks 2330,1101,1303 --start 2020-01-01 --end 2024-12-31 \
     [--tearsheet] [--tearsheet-dir reports/tearsheets]   # 額外輸出 quantstats HTML
 
 uv run python -m backtest_platform.research.cli runs                       # 列出 ledger
-uv run python -m backtest_platform.research.cli sweep --base-preset v3.1b \
+uv run python -m backtest_platform.research.cli sweep --strategy four_layer --base-params '{}' \
     --grid "entry_min_layers=3,4;entry_confirm_days=1,2" \
     --stocks 2330,1101 --start 2020-01-01 --end 2024-12-31                 # 全網格 CSV
 uv run python -m backtest_platform.research.cli compare --baseline <run_id>  # 多 run delta
@@ -128,7 +128,7 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | 子命令 | 用途 | 後端 |
 | :--- | :--- | :--- |
 | `run-is` | 跑 IS sim → 判 gate → 落 ledger；`--tearsheet` 額外出 quantstats HTML（需 `validation` extra） | `is_harness.run_and_judge_with_returns` + `tearsheet.write_tearsheet` |
-| `runs` | 列出 runs ledger（run_id / preset / gate / hypothesis） | `runs_store.read_runs` |
+| `runs` | 列出 runs ledger（run_id / strategy / gate / hypothesis） | `runs_store.read_runs` |
 | `sweep` | 參數網格展開 → 跑每個 → 輸出**全網格** CSV（防 cherry-pick） | `sweep.run_sweep` |
 | `compare` | 多 run baseline delta + 排名 + 同號一致性 | `compare.compare_runs` |
 | `validate` | 把 ledger 內某 run 推進 IS→WFA→OOS **工作流 gate**（IS 階段）：PASS→IS_PASS 解鎖 WFA，並回報 OOS sealed-vault 狀態（IS+WFA 通過前 OOS 封存，防 look-ahead leak） | `validation.gate_machine.ValidationGate` |
@@ -433,8 +433,8 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | Method | Path | 用途 | 後端 |
 | :--- | :--- | :--- | :--- |
 | GET | `/health` | liveness + 版本 | — |
-| GET | `/presets` | 列出所有 StrategyConfig preset + 各自參數 | `config.strategy_config.PRESETS` |
-| GET | `/presets/{name}` | 單一 preset 參數（未知→404） | `get_preset` |
+| GET | `/strategies` | 列出所有已註冊策略的 name/title/description/JSON-schema（ADR-028）| `strategies.protocol.describe_strategies` |
+
 | GET | `/runs` | runs ledger 分頁列表（`?page=&limit=`） | `research.runs_store.read_runs` |
 | GET | `/runs/compare` | 跨 run 比較（`?baseline=`：delta/rank/sign） | `research.compare.compare_runs` |
 | GET | `/runs/{run_id}` | 單一 run 完整紀錄（未知→404） | `read_runs` |
