@@ -28,5 +28,27 @@
   /* focus：單色白環（非彩色） */
   --focus-ring: rgba(245, 245, 245, 0.7);
 
+  /*
+   * 受控資料視覺化色盤（8.G.6）— 僅供 chart/多序列，非品牌色。
+   * 單色品牌之外的唯一例外：圖表需可區辨。色相節制、皆於 #0f0f0f 上達 AA。
+   */
+  /* categorical：多序列（如艦隊策略），6 個可區辨節制色相 */
+  --cat-1: #5b9bd5; /* blue */
+  --cat-2: #e9a60c; /* amber（= warning 同源）*/
+  --cat-3: #a78bfa; /* violet */
+  --cat-4: #4db6ac; /* teal（受控，唯一 teal 來源）*/
+  --cat-5: #f06595; /* rose */
+  --cat-6: #9ccc65; /* lime */
+  /* diverging：loss ↔ 中性 ↔ gain（熱圖：相關性 / 月報酬）*/
+  --div-neg: var(--loss);
+  --div-mid: #555555;
+  --div-pos: var(--gain);
+  /* sequential：單色強度階（熱度）*/
+  --seq-1: #1a2a33;
+  --seq-2: #244a55;
+  --seq-3: #2e6b77;
+  --seq-4: #389099;
+  --seq-5: #4db6ac;
+
   color-scheme: dark;
 }
