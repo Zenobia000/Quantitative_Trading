@@ -22,6 +22,8 @@ import { PerformancePage } from '@/features/monitor/pages/PerformancePage'
 import { PositionsPage } from '@/features/monitor/pages/PositionsPage'
 import { SignalsPage } from '@/features/monitor/pages/SignalsPage'
 import { RiskPage } from '@/features/monitor/pages/RiskPage'
+import { DataPage } from '@/features/system/pages/DataPage'
+import { AlertsPage } from '@/features/system/pages/AlertsPage'
 
 // 有完整真實資料的實頁
 const REAL: Record<string, ReactElement> = {
@@ -40,13 +42,13 @@ const REAL: Record<string, ReactElement> = {
   'monitor/positions': <PositionsPage />,
   'monitor/signals': <SignalsPage />,
   'monitor/risk': <RiskPage />,
+  // System zone — real feature pages
+  'system/data': <DataPage />,
+  'system/alerts': <AlertsPage />,
 }
 
 // 其餘頁：接真實端點（多為 typed-empty stub / M4 deferred）→ WiredPage 渲染四態
-const ENDPOINT: Record<string, string | null> = {
-  'system/data': '/system/bundles',
-  'system/alerts': '/system/alerts/rules',
-}
+const ENDPOINT: Record<string, string | null> = {}
 
 interface RouteDef {
   path: string
