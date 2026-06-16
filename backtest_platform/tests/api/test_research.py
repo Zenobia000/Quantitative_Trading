@@ -14,13 +14,13 @@ def test_strategies_projected_from_ledger(client, write_runs, sample_runs):
     body = client.get("/research/strategies").json()
     assert body["meta"]["total"] == 2
     by_id = {s["strategy_id"]: s for s in body["data"]}
-    assert set(by_id) == {"v2", "v3.1b"}
-    # 每 preset 一筆 run → runs_count 1；FAIL → validation_status is_fail；stage draft
-    assert by_id["v3.1b"]["runs_count"] == 1
-    assert by_id["v3.1b"]["validation_status"] == "is_fail"
-    assert by_id["v3.1b"]["stage"] == "draft"
+    assert set(by_id) == {"four_layer", "momentum"}
+    # 每 strategy 一筆 run → runs_count 1；FAIL → validation_status is_fail；stage draft
+    assert by_id["momentum"]["runs_count"] == 1
+    assert by_id["momentum"]["validation_status"] == "is_fail"
+    assert by_id["momentum"]["stage"] == "draft"
     # best_kpi 取最高 Sharpe 的 metrics
-    assert by_id["v3.1b"]["best_kpi"]["sharpe"] == 0.90
+    assert by_id["momentum"]["best_kpi"]["sharpe"] == 0.90
 
 
 def test_strategies_pagination(client, write_runs, sample_runs):
@@ -37,8 +37,8 @@ def test_strategies_invalid_page_422(client):
 # ---- /runs/estimate (sweep grid cardinality) ----------------------------
 
 def test_estimate_grid_cardinality(client):
-    body = client.get("/runs/estimate", params={"box_period": "40,60,80", "confirm_days": "1,2", "preset": "v3"}).json()
-    assert body["data"]["n_configs"] == 6  # 3 × 2（preset 不計入軸）
+    body = client.get("/runs/estimate", params={"box_period": "40,60,80", "confirm_days": "1,2", "strategy": "four_layer"}).json()
+    assert body["data"]["n_configs"] == 6  # 3 × 2（strategy 不計入軸）
     assert body["data"]["est_minutes"] == 3.0  # 6 × 0.5
     assert body["data"]["axes"] == {"box_period": 3, "confirm_days": 2}
 

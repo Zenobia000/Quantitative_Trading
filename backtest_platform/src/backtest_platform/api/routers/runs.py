@@ -37,7 +37,7 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 #: Fields surfaced in the paginated list view (the full record is on the detail route).
 _SUMMARY_KEYS = (
     "run_id",
-    "preset",
+    "strategy",
     "gate_status",
     "hypothesis",
     "metrics",
@@ -143,9 +143,9 @@ def estimate(request: Request) -> Envelope:
     Grid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``
     → 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same
     grid; we compute the cardinality directly (product of axis lengths) so no base
-    config is required just to count. ``preset`` is ignored as an axis.
+    config is required just to count. ``strategy`` is ignored as an axis.
     """
-    axes = {k: v.split(",") for k, v in request.query_params.items() if k != "preset" and v}
+    axes = {k: v.split(",") for k, v in request.query_params.items() if k != "strategy" and v}
     n_configs = math.prod(len(vals) for vals in axes.values()) if axes else 1
     return ok(
         {

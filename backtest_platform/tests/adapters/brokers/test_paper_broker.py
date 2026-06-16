@@ -23,7 +23,7 @@ from backtest_platform.adapters.brokers.paper_broker import (
     OrderSide,
     PaperBroker,
 )
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 
 # A zero-cost config makes cash arithmetic exact and lets us isolate
 # position/equity logic from fee math in the structural tests.

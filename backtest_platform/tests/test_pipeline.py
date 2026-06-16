@@ -19,7 +19,7 @@ import pandas as pd
 import pytest
 from click.testing import CliRunner
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform import pipeline as pipe
 
 

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest_platform.config.strategy_config import StrategyConfig, get_preset
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.protocol import (
     Engine,
     EngineName,
@@ -40,6 +40,8 @@ def _synthetic_loader(sid: str) -> pd.DataFrame:
 _STOCKS = ["AAA", "BBB"]
 _START = date(2019, 11, 1)
 _END = date(2020, 1, 14)
+#: Default four-layer config — replaces the removed ``get_preset("v3")`` (ADR-028).
+_CONFIG = StrategyConfig()
 
 
 # --- Protocol conformance -------------------------------------------------
@@ -61,7 +63,7 @@ def test_engine_is_runtime_checkable_and_rejects_non_conformers() -> None:
 
 def test_simengine_run_returns_metrics_dict() -> None:
     eng = SimEngine(loader=_synthetic_loader)
-    m = eng.run(_STOCKS, _START, _END, get_preset("v3"))
+    m = eng.run(_STOCKS, _START, _END, _CONFIG)
     assert isinstance(m, dict)
     for k in ("cagr", "sharpe", "slippage_sharpe", "struct1_pct", "churn_pct",
               "avg_hold", "trades", "maxdd", "bars"):
@@ -81,7 +83,7 @@ def test_simengine_run_accepts_arbitrary_strategy_config() -> None:
 
 def test_simengine_empty_when_window_has_no_data() -> None:
     eng = SimEngine(loader=_synthetic_loader)
-    m = eng.run(_STOCKS, date(2010, 1, 1), date(2010, 6, 1), get_preset("v3"))
+    m = eng.run(_STOCKS, date(2010, 1, 1), date(2010, 6, 1), _CONFIG)
     assert m["trades"] == 0
 
 
@@ -115,7 +117,7 @@ def test_get_engine_stub_engines_are_engine_but_run_raises(name: EngineName) -> 
     eng = get_engine(name)
     assert isinstance(eng, Engine)
     with pytest.raises(NotImplementedError):
-        eng.run(_STOCKS, _START, _END, get_preset("v3"))
+        eng.run(_STOCKS, _START, _END, _CONFIG)
 
 
 def test_engine_name_literal_values() -> None:

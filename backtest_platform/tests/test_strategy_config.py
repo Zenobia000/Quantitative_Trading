@@ -2,13 +2,24 @@
 
 When v2.md updates a default, this test fails and forces the engineer to
 either propagate the change here or roll it back — preventing silent drift.
+
+Post-ADR-028: config lives with its strategy
+(``strategies.four_layer_resonance.config``); the central ``config.strategy_config``
+module — and its ``PRESETS`` / ``get_preset`` / ``DEFAULT_CONFIG`` — is gone.
+Named presets are no longer a config concern (a run names a ``strategy`` + ``params``).
 """
 from __future__ import annotations
 
 import pytest
 from pydantic import ValidationError
 
-from backtest_platform.config.strategy_config import DEFAULT_CONFIG, StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
+
+
+def test_strategy_config_constructs_with_defaults() -> None:
+    # config_model()-style construction with no args must succeed (contract invariant).
+    c = StrategyConfig()
+    assert isinstance(c, StrategyConfig)
 
 
 def test_defaults_match_v2_spec() -> None:
@@ -29,12 +40,21 @@ def test_defaults_match_v2_spec() -> None:
 
 
 def test_derived_cost_rates() -> None:
-    c = DEFAULT_CONFIG
+    c = StrategyConfig()
     expected_buy = 0.001425 * 0.6 + 0.001
     expected_sell = 0.001425 * 0.6 + 0.003 + 0.001
     assert c.cost_buy_rate == pytest.approx(expected_buy)
     assert c.cost_sell_rate == pytest.approx(expected_sell)
     assert c.cost_round_rate == pytest.approx(expected_buy + expected_sell)
+
+
+def test_with_extra_slippage_adds_round_trip_slip() -> None:
+    c = StrategyConfig()
+    stressed = c.with_extra_slippage(0.002)
+    assert stressed.slip_rate == pytest.approx(c.slip_rate + 0.002)
+    # immutability: the original is untouched (returns a copy)
+    assert c.slip_rate == 0.001
+    assert isinstance(stressed, StrategyConfig)
 
 
 def test_warning_threshold_must_be_below_strong_buy() -> None:
@@ -64,17 +84,6 @@ def test_v3_entry_fields_default_to_v2_behavior() -> None:
     assert c.exit_flameout_confirm_bars == 1
 
 
-def test_v3_preset_relaxed_values() -> None:
-    from backtest_platform.config.strategy_config import DEFAULT_CONFIG_V3
-
-    c = DEFAULT_CONFIG_V3
-    assert (c.entry_min_layers, c.entry_min_structure) == (3, 1)
-    assert c.entry_first_cross_only is False
-    assert c.entry_confirm_days == 2
-    assert c.entry_cooldown_bars == 3
-    assert c.exit_flameout_confirm_bars == 2
-
-
 def test_v3_entry_field_bounds() -> None:
     with pytest.raises(ValidationError):
         StrategyConfig(entry_min_layers=5)
@@ -82,44 +91,6 @@ def test_v3_entry_field_bounds() -> None:
         StrategyConfig(entry_min_structure=3)
     with pytest.raises(ValidationError):
         StrategyConfig(entry_confirm_days=0)
-
-
-def test_get_preset_selects_v2_or_v3() -> None:
-    from backtest_platform.config.strategy_config import get_preset
-
-    assert get_preset("v2").entry_min_structure == 2
-    assert get_preset("v2").entry_first_cross_only is True
-    assert get_preset("v3").entry_min_structure == 1
-    assert get_preset("v3").entry_confirm_days == 2
-
-
-def test_get_preset_rejects_unknown() -> None:
-    from backtest_platform.config.strategy_config import get_preset
-
-    with pytest.raises(ValueError, match="unknown strategy preset"):
-        get_preset("bogus")
-
-
-def test_v3_1b_preset_keeps_structure_strict() -> None:
-    """Direction B: structure==2 kept strict (unlike v3), only transition relaxed."""
-    from backtest_platform.config.strategy_config import get_preset
-
-    b = get_preset("v3.1b")
-    assert b.entry_min_structure == 2          # strict, unlike v3's 1
-    assert b.entry_first_cross_only is False    # transition relaxed
-    assert b.entry_min_layers == 3
-    assert b.entry_confirm_days == 2
-
-
-def test_v3_1a_preset_breakout_or_retest() -> None:
-    """Direction A: structure==2 breakout primary + box-top retest (entry_retest_band)."""
-    from backtest_platform.config.strategy_config import get_preset
-
-    a = get_preset("v3.1a")
-    assert a.entry_min_structure == 2       # breakout still required for the OR's first arm
-    assert a.entry_retest_band > 0          # ...plus accept box-top retest
-    assert a.entry_first_cross_only is False
-    assert a.entry_confirm_days == 2
 
 
 def test_retest_band_bounds() -> None:

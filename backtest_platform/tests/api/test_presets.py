@@ -1,30 +1,16 @@
-"""``/presets`` — list + single-preset lookup + unknown-name 404."""
+"""``GET /strategies`` — strategy catalog (replaces the deleted ``/presets``, ADR-028)."""
 from __future__ import annotations
 
 
-def test_list_presets(client):
-    body = client.get("/presets").json()
+def test_list_strategies(client):
+    body = client.get("/strategies").json()
     assert body["success"] is True
-    assert "v2" in body["data"]["presets"]
-    assert "v3.1b" in body["data"]["presets"]
-    # v2 baseline reproduces the original entry gate (all-AND, breakout-only).
-    assert body["data"]["configs"]["v2"]["entry_min_layers"] == 4
-    assert body["data"]["configs"]["v2"]["entry_min_structure"] == 2
-
-
-def test_get_one_preset(client):
-    body = client.get("/presets/v3.1b").json()
-    assert body["success"] is True
-    # dirB keeps structure strict (==2) while relaxing the transition gates.
-    assert body["data"]["entry_min_structure"] == 2
-    assert body["data"]["entry_min_layers"] == 3
-
-
-def test_unknown_preset_returns_404_envelope(client):
-    resp = client.get("/presets/does-not-exist")
-    assert resp.status_code == 404
-    body = resp.json()
-    assert body["success"] is False
-    assert body["data"] is None
-    assert body["error"]["code"] == "NOT_FOUND"
-    assert "does-not-exist" in body["error"]["message"]
+    data = body["data"]
+    assert isinstance(data, list)
+    # every catalog row is self-describing: name + title + config JSON-schema.
+    for row in data:
+        assert "name" in row
+        assert "title" in row
+        assert "config_schema" in row
+    names = [row["name"] for row in data]
+    assert "momentum" in names

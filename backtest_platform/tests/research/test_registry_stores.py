@@ -14,7 +14,7 @@ from backtest_platform.research import (
 
 def test_saved_views_create_then_list(tmp_path) -> None:
     p = tmp_path / "sv.jsonl"
-    rec = saved_views_store.create_view("my view", {"cols": ["cagr"], "f": {"preset": "v3"}}, path=p)
+    rec = saved_views_store.create_view("my view", {"cols": ["cagr"], "f": {"strategy": "four_layer"}}, path=p)
     assert rec["name"] == "my view"
     assert rec["id"]
     views = saved_views_store.list_views(path=p)

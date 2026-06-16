@@ -13,8 +13,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from backtest_platform.config.strategy_config import DEFAULT_CONFIG_V3, StrategyConfig
+import backtest_platform.research.runners  # noqa: F401 — registers built-in strategies
 from backtest_platform.research.sweep import expand_grid, run_sweep, to_heatmap
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
+from backtest_platform.strategies.protocol import get_strategy
+
+#: Base four-layer config for the sweep — replaces the removed DEFAULT_CONFIG_V3 /
+#: get_preset("v3") (ADR-028); the registry self-describes its config_model.
+DEFAULT_CONFIG_V3 = get_strategy("four_layer").config_model()
 
 
 def _synthetic_loader(sid: str) -> pd.DataFrame:

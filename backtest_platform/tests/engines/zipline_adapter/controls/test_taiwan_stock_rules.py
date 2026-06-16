@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.zipline_adapter.controls.taiwan_stock_rules import (
     TaiwanCommission,
 )

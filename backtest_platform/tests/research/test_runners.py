@@ -17,7 +17,6 @@ import pytest
 
 # ensure the built-ins are registered (import side effect)
 import backtest_platform.research.runners  # noqa: F401
-from backtest_platform.config.strategy_config import get_preset
 from backtest_platform.research.is_harness import run_is
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
@@ -48,12 +47,13 @@ def test_four_layer_runner_matches_legacy_run_is():
     """De-specialization regression: runner path == is_harness path, same numbers."""
     stocks = ("AAA", "BBB")
     cfg = RunConfig(
-        hypothesis="runner==harness", preset="v3", stocks=stocks,
+        hypothesis="runner==harness", strategy="four_layer", params={}, stocks=stocks,
         is_start=_START, is_end=_END,
     )
     legacy = run_is(cfg, loader=_loader)
-    run = get_strategy("four_layer").run(
-        list(stocks), _START, _END, get_preset("v3"), _loader
+    four_layer = get_strategy("four_layer")
+    run = four_layer.run(
+        list(stocks), _START, _END, four_layer.config_model(), _loader
     )
     assert isinstance(run, StrategyRun)
     assert run.metrics["bars"] == legacy["bars"]

@@ -25,7 +25,7 @@ class RunSummary(_Data):
     """One row of ``GET /runs`` (``_SUMMARY_KEYS`` projection)."""
 
     run_id: str
-    preset: str | None = None
+    strategy: str | None = None
     gate_status: str | None = None
     hypothesis: str | None = None
     metrics: dict[str, Any] | None = None

@@ -11,11 +11,22 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from backtest_platform.config.strategy_config import DEFAULT_CONFIG_V3, StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.strategies.four_layer_resonance.signals import (
     EvaluateBar,
     compute_signals,
     evaluate_bar,
+)
+
+# Inlined former presets (config/strategy_config.py removed by ADR-028). v3 relaxes
+# the four over-tight entry gates; v2 (StrategyConfig() defaults) stays the baseline.
+DEFAULT_CONFIG_V3 = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=1,
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
 )
 
 # Warmup bars so compute_signals' 14-bar edge_ok and 20-bar risk_swing_low fill
@@ -204,22 +215,40 @@ def test_v2_default_entry_unchanged_by_v3_params(rows):
 
 
 # ───────────────────────── direction A: box-top retest ─────────────────────────
-from backtest_platform.config.strategy_config import get_preset  # noqa: E402
+# Inlined former presets: dirA adds a box-top retest arm (entry_retest_band=0.03);
+# dirB keeps structure strict (breakout-only) while relaxing the transition gates.
+_CONFIG_V3_1A = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=2,
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
+    entry_retest_band=0.03,
+)
+_CONFIG_V3_1B = StrategyConfig(
+    entry_min_layers=3,
+    entry_min_structure=2,
+    entry_first_cross_only=False,
+    entry_confirm_days=2,
+    entry_cooldown_bars=3,
+    exit_flameout_confirm_bars=2,
+)
 
 
 def test_v3_1a_accepts_box_top_retest_that_breakout_only_rejects():
     # structure==1 but close within 3% of box_upper → box-top retest entry (dir A)
     rows = [make_row(1, 2, 2, 1, close=98, box_upper=100, box_lower=70)] * 3
-    assert "buy" in _actions(rows, get_preset("v3.1a"))
-    assert "buy" not in _actions(rows, get_preset("v3.1b"))  # breakout-only rejects retest
+    assert "buy" in _actions(rows, _CONFIG_V3_1A)
+    assert "buy" not in _actions(rows, _CONFIG_V3_1B)  # breakout-only rejects retest
 
 
 def test_v3_1a_rejects_mid_box_below_retest_band():
     # structure==1 but close far below box top (mid-box no-man's-land) → still rejected
     rows = [make_row(1, 2, 2, 1, close=85, box_upper=100, box_lower=70)] * 3
-    assert "buy" not in _actions(rows, get_preset("v3.1a"))
+    assert "buy" not in _actions(rows, _CONFIG_V3_1A)
 
 
 def test_v3_1a_still_takes_clean_breakout():
     rows = [make_row(2, 2, 2, 1, close=101, box_upper=100, box_lower=70)] * 3
-    assert "buy" in _actions(rows, get_preset("v3.1a"))
+    assert "buy" in _actions(rows, _CONFIG_V3_1A)

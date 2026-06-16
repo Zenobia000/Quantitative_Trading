@@ -19,7 +19,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.zipline_adapter.algorithms.four_layer_resonance import (
     _build_evaluate_bar,
     evaluate_window_with_state,

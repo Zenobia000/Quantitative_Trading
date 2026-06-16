@@ -203,7 +203,7 @@ def upsert_positions(
 _RUNS_COLS = (
     "run_id",
     "hypothesis",
-    "preset",
+    "strategy",
     "engine",
     "stocks",
     "is_start",

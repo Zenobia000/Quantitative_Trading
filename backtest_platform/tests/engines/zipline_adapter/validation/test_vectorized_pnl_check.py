@@ -6,7 +6,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.zipline_adapter.validation.vectorized_pnl_check import (
     simulate_vectorized_long_only,
 )
