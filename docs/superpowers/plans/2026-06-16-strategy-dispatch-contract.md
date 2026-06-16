@@ -27,10 +27,11 @@ four_layer StrategyConfig relocated from `config/` into its strategy folder (D6)
 | :--- | :--- |
 | **Move** | `config/strategy_config.py` → `strategies/four_layer_resonance/config.py` |
 | **Modify** | `strategies/protocol.py` — add `config_model`, `StrategyInfo`, `describe_strategies` |
-| **Modify** | `strategies/_template/runner.py` — add `config_model = TemplateConfig` |
-| **Modify** | `strategies/momentum/runner.py` — add `config_model = MomentumConfig` |
-| **Modify** | `strategies/inst_flow/runner.py` — add `config_model = InstFlowConfig` |
-| **Modify** | `strategies/four_layer_resonance/runner.py` — add `config_model = StrategyConfig` |
+| **Modify** | `strategies/_template/runner.py` — V1: add `config_model`/`title`; V2: remove isinstance; V3: fix empty metrics |
+| **Modify** | `strategies/momentum/runner.py` — V1: add `config_model`/`title`; V2: remove isinstance; V3: fix empty metrics |
+| **Modify** | `strategies/inst_flow/runner.py` — V1: add `config_model`/`title`; V2: remove isinstance; V3: fix empty metrics |
+| **Modify** | `strategies/four_layer_resonance/runner.py` — V1–V4: ClassVar + isinstance + empty metrics + with_extra_slippage |
+| **Modify** | `strategies/four_layer_resonance/config.py` — V4: add `with_extra_slippage()` to StrategyConfig |
 | **Create** | `strategies/conformance.py` — `synthetic_loader`, `check_strategy`, `ConformanceReport` |
 | **Modify** | `research/run_config.py` — replace `preset` with `strategy`+`params` |
 | **Modify** | `research/is_harness.py` — `_run_is_core` dispatches via registry |
@@ -292,33 +293,121 @@ This is a pure import-path migration — no logic changes.
   from typing import ClassVar
   ```
 
-- [ ] **Step 2.3: Add `config_model` + `title` to every runner**
+- [ ] **Step 2.3: Fix V1+V2+V3 in every runner (18 violations, 4 files)**
 
-  **`_template/runner.py`** — add at class body top:
+  **Architecture audit found 18 violations across all runners:**
+  - V1 (×8): missing `config_model`/`title` ClassVar
+  - V2 (×4): `isinstance` guard silently discards caller's validated config
+  - V3 (×4): empty-result `StrategyRun` missing required metric keys
+  - V4 (×2): `StrategyConfig` missing `with_extra_slippage()`; four_layer runner uses raw `model_copy`
+
+  **`strategies/four_layer_resonance/config.py`** — add `with_extra_slippage()` (V4):
   ```python
-  config_model = TemplateConfig
-  title = "Template (equal-weight buy-and-hold)"
+  def with_extra_slippage(self, slip: float) -> "StrategyConfig":
+      """Return a copy with extra round-trip slippage for K3 robustness Sharpe."""
+      return self.model_copy(update={"slip_rate": self.slip_rate + slip})
   ```
 
-  **`momentum/runner.py`** — add:
+  **`_template/runner.py`** — apply V1+V2+V3:
   ```python
-  config_model = MomentumConfig
-  title = "12-1 Cross-sectional Momentum"
+  @register_strategy("template")
+  class TemplateRunner:
+      """Equal-weight buy-and-hold baseline — the worked example of the contract."""
+      config_model: ClassVar[type[BaseModel]] = TemplateConfig   # V1
+      title: ClassVar[str] = "Template (equal-weight buy-and-hold)"  # V1
+
+      def run(self, symbols, start, end, config, loader) -> StrategyRun:
+          cfg = config                                             # V2: was isinstance guard
+          prices = column_panel(symbols, loader, "close")
+          if prices.empty:
+              return StrategyRun({                                 # V3: complete empty metrics
+                  "trades": 0, "bars": 0,
+                  "cagr": 0.0, "sharpe": 0.0,
+                  "slippage_sharpe": 0.0, "maxdd": 0.0,
+              })
+          res  = backtest_template(prices, cfg, start, end)
+          slip = backtest_template(prices, cfg.with_extra_slippage(_SLIP_STRESS), start, end)
+          return StrategyRun(panel_metrics(res, slip), res.daily_returns)
   ```
 
-  **`inst_flow/runner.py`** — add:
+  **`momentum/runner.py`** — apply V1+V2+V3 (same pattern):
   ```python
-  config_model = InstFlowConfig
-  title = "Institutional Net-Buy Flow"
+  @register_strategy("momentum")
+  class MomentumRunner:
+      """12-1 cross-sectional momentum over a close panel."""
+      config_model: ClassVar[type[BaseModel]] = MomentumConfig   # V1
+      title: ClassVar[str] = "12-1 Cross-sectional Momentum"      # V1
+
+      def run(self, symbols, start, end, config, loader) -> StrategyRun:
+          cfg = config                                             # V2
+          prices = column_panel(symbols, loader, "close")
+          if prices.empty:
+              return StrategyRun({                                 # V3
+                  "trades": 0, "bars": 0,
+                  "cagr": 0.0, "sharpe": 0.0,
+                  "slippage_sharpe": 0.0, "maxdd": 0.0,
+              })
+          res  = backtest_momentum(prices, cfg, start, end)
+          slip = backtest_momentum(prices, cfg.with_extra_slippage(_SLIP_STRESS), start, end)
+          return StrategyRun(panel_metrics(res, slip), res.daily_returns)
   ```
 
-  **`four_layer_resonance/runner.py`** — add (import from new location):
+  **`inst_flow/runner.py`** — apply V1+V2+V3 (same pattern):
   ```python
-  from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
-  # ... (already imported after Task 1)
-  config_model = StrategyConfig
-  title = "Four-Layer Resonance"
+  @register_strategy("inst_flow")
+  class InstFlowRunner:
+      """Long-top-fraction by trailing institutional net-buy intensity."""
+      config_model: ClassVar[type[BaseModel]] = InstFlowConfig    # V1
+      title: ClassVar[str] = "Institutional Net-Buy Flow"          # V1
+
+      def run(self, symbols, start, end, config, loader) -> StrategyRun:
+          cfg = config                                             # V2
+          close, flow, vol = flow_panels(symbols, loader, cfg.flow_cols)
+          if close.empty:
+              return StrategyRun({                                 # V3
+                  "trades": 0, "bars": 0,
+                  "cagr": 0.0, "sharpe": 0.0,
+                  "slippage_sharpe": 0.0, "maxdd": 0.0,
+              })
+          res  = backtest_inst_flow(close, flow, vol, cfg, start, end)
+          slip = backtest_inst_flow(close, flow, vol, cfg.with_extra_slippage(_SLIP_STRESS), start, end)
+          return StrategyRun(panel_metrics(res, slip), res.daily_returns)
   ```
+
+  **`four_layer_resonance/runner.py`** — apply V1+V2+V3+V4:
+  ```python
+  @register_strategy("four_layer")
+  class FourLayerRunner:
+      """Per-stock scoring → signal state machine → equal-weight portfolio sim."""
+      config_model: ClassVar[type[BaseModel]] = StrategyConfig    # V1
+      title: ClassVar[str] = "Four-Layer Resonance"               # V1
+
+      def run(self, symbols, start, end, config, loader) -> StrategyRun:
+          cfg  = config                                            # V2: was isinstance guard
+          slip = cfg.with_extra_slippage(sim._SLIP_STRESS)        # V4: use unified method
+          norm, slipr, all_trades, n_buys = [], [], [], 0
+          for sid in symbols:
+              sig = sim.signaled_window(loader(sid), cfg, start, end)
+              if len(sig) < sim.MIN_BARS:
+                  continue
+              norm.append(sim.daily_returns(sig, cfg))
+              slipr.append(sim.daily_returns(sig, slip))
+              all_trades.extend(sim.trades(sig, cfg))
+              n_buys += int((sig["action"] == "buy").sum())
+          if not norm:
+              return StrategyRun({                                 # V3: complete empty metrics
+                  "trades": 0, "bars": 0,
+                  "cagr": 0.0, "sharpe": 0.0,
+                  "slippage_sharpe": 0.0, "maxdd": 0.0,
+              })
+          port      = pd.concat(norm,  axis=1).mean(axis=1)
+          port_slip = pd.concat(slipr, axis=1).mean(axis=1)
+          m = sim.metrics(port, port_slip, all_trades, n_buys)
+          m["bars"] = len(port)
+          return StrategyRun(m, port, all_trades)
+  ```
+
+  Add `from typing import ClassVar` to each runner's imports.
 
 - [ ] **Step 2.4: Run tests — should pass**
 
@@ -332,12 +421,15 @@ This is a pure import-path migration — no logic changes.
   ```bash
   git add backtest_platform/src/backtest_platform/strategies/
   git add backtest_platform/tests/strategies/test_protocol.py
-  git commit -m "feat(strategies): add config_model + describe_strategies to StrategyRunner contract
+  git commit -m "feat(strategies): enforce contract on all runners — V1-V4 fixes + describe_strategies (D2)
 
-  Each runner now declares config_model (its Pydantic config class) and
-  title. describe_strategies() turns the registry into a self-describing
-  catalog consumed by GET /strategies (Task 7) and the conformance gate
-  (Task 4). This is the schema-exposure half of D2.
+  Architecture audit found 18 violations across 4 runners:
+  - V1 (8×): add config_model + title ClassVar to all runners
+  - V2 (4×): remove isinstance guard — cfg = config (trust validated caller)
+  - V3 (4×): complete empty-result StrategyRun with all 6 required keys
+  - V4 (2×): add with_extra_slippage() to StrategyConfig; use it in FourLayerRunner
+  describe_strategies() turns the registry into a self-describing catalog
+  for GET /strategies (Task 7) and the conformance gate (Task 4).
 
   Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
   ```
