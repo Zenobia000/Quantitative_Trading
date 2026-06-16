@@ -4,6 +4,7 @@
 > **架構圖**：目錄對應 C4 **L3-A Application** 元件，見 [05_architecture_and_design_document.md §1.1](./05_architecture_and_design_document.md)
 > **v1.1 變更**：對齊 M2 重組（commit `ae869f5`）— `strategy/` 改名 `strategies/four_layer_resonance/`、新增 `adapters/` `orchestration/` `monitoring/` `dashboard/`、新增 `sprint_0_spikes/`、移除原規劃但未實作的 `live/`（功能併入 `adapters/brokers/`）
 > **v1.2 變更（2026-06-16, ADR-026）**：抽出 `strategies/common/`（中立回測機制單一真實來源，解策略間 leaky abstraction）；`multi_factor` / spikes（原 `sprint_0_spikes/`）/ 舊驗證 scripts 封存至 `legacy/`（src 外，不打包不進 CI）；刪除空目錄 `engines/zipline_adapter/adapters/`
+> **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
 
 ---
 
@@ -64,20 +65,33 @@ src/backtest_platform/
 │   ├── universe.py               # 標的池過濾（v2.md 2.2）
 │   └── universe_builder.py       # ★ 候選 D：point-in-time 中小型 universe builder（ADR-020，純函式）
 │
-├── strategies/                   # ★ M2 改名 — 多策略 namespace
-│   ├── __init__.py               # （未來：strategy registry）
-│   ├── common/                   # ★ ADR-026 — 中立回測機制共用層（策略間零互相依賴）
+├── strategies/                   # ★ M2 改名 — 多策略 namespace（每隻策略自包含 config+邏輯+runner）
+│   ├── __init__.py
+│   ├── protocol.py               # ★ ADR-027 — 策略契約 + registry（StrategyRunner / StrategyRun / register_strategy / get_strategy）
+│   ├── _template/                # ★ ADR-027 — 可複製的策略撰寫骨架（玩家複製此夾→填 alpha）；註冊為 "template"（等權買進持有 baseline）
+│   │   ├── __init__.py
+│   │   ├── strategy.py           # TemplateConfig + backtest_template（純函式；填你的訊號邏輯）
+│   │   ├── runner.py             # TemplateRunner（4 行 adapter：建 panel→跑 backtest→回 StrategyRun）
+│   │   └── README.md             # 撰寫 checklist + I/O 契約說明
+│   ├── common/                   # ★ ADR-026/027 — 中立共用層（策略間零互相依賴）
 │   │   ├── __init__.py           # TRADING_DAYS / clean_returns / rebalance_dates / vol_target re-export
-│   │   └── mechanics.py          # 再平衡日曆 + 波動目標部位 + 報酬清洗（原 momentum 私有函式抽出）
+│   │   ├── mechanics.py          # 再平衡日曆 + 波動目標部位 + 報酬清洗（原 momentum 私有函式抽出，ADR-026）
+│   │   └── panel.py              # ★ ADR-027 — 橫斷面策略共用：column_panel / flow_panels / panel_metrics（用 validation.metrics）
 │   ├── four_layer_resonance/     # M1 四層共振策略（診斷證實負 edge，待砍）
 │   │   ├── __init__.py           # 對外 re-export (compute_scores, compute_signals, ...)
 │   │   ├── indicators.py         # RSI / KD / MACD / SwingHigh/Low
 │   │   ├── scoring.py            # compute_scores（四層計分）
-│   │   └── signals.py            # compute_signals + evaluate_bar
+│   │   ├── signals.py            # compute_signals + evaluate_bar
+│   │   ├── sim.py                # ★ ADR-027 — 純 close-to-close 組合 sim helper（原 is_harness 私有，下移至策略層）
+│   │   └── runner.py             # ★ ADR-027 — FourLayerRunner（per-stock event-driven，註冊 "four_layer"）
 │   ├── momentum/                 # ★ v0.8 新增 — 跨截面 12-1 動能（Jegadeesh-Titman）；ADR-026 解耦後改依賴 common
 │   │   ├── __init__.py           # MomentumConfig / backtest_momentum re-export
-│   │   └── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
+│   │   ├── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
+│   │   └── runner.py             # ★ ADR-027 — MomentumRunner（註冊 "momentum"）
 │   └── inst_flow/                # ★ 正式 paper-ready 候選（ADR-024/025）；依賴 common（非反向挖 momentum）
+│       ├── strategy.py           # InstFlowConfig + backtest_inst_flow
+│       ├── signal_fn.py          # paper/live 訊號函式
+│       └── runner.py             # ★ ADR-027 — InstFlowRunner（註冊 "inst_flow"）
 │
 ├── adapters/                     # ★ M2 新增 — 廠商接口層 (ADR-005/006/008)
 │   ├── __init__.py

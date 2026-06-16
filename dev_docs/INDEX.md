@@ -13,6 +13,7 @@
 > **2026-06-09 更新**：R9 edge 掃描收斂 — 動能 NO-GO（ADR-023，守 ADR-016 + 四層廢止）、資金流 survivorship-clean NO-GO（ADR-024）；4 結構同 ~0.9 Sharpe 牆；ADR 數量 22→24
 > **2026-06-14 更新**：驗證機制設計修正 — **驗證閘從 binary 絕對通關改兩段式（ADR-025）**：真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；修正部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖；不翻案 ADR-023/024（死於真偽閘）；16 WBS 升 v3.4；ADR 數量 24→25
 > **2026-06-16 更新**：`backtest_platform` 結構整理（ADR-026）— 抽出 `strategies/common`（中立回測機制 `clean_returns`/`rebalance_dates`/`vol_target`/`TRADING_DAYS`），解 inst_flow/multi_factor/paper_daemon 反向挖 momentum 私有函式的 leaky abstraction，策略間零互相依賴；保留 momentum（乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/`；測試 989 passed / coverage 94%；ADR 數量 25→26
+> **2026-06-16 更新（二）**：`backtest_platform` 重構 Stage 1 — **策略契約 + registry（ADR-027）**：平台不再硬綁 four_layer。新增 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + `register_strategy`/`get_strategy` 輕量 registry）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾，玩家複製 `strategies/_template/` 即得新策略）；橫斷面共用抽 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；four_layer 降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保向後相容）；新增策略 7-12 檔→2-3 檔；測試 1000 passed / coverage 94%；ADR 數量 26→27
 
 ---
 
@@ -35,7 +36,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**26 份 ADR**：…020（候選 D）/021（REST 契約合一）/022（多策略艦隊 lite）/023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**27 份 ADR**：…020（候選 D）/021（REST 契約合一）/022（多策略艦隊 lite）/023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -113,6 +114,7 @@
 | [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) | **三大法人資金流候選 → 🔴 survivorship-clean FAIL**：survivor-only 40 檔條件式 GO 係生存者膨脹假陽性；含下市股 116 檔複驗 CAGR 13.1%/Sharpe 0.90/PBO 42.9% → NO-GO，條件式 GO 撤回 | 記錄 ADR-016 gate 對資金流的執行結果 |
 | [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) | **驗證閘兩段化 + paper 前移**：修正 ADR-016 binary 絕對通關三缺陷（部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖）→ 真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；不翻案 ADR-023/024（死於真偽閘）| **amends** ADR-016（binary→兩段閘）|
 | [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) | **共用回測機制抽出 → `strategies/common`**：momentum 的私有 `_clean_returns`/`_rebalance_dates`/`_vol_target`/`TRADING_DAYS` 被 inst_flow/multi_factor/paper_daemon 反向 import（leaky abstraction）→ 抽成中立 public 層，策略間零互相依賴；保留 momentum（解耦後乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/` | — |
+| [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) | **策略契約 + registry**：平台硬綁 four_layer（唯一被引擎掛載、`Engine.run` 焊死其 config、每策略一 harness、新策略要動 7-12 檔）→ 接縫畫在**輸出**（`StrategyRunner.run → StrategyRun`）+ 輕量 name→runner registry；four_layer 純 sim 下移 `sim.py`、降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保相容）；新策略 7-12→2-3 檔；CLI `--strategy`/per-strategy preset 留待 Stage 2 | 接續 ADR-026（策略↔平台零硬綁）；沿用 ADR-003 純函式；registry 輕量化守 ADR-022 |
 
 ---
 
