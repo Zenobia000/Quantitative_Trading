@@ -45,6 +45,8 @@ Types: feat, fix, refactor, docs, test, chore, perf, ci
 
 ## 分支策略
 
+> **本節負責分支的命名、生命週期、merge 策略。** 「動手前的當前狀態 → 行動對照表」與多 session 協調，是 `development-workflow.md` §「鐵律」的職責（單一真相源），此處不複製。
+
 ### 保護分支
 - `main`/`master` 禁止直接 commit — 所有變更透過 PR 合入
 - 發現在保護分支上時，**立即停止**並詢問使用者
