@@ -17,6 +17,11 @@ import { PromotePage } from '@/features/research/pages/PromotePage'
 import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
 import { HomePage } from '@/features/home/pages/HomePage'
+import { FleetPage } from '@/features/monitor/pages/FleetPage'
+import { PerformancePage } from '@/features/monitor/pages/PerformancePage'
+import { PositionsPage } from '@/features/monitor/pages/PositionsPage'
+import { SignalsPage } from '@/features/monitor/pages/SignalsPage'
+import { RiskPage } from '@/features/monitor/pages/RiskPage'
 
 // 有完整真實資料的實頁
 const REAL: Record<string, ReactElement> = {
@@ -29,15 +34,16 @@ const REAL: Record<string, ReactElement> = {
   'research/validate': <ValidateGatePage />,
   'research/sweep': <SweepPage />,
   'research/promote/:strategyId': <PromotePage />,
+  // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
+  monitor: <FleetPage />,
+  'monitor/performance': <PerformancePage />,
+  'monitor/positions': <PositionsPage />,
+  'monitor/signals': <SignalsPage />,
+  'monitor/risk': <RiskPage />,
 }
 
 // 其餘頁：接真實端點（多為 typed-empty stub / M4 deferred）→ WiredPage 渲染四態
 const ENDPOINT: Record<string, string | null> = {
-  monitor: '/monitor/fleet',
-  'monitor/performance': '/monitor/performance/kpi',
-  'monitor/positions': '/monitor/positions/snapshot',
-  'monitor/signals': '/monitor/signals',
-  'monitor/risk': '/monitor/risk/metrics',
   'system/data': '/system/bundles',
   'system/alerts': '/system/alerts/rules',
 }
