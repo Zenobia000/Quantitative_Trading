@@ -18,10 +18,10 @@ from datetime import datetime
 
 import pandas as pd
 
+from backtest_platform.research import runners as _runners  # noqa: F401 — registers all strategies
 from backtest_platform.research.run_config import RunConfig
-from backtest_platform.research.runners import FourLayerRunner
-from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig as _StrategyConfig
 from backtest_platform.strategies.four_layer_resonance import sim as _fl_sim
+from backtest_platform.strategies.protocol import get_strategy
 from backtest_platform.validation.gate_state import GateResult, evaluate_gate
 
 # Back-compat re-exports (ADR-027): the four-layer sim helpers used to be defined
@@ -63,15 +63,13 @@ def _run_is_core(
 ) -> tuple[dict, pd.Series, list[dict]]:
     """The IS portfolio sim. Returns ``(metrics, daily-returns series, trades)``.
 
-    Delegates to ``FourLayerRunner`` (the single home of the four-layer
-    close-to-close sim) after resolving the preset name → concrete config. The
-    returns series is the same series the metrics are computed from (exposed so a
-    caller can render a tear sheet without re-running); ``trades`` is the
-    aggregated per-trade list. Empty Series / empty list when no stock had
-    >= 30 bars in the window.
+    Dispatches to the registered strategy by name, validates params through
+    config_model(**params), and delegates to runner.run(). Unknown strategy name
+    raises ValueError (→ API 400); invalid params raise ValidationError (→ API 422).
     """
-    base = get_preset(cfg.preset)
-    run = FourLayerRunner().run(list(cfg.stocks), cfg.is_start, cfg.is_end, base, loader)
+    runner = get_strategy(cfg.strategy)           # ValueError on unknown name
+    sconf  = runner.config_model(**cfg.params)    # ValidationError on bad params
+    run    = runner.run(list(cfg.stocks), cfg.is_start, cfg.is_end, sconf, loader)
     return run.metrics, run.returns, run.trades
 
 
@@ -134,7 +132,8 @@ def run_and_judge_with_returns(
         "run_id": cfg.run_id,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "hypothesis": cfg.hypothesis,
-        "preset": cfg.preset,
+        "strategy": cfg.strategy,
+        "params": cfg.params,
         "engine": cfg.engine,
         "stocks": list(cfg.stocks),
         "window": [cfg.is_start.isoformat(), cfg.is_end.isoformat()],
@@ -179,7 +178,8 @@ def run_and_judge_persist(
         "run_id": cfg.run_id,
         "created_at": datetime.now().isoformat(timespec="seconds"),
         "hypothesis": cfg.hypothesis,
-        "preset": cfg.preset,
+        "strategy": cfg.strategy,
+        "params": cfg.params,
         "engine": cfg.engine,
         "stocks": list(cfg.stocks),
         "window": [cfg.is_start.isoformat(), cfg.is_end.isoformat()],
