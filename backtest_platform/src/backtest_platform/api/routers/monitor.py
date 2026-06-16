@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query
+from loguru import logger
 
 from backtest_platform.api.deps import get_telemetry_reader
 from backtest_platform.api.envelope import Envelope, ok
@@ -114,7 +115,8 @@ def perf_equity(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
     when no DB / telemetry exists yet (graceful degradation)."""
     try:
         rows = reader.equity_series()
-    except Exception:
+    except Exception as exc:
+        logger.warning("monitor /performance/equity degraded (no telemetry?): {}", exc)
         return _stub([], ttl=300)
     return _served(rows, ttl=300, total=len(rows))
 
@@ -135,7 +137,8 @@ def perf_kpi(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
     series (8.H.8); typed-empty pending when no DB/telemetry."""
     try:
         kpis = _equity_kpis(reader.equity_series())
-    except Exception:
+    except Exception as exc:
+        logger.warning("monitor /performance/kpi degraded (no telemetry?): {}", exc)
         return _stub({}, ttl=300)
     return _served(kpis, ttl=300)
 
@@ -146,7 +149,8 @@ def pos_snapshot(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
     """Open positions from real telemetry (8.H.8); pending fallback when no DB."""
     try:
         rows = reader.open_positions()
-    except Exception:
+    except Exception as exc:
+        logger.warning("monitor /positions/snapshot degraded (no telemetry?): {}", exc)
         return _stub([])
     return _served(rows, ttl=60, total=len(rows))
 
@@ -181,7 +185,8 @@ def signals(
     """Recent signals from real telemetry (8.H.8); pending fallback when no DB."""
     try:
         rows = reader.recent_signals(limit=limit)
-    except Exception:
+    except Exception as exc:
+        logger.warning("monitor /signals degraded (no telemetry?): {}", exc)
         return _stub([], ttl=30, total=0)
     return _served(rows, ttl=30, total=len(rows))
 
@@ -204,7 +209,8 @@ def fills(
     """Recent order executions from real telemetry (8.H.8); pending fallback."""
     try:
         rows = reader.recent_fills(limit=limit)
-    except Exception:
+    except Exception as exc:
+        logger.warning("monitor /fills degraded (no telemetry?): {}", exc)
         return _stub([], ttl=300)
     return _served(rows, ttl=300, total=len(rows))
 
