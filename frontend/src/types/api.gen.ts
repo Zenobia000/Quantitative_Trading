@@ -120,6 +120,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/async": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Run Async
+         * @description Async variant of ``POST /runs`` (8.H.6): validate the config up-front (422
+         *     stays synchronous), then enqueue judge-and-append as a job and return
+         *     ``{job_id, status}`` (202 Accepted). The sync ``POST /runs`` is unchanged;
+         *     poll :func:`run_log` for completion.
+         */
+        post: operations["create_run_async_runs_async_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{job_id}/log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Log
+         * @description Async-run job log (8.H.6): lifecycle (status/progress) + terminal
+         *     result/error. A typed-empty ``pending`` envelope when the id is unknown
+         *     (mirrors the sweep status route).
+         */
+        get: operations["run_log_runs__job_id__log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/{run_id}/equity": {
         parameters: {
             query?: never;
@@ -575,7 +620,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Strategies */
+        /**
+         * Strategies
+         * @description Registered strategy catalog (ADR-027 registry). Typed-empty pending if none.
+         */
         get: operations["strategies_monitor_strategies_get"];
         put?: never;
         post?: never;
@@ -592,7 +640,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Fleet */
+        /**
+         * Fleet
+         * @description Live fleet board — latest equity per strategy from telemetry (8.H.8);
+         *     pending fallback when no DB/telemetry.
+         */
         get: operations["fleet_monitor_fleet_get"];
         put?: never;
         post?: never;
@@ -609,7 +661,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Portfolio Summary */
+        /**
+         * Portfolio Summary
+         * @description Fleet roll-up — total equity / strategy count / open positions (8.H.8).
+         */
         get: operations["portfolio_summary_monitor_portfolio_summary_get"];
         put?: never;
         post?: never;
@@ -660,7 +715,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Perf Equity */
+        /**
+         * Perf Equity
+         * @description Equity curve from real paper/live telemetry (8.H.8); typed-empty pending
+         *     when no DB / telemetry exists yet (graceful degradation).
+         */
         get: operations["perf_equity_monitor_performance_equity_get"];
         put?: never;
         post?: never;
@@ -711,7 +770,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Perf Kpi */
+        /**
+         * Perf Kpi
+         * @description Headline KPIs (return/CAGR/Sharpe/MDD/Calmar) derived from the real equity
+         *     series (8.H.8); typed-empty pending when no DB/telemetry.
+         */
         get: operations["perf_kpi_monitor_performance_kpi_get"];
         put?: never;
         post?: never;
@@ -728,7 +791,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Pos Snapshot */
+        /**
+         * Pos Snapshot
+         * @description Open positions from real telemetry (8.H.8); pending fallback when no DB.
+         */
         get: operations["pos_snapshot_monitor_positions_snapshot_get"];
         put?: never;
         post?: never;
@@ -813,7 +879,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Signals */
+        /**
+         * Signals
+         * @description Recent signals from real telemetry (8.H.8); pending fallback when no DB.
+         */
         get: operations["signals_monitor_signals_get"];
         put?: never;
         post?: never;
@@ -864,7 +933,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Fills */
+        /**
+         * Fills
+         * @description Recent order executions from real telemetry (8.H.8); pending fallback.
+         */
         get: operations["fills_monitor_fills_get"];
         put?: never;
         post?: never;
@@ -1116,7 +1188,12 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Ingest */
+        /**
+         * Ingest
+         * @description Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``
+         *     (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
+         *     so the API never blocks; poll :func:`ingest_status`.
+         */
         post: operations["ingest_system_ingest_post"];
         delete?: never;
         options?: never;
@@ -1131,7 +1208,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Ingest Status */
+        /**
+         * Ingest Status
+         * @description Poll an ingest job's status/result; typed-empty ``pending`` if unknown.
+         */
         get: operations["ingest_status_system_ingest__job_id__status_get"];
         put?: never;
         post?: never;
@@ -1540,6 +1620,29 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * IngestRequest
+         * @description Trigger a bundle ingest as an async job (8.H.6).
+         */
+        IngestRequest: {
+            /** Symbols */
+            symbols: string[];
+            /**
+             * Start
+             * Format: date
+             */
+            start: string;
+            /**
+             * End
+             * Format: date
+             */
+            end: string;
+            /**
+             * Source
+             * @default finlab
+             */
+            source: string;
         };
         /**
          * MetricsData
@@ -2064,6 +2167,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_RunRecord_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_run_async_runs_async_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_log_runs__job_id__log_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
                 };
             };
             /** @description Validation Error */
@@ -3161,7 +3328,9 @@ export interface operations {
     };
     fills_monitor_fills_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3175,6 +3344,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3575,15 +3753,28 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IngestRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
-            200: {
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
