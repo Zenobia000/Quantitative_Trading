@@ -92,4 +92,7 @@ runner 私下知道自己要什麼資料，從**同一個** loader（`load_merge
 `strategies/protocol.py`（新）、`strategies/four_layer_resonance/sim.py`（新）、`research/runners.py`（新）、`research/is_harness.py`（委派 + re-export）、`research/momentum_harness.py`（委派）。引擎層 / API / sweep 不動。
 
 ### 後續動作
-- Stage 2：per-strategy preset 統一 → `RunConfig.strategy` + CLI `--strategy` dispatch；metrics 全面收斂到 `validation.metrics`（four_layer 的 `sim.metrics`/`sim.sharpe` 仍是本地版）。
+- **Stage 2（已完成 2026-06-16）**：
+  - **metrics 去重**：Sharpe 公式的四份複製（four_layer `sim`、zipline `cli.sharpe_naive`、`cross_check._sharpe_from_equity`、外加 panel 策略）收斂到單一規範源 `validation.metrics.sharpe`；four_layer `sim` 的 cagr 亦改用 `validation.metrics.cagr`。`maxdd` 維持 four_layer 的負值報表慣例（非 gated criterion）。
+  - **config 集中**：新增 `config/settings.py`（`Settings(BaseSettings)`），把散落於 `data/`/`api/`/`engines/` 的憑證（FINMIND/FINLAB token）、Postgres 連線、runs 路徑等 `os.environ.get` 收斂到單一型別化來源；只讀真實環境變數（不讀 `.env` 檔，保持原 `os.environ.get` 行為）。env-IPC（`UNIVERSE_FINMIND`/`STRATEGY_PRESET`）刻意保留。
+- **仍待後續**：per-strategy preset 統一 → `RunConfig.strategy` + CLI `--strategy` dispatch（依賴 preset 系統擴展；屬 feature 非 cleanup，獨立交付）。

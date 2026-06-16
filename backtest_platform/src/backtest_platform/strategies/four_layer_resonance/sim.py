@@ -25,6 +25,8 @@ import pandas as pd
 from backtest_platform.config.strategy_config import StrategyConfig
 from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores
 from backtest_platform.strategies.four_layer_resonance.signals import compute_signals
+from backtest_platform.validation.metrics import cagr as _cagr
+from backtest_platform.validation.metrics import sharpe as _sharpe
 
 TRADING_DAYS = 252
 _SLIP_STRESS = 0.003  # 0.3% slippage for the K3 robustness Sharpe
@@ -76,25 +78,33 @@ def trades(sig: pd.DataFrame, cfg: StrategyConfig) -> list[dict[str, Any]]:
 
 
 def sharpe(strat: pd.Series) -> float:
-    """Annualized Sharpe of a daily-returns series (0.0 when std is 0)."""
-    sd = float(strat.std())
-    return float(strat.mean() / sd * np.sqrt(TRADING_DAYS)) if sd > 0 else 0.0
+    """Annualized Sharpe — delegates to the canonical ``validation.metrics.sharpe``.
+
+    Kept as a named function because ``research.is_harness`` re-exports it as
+    ``_sharpe`` (back-compat). ADR-027 Stage 2: the four-layer sim no longer
+    carries its own Sharpe formula — every strategy is now judged by one estimator.
+    """
+    return _sharpe(strat)
 
 
 def metrics(
     strat: pd.Series, strat_slip: pd.Series, trade_list: list[dict[str, Any]], n_buys: int
 ) -> dict[str, Any]:
-    """Gate-ready metrics dict from portfolio returns + closed trades."""
+    """Gate-ready metrics dict from portfolio returns + closed trades.
+
+    ``cagr`` / ``sharpe`` come from ``validation.metrics`` (single source). ``maxdd``
+    keeps the four-layer *signed* convention (<= 0; not a gated criterion) for
+    tear-sheet continuity — panel strategies report it as a positive fraction.
+    """
     n = len(strat)
     eq = (1 + strat).cumprod()
-    cagr = float(eq.iloc[-1] ** (TRADING_DAYS / n) - 1) if n else 0.0
     dd = float((eq / eq.cummax() - 1).min()) if n else 0.0
     rets = [t["ret"] for t in trade_list]
     wins = [r for r in rets if r > 0]
     return {
         "trades": n_buys,
         "closed": len(trade_list),
-        "cagr": cagr,
+        "cagr": _cagr(strat),
         "sharpe": sharpe(strat),
         "slippage_sharpe": sharpe(strat_slip),
         "maxdd": dd,
