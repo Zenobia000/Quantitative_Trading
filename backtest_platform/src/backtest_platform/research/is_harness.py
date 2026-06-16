@@ -18,9 +18,9 @@ from datetime import datetime
 
 import pandas as pd
 
-from backtest_platform.config.strategy_config import get_preset
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.research.runners import FourLayerRunner
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig as _StrategyConfig
 from backtest_platform.strategies.four_layer_resonance import sim as _fl_sim
 from backtest_platform.validation.gate_state import GateResult, evaluate_gate
 

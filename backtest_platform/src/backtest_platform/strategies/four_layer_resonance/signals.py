@@ -27,7 +27,7 @@ from typing import Literal
 import numpy as np
 import pandas as pd
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from .indicators import rolling_swing_low
 
 SIGNAL_PRIORITY: tuple[str, ...] = (

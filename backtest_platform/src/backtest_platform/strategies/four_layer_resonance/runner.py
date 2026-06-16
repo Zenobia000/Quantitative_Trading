@@ -13,7 +13,7 @@ from typing import Any
 
 import pandas as pd
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.strategies.four_layer_resonance import sim
 from backtest_platform.strategies.protocol import (
     Loader,
