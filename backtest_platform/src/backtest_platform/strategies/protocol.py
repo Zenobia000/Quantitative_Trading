@@ -1,57 +1,46 @@
-"""Strategy contract + registry — the platform↔strategy seam (ADR-027).
+"""Strategy contract + registry — the platform↔strategy seam (ADR-027/028).
 
 Why this exists
 ---------------
 The platform's job is to judge *any* strategy by identical plumbing
 (metrics / gate / ledger). For that, upper layers must depend on a stable
-strategy *contract*, never on a concrete strategy. Before this module the
-research path hard-wired four-layer-resonance (``is_harness``) and grew a
-parallel harness per new strategy (``momentum_harness``), so adding a strategy
-touched 7-12 files and four-layer was the only engine-mounted "privileged
-citizen". This collapses all of that to one seam.
+strategy *contract*, never on a concrete strategy. Before ADR-027 the research
+path hard-wired four-layer-resonance and grew a parallel harness per new strategy,
+so adding a strategy touched 7-12 files. ADR-028 extends the contract with
+``config_model`` (self-description) and ``title`` so the registry becomes a
+self-describing catalog for dispatch, schema exposure, and the conformance gate.
 
 The seam is at the **output**, not the input
 ---------------------------------------------
 Strategies have genuinely different inputs — four-layer is per-stock
 event-driven (scoring → signal state machine), momentum / inst_flow are
-cross-sectional panels. Forcing one input shape would be premature
-abstraction (special cases pushed into the contract). What they *share* is the
-output every consumer needs: a daily-returns series + trades + a gate-ready
-metrics dict. So the contract is a ``StrategyRunner`` whose ``run`` returns a
-:class:`StrategyRun`; each runner privately knows what data it needs and builds
-it from the same per-stock ``Loader`` (``research.is_harness.load_merged_parquet``
-returns daily+institutional+chip merged, a superset every strategy slices).
+cross-sectional panels. What they *share* is the output: a daily-returns series
++ trades + a gate-ready metrics dict. So the contract is a ``StrategyRunner``
+whose ``run`` returns a :class:`StrategyRun`.
 
 Design notes
 ------------
-- Pure-function strategies stay pure (ADR-003); the runner is a thin adapter,
-  not a stateful object. Runners live in ``research/`` (the harness layer that
-  may depend on ``validation`` / ``config``); this module holds only the
-  contract types + registry, so it has no upward dependency.
-- ``config`` is typed as ``pydantic.BaseModel`` (each strategy passes its own
-  frozen config) — deliberately NOT a shared ``StrategyConfigBase``: that would
-  force ``config.StrategyConfig`` to import from this ``strategies`` module
-  (an upward dependency) for zero behavioural gain. YAGNI until a real
-  polymorphic-config need appears.
-- The registry is a plain name→runner dict, NOT a versioned model registry —
-  ADR-022 deliberately rejected the heavyweight champion/challenger registry for
-  a single-operator project.
-- Mirrors ``engines/protocol.py`` (``Engine`` Protocol + ``get_engine`` factory)
-  so the two seams read the same.
+- ``config_model`` ClassVar: the strategy's own frozen Pydantic config class.
+  Dispatch uses it to validate ``params`` (``config_model(**params)``); the API
+  uses it to expose JSON-schema (``GET /strategies``); the conformance gate uses
+  it to build a default config for contract checking.
+- ``config`` arg to ``run`` is the already-validated output of
+  ``config_model(**params)`` — runners MUST NOT re-wrap it with isinstance guards.
+- The registry is a plain name→runner dict (ADR-022 rejected heavyweight registries
+  for a single-operator project).
 """
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, ClassVar, Protocol, runtime_checkable
 
 import pandas as pd
 from pydantic import BaseModel
 
-# A loader maps a stock id → its merged daily/institutional/chip frame (the
-# ETLBundle.merged shape). Every strategy slices the columns it needs from this,
-# so the platform has ONE data-access seam, not one per strategy.
+# A loader maps a stock id → its merged daily/institutional/chip frame.
+# Every strategy slices the columns it needs — ONE data-access seam.
 Loader = Callable[[str], pd.DataFrame]
 
 
@@ -60,16 +49,26 @@ class StrategyRun:
     """The uniform output every strategy produces — the seam consumers depend on.
 
     ``metrics`` is the gate-ready dict (cagr / sharpe / slippage_sharpe / maxdd /
-    trades / …) that ``validation.gate_state.evaluate_gate`` consumes. ``returns``
-    is the portfolio daily-returns series the metrics are derived from (exposed so
-    a caller can render a tear sheet without re-running). ``trades`` is the
-    per-trade list the trade-quality metrics use. Empty Series / empty list when
-    the window yields no tradable data.
+    trades / bars / …) that ``validation.gate_state.evaluate_gate`` consumes.
+    ``returns`` is the portfolio daily-returns series (for tear sheets).
+    ``trades`` is the per-trade list (for trade-quality metrics).
+    Empty result: metrics must still carry {cagr, sharpe, slippage_sharpe,
+    maxdd, trades, bars} all set to 0 / 0.0 so the conformance gate passes.
     """
 
     metrics: dict[str, Any]
     returns: pd.Series = field(default_factory=lambda: pd.Series(dtype=float))
     trades: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class StrategyInfo:
+    """Self-description of a registered strategy — feeds GET /strategies."""
+
+    name: str
+    title: str
+    description: str        # from runner class __doc__ (first non-empty line)
+    config_schema: dict     # runner.config_model.model_json_schema()
 
 
 @runtime_checkable
@@ -78,9 +77,18 @@ class StrategyRunner(Protocol):
 
     ``run`` takes a universe, an IS window, the strategy's own (frozen) config,
     and the shared per-stock ``Loader``, and returns a :class:`StrategyRun`.
-    Callers resolve presets → concrete config upstream (same convention as
-    ``engines.protocol``), so the runner never reaches for global preset state.
+
+    ``config_model`` is the strategy's Pydantic config class — callers use it to
+    validate ``params`` and to expose JSON-schema. ``title`` is a short human label.
+
+    Contract invariants enforced by the conformance gate:
+    - ``config_model()`` (no args) must succeed (all fields have defaults or none).
+    - ``run(...)`` must not raise on synthetic data.
+    - ``run(...)`` metrics dict ⊇ {cagr, sharpe, slippage_sharpe, maxdd, trades, bars}.
     """
+
+    config_model: ClassVar[type[BaseModel]]
+    title: ClassVar[str]
 
     def run(
         self,
@@ -96,14 +104,13 @@ class StrategyRunner(Protocol):
 
 # --- registry -------------------------------------------------------------
 
-_REGISTRY: dict[str, StrategyRunner] = {}
+_REGISTRY: dict[str, "StrategyRunner"] = {}
 
 
 def register_strategy(name: str) -> Callable[[type], type]:
     """Class decorator: register a ``StrategyRunner`` under ``name``.
 
-    Used at strategy-module import time. Re-registering the same name is an
-    error (catches accidental duplicate names / double imports).
+    Re-registering the same name raises ValueError (catches duplicate imports).
     """
 
     def deco(cls: type) -> type:
@@ -115,7 +122,7 @@ def register_strategy(name: str) -> Callable[[type], type]:
     return deco
 
 
-def get_strategy(name: str) -> StrategyRunner:
+def get_strategy(name: str) -> "StrategyRunner":
     """Resolve a registered strategy name to its runner instance."""
     try:
         return _REGISTRY[name]
@@ -128,3 +135,21 @@ def get_strategy(name: str) -> StrategyRunner:
 def list_strategies() -> list[str]:
     """Names of all registered strategies (sorted)."""
     return sorted(_REGISTRY)
+
+
+def describe_strategy(name: str) -> StrategyInfo:
+    """Full self-description for one registered strategy."""
+    runner = get_strategy(name)
+    doc = (runner.__class__.__doc__ or "").strip().splitlines()
+    description = next((line.strip() for line in doc if line.strip()), "")
+    return StrategyInfo(
+        name=name,
+        title=getattr(runner, "title", name),
+        description=description,
+        config_schema=runner.config_model.model_json_schema(),
+    )
+
+
+def describe_strategies() -> list[StrategyInfo]:
+    """Self-description of every registered strategy (sorted by name)."""
+    return [describe_strategy(n) for n in list_strategies()]
