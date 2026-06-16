@@ -8,14 +8,26 @@ the frontend, no fabricated data. Secrets are always masked (``rules/security.md
 """
 from __future__ import annotations
 
+from datetime import date
 from typing import Any
 
 from fastapi import APIRouter, Query
+from pydantic import BaseModel, Field
 
-from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.envelope import Envelope, ok, pending
 from backtest_platform.api.response_models import AlertRuleRow, RiskSpecData
+from backtest_platform.jobs import job_store, submit
 from backtest_platform.monitoring.alert_rules import rules_spec as _alert_rules_spec
 from backtest_platform.risk.risk_gate import risk_spec as _risk_spec
+
+
+class IngestRequest(BaseModel):
+    """Trigger a bundle ingest as an async job (8.H.6)."""
+
+    symbols: list[str] = Field(..., min_length=1)
+    start: date
+    end: date
+    source: str = "finlab"  # "finlab" (ADR-006 primary) | "finmind" (fallback)
 
 router = APIRouter(prefix="/system", tags=["system"])
 
@@ -99,11 +111,32 @@ def bundle_quality(bundle_id: str) -> Envelope:
     return _stub({"id": bundle_id})
 
 
-@router.post("/ingest", response_model=Envelope)
-def ingest() -> Envelope:
-    return _stub({"job_id": "stub", "status": "queued"})
+@router.post("/ingest", response_model=Envelope, status_code=202)
+def ingest(req: IngestRequest) -> Envelope:
+    """Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``
+    (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
+    so the API never blocks; poll :func:`ingest_status`."""
+    from backtest_platform.orchestration.collaborators import make_ingest
+
+    ing = make_ingest(start=req.start, end=req.end, source=req.source)
+
+    def _run() -> dict[str, Any]:
+        result = ing(list(req.symbols))
+        return {
+            "requested": len(req.symbols),
+            "ok": sorted(s for s, good in result.items() if good),
+            "failed": sorted(s for s, good in result.items() if not good),
+        }
+
+    key = f"{req.source}|{req.start}|{req.end}|{','.join(req.symbols)}"
+    job = submit("ingest", key, _run)
+    return ok({"job_id": job.job_id, "status": job.status.value})
 
 
 @router.get("/ingest/{job_id}/status", response_model=Envelope)
 def ingest_status(job_id: str) -> Envelope:
-    return _stub({"job_id": job_id, "status": "queued", "progress": 0})
+    """Poll an ingest job's status/result; typed-empty ``pending`` if unknown."""
+    job = job_store.read_job(job_id)
+    if job is None:
+        return pending({"job_id": job_id, "status": None, "progress": None})
+    return ok(job.to_dict())
