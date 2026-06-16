@@ -10,14 +10,15 @@ back-fill and re-runs after upstream schema changes.
 """
 from __future__ import annotations
 
-import os
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any
 
 import pandas as pd
 from loguru import logger
 
+from backtest_platform.config.settings import get_settings
 from backtest_platform.data.schemas import ETLBundle
 
 
@@ -31,12 +32,13 @@ class DBConfig:
 
     @classmethod
     def from_env(cls) -> DBConfig:
+        s = get_settings()
         return cls(
-            host=os.environ.get("POSTGRES_HOST", "localhost"),
-            port=int(os.environ.get("POSTGRES_PORT", "5432")),
-            database=os.environ.get("POSTGRES_DB", "quant_trading"),
-            user=os.environ.get("POSTGRES_USER", "quant"),
-            password=os.environ.get("POSTGRES_PASSWORD", "change_me_in_production"),
+            host=s.postgres_host,
+            port=s.postgres_port,
+            database=s.postgres_db,
+            user=s.postgres_user,
+            password=s.postgres_password,
         )
 
     def dsn(self) -> str:

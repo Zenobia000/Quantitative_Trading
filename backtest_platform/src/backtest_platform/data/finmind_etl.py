@@ -15,7 +15,6 @@ mock it without installing the package.
 """
 from __future__ import annotations
 
-import os
 import time
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -26,6 +25,7 @@ import click
 import pandas as pd
 from loguru import logger
 
+from backtest_platform.config.settings import get_settings
 from backtest_platform.data.schemas import ETLBundle
 
 
@@ -102,10 +102,12 @@ def fetch_bundle(
     """
     from backtest_platform.data.adjustment import (
         apply_adjustment as _apply_adj,
+    )
+    from backtest_platform.data.adjustment import (
         compute_adj_factor,
     )
 
-    loader = loader or _build_loader(token or os.environ.get("FINMIND_TOKEN"))
+    loader = loader or _build_loader(token or get_settings().finmind_token)
     s, e = start.isoformat(), end.isoformat()
 
     logger.info("fetch daily bars stock={} {}..{}", stock_id, s, e)
@@ -137,7 +139,7 @@ def fetch_bundle(
                 distinct_factors,
                 n_adjusted_bars,
             )
-        except Exception as exc:  # noqa: BLE001 — adjustment is best-effort
+        except Exception as exc:
             logger.warning("adjustment skipped due to error: {}", exc)
 
     institutional = _normalize_institutional(inst_raw, stock_id)

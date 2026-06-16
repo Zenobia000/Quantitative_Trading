@@ -46,6 +46,7 @@ from backtest_platform.engines.zipline_adapter.validation.regression_vs_m1 impor
 from backtest_platform.engines.zipline_adapter.validation.vectorized_pnl_check import (
     simulate_vectorized_long_only,
 )
+from backtest_platform.validation.metrics import sharpe as _metrics_sharpe
 
 # Per-buy notional sizing (matches algorithms/four_layer_resonance._BUY_TARGET_PCT)
 _BUY_PCT = 0.05
@@ -90,11 +91,15 @@ def _binarize_actions(actions: pd.Series) -> pd.Series:
 
 
 def _sharpe_from_equity(equity: pd.Series, ann_factor: int = 252) -> float | None:
-    """Annualized Sharpe from a daily equity curve (no risk-free)."""
+    """Annualized Sharpe from a daily equity curve (no risk-free).
+
+    Delegates to the canonical ``validation.metrics.sharpe`` (ADR-027 Stage 2);
+    returns None for a degenerate curve so the cross-check can skip it.
+    """
     rets = equity.pct_change().dropna()
     if len(rets) < 2 or rets.std() == 0:
         return None
-    return float(rets.mean() / rets.std() * np.sqrt(ann_factor))
+    return _metrics_sharpe(rets, periods_per_year=ann_factor)
 
 
 def cross_check_vectorbt(
@@ -181,7 +186,7 @@ def cross_check_vectorbt(
         vbt_sharpe = float(pf.sharpe_ratio())
         if not np.isfinite(vbt_sharpe):
             vbt_sharpe = None
-    except Exception:  # noqa: BLE001 — vectorbt raises on degenerate cases
+    except Exception:
         vbt_sharpe = None
 
     diff_abs = abs(self_total_return - vbt_total_return)

@@ -15,7 +15,6 @@ Dataset keys verified live 2026-06-15 (paid token: full history 2007→present,
 """
 from __future__ import annotations
 
-import os
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -23,6 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from backtest_platform.config.settings import get_settings
 from backtest_platform.data.finmind_etl import write_parquet
 from backtest_platform.data.schemas import ETLBundle
 
@@ -64,7 +64,7 @@ def login() -> None:
     finlab 2.x (new flow: ``python -m finlab login``). Migrating off token auth
     is tracked as a follow-up; token auth is kept for headless automation.
     """
-    token = os.environ.get("FINLAB_API_TOKEN")
+    token = get_settings().finlab_api_token
     if not token:
         raise RuntimeError("FINLAB_API_TOKEN not set — required for the FinLab source (ADR-006)")
     import finlab

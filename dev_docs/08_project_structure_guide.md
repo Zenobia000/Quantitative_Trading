@@ -53,8 +53,8 @@ src/backtest_platform/
 │
 ├── config/                       # 純資料層
 │   ├── __init__.py
-│   ├── strategy_config.py        # StrategyConfig (Pydantic frozen)
-│   └── settings.py               # M2+：環境設定 (Pydantic Settings)
+│   ├── strategy_config.py        # StrategyConfig (Pydantic frozen) + four_layer presets
+│   └── settings.py               # ★ ADR-027 Stage 2 — 集中環境設定 (Settings/BaseSettings)：憑證+Postgres+路徑，取代散落 os.getenv
 │
 ├── data/                         # Infrastructure：IO + 外部 API
 │   ├── __init__.py

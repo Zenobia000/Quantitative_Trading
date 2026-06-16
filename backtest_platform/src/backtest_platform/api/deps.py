@@ -11,11 +11,11 @@ the API (e.g. to serve ``/health``) does not drag in zipline/vectorbt.
 """
 from __future__ import annotations
 
-import os
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from backtest_platform.config.settings import get_settings
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH
 
@@ -23,12 +23,14 @@ from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH
 RunExecutor = Callable[[RunConfig], dict[str, Any]]
 
 #: Env var overriding where the runs ledger lives (defaults to ``reports/runs.jsonl``).
+#: Read via ``config.settings.Settings.backtest_runs_path`` (ADR-027 Stage 2).
 RUNS_PATH_ENV = "BACKTEST_RUNS_PATH"
 
 
 def get_runs_path() -> Path:
     """Resolve the runs-ledger path (``$BACKTEST_RUNS_PATH`` or the default)."""
-    return Path(os.environ.get(RUNS_PATH_ENV, str(DEFAULT_RUNS_PATH)))
+    configured = get_settings().backtest_runs_path
+    return configured if configured is not None else DEFAULT_RUNS_PATH
 
 
 def get_run_executor() -> RunExecutor:

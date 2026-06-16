@@ -22,12 +22,14 @@ from __future__ import annotations
 import json
 import os
 import sys
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 
 import click
 import pandas as pd
 from loguru import logger
+
+from backtest_platform.validation.metrics import sharpe
 
 
 def _ensure_bundle_registered():
@@ -92,9 +94,8 @@ def _format_perf_summary(perf: pd.DataFrame, capital_base: float) -> dict:
         summary["mean_daily_return"] = float(returns.mean())
         summary["std_daily_return"] = float(returns.std())
         if summary["std_daily_return"] > 0:
-            summary["sharpe_naive"] = float(
-                returns.mean() / returns.std() * (252**0.5)
-            )
+            # canonical estimator (ADR-027 Stage 2) — single source of truth
+            summary["sharpe_naive"] = sharpe(returns)
 
     return summary
 
@@ -149,7 +150,7 @@ def _maybe_notify_discord(summary: dict, run_id: str) -> None:
             f"({summary['n_buys']} buys / {summary['n_sells']} sells)"
         )
         notifier.send(content=msg)
-    except Exception as exc:  # noqa: BLE001 — notification failure ≠ backtest failure
+    except Exception as exc:
         logger.warning("Discord notify failed: {}", exc)
 
 
