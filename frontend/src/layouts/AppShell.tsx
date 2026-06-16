@@ -2,9 +2,10 @@
  * AppShell — 三區 sidebar（Research/Monitor/System + 首頁）+ Cmd-K 佔位 + Outlet。
  * RWD：sidebar 兩態（展開 ↔ drawer @<1024，lg 斷點）。GOAL.md 硬約束 #7。
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { HOME, NAV } from '@/app/nav'
+import { CommandPalette } from '@/components/CommandPalette'
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   return [
@@ -39,6 +40,18 @@ function SidebarContent() {
 
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [cmdkOpen, setCmdkOpen] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setCmdkOpen((o) => !o)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   return (
     <div className="flex h-full">
@@ -60,7 +73,10 @@ export function AppShell() {
           >
             ☰
           </button>
-          <button className="rounded-pill border border-border px-3 py-1 text-xs text-text-muted">
+          <button
+            onClick={() => setCmdkOpen(true)}
+            className="rounded-pill border border-border px-3 py-1 text-xs text-text-muted hover:text-text"
+          >
             ⌘K 搜尋 / 跳轉
           </button>
         </header>
@@ -87,6 +103,8 @@ export function AppShell() {
           </aside>
         </div>
       )}
+
+      <CommandPalette open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
     </div>
   )
 }
