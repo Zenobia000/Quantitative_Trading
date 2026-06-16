@@ -182,7 +182,8 @@ def create_run(
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
-            preset=req.preset,
+            strategy=req.strategy,
+            params=req.params,
             stocks=tuple(req.stocks),
             is_start=req.is_start,
             is_end=req.is_end,
@@ -210,7 +211,8 @@ def create_run_async(
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
-            preset=req.preset,
+            strategy=req.strategy,
+            params=req.params,
             stocks=tuple(req.stocks),
             is_start=req.is_start,
             is_end=req.is_end,
@@ -224,7 +226,7 @@ def create_run_async(
         append_run(record, runs_path)
         return record
 
-    key = f"{req.preset}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
+    key = f"{req.strategy}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
     job = submit("run", key, _judge_and_append)
     return ok({"job_id": job.job_id, "status": job.status.value})
 

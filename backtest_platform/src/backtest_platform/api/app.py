@@ -24,7 +24,6 @@ from backtest_platform.api.routers import (
     home,
     metrics,
     monitor,
-    presets,
     research,
     research_promote,
     research_registry,
@@ -33,6 +32,7 @@ from backtest_platform.api.routers import (
     runs,
     runs_series,
     runs_tags,
+    strategies,
     system,
 )
 
@@ -82,7 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(runs_tags.router)  # M3 seam: S5 run tagging (8.H.4)
     app.include_router(gate.router)
     app.include_router(metrics.router)
-    app.include_router(presets.router)
+    app.include_router(strategies.router)  # GET /strategies — replaces GET /presets (ADR-028)
     app.include_router(research.router)
     app.include_router(research_validate.router)  # M3 seam: S3 validate (8.H.7)
     app.include_router(research_promote.router)  # M3 seam: S3 promote (8.H.7)

@@ -9,6 +9,7 @@ the boundary never trusts external JSON.
 from __future__ import annotations
 
 from datetime import date
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -19,7 +20,8 @@ class RunCreateRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
     hypothesis: str = Field(..., min_length=1, description="預先註冊：這個 run 在驗什麼")
-    preset: str = Field(..., description="StrategyConfig preset name (v2 / v3 / ...)")
+    strategy: str = Field(..., description="Registered strategy name (see GET /strategies)")
+    params: dict[str, Any] = Field(default_factory=dict, description="Strategy params — validated at dispatch")
     stocks: list[str] = Field(..., min_length=1, description="Stock ids to run")
     is_start: date
     is_end: date
