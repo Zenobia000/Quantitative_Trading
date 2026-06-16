@@ -192,7 +192,10 @@ def create_run(
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
 
-    record = executor(cfg)
+    try:
+        record = executor(cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
     append_run(record, runs_path)
     return ok(record)
 
