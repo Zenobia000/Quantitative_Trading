@@ -1,15 +1,18 @@
 """Research-loop CLI — formalizes the one-off-script workflow.
 
     uv run python -m backtest_platform.research.cli run-is \\
-        --preset v3 --hypothesis "v3 放寬是否在雙窗有一致正期望" \\
+        --strategy momentum --params '{"lookback_days": 120}' \\
+        --hypothesis "momentum edge check" \\
         --stocks 2330,1101,1303 --start 2020-01-01 --end 2024-12-31
 
+    uv run python -m backtest_platform.research.cli validate-strategy momentum
+
 Builds a RunConfig (forces a hypothesis), runs the IS sim, judges it with the
-gate_state審判庭, prints逐條綠紅, and appends the result to the runs ledger —
-turning '手寫 script 半天' into one disciplined, lineage-bearing command.
+gate_state審判庭, prints逐條綠紅, and appends the result to the runs ledger.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import click
@@ -28,47 +31,46 @@ from backtest_platform.validation.tearsheet import write_tearsheet
 
 @click.group()
 def cli() -> None:
-    """Research loop: run-is / runs."""
+    """Research loop: run-is / validate-strategy / runs / compare / validate / sweep."""
 
 
 @cli.command("run-is")
-@click.option("--preset", required=True, help="StrategyConfig preset (v2 / v3 / ...)")
+@click.option("--strategy", required=True, help="Registered strategy name (see validate-strategy --list)")
+@click.option("--params", default="{}", help="JSON dict of strategy params (e.g. '{\"lookback_days\": 120}')")
 @click.option("--hypothesis", required=True, help="預先註冊：這個 run 在驗什麼（強制）")
 @click.option("--stocks", required=True, help="Comma-separated stock_ids")
 @click.option("--start", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--end", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
-@click.option(
-    "--tearsheet", is_flag=True, default=False,
-    help="額外輸出 quantstats HTML tear sheet（需 validation extra）",
-)
-@click.option(
-    "--tearsheet-dir", default="reports/tearsheets", show_default=True,
-    help="tear sheet 輸出目錄（檔名 = <run_id>.html）",
-)
-def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path, tearsheet, tearsheet_dir) -> None:
+@click.option("--tearsheet", is_flag=True, default=False,
+              help="額外輸出 quantstats HTML tear sheet")
+@click.option("--tearsheet-dir", default="reports/tearsheets", show_default=True)
+def run_is_cmd(strategy, params, hypothesis, stocks, start, end, runs_path, tearsheet, tearsheet_dir) -> None:
+    """Run a strategy IS backtest and append to the runs ledger."""
+    from backtest_platform.research import runners as _runners  # noqa: F401
+    params_dict = json.loads(params)
     cfg = RunConfig(
         hypothesis=hypothesis,
-        preset=preset,
+        strategy=strategy,
+        params=params_dict,
         stocks=tuple(s.strip() for s in stocks.split(",") if s.strip()),
         is_start=start.date(),
         is_end=end.date(),
     )
     rec, returns = run_and_judge_with_returns(cfg)
     append_run(rec, runs_path)
-    click.echo(f"\nrun_id={rec['run_id']}  preset={preset}  [{rec['gate_status']}]")
+    click.echo(f"\nrun_id={rec['run_id']}  strategy={strategy}  [{rec['gate_status']}]")
     click.echo(rec["gate_summary"])
     m = rec["metrics"]
     click.echo(
-        f"  metrics: trades={m.get('trades')} cagr={m.get('cagr'):.4f} "
-        f"sharpe={m.get('sharpe'):.3f} struct1%={m.get('struct1_pct'):.2f} "
-        f"churn%={m.get('churn_pct'):.2f} avg_hold={m.get('avg_hold'):.1f}"
+        f"  metrics: trades={m.get('trades')} cagr={m.get('cagr', float('nan')):.4f} "
+        f"sharpe={m.get('sharpe', float('nan')):.3f} maxdd={m.get('maxdd', float('nan')):.4f}"
     )
     click.echo(f"  → appended to {runs_path}")
     if tearsheet:
         out_path = Path(tearsheet_dir) / f"{rec['run_id']}.html"
         written = write_tearsheet(
-            returns, out_path, title=f"{preset} IS {cfg.is_start}..{cfg.is_end}"
+            returns, out_path, title=f"{strategy} IS {cfg.is_start}..{cfg.is_end}"
         )
         if written is not None:
             click.echo(f"  → tear sheet: {written}")
@@ -76,17 +78,50 @@ def run_is_cmd(preset, hypothesis, stocks, start, end, runs_path, tearsheet, tea
             click.echo("  → tear sheet skipped（quantstats 不可用 / 資料 < 2 bars）")
 
 
+@cli.command("validate-strategy")
+@click.argument("name", required=False)
+@click.option("--list", "list_all", is_flag=True, default=False, help="List all registered strategies")
+def validate_strategy_cmd(name: str | None, list_all: bool) -> None:
+    """Run the conformance gate on a registered strategy and print the report.
+
+    Usage:
+      validate-strategy momentum
+      validate-strategy --list
+    """
+    from backtest_platform.research import runners as _runners  # noqa: F401
+    from backtest_platform.strategies.conformance import check_strategy
+    from backtest_platform.strategies.protocol import list_strategies
+
+    if list_all:
+        for n in list_strategies():
+            click.echo(n)
+        return
+
+    if not name:
+        raise click.UsageError("provide a strategy name or --list")
+
+    report = check_strategy(name)
+    if report.ok:
+        click.echo(f"[OK] strategy {name!r} conforms to the contract.")
+    else:
+        click.echo(f"[FAIL] strategy {name!r} failed conformance:", err=True)
+        for e in report.errors:
+            click.echo(f"  - {e}", err=True)
+        raise SystemExit(1)
+
+
 @cli.command("runs")
 @click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
 def runs_cmd(runs_path) -> None:
-    """List the runs ledger (run_id / preset / gate / hypothesis)."""
+    """List the runs ledger (run_id / strategy / gate / hypothesis)."""
     runs = read_runs(runs_path)
     if not runs:
         click.echo(f"no runs in {runs_path}")
         return
     for r in runs:
+        strat = r.get("strategy") or r.get("preset", "?")
         click.echo(
-            f"{r.get('run_id')}  {r.get('preset'):4}  [{r.get('gate_status'):10}]  "
+            f"{r.get('run_id')}  {strat:12}  [{r.get('gate_status'):10}]  "
             f"{r.get('hypothesis')}"
         )
 
@@ -119,12 +154,7 @@ def compare_cmd(runs_path, baseline) -> None:
 @click.option("--run-id", required=True, help="ledger 內要驗的 run_id")
 @click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
 def validate_cmd(run_id, runs_path) -> None:
-    """Drive a ledger run through the IS→WFA→OOS 工作流 gate (IS phase).
-
-    Unlike `run-is`（唯讀審判庭），this feeds the run's IS metrics into the
-    *stateful* ``ValidationGate``: PASS → IS_PASS（WFA 解鎖）；否則 FAILED。也回報
-    OOS sealed-vault 狀態（OOS 在 IS+WFA 都通過前保持封存，防 look-ahead leak）。
-    """
+    """Drive a ledger run through the IS→WFA→OOS 工作流 gate (IS phase)."""
     records = read_runs(runs_path)
     rec = next((r for r in records if str(r.get("run_id")) == run_id), None)
     if rec is None:
@@ -134,10 +164,9 @@ def validate_cmd(run_id, runs_path) -> None:
     gate = ValidationGate()
     state = gate.submit_is(metrics)
     result = gate.last_is_result
+    strat = rec.get("strategy") or rec.get("preset", "?")
 
-    click.echo(
-        f"run_id={run_id}  preset={rec.get('preset')}  hypothesis={rec.get('hypothesis')}"
-    )
+    click.echo(f"run_id={run_id}  strategy={strat}  hypothesis={rec.get('hypothesis')}")
     click.echo(result.summary())
     click.echo(f"\nGATE STATE: {state.value}")
     if state is GateState.IS_PASS:
@@ -154,8 +183,6 @@ def validate_cmd(run_id, runs_path) -> None:
     )
 
 
-# Forward path IS_PASS → … → APPROVED, with the human label for the phase each
-# state *clears*. Promotion to live requires reaching APPROVED (all four cleared).
 _PROMOTION_PHASES: tuple[tuple[GateState, str], ...] = (
     (GateState.IS_PASS, "IS gate"),
     (GateState.WFA_PASS, "WFA"),
@@ -165,15 +192,6 @@ _PROMOTION_PHASES: tuple[tuple[GateState, str], ...] = (
 
 
 def _resolve_validation_status(rec: dict) -> GateState:
-    """A run's furthest-cleared workflow state.
-
-    An explicit ``validation_status`` is authoritative — ``coerce_gate_state``
-    honours BOTH the GateState enum form and the persisted verdict vocabulary
-    (``is_pass`` …) promotion_service writes, so the CLI no longer silently
-    ignores a recorded verdict it cannot parse. Absent (or unrecognised), v0.1
-    records carry only IS metrics, so we re-derive via ``derive_is_state`` (the
-    same single threshold source). Never fabricates progress past what is recorded.
-    """
     state = coerce_gate_state(rec.get("validation_status"))
     if state is not None:
         return state
@@ -181,12 +199,6 @@ def _resolve_validation_status(rec: dict) -> GateState:
 
 
 def _outstanding_phases(state: GateState) -> list[str]:
-    """Phases still blocking promotion, from ``state`` up to APPROVED.
-
-    A cleared forward state lists only the phases above it. FAILED / PENDING have
-    cleared nothing on the promotion path → every phase is outstanding (must
-    re-clear IS first).
-    """
     order = [st for st, _ in _PROMOTION_PHASES]
     cleared = order.index(state) if state in order else -1
     return [label for i, (_, label) in enumerate(_PROMOTION_PHASES) if i > cleared]
@@ -196,22 +208,15 @@ def _outstanding_phases(state: GateState) -> list[str]:
 @click.option("--run-id", required=True, help="ledger 內要查晉升資格的 run_id")
 @click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
 def promote_check_cmd(run_id, runs_path) -> None:
-    """Read a run's validation_status and report promotion eligibility (read-only).
-
-    A run is promotable to live **only** in state ``APPROVED`` (IS→WFA→OOS→approve
-    all cleared). The v0.1 ledger records the IS verdict only, so a run that has
-    merely passed IS is reported NOT eligible with the outstanding phases listed —
-    promotion is never rubber-stamped on IS alone（防未驗證策略上線）.
-    """
+    """Report promotion eligibility for a run (read-only)."""
     records = read_runs(runs_path)
     rec = next((r for r in records if str(r.get("run_id")) == run_id), None)
     if rec is None:
         raise click.ClickException(f"run {run_id!r} not found in {runs_path}")
 
     state = _resolve_validation_status(rec)
-    click.echo(
-        f"run_id={run_id}  preset={rec.get('preset')}  hypothesis={rec.get('hypothesis')}"
-    )
+    strat = rec.get("strategy") or rec.get("preset", "?")
+    click.echo(f"run_id={run_id}  strategy={strat}  hypothesis={rec.get('hypothesis')}")
     click.echo(f"VALIDATION STATUS: {state.value}")
     if state is GateState.APPROVED:
         click.echo("  PROMOTE ✅ ELIGIBLE — IS→WFA→OOS→approve 全數通過，可晉升實盤")
@@ -237,21 +242,20 @@ def _coerce(v: str):
 
 
 @cli.command("sweep")
-@click.option("--base-preset", default="v3.1b", show_default=True, help="StrategyConfig preset to sweep from")
+@click.option("--strategy", default="four_layer", show_default=True, help="Strategy to sweep")
+@click.option("--base-params", default="{}", show_default=True, help="Base params JSON for the strategy")
 @click.option("--grid", required=True, help="e.g. 'entry_min_layers=3,4;entry_confirm_days=1,2'")
 @click.option("--stocks", required=True, help="Comma-separated stock_ids")
 @click.option("--start", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--end", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
 @click.option("--out-csv", default="reports/sweep.csv", show_default=True)
-def sweep_cmd(base_preset, grid, stocks, start, end, out_csv) -> None:
-    """Parameter sweep — expand a grid of StrategyConfigs, run each, emit the FULL
-    grid (anti cherry-pick: never just the single best)."""
+def sweep_cmd(strategy, base_params, grid, stocks, start, end, out_csv) -> None:
+    """Parameter sweep over a strategy's config grid."""
     import csv
-    from pathlib import Path
-
-    from backtest_platform.config.strategy_config import get_preset
+    from backtest_platform.research import runners as _runners  # noqa: F401
     from backtest_platform.research.is_harness import load_merged_parquet
     from backtest_platform.research.sweep import expand_grid, run_sweep
+    from backtest_platform.strategies.protocol import get_strategy
 
     param_grid: dict[str, list] = {}
     for part in grid.split(";"):
@@ -260,7 +264,8 @@ def sweep_cmd(base_preset, grid, stocks, start, end, out_csv) -> None:
         k, vals = part.split("=")
         param_grid[k.strip()] = [_coerce(x) for x in vals.split(",")]
 
-    base = get_preset(base_preset)
+    runner = get_strategy(strategy)
+    base = runner.config_model(**json.loads(base_params))
     configs = expand_grid(base, param_grid)
     syms = [s.strip() for s in stocks.split(",") if s.strip()]
     click.echo(f"sweep: {len(configs)} configs over {len(syms)} stocks {start.date()}..{end.date()}")
@@ -277,7 +282,6 @@ def sweep_cmd(base_preset, grid, stocks, start, end, out_csv) -> None:
             click.echo(
                 "  " + " ".join(f"{k}={r[k]}" for k in param_grid if k in r)
                 + f"  → cagr={r.get('cagr', float('nan')):.4f} sharpe={r.get('sharpe', float('nan')):.3f}"
-                + f" struct1%={r.get('struct1_pct', float('nan')):.2f}"
             )
         click.echo(f"  → full grid ({len(results)} rows) written to {out_csv}")
 
