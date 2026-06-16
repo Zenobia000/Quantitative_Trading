@@ -10,6 +10,7 @@ back-fill and re-runs after upstream schema changes.
 """
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -20,6 +21,15 @@ from loguru import logger
 
 from backtest_platform.config.settings import get_settings
 from backtest_platform.data.schemas import ETLBundle
+
+
+def _serialize_cell(col: str, value: Any, json_cols: tuple[str, ...]) -> Any:
+    """JSONB columns → json text (``ensure_ascii=False`` so CJK stays readable);
+    every other column passes through unchanged. Single source for the row-tuple
+    serialization shared by ``upsert_runs`` and ``_execute_write``."""
+    if col in json_cols and value is not None:
+        return json.dumps(value, ensure_ascii=False, default=str)
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,8 +234,6 @@ def upsert_runs(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
         return 0
 
     cfg = cfg or DBConfig.from_env()
-    import json
-
     from psycopg2.extras import execute_values  # type: ignore[import-not-found]
 
     update_cols = [c for c in _RUNS_COLS if c not in _RUNS_IMMUTABLE_COLS]
@@ -235,12 +243,10 @@ def upsert_runs(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
         f"ON CONFLICT (run_id) DO UPDATE SET {set_clause}"
     )
 
-    def _cell(col: str, value: Any) -> Any:
-        if col in _RUNS_JSON_COLS and value is not None:
-            return json.dumps(value, ensure_ascii=False, default=str)
-        return value
-
-    tuples = [tuple(_cell(col, row.get(col)) for col in _RUNS_COLS) for row in rows]
+    tuples = [
+        tuple(_serialize_cell(col, row.get(col), _RUNS_JSON_COLS) for col in _RUNS_COLS)
+        for row in rows
+    ]
 
     with _connection(cfg) as conn, conn.cursor() as cur:
         execute_values(cur, sql, tuples, page_size=500)
@@ -274,8 +280,6 @@ def _execute_write(
         return 0
 
     cfg = cfg or DBConfig.from_env()
-    import json
-
     from psycopg2.extras import execute_values  # type: ignore[import-not-found]
 
     sql = f"INSERT INTO {table} ({', '.join(cols)}) VALUES %s"
@@ -284,12 +288,9 @@ def _execute_write(
         set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
         sql += f" ON CONFLICT ({', '.join(conflict_cols)}) DO UPDATE SET {set_clause}"
 
-    def _cell(col: str, value: Any) -> Any:
-        if col in json_cols and value is not None:
-            return json.dumps(value, ensure_ascii=False, default=str)
-        return value
-
-    tuples = [tuple(_cell(c, row.get(c)) for c in cols) for row in rows]
+    tuples = [
+        tuple(_serialize_cell(c, row.get(c), json_cols) for c in cols) for row in rows
+    ]
     with _connection(cfg) as conn, conn.cursor() as cur:
         execute_values(cur, sql, tuples, page_size=500)
     logger.info("wrote {} rows to {}", len(rows), table)
