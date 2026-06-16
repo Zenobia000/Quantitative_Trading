@@ -4,7 +4,8 @@
 > **架構圖**：目錄對應 C4 **L3-A Application** 元件，見 [05_architecture_and_design_document.md §1.1](./05_architecture_and_design_document.md)
 > **v1.1 變更**：對齊 M2 重組（commit `ae869f5`）— `strategy/` 改名 `strategies/four_layer_resonance/`、新增 `adapters/` `orchestration/` `monitoring/` `dashboard/`、新增 `sprint_0_spikes/`、移除原規劃但未實作的 `live/`（功能併入 `adapters/brokers/`）
 > **v1.2 變更（2026-06-16, ADR-026）**：抽出 `strategies/common/`（中立回測機制單一真實來源，解策略間 leaky abstraction）；`multi_factor` / spikes（原 `sprint_0_spikes/`）/ 舊驗證 scripts 封存至 `legacy/`（src 外，不打包不進 CI）；刪除空目錄 `engines/zipline_adapter/adapters/`
-> **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
+> **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/
+    workflows/            ← 通用研究工作流（DOE/GO-gates/truth-gate/paper-replay，ADR-029）runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
 
 ---
 
@@ -35,7 +36,6 @@ backtest_platform/
 │   ├── README.md
 │   ├── strategies/multi_factor/  # 已從 src 搬出（零 production 引用的葉子策略實驗）+ 其測試
 │   ├── spikes/                   # 原 sprint_0_spikes/（M2 啟動前 6 spike + RUNBOOK + gate_review）已封存
-│   └── scripts/                  # 非 inst_flow_* 的一次性 momentum / DOE / candidate-D / factor-baseline 驗證腳本
 ├── .env.example                  # 環境變數樣板（含 FINLAB / TEJ / SHIOAJI / DISCORD / ...）
 ├── .gitignore
 ├── docker-compose.yml
@@ -168,7 +168,8 @@ src/backtest_platform/
 | `dashboard/streamlit_app.py` | | | ✅ MVP | | + D/E 面板 |
 | `dashboard/grafana_dashboards.json` | | | | ✅ | |
 | `api/` (FastAPI HTTP) | | | ✅ v0.6（提前；研究迴圈讀寫面） | + 監控/風控面板端點 | |
-| `research/` (run loop) | | | ✅ v0.1-v0.3（RunConfig/IS harness/runs ledger/sweep/compare/CLI） | | |
+| `research/
+    workflows/            ← 通用研究工作流（DOE/GO-gates/truth-gate/paper-replay，ADR-029）` (run loop) | | | ✅ v0.1-v0.3（RunConfig/IS harness/runs ledger/sweep/compare/CLI） | | |
 | `pipeline.py` (M1 shim) | ✅ | (保留) | | | |
 
 ---
