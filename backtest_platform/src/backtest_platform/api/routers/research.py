@@ -50,21 +50,21 @@ def _best_kpi(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Group ledger records by preset into a strategy roster."""
+    """Group ledger records by strategy into a strategy roster."""
     groups: dict[str, list[dict[str, Any]]] = {}
     for r in records:
-        preset = r.get("preset") or "—"
-        groups.setdefault(preset, []).append(r)
+        strategy = r.get("strategy") or "—"
+        groups.setdefault(strategy, []).append(r)
 
     out: list[dict[str, Any]] = []
-    for preset, recs in sorted(groups.items()):
+    for strategy, recs in sorted(groups.items()):
         statuses = {_validation_status(r.get("gate_status")) for r in recs}
         # 確定性優先序（避免 order-dependent）：任一 run is_pass → 策略 is_pass；否則 is_fail；否則 draft
         validation_status = next((s for s in ("is_pass", "is_fail", "draft") if s in statuses), "draft")
         out.append(
             {
-                "strategy_id": preset,
-                "version": preset,
+                "strategy_id": strategy,
+                "version": strategy,
                 "best_kpi": _best_kpi(recs),
                 "validation_status": validation_status,
                 "stage": "draft",  # 晉升狀態機尚未持久化（needs-work）
@@ -90,11 +90,11 @@ def list_strategies(
 
 @router.get("/strategies/{strategy_id}/versions", response_model=Envelope)
 def strategy_versions(strategy_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
-    """Version timeline for a strategy — runs of this preset, newest first (real projection)."""
-    recs = [r for r in read_runs(runs_path) if (r.get("preset") or "—") == strategy_id]
+    """Version timeline for a strategy — runs of this strategy, newest first (real projection)."""
+    recs = [r for r in read_runs(runs_path) if (r.get("strategy") or "—") == strategy_id]
     versions = [
         {
-            "version": r.get("preset"),
+            "version": r.get("strategy"),
             "run_id": r.get("run_id"),
             "hypothesis": r.get("hypothesis"),
             "gate_status": r.get("gate_status"),

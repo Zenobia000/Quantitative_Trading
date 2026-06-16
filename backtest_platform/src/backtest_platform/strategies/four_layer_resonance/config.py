@@ -1,6 +1,7 @@
-"""Strategy parameters. Single source of truth — mirrors v2.md 2.7.1 / 6.1.1.
+"""Four-layer resonance strategy parameters — single source of truth.
 
-Any default change here MUST be recorded in v2.md Part 6.3 changelog.
+Relocated from ``config/strategy_config.py`` (ADR-028): config lives with
+its strategy, not in the central config package.
 """
 from __future__ import annotations
 
@@ -43,7 +44,6 @@ class StrategyConfig(BaseModel):
     tp_min_net_rate: float = Field(0.015, ge=0, le=1.0, description="停利最低淨利")
 
     # --- v3 entry gate (M0 v3 redesign; defaults reproduce v2 baseline) ---
-    # See docs/superpowers/specs/2026-06-02-m0-v3-entry-redesign-design.md
     entry_min_layers: int = Field(
         4, ge=1, le=4, description="N-of-4 冗餘計數上限門 (v2=4 全AND, v3=3)"
     )
@@ -64,7 +64,7 @@ class StrategyConfig(BaseModel):
     )
     entry_retest_band: float = Field(
         0.0, ge=0, le=0.2,
-        description="箱頂回測帶：0=僅突破；>0 額外接受 close>=box_upper*(1-band) 的箱頂回測 (方向A=0.03)",
+        description="箱頂回測帶：0=僅突破；>0 額外接受 close>=box_upper*(1-band) 的箱頂回測",
     )
 
     # --- Derived cost rates (computed, not configurable) ---
@@ -88,64 +88,6 @@ class StrategyConfig(BaseModel):
             raise ValueError("add_score_threshold must be >= strong_buy_threshold")
         return self
 
-
-DEFAULT_CONFIG = StrategyConfig()
-
-# v3 entry-redesign preset (M0 v0.1). Relaxes the four over-tight entry gates
-# per the trader-pressure-tested design spec. Use explicitly; DEFAULT_CONFIG
-# (v2) remains the baseline-reproducing default.
-DEFAULT_CONFIG_V3 = StrategyConfig(
-    entry_min_layers=3,
-    entry_min_structure=1,
-    entry_first_cross_only=False,
-    entry_confirm_days=2,
-    entry_cooldown_bars=3,
-    exit_flameout_confirm_bars=2,
-)
-
-# v3 IS gate FAIL smoking gun: min_structure=1 floods structure==1 mid-box entries
-# (72-76%). Direction B (ADR-019 §4) — keep structure==2 strict, relax ONLY the
-# transition gates. Minimal causal-isolation: was the over-tight *transition*, not
-# the structure, the constraint? IS result: dirB beats both v2 and v3 in both
-# windows with structure1%=0 (gate review §7).
-DEFAULT_CONFIG_V3_1B = StrategyConfig(
-    entry_min_layers=3,
-    entry_min_structure=2,           # <-- kept strict (breakout only), unlike v3
-    entry_first_cross_only=False,
-    entry_confirm_days=2,
-    entry_cooldown_bars=3,
-    exit_flameout_confirm_bars=2,
-)
-
-# Direction A (ADR-019 §4) — keep structure==2 breakout as primary, but ALSO accept
-# a box-top retest (close >= box_upper*(1-retest_band) while above box_mid). Keeps
-# structure quality (no mid-box flood, unlike v3) yet adds participation that dirB
-# (breakout-only) misses. Goal: push 2015-2020 positive without re-breaking struct1.
-DEFAULT_CONFIG_V3_1A = StrategyConfig(
-    entry_min_layers=3,
-    entry_min_structure=2,           # breakout is the OR's first arm
-    entry_first_cross_only=False,
-    entry_confirm_days=2,
-    entry_cooldown_bars=3,
-    exit_flameout_confirm_bars=2,
-    entry_retest_band=0.03,          # ...OR within 3% of box top
-)
-
-# Named presets for engine/CLI config injection (STRATEGY_PRESET env / `backtest-run
-# --config` / research `run-is --preset`).
-PRESETS: dict[str, StrategyConfig] = {
-    "v2": DEFAULT_CONFIG,
-    "v3": DEFAULT_CONFIG_V3,
-    "v3.1b": DEFAULT_CONFIG_V3_1B,
-    "v3.1a": DEFAULT_CONFIG_V3_1A,
-}
-
-
-def get_preset(name: str) -> StrategyConfig:
-    """Return the named StrategyConfig preset ('v2' baseline / 'v3' relaxed)."""
-    try:
-        return PRESETS[name]
-    except KeyError:
-        raise ValueError(
-            f"unknown strategy preset {name!r}; choose from {sorted(PRESETS)}"
-        ) from None
+    def with_extra_slippage(self, slip: float) -> "StrategyConfig":
+        """Return a copy with extra round-trip slippage for K3 robustness Sharpe."""
+        return self.model_copy(update={"slip_rate": self.slip_rate + slip})

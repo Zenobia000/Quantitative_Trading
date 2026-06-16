@@ -37,7 +37,8 @@ def _synthetic_loader(sid: str) -> pd.DataFrame:
 
 def _cfg(**kw):
     base = dict(
-        hypothesis="harness smoke", preset="v3", stocks=("AAA", "BBB"),
+        hypothesis="harness smoke", strategy="four_layer", params={},
+        stocks=("AAA", "BBB"),
         is_start=date(2019, 11, 1), is_end=date(2020, 1, 14),
     )
     base.update(kw)
@@ -57,7 +58,7 @@ def test_run_and_judge_produces_ledger_record() -> None:
     rec = run_and_judge(cfg, loader=_synthetic_loader)
     assert rec["run_id"] == cfg.run_id
     assert rec["hypothesis"] == "does v3 relax help?"
-    assert rec["preset"] == "v3"
+    assert rec["strategy"] == "four_layer"
     assert rec["window"] == ["2019-11-01", "2020-01-14"]
     assert rec["gate_status"] in ("PASS", "FAIL", "INCOMPLETE")
     assert "cagr" in rec["metrics"]

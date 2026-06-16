@@ -21,7 +21,7 @@ from backtest_platform.api.deps import get_run_executor, get_runs_path
 SAMPLE_RUNS = [
     {
         "run_id": "aaa111",
-        "preset": "v2",
+        "strategy": "four_layer",
         "hypothesis": "baseline reproduce",
         "gate_status": "FAIL",
         "metrics": {"cagr": 0.05, "sharpe": 0.40, "struct1_pct": 0.50, "churn_pct": 0.30},
@@ -30,7 +30,7 @@ SAMPLE_RUNS = [
     },
     {
         "run_id": "bbb222",
-        "preset": "v3.1b",
+        "strategy": "momentum",
         "hypothesis": "dirB strict structure",
         "gate_status": "FAIL",
         "metrics": {"cagr": 0.12, "sharpe": 0.90, "struct1_pct": 0.00, "churn_pct": 0.10},
@@ -73,7 +73,7 @@ def stub_executor():
         _execute.calls.append(cfg)
         return {
             "run_id": cfg.run_id,
-            "preset": cfg.preset,
+            "strategy": cfg.strategy,
             "hypothesis": cfg.hypothesis,
             "gate_status": "INCOMPLETE",
             "gate_summary": "stub run",

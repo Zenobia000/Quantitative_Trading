@@ -13,8 +13,8 @@ def test_typed_models_are_in_openapi_components(client):
     for model in (
         # batch 1 — runs
         "RunSummary", "RunRecord", "SweepEstimate", "CompareReportData",
-        # batch 2 — research / gate / metrics / presets / system config
-        "GateSpecData", "MetricsData", "PresetsListData", "StrategyRow",
+        # batch 2 — research / gate / metrics / strategies / system config
+        "GateSpecData", "MetricsData", "StrategyRow",
         "UniverseFiltersData", "SavedView", "TrialsData", "PromotionStateData",
         "RiskSpecData", "AlertRuleRow",
     ):

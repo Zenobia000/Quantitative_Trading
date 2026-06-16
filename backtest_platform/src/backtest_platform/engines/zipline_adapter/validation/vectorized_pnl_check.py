@@ -25,7 +25,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 
 
 @dataclass(frozen=True)

@@ -158,7 +158,7 @@ def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
         {
             "run_id": "a1b2c3d4e5f6",
             "hypothesis": "v3 entry beats v2 on 2330 IS window",
-            "preset": "v3",
+            "strategy": "four_layer",
             "engine": "sim",
             "stocks": ["2330", "2317"],
             "is_start": date(2020, 1, 1),
@@ -347,7 +347,7 @@ def test_real_trade_log_writers_round_trip() -> None:
     }]) == 1
 
     assert upsert_runs([{
-        "run_id": rid, "hypothesis": "inst_flow paper", "preset": "inst_flow_fixed",
+        "run_id": rid, "hypothesis": "inst_flow paper", "strategy": "inst_flow",
         "engine": "sim", "stocks": [sid], "is_start": date(2015, 1, 1),
         "is_end": date(2020, 12, 31), "status": "done", "trials_count": 24,
     }]) == 1

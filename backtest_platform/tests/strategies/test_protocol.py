@@ -36,8 +36,13 @@ def test_strategy_run_defaults_are_empty():
 
 
 def test_register_and_resolve_a_new_strategy(clean_registry):
+    from pydantic import BaseModel as _BM
+    from typing import ClassVar as _CV
+
     @register_strategy("fake_v0")
     class FakeRunner:
+        config_model: _CV[type[_BM]] = _BM
+        title: _CV[str] = "Fake v0"
         def run(self, symbols, start, end, config, loader):
             return StrategyRun({"trades": len(symbols)}, pd.Series([0.01, 0.02]))
 

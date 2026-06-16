@@ -37,7 +37,7 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 #: Fields surfaced in the paginated list view (the full record is on the detail route).
 _SUMMARY_KEYS = (
     "run_id",
-    "preset",
+    "strategy",
     "gate_status",
     "hypothesis",
     "metrics",
@@ -143,9 +143,9 @@ def estimate(request: Request) -> Envelope:
     Grid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``
     → 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same
     grid; we compute the cardinality directly (product of axis lengths) so no base
-    config is required just to count. ``preset`` is ignored as an axis.
+    config is required just to count. ``strategy`` is ignored as an axis.
     """
-    axes = {k: v.split(",") for k, v in request.query_params.items() if k != "preset" and v}
+    axes = {k: v.split(",") for k, v in request.query_params.items() if k != "strategy" and v}
     n_configs = math.prod(len(vals) for vals in axes.values()) if axes else 1
     return ok(
         {
@@ -182,7 +182,8 @@ def create_run(
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
-            preset=req.preset,
+            strategy=req.strategy,
+            params=req.params,
             stocks=tuple(req.stocks),
             is_start=req.is_start,
             is_end=req.is_end,
@@ -191,7 +192,10 @@ def create_run(
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
 
-    record = executor(cfg)
+    try:
+        record = executor(cfg)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
     append_run(record, runs_path)
     return ok(record)
 
@@ -210,7 +214,8 @@ def create_run_async(
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
-            preset=req.preset,
+            strategy=req.strategy,
+            params=req.params,
             stocks=tuple(req.stocks),
             is_start=req.is_start,
             is_end=req.is_end,
@@ -224,7 +229,7 @@ def create_run_async(
         append_run(record, runs_path)
         return record
 
-    key = f"{req.preset}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
+    key = f"{req.strategy}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
     job = submit("run", key, _judge_and_append)
     return ok({"job_id": job.job_id, "status": job.status.value})
 

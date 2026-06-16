@@ -39,7 +39,7 @@ from zipline.api import (
 )
 from zipline.utils.events import date_rules, time_rules
 
-from backtest_platform.config.strategy_config import StrategyConfig, get_preset
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.zipline_adapter.algorithms.base import (
     get_history_window,
     preload_merged_frames,
@@ -79,7 +79,7 @@ def initialize(context):
     # `backtest-run --config v3`) lets DEFAULT_CONFIG_V3 run in the real engine —
     # required to calibrate the v3 verdict against the offline sim. Previously
     # hardcoded StrategyConfig(), so v3 never reached the event-driven path.
-    context.config = get_preset(os.environ.get("STRATEGY_PRESET", "v2"))
+    context.config = StrategyConfig()  # default params; override via params dict in new dispatch
 
     universe_env = os.environ.get("UNIVERSE_FINMIND")
     universe_syms = (

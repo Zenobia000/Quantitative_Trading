@@ -20,7 +20,7 @@ from zipline.api import set_commission, set_long_only, set_slippage
 from zipline.finance.commission import CommissionModel
 from zipline.finance.slippage import FixedBasisPointsSlippage
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 
 
 class TaiwanCommission(CommissionModel):

@@ -12,6 +12,7 @@ same way.
 from __future__ import annotations
 
 from datetime import date
+from typing import ClassVar
 
 from backtest_platform.strategies._template.strategy import (
     TemplateConfig,
@@ -26,10 +27,18 @@ from backtest_platform.strategies.protocol import (
 
 _SLIP_STRESS = 0.003
 
+_EMPTY_METRICS: dict = {
+    "trades": 0, "bars": 0,
+    "cagr": 0.0, "sharpe": 0.0, "slippage_sharpe": 0.0, "maxdd": 0.0,
+}
+
 
 @register_strategy("template")
 class TemplateRunner:
     """Equal-weight buy-and-hold baseline — the worked example of the contract."""
+
+    config_model: ClassVar[type[TemplateConfig]] = TemplateConfig
+    title: ClassVar[str] = "Template (equal-weight buy-and-hold)"
 
     def run(
         self,
@@ -39,10 +48,10 @@ class TemplateRunner:
         config: TemplateConfig,
         loader: Loader,
     ) -> StrategyRun:
-        cfg = config if isinstance(config, TemplateConfig) else TemplateConfig()
+        cfg = config  # caller already validated via config_model(**params)
         prices = column_panel(symbols, loader, "close")
         if prices.empty:
-            return StrategyRun({"trades": 0, "bars": 0})
+            return StrategyRun(_EMPTY_METRICS)
         res = backtest_template(prices, cfg, start, end)
         slip = backtest_template(prices, cfg.with_extra_slippage(_SLIP_STRESS), start, end)
         return StrategyRun(panel_metrics(res, slip), res.daily_returns)

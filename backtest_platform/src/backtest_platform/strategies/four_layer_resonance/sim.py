@@ -22,7 +22,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores
 from backtest_platform.strategies.four_layer_resonance.signals import compute_signals
 from backtest_platform.validation.metrics import cagr as _cagr

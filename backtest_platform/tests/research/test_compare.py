@@ -25,7 +25,7 @@ def _rec(run_id: str, *, cagr=0.0, sharpe=0.0, struct1_pct=0.0, churn_pct=0.0,
         "metrics": m,
         "gate_status": gate_status,
         "hypothesis": hypothesis,
-        "preset": "v3",
+        "strategy": "four_layer",
     }
 
 

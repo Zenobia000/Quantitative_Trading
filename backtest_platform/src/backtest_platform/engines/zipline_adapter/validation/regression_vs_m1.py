@@ -29,7 +29,7 @@ from pathlib import Path
 import pandas as pd
 from loguru import logger
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.engines.zipline_adapter.algorithms.base import (
     preload_merged_frames,
 )

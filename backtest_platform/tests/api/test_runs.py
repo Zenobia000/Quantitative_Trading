@@ -22,7 +22,7 @@ def test_list_runs_seeded(client, write_runs, sample_runs):
     assert {item["run_id"] for item in body["data"]} == {"aaa111", "bbb222"}
     # list view is a projection (summary keys only)
     assert set(body["data"][0]) == {
-        "run_id", "preset", "gate_status", "hypothesis", "metrics", "is_start", "is_end"
+        "run_id", "strategy", "gate_status", "hypothesis", "metrics", "is_start", "is_end"
     }
 
 
@@ -57,7 +57,7 @@ def test_list_runs_dedupes_duplicate_run_id(client, write_runs, sample_runs):
 def test_get_run_found_returns_full_record(client, write_runs, sample_runs):
     write_runs(sample_runs)
     body = client.get("/runs/bbb222").json()
-    assert body["data"]["preset"] == "v3.1b"
+    assert body["data"]["strategy"] == "momentum"
     assert body["data"]["hypothesis"] == "dirB strict structure"
 
 
@@ -101,7 +101,7 @@ def test_compare_empty_ledger(client):
 
 def test_compare_run_ids_subset_compares_only_selected(client, write_runs, sample_runs):
     # three in the ledger; the frontend multi-select picks two → only those compare
-    third = dict(sample_runs[1], run_id="ccc333", preset="v3.2")
+    third = dict(sample_runs[1], run_id="ccc333", strategy="momentum")
     write_runs(sample_runs + [third])
     data = client.get(
         "/runs/compare", params={"run_ids": "aaa111,ccc333", "baseline": "aaa111"}
@@ -120,8 +120,9 @@ def test_compare_run_ids_unknown_member_404(client, write_runs, sample_runs):
 # ---- trigger (POST) -----------------------------------------------------
 
 _VALID_PAYLOAD = {
-    "hypothesis": "does v3.1b hold cross-window",
-    "preset": "v3.1b",
+    "hypothesis": "does four_layer hold cross-window",
+    "strategy": "four_layer",
+    "params": {},
     "stocks": ["2330", "1101"],
     "is_start": "2020-01-01",
     "is_end": "2024-12-31",
@@ -133,18 +134,11 @@ def test_create_run_appends_and_is_listable(client, runs_path, stub_executor):
     assert resp.status_code == 201
     body = resp.json()
     assert body["success"] is True
-    assert body["data"]["preset"] == "v3.1b"
+    assert body["data"]["strategy"] == "four_layer"
     assert len(stub_executor.calls) == 1
     assert runs_path.exists()
     # now visible in the ledger list
     assert client.get("/runs").json()["meta"]["total"] == 1
-
-
-def test_create_run_unknown_preset_422(client):
-    payload = {**_VALID_PAYLOAD, "preset": "no-such-preset"}
-    resp = client.post("/runs", json=payload)
-    assert resp.status_code == 422
-    assert resp.json()["success"] is False
 
 
 def test_create_run_reversed_window_422(client):
@@ -183,7 +177,7 @@ def test_create_run_async_submits_then_logs_done(client, runs_path, stub_executo
     assert resp.json()["data"]["status"] == "queued"
     final = _poll_log(client, job_id)
     assert final["status"] == "done"
-    assert final["result"]["preset"] == "v3.1b"
+    assert final["result"]["strategy"] == "four_layer"
     assert len(stub_executor.calls) == 1
     # the async job appended to the ledger → now listable (sync POST unaffected)
     assert client.get("/runs").json()["meta"]["total"] == 1
@@ -193,9 +187,3 @@ def test_run_log_unknown_is_pending(client, isolate_jobs):
     body = client.get("/runs/ghost/log").json()
     assert body["data"]["status"] is None
     assert body["meta"]["data_source"] == "pending"
-
-
-def test_create_run_async_bad_preset_stays_422_sync(client, isolate_jobs):
-    payload = {**_VALID_PAYLOAD, "preset": "no-such-preset"}
-    resp = client.post("/runs/async", json=payload)
-    assert resp.status_code == 422  # config validation stays synchronous

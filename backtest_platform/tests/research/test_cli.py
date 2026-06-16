@@ -32,7 +32,7 @@ def _write_ledger(path, records):
 
 def test_validate_is_pass(tmp_path):
     ledger = tmp_path / "runs.jsonl"
-    _write_ledger(ledger, [{"run_id": "good1", "preset": "v2", "hypothesis": "h", "metrics": _PASS_METRICS}])
+    _write_ledger(ledger, [{"run_id": "good1", "strategy": "four_layer", "hypothesis": "h", "metrics": _PASS_METRICS}])
     res = CliRunner().invoke(cli, ["validate", "--run-id", "good1", "--runs-path", str(ledger)])
     assert res.exit_code == 0, res.output
     assert "GATE STATE: IS_PASS" in res.output
@@ -43,7 +43,7 @@ def test_validate_is_pass(tmp_path):
 
 def test_validate_is_fail(tmp_path):
     ledger = tmp_path / "runs.jsonl"
-    _write_ledger(ledger, [{"run_id": "bad1", "preset": "v3", "hypothesis": "h", "metrics": _FAIL_METRICS}])
+    _write_ledger(ledger, [{"run_id": "bad1", "strategy": "four_layer", "hypothesis": "h", "metrics": _FAIL_METRICS}])
     res = CliRunner().invoke(cli, ["validate", "--run-id", "bad1", "--runs-path", str(ledger)])
     assert res.exit_code == 0, res.output
     assert "GATE STATE: FAILED" in res.output
@@ -52,7 +52,7 @@ def test_validate_is_fail(tmp_path):
 
 def test_validate_incomplete_metrics_is_not_pass(tmp_path):
     ledger = tmp_path / "runs.jsonl"
-    _write_ledger(ledger, [{"run_id": "inc1", "preset": "v2", "hypothesis": "h", "metrics": {"cagr": 0.25}}])
+    _write_ledger(ledger, [{"run_id": "inc1", "strategy": "four_layer", "hypothesis": "h", "metrics": {"cagr": 0.25}}])
     res = CliRunner().invoke(cli, ["validate", "--run-id", "inc1", "--runs-path", str(ledger)])
     assert res.exit_code == 0, res.output
     # INCOMPLETE gate → submit_is → FAILED (cannot APPROVE what you cannot fully judge)
@@ -71,13 +71,14 @@ def test_validate_unknown_run_id_errors(tmp_path):
 # --- run-is --tearsheet --------------------------------------------------
 
 _CANNED_REC = {
-    "run_id": "rid9", "preset": "v2", "hypothesis": "h",
+    "run_id": "rid9", "strategy": "four_layer", "hypothesis": "h",
     "metrics": {"trades": 3, "cagr": 0.10, "sharpe": 0.50,
                 "struct1_pct": 0.10, "churn_pct": 0.10, "avg_hold": 7.0},
     "gate_status": "INCOMPLETE", "gate_summary": "GATE: INCOMPLETE",
 }
 _RUN_IS_ARGS = [
-    "run-is", "--preset", "v2", "--hypothesis", "h", "--stocks", "2330",
+    "run-is", "--strategy", "four_layer", "--params", "{}",
+    "--hypothesis", "h", "--stocks", "2330",
     "--start", "2020-01-01", "--end", "2024-12-31",
 ]
 
@@ -146,7 +147,7 @@ def test_promote_check_approved_is_eligible(tmp_path):
     # (written once v0.2 wires OOS into the ledger) is the only promotable state.
     ledger = tmp_path / "runs.jsonl"
     _write_ledger(ledger, [{
-        "run_id": "appr1", "preset": "v2", "hypothesis": "h",
+        "run_id": "appr1", "strategy": "four_layer", "hypothesis": "h",
         "metrics": _PASS_METRICS, "gate_status": "PASS",
         "validation_status": "APPROVED",
     }])
@@ -161,7 +162,7 @@ def test_promote_check_is_pass_not_eligible_lists_outstanding(tmp_path):
     # IS passes but nothing beyond is recorded → NOT promotable; WFA/OOS/approve
     # are listed as outstanding. Promotion is never rubber-stamped on IS alone.
     ledger = tmp_path / "runs.jsonl"
-    _write_ledger(ledger, [{"run_id": "good1", "preset": "v2", "hypothesis": "h", "metrics": _PASS_METRICS}])
+    _write_ledger(ledger, [{"run_id": "good1", "strategy": "four_layer", "hypothesis": "h", "metrics": _PASS_METRICS}])
     res = CliRunner().invoke(cli, ["promote-check", "--run-id", "good1", "--runs-path", str(ledger)])
     assert res.exit_code == 0, res.output
     assert "VALIDATION STATUS: IS_PASS" in res.output
@@ -171,7 +172,7 @@ def test_promote_check_is_pass_not_eligible_lists_outstanding(tmp_path):
 
 def test_promote_check_is_fail_not_eligible(tmp_path):
     ledger = tmp_path / "runs.jsonl"
-    _write_ledger(ledger, [{"run_id": "bad1", "preset": "v3", "hypothesis": "h", "metrics": _FAIL_METRICS}])
+    _write_ledger(ledger, [{"run_id": "bad1", "strategy": "four_layer", "hypothesis": "h", "metrics": _FAIL_METRICS}])
     res = CliRunner().invoke(cli, ["promote-check", "--run-id", "bad1", "--runs-path", str(ledger)])
     assert res.exit_code == 0, res.output
     assert "VALIDATION STATUS: FAILED" in res.output
@@ -183,7 +184,7 @@ def test_promote_check_explicit_status_overrides_derivation(tmp_path):
     # OOS_PASS shows as such, still NOT eligible, only `approve` outstanding.
     ledger = tmp_path / "runs.jsonl"
     _write_ledger(ledger, [{
-        "run_id": "oos1", "preset": "v2", "hypothesis": "h",
+        "run_id": "oos1", "strategy": "four_layer", "hypothesis": "h",
         "metrics": _FAIL_METRICS, "validation_status": "OOS_PASS",
     }])
     res = CliRunner().invoke(cli, ["promote-check", "--run-id", "oos1", "--runs-path", str(ledger)])
@@ -202,7 +203,7 @@ def test_promote_check_honors_persisted_lowercase_verdict(tmp_path):
     # contradicting metrics).
     ledger = tmp_path / "runs.jsonl"
     _write_ledger(ledger, [{
-        "run_id": "lp1", "preset": "v2", "hypothesis": "h",
+        "run_id": "lp1", "strategy": "four_layer", "hypothesis": "h",
         "metrics": _FAIL_METRICS, "validation_status": "is_pass",
     }])
     res = CliRunner().invoke(cli, ["promote-check", "--run-id", "lp1", "--runs-path", str(ledger)])

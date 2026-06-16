@@ -26,7 +26,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.research.is_harness import (
     _SLIP_STRESS,
     _daily_returns,

@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Mapping
 
-from backtest_platform.config.strategy_config import DEFAULT_CONFIG, StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 
 
 class OrderSide(str, Enum):
@@ -105,7 +105,7 @@ class PaperBroker:
     """
 
     initial_cash: float
-    config: StrategyConfig = DEFAULT_CONFIG
+    config: StrategyConfig = field(default_factory=StrategyConfig)
     cash: float = field(init=False)
     _positions: dict[str, Position] = field(init=False, default_factory=dict)
     _trade_log: list[Fill] = field(init=False, default_factory=list)

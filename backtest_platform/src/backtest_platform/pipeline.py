@@ -17,7 +17,7 @@ import click
 import pandas as pd
 from loguru import logger
 
-from backtest_platform.config.strategy_config import StrategyConfig
+from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.data.finmind_etl import fetch_bundle, write_parquet
 from backtest_platform.strategies.four_layer_resonance.scoring import compute_scores
 from backtest_platform.strategies.four_layer_resonance.signals import compute_signals
