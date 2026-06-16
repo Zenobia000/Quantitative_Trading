@@ -263,6 +263,91 @@
         }
       }
     },
+    "/runs/async": {
+      "post": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Create Run Async",
+        "description": "Async variant of ``POST /runs`` (8.H.6): validate the config up-front (422\nstays synchronous), then enqueue judge-and-append as a job and return\n``{job_id, status}`` (202 Accepted). The sync ``POST /runs`` is unchanged;\npoll :func:`run_log` for completion.",
+        "operationId": "create_run_async_runs_async_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{job_id}/log": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Log",
+        "description": "Async-run job log (8.H.6): lifecycle (status/progress) + terminal\nresult/error. A typed-empty ``pending`` envelope when the id is unknown\n(mirrors the sweep status route).",
+        "operationId": "run_log_runs__job_id__log_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/runs/{run_id}/equity": {
       "get": {
         "tags": [
@@ -1226,6 +1311,7 @@
           "monitor"
         ],
         "summary": "Strategies",
+        "description": "Registered strategy catalog (ADR-027 registry). Typed-empty pending if none.",
         "operationId": "strategies_monitor_strategies_get",
         "responses": {
           "200": {
@@ -1247,6 +1333,7 @@
           "monitor"
         ],
         "summary": "Fleet",
+        "description": "Live fleet board — latest equity per strategy from telemetry (8.H.8);\npending fallback when no DB/telemetry.",
         "operationId": "fleet_monitor_fleet_get",
         "responses": {
           "200": {
@@ -1268,6 +1355,7 @@
           "monitor"
         ],
         "summary": "Portfolio Summary",
+        "description": "Fleet roll-up — total equity / strategy count / open positions (8.H.8).",
         "operationId": "portfolio_summary_monitor_portfolio_summary_get",
         "responses": {
           "200": {
@@ -1352,6 +1440,7 @@
           "monitor"
         ],
         "summary": "Perf Equity",
+        "description": "Equity curve from real paper/live telemetry (8.H.8); typed-empty pending\nwhen no DB / telemetry exists yet (graceful degradation).",
         "operationId": "perf_equity_monitor_performance_equity_get",
         "responses": {
           "200": {
@@ -1415,6 +1504,7 @@
           "monitor"
         ],
         "summary": "Perf Kpi",
+        "description": "Headline KPIs (return/CAGR/Sharpe/MDD/Calmar) derived from the real equity\nseries (8.H.8); typed-empty pending when no DB/telemetry.",
         "operationId": "perf_kpi_monitor_performance_kpi_get",
         "responses": {
           "200": {
@@ -1436,6 +1526,7 @@
           "monitor"
         ],
         "summary": "Pos Snapshot",
+        "description": "Open positions from real telemetry (8.H.8); pending fallback when no DB.",
         "operationId": "pos_snapshot_monitor_positions_snapshot_get",
         "responses": {
           "200": {
@@ -1541,6 +1632,7 @@
           "monitor"
         ],
         "summary": "Signals",
+        "description": "Recent signals from real telemetry (8.H.8); pending fallback when no DB.",
         "operationId": "signals_monitor_signals_get",
         "parameters": [
           {
@@ -1639,7 +1731,22 @@
           "monitor"
         ],
         "summary": "Fills",
+        "description": "Recent order executions from real telemetry (8.H.8); pending fallback.",
         "operationId": "fills_monitor_fills_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1647,6 +1754,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2160,14 +2277,35 @@
           "system"
         ],
         "summary": "Ingest",
+        "description": "Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``\n(202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread\nso the API never blocks; poll :func:`ingest_status`.",
         "operationId": "ingest_system_ingest_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestRequest"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
-          "200": {
+          "202": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2181,6 +2319,7 @@
           "system"
         ],
         "summary": "Ingest Status",
+        "description": "Poll an ingest job's status/result; typed-empty ``pending`` if unknown.",
         "operationId": "ingest_status_system_ingest__job_id__status_get",
         "parameters": [
           {
@@ -3399,6 +3538,41 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "IngestRequest": {
+        "properties": {
+          "symbols": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Symbols"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "default": "finlab"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbols",
+          "start",
+          "end"
+        ],
+        "title": "IngestRequest",
+        "description": "Trigger a bundle ingest as an async job (8.H.6)."
       },
       "MetricsData": {
         "properties": {},
