@@ -252,6 +252,7 @@ def _coerce(v: str):
 def sweep_cmd(strategy, base_params, grid, stocks, start, end, out_csv) -> None:
     """Parameter sweep over a strategy's config grid."""
     import csv
+
     from backtest_platform.research import runners as _runners  # noqa: F401
     from backtest_platform.research.is_harness import load_merged_parquet
     from backtest_platform.research.sweep import expand_grid, run_sweep
@@ -284,6 +285,134 @@ def sweep_cmd(strategy, base_params, grid, stocks, start, end, out_csv) -> None:
                 + f"  → cagr={r.get('cagr', float('nan')):.4f} sharpe={r.get('sharpe', float('nan')):.3f}"
             )
         click.echo(f"  → full grid ({len(results)} rows) written to {out_csv}")
+
+
+# ── Research workflow commands (ADR-029) ────────────────────────────────────
+# Each reads strategies/<name>/research_config.py and drives the generic workflow
+# in research/workflows/ through the ADR-028 dispatch layer.
+
+
+def _override_window(cfg, is_start: str | None, is_end: str | None):
+    """Return a copy of ``cfg`` with is_start/is_end overridden from ISO strings."""
+    from datetime import date as _date
+    updates = {}
+    if is_start:
+        updates["is_start"] = _date.fromisoformat(is_start)
+    if is_end:
+        updates["is_end"] = _date.fromisoformat(is_end)
+    return cfg.model_copy(update=updates) if updates else cfg
+
+
+@cli.command("doe")
+@click.option("--strategy", required=True, help="Registered strategy name")
+@click.option("--dry-run", is_flag=True, default=False, help="Print config and exit")
+@click.option("--is-start", default=None, help="Override is_start (YYYY-MM-DD)")
+@click.option("--is-end", default=None, help="Override is_end (YYYY-MM-DD)")
+@click.option("--out-csv", default=None, help="Write the full result grid to CSV")
+def doe_cmd(strategy, dry_run, is_start, is_end, out_csv) -> None:
+    """DOE parameter grid scan — reads research_config.DOE for the strategy."""
+    from backtest_platform.research.workflows.loader import get_doe_config
+    try:
+        cfg = get_doe_config(strategy)
+    except (ValueError, AttributeError) as exc:
+        raise click.ClickException(str(exc)) from None
+    cfg = _override_window(cfg, is_start, is_end)
+    if dry_run:
+        click.echo(f"[dry-run] DOEConfig for {strategy!r}:")
+        click.echo(f"  grid={cfg.grid}  n_configs={cfg.n_configs}")
+        click.echo(f"  symbols={len(cfg.symbols)} stocks  {cfg.is_start}..{cfg.is_end}")
+        return
+    from backtest_platform.research.is_harness import load_merged_parquet
+    from backtest_platform.research.workflows.doe import run_doe
+    click.echo(f"Running DOE for {strategy!r}: {cfg.n_configs} configs…")
+    result = run_doe(cfg, loader=load_merged_parquet)
+    for r in result.runs:
+        params = {k: r[k] for k in cfg.grid if k in r}
+        click.echo(f"  {params}  → cagr={r.get('cagr', float('nan')):.4f} "
+                   f"sharpe={r.get('sharpe', float('nan')):.3f}")
+    if out_csv and result.runs:
+        import csv
+        from pathlib import Path
+        Path(out_csv).parent.mkdir(parents=True, exist_ok=True)
+        keys = sorted(result.runs[0].keys())
+        with open(out_csv, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=keys)
+            w.writeheader()
+            w.writerows(result.runs)
+        click.echo(f"  → {out_csv}")
+
+
+@cli.command("go-gates")
+@click.option("--strategy", required=True)
+@click.option("--dry-run", is_flag=True, default=False)
+def go_gates_cmd(strategy, dry_run) -> None:
+    """WFA + PBO GO-gates — reads research_config.GO_GATES for the strategy."""
+    from backtest_platform.research.workflows.loader import get_go_gates_config
+    try:
+        cfg = get_go_gates_config(strategy)
+    except (ValueError, AttributeError) as exc:
+        raise click.ClickException(str(exc)) from None
+    if dry_run:
+        click.echo(f"[dry-run] GOGatesConfig for {strategy!r}:")
+        click.echo(f"  symbols={len(cfg.symbols)}  folds={cfg.n_wfa_folds}  "
+                   f"{cfg.is_start}..{cfg.is_end}")
+        return
+    from backtest_platform.research.is_harness import load_merged_parquet
+    from backtest_platform.research.workflows.go_gates import run_go_gates
+    click.echo(f"Running GO gates for {strategy!r}…")
+    result = run_go_gates(cfg, loader=load_merged_parquet)
+    click.echo(f"  verdict={result.verdict}  WFA OOS+={result.wfa_oos_positive_frac:.2%}  "
+               f"PBO={result.pbo}")
+
+
+@cli.command("truth-gate")
+@click.option("--strategy", required=True)
+@click.option("--dry-run", is_flag=True, default=False)
+def truth_gate_cmd(strategy, dry_run) -> None:
+    """ADR-025 two-stage truth gate — reads research_config.TRUTH_GATE."""
+    from backtest_platform.research.workflows.loader import get_truth_gate_config
+    try:
+        cfg = get_truth_gate_config(strategy)
+    except (ValueError, AttributeError) as exc:
+        raise click.ClickException(str(exc)) from None
+    if dry_run:
+        click.echo(f"[dry-run] TruthGateConfig for {strategy!r}:")
+        click.echo(f"  n_trials={cfg.n_trials}  pre_registered={cfg.pre_registered}")
+        click.echo(f"  {cfg.is_start}..{cfg.oos_start}(OOS)..{cfg.is_end}")
+        return
+    from backtest_platform.research.is_harness import load_merged_parquet
+    from backtest_platform.research.workflows.truth_gate import run_truth_gate
+    click.echo(f"Running truth gate for {strategy!r}…")
+    result = run_truth_gate(cfg, loader=load_merged_parquet)
+    click.echo(f"  verdict={result.verdict}  DSR={result.dsr:.4f}  "
+               f"slip_sharpe={result.slippage_sharpe:.3f}  "
+               f"WFA OOS+={result.wfa_oos_positive_frac:.2%}")
+    for r in result.reasons:
+        click.echo(f"  ✗ {r}")
+
+
+@cli.command("paper-replay")
+@click.option("--strategy", required=True)
+@click.option("--dry-run", is_flag=True, default=False)
+def paper_replay_cmd(strategy, dry_run) -> None:
+    """Paper replay — reads research_config.PAPER_REPLAY for the strategy."""
+    from backtest_platform.research.workflows.loader import get_paper_replay_config
+    try:
+        cfg = get_paper_replay_config(strategy)
+    except (ValueError, AttributeError) as exc:
+        raise click.ClickException(str(exc)) from None
+    if dry_run:
+        click.echo(f"[dry-run] PaperReplayConfig for {strategy!r}:")
+        click.echo(f"  as_of={cfg.as_of}  symbols={len(cfg.symbols)}  "
+                   f"cash={cfg.initial_cash:,.0f}")
+        return
+    from backtest_platform.research.is_harness import load_merged_parquet
+    from backtest_platform.research.workflows.paper_replay import run_paper_replay_workflow
+    click.echo(f"Running paper replay for {strategy!r} as_of={cfg.as_of}…")
+    result = run_paper_replay_workflow(cfg, loader=load_merged_parquet)
+    click.echo(f"  run_id={result.run_id}  gate={result.gate_status}")
+    click.echo(f"  cagr={result.metrics.get('cagr', float('nan')):.4f}  "
+               f"sharpe={result.metrics.get('sharpe', float('nan')):.3f}")
 
 
 if __name__ == "__main__":
