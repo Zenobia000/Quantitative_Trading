@@ -219,3 +219,38 @@ def test_promote_check_unknown_run_id_errors(tmp_path):
     res = CliRunner().invoke(cli, ["promote-check", "--run-id", "nope", "--runs-path", str(ledger)])
     assert res.exit_code != 0
     assert "not found" in res.output
+
+
+# ── Research workflow commands (ADR-029) ────────────────────────────────────
+
+def test_doe_dry_run_template():
+    """doe --strategy template --dry-run prints config without running the sim."""
+    result = CliRunner().invoke(cli, ["doe", "--strategy", "template", "--dry-run"])
+    assert result.exit_code == 0
+    assert "template" in result.output
+
+
+def test_doe_unknown_strategy_exits_nonzero():
+    result = CliRunner().invoke(cli, ["doe", "--strategy", "nonexistent_xyz"])
+    assert result.exit_code != 0
+
+
+def test_go_gates_dry_run_momentum():
+    result = CliRunner().invoke(cli, ["go-gates", "--strategy", "momentum", "--dry-run"])
+    assert result.exit_code == 0
+
+
+def test_truth_gate_dry_run_momentum():
+    result = CliRunner().invoke(cli, ["truth-gate", "--strategy", "momentum", "--dry-run"])
+    assert result.exit_code == 0
+
+
+def test_paper_replay_dry_run_momentum():
+    result = CliRunner().invoke(cli, ["paper-replay", "--strategy", "momentum", "--dry-run"])
+    assert result.exit_code == 0
+
+
+def test_go_gates_undeclared_workflow_exits_nonzero():
+    """four_layer declares only DOE — go-gates must fail clearly (not crash)."""
+    result = CliRunner().invoke(cli, ["go-gates", "--strategy", "four_layer"])
+    assert result.exit_code != 0

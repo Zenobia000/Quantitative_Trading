@@ -29,6 +29,7 @@ from backtest_platform.api.routers import (
     research_registry,
     research_sweep,
     research_validate,
+    research_workflows,
     runs,
     runs_series,
     runs_tags,
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(research_promote.router)  # M3 seam: S3 promote (8.H.7)
     app.include_router(research_registry.router)  # M3 seam: S5 saved-views/trials (8.H.4/5)
     app.include_router(research_sweep.router)  # M3 seam: S2 async sweep (8.H.6)
+    app.include_router(research_workflows.router)  # ADR-029: research workflow jobs (①.5)
     app.include_router(monitor.router)
     app.include_router(system.router)
     app.include_router(home.router)

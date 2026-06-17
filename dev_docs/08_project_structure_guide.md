@@ -5,6 +5,7 @@
 > **v1.1 變更**：對齊 M2 重組（commit `ae869f5`）— `strategy/` 改名 `strategies/four_layer_resonance/`、新增 `adapters/` `orchestration/` `monitoring/` `dashboard/`、新增 `sprint_0_spikes/`、移除原規劃但未實作的 `live/`（功能併入 `adapters/brokers/`）
 > **v1.2 變更（2026-06-16, ADR-026）**：抽出 `strategies/common/`（中立回測機制單一真實來源，解策略間 leaky abstraction）；`multi_factor` / spikes（原 `sprint_0_spikes/`）/ 舊驗證 scripts 封存至 `legacy/`（src 外，不打包不進 CI）；刪除空目錄 `engines/zipline_adapter/adapters/`
 > **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
+> **v1.4 變更（2026-06-17, ADR-029）**：研究流程標準化。**刪除** `backtest_platform/scripts/`（7 支 `inst_flow_*` 一次性腳本）；**新增** `research/workflows/`（通用工作流 `config`/`loader`/`doe`/`go_gates`/`truth_gate`/`paper_replay`，全走 ADR-028 dispatch）；**每隻策略加** `strategies/<name>/research_config.py`（宣告 DOE/GO_GATES/TRUTH_GATE/PAPER_REPLAY）；新增 `api/routers/research_workflows.py`（`POST /research/workflows/{workflow}` + `GET /research/workflows/{strategy}`）。新增策略寫一個 `research_config.py` 即參與所有工作流。
 
 ---
 
