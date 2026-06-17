@@ -14,6 +14,7 @@
 > **2026-06-14 更新**：驗證機制設計修正 — **驗證閘從 binary 絕對通關改兩段式（ADR-025）**：真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；修正部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖；不翻案 ADR-023/024（死於真偽閘）；16 WBS 升 v3.4；ADR 數量 24→25
 > **2026-06-16 更新**：`backtest_platform` 結構整理（ADR-026）— 抽出 `strategies/common`（中立回測機制 `clean_returns`/`rebalance_dates`/`vol_target`/`TRADING_DAYS`），解 inst_flow/multi_factor/paper_daemon 反向挖 momentum 私有函式的 leaky abstraction，策略間零互相依賴；保留 momentum（乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/`；測試 989 passed / coverage 94%；ADR 數量 25→26
 > **2026-06-16 更新（二）**：`backtest_platform` 重構 Stage 1 — **策略契約 + registry（ADR-027）**：平台不再硬綁 four_layer。新增 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + `register_strategy`/`get_strategy` 輕量 registry）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾，玩家複製 `strategies/_template/` 即得新策略）；橫斷面共用抽 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；four_layer 降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保向後相容）；新增策略 7-12 檔→2-3 檔；測試 1000 passed / coverage 94%；ADR 數量 26→27
+> **2026-06-17 更新**：研究流程標準化（sub-project ①.5，**ADR-029**）— 7 支 `scripts/inst_flow_*.py` 一次性腳本刪除，邏輯拆成「平台通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 ADR-028 dispatch）+ 策略宣告 `strategies/<name>/research_config.py`」；CLI 加 doe/go-gates/truth-gate/paper-replay、HTTP 加 `POST /research/workflows/{workflow}`（非同步 job）+ `GET /research/workflows/{strategy}`；新增一隻策略只要寫 `research_config.py` 即可參與所有工作流，零新腳本；測試 1053 passed / coverage 92.9%；ADR 數量 28→29（含補登 028 dispatch contract）
 
 ---
 
@@ -36,7 +37,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**27 份 ADR**：…020（候選 D）/021（REST 契約合一）/022（多策略艦隊 lite）/023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**29 份 ADR**：…023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）/028（strategy dispatch contract + preset 移除）/029（研究工作流標準化）） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 

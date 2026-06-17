@@ -133,6 +133,11 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | `compare` | 多 run baseline delta + 排名 + 同號一致性 | `compare.compare_runs` |
 | `validate` | 把 ledger 內某 run 推進 IS→WFA→OOS **工作流 gate**（IS 階段）：PASS→IS_PASS 解鎖 WFA，並回報 OOS sealed-vault 狀態（IS+WFA 通過前 OOS 封存，防 look-ahead leak） | `validation.gate_machine.ValidationGate` |
 | `promote-check` | **唯讀晉升閘**：讀某 run 的 `validation_status`（顯式欄優先，否則由 metrics 推導 IS 狀態）→ 僅 `APPROVED`（IS→WFA→OOS→approve 全通過）才 ELIGIBLE，否則列出待完成階段。防未驗證策略上線 | `validation.gate_machine.GateState` + `ValidationGate` |
+| `validate-strategy` | conformance gate：驗任一已註冊策略 runner 是否符合契約（`--list` 列全部，ADR-028）| `strategies.conformance.check_strategy` |
+| `doe` | DOE 參數網格掃描（讀 `research_config.DOE`）；`--dry-run`/`--is-start`/`--is-end`/`--out-csv`（ADR-029）| `research.workflows.doe.run_doe` |
+| `go-gates` | WFA + PBO GO 閘（讀 `research_config.GO_GATES`）| `research.workflows.go_gates.run_go_gates` |
+| `truth-gate` | ADR-025 兩段式真偽閘（讀 `research_config.TRUTH_GATE`）| `research.workflows.truth_gate.run_truth_gate` |
+| `paper-replay` | paper 重放 sim（讀 `research_config.PAPER_REPLAY`）| `research.workflows.paper_replay.run_paper_replay_workflow` |
 
 > `run-is`／`validate`／`promote-check` 區別：`run-is` 是**唯讀審判庭**（`evaluate_gate` 逐條綠紅）；`validate` 是**有狀態工作流 gate**（`ValidationGate`，強制 IS→WFA→OOS 不可逆推進 + OOS 封存）；`promote-check` 是**唯讀晉升資格查詢**（不推進狀態，只回報距 APPROVED 還缺哪些階段）。
 
@@ -443,6 +448,8 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | POST | `/gate/evaluate` | 對任意 metrics dict 判 PASS/FAIL/INCOMPLETE | `evaluate_gate` |
 | POST | `/metrics/summary` | 日報酬序列 → A/B/C 指標 | `validation.metrics` |
 | POST | `/metrics/trades` | 交易清單 → E 指標（缺 key→400） | `validation.metrics` |
+| GET | `/research/workflows/{strategy}` | 列該策略宣告的研究工作流（ADR-029；未宣告/未知→400） | `research.workflows.loader.list_workflow_configs` |
+| POST | `/research/workflows/{workflow}` | 非同步排程研究工作流 job（doe/go_gates/truth_gate/paper_replay），回 202 `{job_id,status}`；未知 workflow→404、未知策略→400 | `jobs.submit` + `research.workflows.*` |
 
 ### 9.4 設計約束
 
