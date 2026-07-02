@@ -1,5 +1,7 @@
 # 儀表板規格 — backtest_platform
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件內文凍結於 2026-05-31（仍寫前 React 的 Streamlit 直連 SQL），與現況（ADR-023~030、React 前端、研究工作流標準化、ADR-029 工作流在 GUI IA 尚缺位）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3）。
+
 > ⚠️ **定位 banner（ADR-021，2026-06-04）**：本檔是面板 **FUNCTION / data-needs 真相源**（每個元件要哪張表 + 哪個欄 + 怎麼算），**不定義 REST shape**（內文仍寫前 React 的 Streamlit 直連 SQL，已 superseded by ADR-015）。前後端 REST 契約見 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**；本檔**餵**契約，非 **host** 契約。
 >
 > **版本：** v1.0 | **更新：** 2026-05-31

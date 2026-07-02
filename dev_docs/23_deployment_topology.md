@@ -1,5 +1,7 @@
 # 部署拓撲 — backtest_platform
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件內文凍結於 2026-05-31，與現況（ADR-023~030、FastAPI + React 前端拓撲、研究工作流標準化）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3，含 23 拓撲對齊 FastAPI+React 現實）。
+
 > **版本：** v1.0 | **更新：** 2026-05-31
 > **適用 M**：Dev (M2+) / Staging Paper (M4) / Production Live (M5)
 > **進度**：見 [`16_wbs_development_plan.md §7.D + §8.B`](./16_wbs_development_plan.md)（單一狀態真相源）

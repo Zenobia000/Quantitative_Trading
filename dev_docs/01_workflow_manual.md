@@ -1,5 +1,7 @@
 # 開發流程說明 — backtest_platform
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件部分內容凍結於 2026-05/06（此檔仍寫 TQuant-Lab/ADR-005 路線），與現況（ADR-023~030、React 前端、研究工作流標準化）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3）。
+
 > **版本：** v1.1 | **更新：** 2026-05-31 | **狀態：** 活躍
 > **v1.1**：合併原 `19_sprint_0_design.md` 內容（M1→M2 Sprint 0 Gate）；19 號文檔已撤回
 

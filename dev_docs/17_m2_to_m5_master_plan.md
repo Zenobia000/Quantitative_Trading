@@ -1,5 +1,7 @@
 # M2–M5 主規劃文件 — zipline-reloaded 主骨架整合方案
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件部分內容凍結於 2026-05/06——反清單「不寫 React」已被 ADR-015/021 推翻（React 前端已上線）、17 週排程與實際 2027-08 全倉差約 4 倍。與現況（ADR-023~030、React 前端、研究工作流標準化）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3）。
+
 > **版本：** v1.1 | **更新：** 2026-06-01 | **狀態：** 已批准
 > **路線代號：** Plan zipline-reloaded（原 Plan TQuant-Lab，Sprint 0 S1 揭露 zipline-tej 強綁 TEJ key 後切換）
 > **對應 plan file：** `C:\Users\xdxd2\.claude\plans\maintain-calm-blossom.md`

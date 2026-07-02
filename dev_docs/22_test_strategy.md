@@ -1,5 +1,7 @@
 # 測試策略 — backtest_platform
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件內文凍結於 2026-05-31，與現況（ADR-023~030、React 前端、研究工作流標準化、實際測試體系 1053 pass / ~92.9%、CI 尚缺）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3，含 22 重寫對齊實際測試體系）。
+
 > **版本：** v1.0 | **更新：** 2026-05-31
 > **適用 M**：全 milestone 測試規範
 > **進度**：見 [`16_wbs_development_plan.md §9`](./16_wbs_development_plan.md)（單一狀態真相源）
