@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backtest_platform.api.app import create_app
-from backtest_platform.api.deps import get_run_executor, get_runs_path
+from backtest_platform.api.deps import get_data_root, get_run_executor, get_runs_path
 
 #: Two minimal ledger records — a v2 baseline and a v3.1b variant, both FAIL,
 #: with opposite-sign nothing (same sign) so compare's sign-consistency is True.
@@ -44,6 +44,18 @@ SAMPLE_RUNS = [
 def runs_path(tmp_path) -> Path:
     """Path to a per-test runs ledger (file may or may not exist yet)."""
     return tmp_path / "runs.jsonl"
+
+
+@pytest.fixture
+def data_root(tmp_path) -> Path:
+    """Per-test parquet-cache scan root for ``GET /system/bundles`` (may be empty).
+
+    Kept separate from the real ``data/`` dir so bundle tests write synthetic
+    manifests here and every other API test simply sees a typed-empty bundle list.
+    """
+    root = tmp_path / "data"
+    root.mkdir(parents=True, exist_ok=True)
+    return root
 
 
 @pytest.fixture
@@ -95,10 +107,11 @@ def stub_executor():
 
 
 @pytest.fixture
-def client(runs_path, stub_executor) -> TestClient:
-    """TestClient over a fresh app with temp-ledger + stub-executor overrides."""
+def client(runs_path, stub_executor, data_root) -> TestClient:
+    """TestClient over a fresh app with temp-ledger + stub-executor + temp data-root."""
     app = create_app()
     app.dependency_overrides[get_runs_path] = lambda: runs_path
     app.dependency_overrides[get_run_executor] = lambda: stub_executor
+    app.dependency_overrides[get_data_root] = lambda: data_root
     with TestClient(app) as test_client:
         yield test_client

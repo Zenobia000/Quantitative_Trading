@@ -2429,6 +2429,7 @@
           "system"
         ],
         "summary": "Bundles",
+        "description": "Real bundle manifest scan (ADR-021 §5.4 → live). Discovers the default parquet\ncache + any ``data/parquet_*`` universe caches by their lineage manifests. Missing\ndata root / corrupt manifests degrade to typed-empty (``data_source`` explains),\nnever 500.",
         "operationId": "bundles_system_bundles_get",
         "parameters": [
           {
@@ -2461,7 +2462,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_list_BundleRow__"
                 }
               }
             }
@@ -2485,6 +2486,7 @@
           "system"
         ],
         "summary": "Bundle Quality",
+        "description": "Cheap manifest-derived quality for one bundle (row stats / alive-delisted /\ningest tallies). Unknown id → typed-empty (``data_source=\"not_found\"``). The\nheavier per-column freshness/gap audit is left to a future producer.",
         "operationId": "bundle_quality_system_bundles__bundle_id__quality_get",
         "parameters": [
           {
@@ -2503,7 +2505,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope"
+                  "$ref": "#/components/schemas/Envelope_BundleQuality_"
                 }
               }
             }
@@ -2571,6 +2573,91 @@
         "summary": "Ingest Status",
         "description": "Poll an ingest job's status/result; typed-empty ``pending`` if unknown.",
         "operationId": "ingest_status_system_ingest__job_id__status_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/universe/build": {
+      "post": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Universe Build",
+        "description": "Enqueue a survivorship-clean universe build as an async job (ADR-032); returns\n``{job_id, status}`` (202). Mirrors :func:`ingest` exactly — the job runs the real\n``run_build_universe`` workflow (FinLab wide frames → point-in-time union → parquet\ncache + ``universe_manifest.json``) off-thread; poll :func:`universe_build_status`.\n\nThe workflow is imported + called via its module at run time so a test can\nmonkeypatch ``research.workflows.universe.run_build_universe`` and never touch\nFinLab / the network.",
+        "operationId": "universe_build_system_universe_build_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UniverseBuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/universe/build/{job_id}/status": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Universe Build Status",
+        "description": "Poll a universe-build job's status/result; typed-empty ``pending`` if unknown.",
+        "operationId": "universe_build_status_system_universe_build__job_id__status_get",
         "parameters": [
           {
             "name": "job_id",
@@ -2759,6 +2846,235 @@
         "title": "ApiError",
         "description": "Structured error body shared by every failure response."
       },
+      "BundleQuality": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "stock_count": {
+            "type": "integer",
+            "title": "Stock Count"
+          },
+          "coverage_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Start"
+          },
+          "coverage_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage End"
+          },
+          "data_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Hash"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "total_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Rows"
+          },
+          "min_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Rows"
+          },
+          "max_rows": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Rows"
+          },
+          "n_alive": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Alive"
+          },
+          "n_delisted": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Delisted"
+          },
+          "n_ingested_ok": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Ingested Ok"
+          },
+          "n_ingested_failed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Ingested Failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "stock_count"
+        ],
+        "title": "BundleQuality",
+        "description": "Manifest-derived quality summary (``GET /system/bundles/{id}/quality``)."
+      },
+      "BundleRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "stock_count": {
+            "type": "integer",
+            "title": "Stock Count"
+          },
+          "coverage_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Start"
+          },
+          "coverage_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage End"
+          },
+          "data_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Hash"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "kind",
+          "stock_count"
+        ],
+        "title": "BundleRow",
+        "description": "One discovered parquet bundle cache (``GET /system/bundles`` row)."
+      },
       "CompareReportData": {
         "properties": {
           "baseline_id": {
@@ -2846,6 +3162,51 @@
         ],
         "title": "Envelope",
         "description": "The single response shape shared by every endpoint.\n\nGeneric over the ``data`` payload: ``response_model=Envelope[RunRow]`` types\nthe OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.\nUnparametrised ``Envelope`` ≡ ``Envelope[Any]`` — the ``ok``/``fail``/``pending``\nhelpers and any endpoint without a specific shape keep working untyped, with\nno field loss."
+      },
+      "Envelope_BundleQuality_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BundleQuality"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[BundleQuality]"
       },
       "Envelope_CompareReportData_": {
         "properties": {
@@ -3390,6 +3751,55 @@
           "success"
         ],
         "title": "Envelope[list[AlertRuleRow]]"
+      },
+      "Envelope_list_BundleRow__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/BundleRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[BundleRow]]"
       },
       "Envelope_list_PromotionEvent__": {
         "properties": {
@@ -4390,6 +4800,54 @@
         ],
         "title": "TrialsIncrement",
         "description": "Record N additional trials searched over a param-space (DSR deflation)."
+      },
+      "UniverseBuildRequest": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Strategy"
+          },
+          "span_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Span Start"
+          },
+          "span_end": {
+            "type": "string",
+            "format": "date",
+            "title": "Span End"
+          },
+          "top_n": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Top N",
+            "description": "per-quarter top-N by market cap"
+          },
+          "min_turnover": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Min Turnover",
+            "description": "trailing-20d avg turnover floor (TWD)"
+          },
+          "cache_dir": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Cache Dir",
+            "description": "dedicated parquet cache for this build"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy",
+          "span_start",
+          "span_end",
+          "top_n",
+          "min_turnover",
+          "cache_dir"
+        ],
+        "title": "UniverseBuildRequest",
+        "description": "Trigger a survivorship-clean universe build as an async job (ADR-032).\n\nMirrors ``research.workflows.config.UniverseConfig`` — the params the\n``build_universe`` workflow needs — and re-runs the same span-ordering gate at\nthe API boundary so a bad window fails 422 here, not deep in the job thread."
       },
       "UniverseFiltersData": {
         "properties": {

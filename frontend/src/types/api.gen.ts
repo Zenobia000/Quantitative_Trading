@@ -1269,7 +1269,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Bundles */
+        /**
+         * Bundles
+         * @description Real bundle manifest scan (ADR-021 §5.4 → live). Discovers the default parquet
+         *     cache + any ``data/parquet_*`` universe caches by their lineage manifests. Missing
+         *     data root / corrupt manifests degrade to typed-empty (``data_source`` explains),
+         *     never 500.
+         */
         get: operations["bundles_system_bundles_get"];
         put?: never;
         post?: never;
@@ -1286,7 +1292,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Bundle Quality */
+        /**
+         * Bundle Quality
+         * @description Cheap manifest-derived quality for one bundle (row stats / alive-delisted /
+         *     ingest tallies). Unknown id → typed-empty (``data_source="not_found"``). The
+         *     heavier per-column freshness/gap audit is left to a future producer.
+         */
         get: operations["bundle_quality_system_bundles__bundle_id__quality_get"];
         put?: never;
         post?: never;
@@ -1330,6 +1341,53 @@ export interface paths {
          * @description Poll an ingest job's status/result; typed-empty ``pending`` if unknown.
          */
         get: operations["ingest_status_system_ingest__job_id__status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/universe/build": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Universe Build
+         * @description Enqueue a survivorship-clean universe build as an async job (ADR-032); returns
+         *     ``{job_id, status}`` (202). Mirrors :func:`ingest` exactly — the job runs the real
+         *     ``run_build_universe`` workflow (FinLab wide frames → point-in-time union → parquet
+         *     cache + ``universe_manifest.json``) off-thread; poll :func:`universe_build_status`.
+         *
+         *     The workflow is imported + called via its module at run time so a test can
+         *     monkeypatch ``research.workflows.universe.run_build_universe`` and never touch
+         *     FinLab / the network.
+         */
+        post: operations["universe_build_system_universe_build_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/system/universe/build/{job_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Universe Build Status
+         * @description Poll a universe-build job's status/result; typed-empty ``pending`` if unknown.
+         */
+        get: operations["universe_build_status_system_universe_build__job_id__status_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1440,6 +1498,64 @@ export interface components {
             detail?: unknown | null;
         };
         /**
+         * BundleQuality
+         * @description Manifest-derived quality summary (``GET /system/bundles/{id}/quality``).
+         */
+        BundleQuality: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Stock Count */
+            stock_count: number;
+            /** Coverage Start */
+            coverage_start?: string | null;
+            /** Coverage End */
+            coverage_end?: string | null;
+            /** Data Hash */
+            data_hash?: string | null;
+            /** Generated At */
+            generated_at?: string | null;
+            /** Total Rows */
+            total_rows?: number | null;
+            /** Min Rows */
+            min_rows?: number | null;
+            /** Max Rows */
+            max_rows?: number | null;
+            /** N Alive */
+            n_alive?: number | null;
+            /** N Delisted */
+            n_delisted?: number | null;
+            /** N Ingested Ok */
+            n_ingested_ok?: number | null;
+            /** N Ingested Failed */
+            n_ingested_failed?: number | null;
+        };
+        /**
+         * BundleRow
+         * @description One discovered parquet bundle cache (``GET /system/bundles`` row).
+         */
+        BundleRow: {
+            /** Id */
+            id: string;
+            /** Path */
+            path: string;
+            /** Kind */
+            kind: string;
+            /** Stock Count */
+            stock_count: number;
+            /** Coverage Start */
+            coverage_start?: string | null;
+            /** Coverage End */
+            coverage_end?: string | null;
+            /** Data Hash */
+            data_hash?: string | null;
+            /** Generated At */
+            generated_at?: string | null;
+            /** Strategy */
+            strategy?: string | null;
+        };
+        /**
          * CompareReportData
          * @description ``GET /runs/compare`` — per-metric delta vs baseline + ranks + sign.
          */
@@ -1476,6 +1592,17 @@ export interface components {
             success: boolean;
             /** Data */
             data?: unknown | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[BundleQuality] */
+        Envelope_BundleQuality_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["BundleQuality"] | null;
             error?: components["schemas"]["ApiError"] | null;
             /** Meta */
             meta?: {
@@ -1609,6 +1736,18 @@ export interface components {
             success: boolean;
             /** Data */
             data?: components["schemas"]["AlertRuleRow"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[BundleRow]] */
+        Envelope_list_BundleRow__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["BundleRow"][] | null;
             error?: components["schemas"]["ApiError"] | null;
             /** Meta */
             meta?: {
@@ -2067,6 +2206,43 @@ export interface components {
              * @default 1
              */
             count: number;
+        };
+        /**
+         * UniverseBuildRequest
+         * @description Trigger a survivorship-clean universe build as an async job (ADR-032).
+         *
+         *     Mirrors ``research.workflows.config.UniverseConfig`` — the params the
+         *     ``build_universe`` workflow needs — and re-runs the same span-ordering gate at
+         *     the API boundary so a bad window fails 422 here, not deep in the job thread.
+         */
+        UniverseBuildRequest: {
+            /** Strategy */
+            strategy: string;
+            /**
+             * Span Start
+             * Format: date
+             */
+            span_start: string;
+            /**
+             * Span End
+             * Format: date
+             */
+            span_end: string;
+            /**
+             * Top N
+             * @description per-quarter top-N by market cap
+             */
+            top_n: number;
+            /**
+             * Min Turnover
+             * @description trailing-20d avg turnover floor (TWD)
+             */
+            min_turnover: number;
+            /**
+             * Cache Dir
+             * @description dedicated parquet cache for this build
+             */
+            cache_dir: string;
         };
         /** UniverseFiltersData */
         UniverseFiltersData: {
@@ -3964,7 +4140,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_list_BundleRow__"];
                 };
             };
             /** @description Validation Error */
@@ -3995,7 +4171,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope"];
+                    "application/json": components["schemas"]["Envelope_BundleQuality_"];
                 };
             };
             /** @description Validation Error */
@@ -4043,6 +4219,70 @@ export interface operations {
         };
     };
     ingest_status_system_ingest__job_id__status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    universe_build_system_universe_build_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UniverseBuildRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    universe_build_status_system_universe_build__job_id__status_get: {
         parameters: {
             query?: never;
             header?: never;

@@ -451,6 +451,10 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | POST | `/metrics/trades` | 交易清單 → E 指標（缺 key→400） | `validation.metrics` |
 | GET | `/research/workflows/{strategy}` | 列該策略宣告的研究工作流（ADR-029；未宣告/未知→400） | `research.workflows.loader.list_workflow_configs` |
 | POST | `/research/workflows/{workflow}` | 非同步排程研究工作流 job（doe/go_gates/truth_gate/paper_replay），回 202 `{job_id,status}`；未知 workflow→404、未知策略→400 | `jobs.submit` + `research.workflows.*` |
+| GET | `/system/bundles` | 掃 `data/parquet*` manifest → bundle 清單（id/path/kind/stock_count/coverage/data_hash；分頁）。無 manifest / 損毀 → typed-empty（`data_source="parquet_scan"`），永不 500 | `data.bundle_registry.scan_bundles` |
+| GET | `/system/bundles/{id}/quality` | 單一 bundle 由 manifest 衍生的品質摘要（default: row 統計；universe: alive/delisted + ingest 計數）。未知 id → typed-empty（`not_found`） | `data.bundle_registry.compute_bundle_quality` |
+| POST | `/system/ingest` | 非同步 ingest job（FinLab/FinMind → parquet），回 202 `{job_id,status}`；輪詢 `/system/ingest/{id}/status`（8.H.6） | `orchestration.collaborators.make_ingest` + `jobs.submit` |
+| POST | `/system/universe/build` | 非同步 survivorship-clean universe 建置 job（鏡射 ingest；驗 strategy/span/top_n/min_turnover/cache_dir，bad span→422），回 202；輪詢 `/system/universe/build/{id}/status`（ADR-032） | `research.workflows.universe.run_build_universe` + `jobs.submit` |
 
 ### 9.4 設計約束
 
