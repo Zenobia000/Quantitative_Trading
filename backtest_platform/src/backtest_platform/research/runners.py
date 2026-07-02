@@ -17,6 +17,7 @@ from backtest_platform.strategies import (
     FourLayerRunner,
     InstFlowRunner,
     MomentumRunner,
+    ReversalRunner,
     TemplateRunner,
 )
 from backtest_platform.strategies.common.panel import (
@@ -33,6 +34,7 @@ __all__ = [
     "FourLayerRunner",
     "InstFlowRunner",
     "MomentumRunner",
+    "ReversalRunner",
     "TemplateRunner",
     "_column_panel",
     "_flow_panels",

@@ -24,6 +24,19 @@ def test_load_momentum_research_config():
     assert hasattr(mod, "DOE")
 
 
+def test_load_reversal_research_config():
+    mod = load_research_config("reversal")
+    assert hasattr(mod, "DOE")
+    assert hasattr(mod, "GO_GATES")
+    assert hasattr(mod, "TRUTH_GATE")
+    assert hasattr(mod, "PAPER_REPLAY")
+
+
+def test_list_workflow_configs_reversal():
+    workflows = list_workflow_configs("reversal")
+    assert {"doe", "go_gates", "truth_gate", "paper_replay"} == set(workflows)
+
+
 def test_unknown_strategy_raises():
     with pytest.raises(ValueError, match="no research_config"):
         load_research_config("nonexistent_xyz")
