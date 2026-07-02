@@ -327,7 +327,7 @@
 | 編號 | 任務 | 角色 | 工時 | 狀態 | 完成 | 備註 |
 |:--|:--|:--|:--:|:--:|:--|:--|
 | 8.G.0 | UI/UX deep-research 對標 + 10 維度差距 + 7 流程圖 + roadmap（ADR-018 證據包） | — | 8h | ✅ | 2026-06-02 | — |
-| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | — | 6h | 🟡 v0.1-min | 2026-06-07 | **v0.1-min ✅**：`runs` 主表 DDL（init.sql + migration 002）+ `db_writer.upsert_runs()`（冪等 ON CONFLICT run_id，JSONB 血緣欄，13 tests）+ doc 21 §4.2b。**剩 v0.2-full**：4 張時序表回補 run_id FK（migration 003，需先 backfill 孤兒 run_id）|
+| 8.G.1 | `runs` 主表 DDL（21 §4）+ 4 張時序表 run_id 補 FK（Run 物件化 single source of truth） | — | 6h | 🟡 v0.1-min+A0 | 2026-07-02 | **v0.1-min ✅**：`runs` 主表 DDL（init.sql + migration 002）+ `db_writer.upsert_runs()`（冪等 ON CONFLICT run_id，JSONB 血緣欄，13 tests）+ doc 21 §4.2b。**A0 ✅（2026-07-02）**：`upsert_runs` 接上生產呼叫者——`research/run_persist.py::persist_run`（ledger append + best-effort DB 鏡射，DB 掛掉降級不擋 run），三寫入點（`POST /runs`·`/runs/async`·CLI `run-is`）全走；`gate_status`/`gate_summary` 隨行入表（migration 004）；`upsert_fills` 雙寫 `orders`+`fills`（成交經濟學欄位落地，client-side order_id 互聯）。**剩 v0.2-full**：4 張時序表回補 run_id FK（需先 backfill 孤兒 run_id）|
 | 8.G.2 | RunConfig Pydantic schema（IS/OOS 區間 + 成本攤平 + engine + range/step + hypothesis 預登記） | — | 6h | 🟡 v0.1-min | 2026-06-02 | `research/run_config.py`（IS 區間 + 成本 + engine + hypothesis 強制欄已實作）；OOS 鎖死 / range-step sweep / hypothesis 系統鎖死延後 v0.2 |
 | 8.G.3 | IS→WFA→OOS 不可逆狀態機 + OOS sealed vault + 硬門檻 dict | — | 8h | ✅ v0.1+v0.3 | — | M0/M2；`gate_state.py`(IS gate dict,v0.1) + `gate_machine.py`(ValidationGate 狀態機+OOSSealedError sealed vault,v0.3) |
 | 8.G.4 | 試驗次數計數 → DSR deflate | — | 4h | ✅ v0.3 | — | `validation/trials.py`（TrialsCounter + trials_deflated_criterion 接 dsr） |

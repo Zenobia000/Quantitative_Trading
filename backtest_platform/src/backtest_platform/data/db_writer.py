@@ -219,6 +219,8 @@ _RUNS_COLS = (
     "cost_assumptions",
     "params",
     "metrics",
+    "gate_status",
+    "gate_summary",
     "status",
     "trials_count",
 )
@@ -336,25 +338,84 @@ def upsert_equity_snapshots(rows: list[dict[str, Any]], cfg: DBConfig | None = N
     return _execute_write("equity_snapshots", _EQUITY_COLS, rows, conflict_cols=_EQUITY_PK, cfg=cfg)
 
 
+# fills execution log — carries the economics (commission / tax / slippage_bps)
+# the orders row cannot. fills.order_id is NOT NULL, so the id is minted
+# client-side (uuid4) and shared by both rows — DB-side gen_random_uuid()
+# can't be referenced across the two INSERTs.
+_FILLS_COLS = (
+    "fill_time", "order_id", "signal_id", "stock_id", "side", "fill_price",
+    "fill_quantity", "commission", "tax", "slippage_bps", "broker",
+    "broker_trade_id",
+)
+
+
 def upsert_fills(rows: list[dict[str, Any]], cfg: DBConfig | None = None) -> int:
-    """Persist broker fills. There is no `fills` table — a fill is a *filled* row
-    in `orders`, so each fill dict (stock_id / side / qty / price / filled_at,
-    broker defaults to 'paper') is mapped to an order and written via
-    ``upsert_orders``."""
-    orders = [
-        {
-            "created_at": f.get("filled_at"),
-            "completed_at": f.get("filled_at"),
-            "submitted_at": f.get("filled_at"),
-            "broker": f.get("broker", "paper"),
-            "stock_id": f.get("stock_id"),
-            "side": f.get("side"),
-            "order_type": f.get("order_type", "Market"),
-            "quantity": f.get("qty"),
-            "limit_price": f.get("price"),
-            "status": "filled",
-            "signal_id": f.get("signal_id"),
-        }
-        for f in rows
-    ]
-    return upsert_orders(orders, cfg=cfg)
+    """Persist broker fills as one logical event across two tables (A0):
+
+    1. a ``status='filled'`` row in `orders` — keeps the Monitor ``/fills``
+       reader path working unchanged;
+    2. a `fills` row with execution economics (commission / tax / slippage_bps),
+       linked to (1) by a client-generated ``order_id``.
+
+    Both INSERTs share one connection/commit. Fill dict keys: stock_id / side /
+    qty / price / filled_at (+ optional commission / tax / slippage_bps /
+    signal_id / broker_trade_id; broker defaults to 'paper')."""
+    if not rows:
+        return 0
+
+    import uuid
+
+    cfg = cfg or DBConfig.from_env()
+    from psycopg2.extras import execute_values  # type: ignore[import-not-found]
+
+    order_cols = ("order_id", *_ORDERS_COLS)
+    orders: list[dict[str, Any]] = []
+    fills: list[dict[str, Any]] = []
+    for f in rows:
+        oid = f.get("order_id") or str(uuid.uuid4())
+        orders.append(
+            {
+                "order_id": oid,
+                "created_at": f.get("filled_at"),
+                "completed_at": f.get("filled_at"),
+                "submitted_at": f.get("filled_at"),
+                "broker": f.get("broker", "paper"),
+                "stock_id": f.get("stock_id"),
+                "side": f.get("side"),
+                "order_type": f.get("order_type", "Market"),
+                "quantity": f.get("qty"),
+                "limit_price": f.get("price"),
+                "status": "filled",
+                "signal_id": f.get("signal_id"),
+            }
+        )
+        fills.append(
+            {
+                "fill_time": f.get("filled_at"),
+                "order_id": oid,
+                "signal_id": f.get("signal_id"),
+                "stock_id": f.get("stock_id"),
+                "side": f.get("side"),
+                "fill_price": f.get("price"),
+                "fill_quantity": f.get("qty"),
+                "commission": f.get("commission"),
+                "tax": f.get("tax"),
+                "slippage_bps": f.get("slippage_bps"),
+                "broker": f.get("broker", "paper"),
+                "broker_trade_id": f.get("broker_trade_id"),
+            }
+        )
+
+    orders_sql = f"INSERT INTO orders ({', '.join(order_cols)}) VALUES %s"
+    fills_sql = f"INSERT INTO fills ({', '.join(_FILLS_COLS)}) VALUES %s"
+    with _connection(cfg) as conn, conn.cursor() as cur:
+        execute_values(
+            cur, orders_sql,
+            [tuple(o.get(c) for c in order_cols) for o in orders], page_size=500,
+        )
+        execute_values(
+            cur, fills_sql,
+            [tuple(fl.get(c) for c in _FILLS_COLS) for fl in fills], page_size=500,
+        )
+    logger.info("wrote {} fills (orders + fills rows)", len(rows))
+    return len(rows)

@@ -110,6 +110,8 @@ CREATE TABLE IF NOT EXISTS runs (
     cost_assumptions  JSONB,                   -- fee / tax / slippage
     params            JSONB,                   -- entry / exit params
     metrics           JSONB,                   -- result summary (cagr / sharpe / ...)
+    gate_status       TEXT,                    -- 審判庭 verdict (PASS|FAIL|INCOMPLETE|...; enum evolves, unconstrained — migration 004)
+    gate_summary      TEXT,                    -- human-readable gate check summary
     status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
     trials_count      INTEGER NOT NULL DEFAULT 0,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),

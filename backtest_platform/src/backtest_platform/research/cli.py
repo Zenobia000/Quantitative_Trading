@@ -19,7 +19,8 @@ import click
 
 from backtest_platform.research.is_harness import run_and_judge_with_returns
 from backtest_platform.research.run_config import RunConfig
-from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH, append_run, read_runs
+from backtest_platform.research.run_persist import persist_run
+from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH, read_runs
 from backtest_platform.validation.gate_machine import (
     GateState,
     ValidationGate,
@@ -80,7 +81,7 @@ def run_is_cmd(strategy, params, hypothesis, stocks, start, end, runs_path, tear
         is_end=end.date(),
     )
     rec, returns = run_and_judge_with_returns(cfg)
-    append_run(rec, runs_path)
+    persist_run(rec, runs_path)  # ledger + best-effort runs-table mirror (A0)
     click.echo(f"\nrun_id={rec['run_id']}  strategy={strategy}  [{rec['gate_status']}]")
     click.echo(rec["gate_summary"])
     m = rec["metrics"]

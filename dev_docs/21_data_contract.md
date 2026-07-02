@@ -405,6 +405,8 @@ CREATE TABLE runs (
     cost_assumptions  JSONB,                   -- 手續費 / 稅 / 滑點
     params            JSONB,                   -- 策略 / 進出場參數快照
     metrics           JSONB,                   -- 結果摘要 (cagr / sharpe / ...)
+    gate_status       TEXT,                    -- 審判庭判決 (PASS|FAIL|INCOMPLETE|...；enum 會演進，不設 CHECK — migration 004)
+    gate_summary      TEXT,                    -- 逐條 gate 檢查摘要（人讀）
     status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
     trials_count      INTEGER NOT NULL DEFAULT 0,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -418,6 +420,8 @@ CREATE INDEX ON runs (status, created_at DESC);
 > 欄位順序與 `data/db_writer.py:_RUNS_COLS`（+ DB 預設的 `created_at`）逐欄對齊；`tests/data/test_init_sql_schema.py::test_runs_table_columns_match_db_writer_cols` 為防漂移守門，任何一邊改欄位另一邊未跟上即紅燈。`params` 只出現一次（於 `cost_assumptions` 之後），承載策略／進出場參數快照。
 
 > **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。四張時序表（equity_snapshots / positions / signals / risk_metrics）回補 `run_id → runs(run_id)` FK 屬 v0.2-full（需先 backfill 每個孤兒 run_id 對應的 `runs` 列），排入日後的 migration。寫入器見 `data/db_writer.py:upsert_runs`；建表 migration 見 `docker/timescaledb/migrations/002_add_runs_table.sql`，`preset → strategy` 欄位改名（ADR-028 對齊既有 DB）見 `003_rename_runs_preset_to_strategy.sql`。
+>
+> **A0（2026-07-02）— `upsert_runs` 接上生產呼叫者**：`research/run_persist.py::persist_run` = JSONL ledger append（真相源不變）+ best-effort DB 鏡射（DB 掛掉降級為 ledger-only，只 warning 不擋 run）。三個寫入點（`POST /runs`、`POST /runs/async`、CLI `run-is`）全數改走 `persist_run`；`run_record_to_db_row` 負責 `window → is_start/is_end` 拆欄與 NOT NULL 預設（`status='done'`、`trials_count=1`）。審判庭判決以 `gate_status`/`gate_summary` 兩個 nullable TEXT 欄隨行（migration `004_add_runs_gate_columns.sql`），供 run board 直接用 SQL badge。
 
 ### 4.3 新增表 — equity_snapshots（M2）
 
@@ -541,6 +545,8 @@ SELECT create_hypertable('fills', 'fill_time', chunk_time_interval => INTERVAL '
 CREATE INDEX ON fills (order_id);
 CREATE INDEX ON fills (stock_id, fill_time DESC);
 ```
+
+> **A0（2026-07-02）— fills 表開始有寫入者**：`db_writer.upsert_fills` 由「fill 只映射為 `orders` 的 `status='filled'` 列」改為**雙寫**：(1) `orders` filled 列（Monitor `/fills` 讀取路徑不變）+ (2) `fills` 列（承載 orders 沒有的成交經濟學欄位 commission / tax / slippage_bps）。兩列以 client 端 `uuid4` 產生的 `order_id` 互聯（`fills.order_id` NOT NULL，DB 端 `gen_random_uuid()` 無法跨兩個 INSERT 共享），同一 connection/commit 完成。
 
 ### 4.8 新增表 — risk_metrics（M3）
 
