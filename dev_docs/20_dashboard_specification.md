@@ -134,6 +134,15 @@ Monitor 面板無 live 資料源前（無 daemon 託管 PaperBroker / CircuitBre
 
 ---
 
+### 3.7 運行看板 `/monitor/board`（monitor_board，A2）
+
+> **此頁已 LIVE**（非 M4 stub）。資料源是 TimescaleDB `runs` 表——`run_persist`（A0）與 `run-batch`（A1）鏡射的生命週期 `running → done|failed` + 審判庭 verdict。10s 輪詢；in-flight run 的 verdict/metrics 為 null → 顯示 —，絕不捏造。
+
+| 元件 | 表 / 來源 | 計算 |
+| :--- | :--- | :--- |
+| 狀態 KPI 卡（總數 / 進行中 / 完成 / 失敗）| `runs`（`GET /monitor/board`）| client 端依 `status` 分組計數 |
+| 最新 runs 表（run_id / 策略 / 標的 / 窗口 / 狀態 / 審判庭 / Sharpe）| 同上，`ORDER BY created_at DESC LIMIT 50` | Sharpe 取 `metrics.sharpe`；null 顯示 — |
+
 ## 4. System zone
 
 | 頁面 | route | 職責 | 端點 |

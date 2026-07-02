@@ -184,3 +184,57 @@ def test_strategies_lists_registry_catalog():
     body = _client(_FakeReader()).get("/monitor/strategies").json()
     names = {r["strategy_id"] for r in body["data"]}
     assert "inst_flow" in names  # registered via @register_strategy
+
+
+# ---------------------------------------------------------------------------
+# A2 — /monitor/board: run board from the runs table (lifecycle + verdict)
+# ---------------------------------------------------------------------------
+class _BoardReader:
+    def __init__(self, rows=None, fail=False):
+        self._rows = rows or []
+        self._fail = fail
+        self.seen_limit = None
+
+    def runs_board(self, *, limit=50):
+        if self._fail:
+            raise RuntimeError("no DB connection")
+        self.seen_limit = limit
+        return self._rows
+
+
+def _board_client(reader) -> TestClient:
+    app = create_app()
+    app.dependency_overrides[get_telemetry_reader] = lambda: reader
+    return TestClient(app)
+
+
+def test_board_serves_runs_rows() -> None:
+    rows = [{
+        "run_id": "a1b2c3d4e5f6", "strategy": "inst_flow", "engine": "sim",
+        "stocks": ["2330", "2317"], "is_start": "2026-01-05", "is_end": "2026-04-10",
+        "status": "done", "gate_status": "PASS", "gate_summary": "IS gate: 4/4",
+        "metrics": {"sharpe": 1.1}, "created_at": "2026-07-02T12:00:00+00:00",
+    }]
+    res = _board_client(_BoardReader(rows=rows)).get("/monitor/board")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["success"] is True
+    assert body["data"] == rows
+    assert body["meta"]["total"] == 1
+    assert body["meta"]["data_source"] != "pending"
+
+
+def test_board_degrades_to_pending_without_db() -> None:
+    res = _board_client(_BoardReader(fail=True)).get("/monitor/board")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["data"] == []
+    assert body["meta"]["data_source"].startswith("pending")  # _PENDING marker
+
+
+def test_board_passes_limit_and_validates() -> None:
+    reader = _BoardReader(rows=[])
+    client = _board_client(reader)
+    assert client.get("/monitor/board?limit=7").status_code == 200
+    assert reader.seen_limit == 7
+    assert client.get("/monitor/board?limit=0").status_code == 422

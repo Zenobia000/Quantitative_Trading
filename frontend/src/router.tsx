@@ -18,6 +18,7 @@ import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { FleetPage } from '@/features/monitor/pages/FleetPage'
+import { BoardPage } from '@/features/monitor/pages/BoardPage'
 import { WatchPage } from '@/features/monitor/pages/WatchPage'
 import { PerformancePage } from '@/features/monitor/pages/PerformancePage'
 import { PositionsPage } from '@/features/monitor/pages/PositionsPage'
@@ -39,6 +40,7 @@ const REAL: Record<string, ReactElement> = {
   'research/promote/:strategyId': <PromotePage />,
   // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
   monitor: <FleetPage />,
+  'monitor/board': <BoardPage />,
   'monitor/watch': <WatchPage />,
   'monitor/performance': <PerformancePage />,
   'monitor/positions': <PositionsPage />,

@@ -141,6 +141,22 @@ def portfolio_summary(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
     )
 
 
+@router.get("/board", response_model=Envelope)
+def board(
+    limit: int = Query(50, ge=1, le=500),
+    reader: Any = Depends(get_telemetry_reader),
+) -> Envelope:
+    """Run board (A2) — latest research runs from the runs table: lifecycle
+    status (running|done|failed, mirrored by run_persist / run-batch) + 審判庭
+    verdict + metrics. Typed-empty pending fallback when no DB."""
+    try:
+        rows = reader.runs_board(limit=limit)
+    except Exception as exc:
+        logger.warning("monitor /board degraded (no DB?): {}", exc)
+        return _stub([])
+    return _served(rows, ttl=5, total=len(rows))
+
+
 @router.get("/correlation", response_model=Envelope)
 def correlation() -> Envelope:
     return _stub({"axes": [], "z": []}, ttl=300)

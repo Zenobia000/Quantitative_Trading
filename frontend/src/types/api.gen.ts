@@ -725,6 +725,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/monitor/board": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Board
+         * @description Run board (A2) — latest research runs from the runs table: lifecycle
+         *     status (running|done|failed, mirrored by run_persist / run-batch) + 審判庭
+         *     verdict + metrics. Typed-empty pending fallback when no DB.
+         */
+        get: operations["board_monitor_board_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/monitor/correlation": {
         parameters: {
             query?: never;
@@ -3376,6 +3398,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope"];
+                };
+            };
+        };
+    };
+    board_monitor_board_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
