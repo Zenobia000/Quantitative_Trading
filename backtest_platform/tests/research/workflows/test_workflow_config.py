@@ -11,6 +11,7 @@ from backtest_platform.research.workflows.config import (
     GOGatesConfig,
     PaperReplayConfig,
     TruthGateConfig,
+    revalidate_with_overrides,
 )
 
 
@@ -119,3 +120,71 @@ def test_paper_replay_config_valid():
     )
     assert cfg.initial_cash == 10_000_000.0
     assert cfg.lookback_buffer_days == 400
+
+
+# --- revalidate_with_overrides (審查缺陷 #11 — boundary re-validation) --------
+# ``model_copy(update=...)`` bypasses field validators / extra=forbid / model
+# validators. The boundary override path must re-validate so a bad override fails
+# at the edge, not deep inside the workflow.
+
+
+def _doe() -> DOEConfig:
+    return DOEConfig(
+        strategy="momentum",
+        grid={"lookback_days": [120, 252]},
+        symbols=["2330", "2317"],
+        is_start=date(2020, 1, 1),
+        is_end=date(2023, 12, 31),
+    )
+
+
+def test_revalidate_no_overrides_returns_same_instance():
+    cfg = _doe()
+    assert revalidate_with_overrides(cfg, {}) is cfg
+
+
+def test_revalidate_applies_valid_override():
+    out = revalidate_with_overrides(_doe(), {"is_start": date(2019, 1, 1)})
+    assert out.is_start == date(2019, 1, 1)
+    assert out.is_end == date(2023, 12, 31)  # untouched field preserved
+
+
+def test_revalidate_coerces_iso_date_string():
+    out = revalidate_with_overrides(_doe(), {"is_start": "2019-06-01"})
+    assert out.is_start == date(2019, 6, 1)
+
+
+def test_revalidate_rejects_wrong_type():
+    with pytest.raises(ValidationError):
+        revalidate_with_overrides(_doe(), {"is_start": "not-a-date"})
+
+
+def test_revalidate_rejects_unknown_field():
+    # extra=forbid must fire — model_copy(update=) would silently attach it.
+    with pytest.raises(ValidationError):
+        revalidate_with_overrides(_doe(), {"nonexistent_knob": 1})
+
+
+def test_revalidate_rejects_inverted_window():
+    # The _window_ordered model_validator must run — model_copy skips it.
+    with pytest.raises(ValidationError):
+        revalidate_with_overrides(_doe(), {"is_start": date(2025, 1, 1)})
+
+
+def test_revalidate_preserves_nested_arbitrary_type_config():
+    # GOGates/Truth/Paper carry ``fixed_config: BaseModel`` (arbitrary type). A
+    # naive model_dump() round-trip degrades it to a bare BaseModel, losing every
+    # field. The shallow dict() approach must keep the real strategy config.
+    from backtest_platform.strategies.momentum.strategy import MomentumConfig
+
+    cfg = GOGatesConfig(
+        strategy="momentum",
+        fixed_config=MomentumConfig(),
+        symbols=["2330"],
+        is_start=date(2015, 1, 1),
+        is_end=date(2024, 12, 31),
+    )
+    out = revalidate_with_overrides(cfg, {"n_wfa_folds": 6})
+    assert out.n_wfa_folds == 6
+    assert type(out.fixed_config).__name__ == "MomentumConfig"
+    assert out.fixed_config == cfg.fixed_config

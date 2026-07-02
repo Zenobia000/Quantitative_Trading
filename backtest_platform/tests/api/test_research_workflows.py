@@ -55,3 +55,48 @@ def test_post_build_universe_is_a_known_workflow():
     """
     r = client.post("/research/workflows/build_universe", json={"strategy": "nonexistent"})
     assert r.status_code == 400
+
+
+# --- overrides re-validation at the boundary (審查缺陷 #11) -------------------
+# ``model_copy(update=...)`` bypassed every validator, so a bad override enqueued a
+# job that blew up deep inside the workflow thread. Overrides must re-validate at
+# the HTTP edge → 422 VALIDATION_ERROR, never a silent 202.
+
+
+def test_post_doe_valid_override_still_queues():
+    r = client.post(
+        "/research/workflows/doe",
+        json={"strategy": "momentum", "overrides": {"hypothesis_prefix": "EXP"}},
+    )
+    assert r.status_code == 202, r.text
+    assert r.json()["success"] is True
+
+
+def test_post_doe_override_wrong_type_422():
+    r = client.post(
+        "/research/workflows/doe",
+        json={"strategy": "momentum", "overrides": {"is_start": "not-a-date"}},
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_post_doe_override_unknown_field_422():
+    r = client.post(
+        "/research/workflows/doe",
+        json={"strategy": "momentum", "overrides": {"nonexistent_knob": 1}},
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_post_doe_override_inverted_window_422():
+    r = client.post(
+        "/research/workflows/doe",
+        json={
+            "strategy": "momentum",
+            "overrides": {"is_start": "2025-01-01", "is_end": "2020-01-01"},
+        },
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"

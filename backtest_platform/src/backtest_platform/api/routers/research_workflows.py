@@ -11,10 +11,11 @@ from __future__ import annotations
 import importlib
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from backtest_platform.api.envelope import Envelope, ok
 from backtest_platform.jobs import submit
+from backtest_platform.research.workflows.config import revalidate_with_overrides
 from backtest_platform.research.workflows.loader import (
     get_doe_config,
     get_go_gates_config,
@@ -47,6 +48,15 @@ class _WorkflowRequest(BaseModel):
     overrides: dict = {}
 
 
+def _overrides_detail(exc: ValidationError) -> str:
+    """Collapse override validation errors into one readable 422 message (doc 25 §2)."""
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(p) for p in err.get("loc", ()))
+        parts.append(f"{loc}: {err['msg']}" if loc else str(err["msg"]))
+    return "invalid overrides — " + "; ".join(parts)
+
+
 @router.get("/{strategy}", response_model=Envelope)
 def list_strategy_workflows(strategy: str) -> Envelope:
     """List which workflow configs this strategy declares."""
@@ -72,7 +82,13 @@ def submit_workflow(workflow: str, req: _WorkflowRequest) -> Envelope:
         raise HTTPException(status_code=400, detail=str(exc)) from None
 
     if req.overrides:
-        cfg = cfg.model_copy(update=req.overrides)
+        # Re-validate at the boundary (審查缺陷 #11): bad type / unknown field /
+        # illegal window fails 422 HERE, never as a silent 202 that explodes in the
+        # job thread. ``model_copy(update=...)`` bypassed the whole validation gate.
+        try:
+            cfg = revalidate_with_overrides(cfg, req.overrides)
+        except ValidationError as exc:
+            raise HTTPException(status_code=422, detail=_overrides_detail(exc)) from None
 
     module_path, fn_name = run_ref.rsplit(":", 1)
     run_fn = getattr(importlib.import_module(module_path), fn_name)

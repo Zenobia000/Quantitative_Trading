@@ -31,6 +31,21 @@ def test_db_config_from_env_reads_overrides(monkeypatch) -> None:
     assert "host=db.example" in cfg.dsn()
 
 
+def test_connection_refuses_default_password(monkeypatch) -> None:
+    """審查缺陷 #19: the single DB choke point must refuse the shipped placeholder
+    password BEFORE opening a socket — a real connection is never attempted."""
+    from backtest_platform.config.settings import INSECURE_POSTGRES_PASSWORD
+    from backtest_platform.data.db_writer import _connection
+
+    cfg = DBConfig(password=INSECURE_POSTGRES_PASSWORD)
+    # psycopg2.connect must never be reached: the guard fires first.
+    with patch("psycopg2.connect") as mock_connect:
+        with pytest.raises(RuntimeError, match="POSTGRES_PASSWORD"):
+            with _connection(cfg):
+                pass
+    mock_connect.assert_not_called()
+
+
 def test_upsert_frame_empty_returns_zero() -> None:
     cur = MagicMock()
     n = _upsert_frame(cur, "daily_bars", ("stock_id", "trade_date"), pd.DataFrame())

@@ -286,3 +286,40 @@ def test_build_universe_dry_run_inst_flow():
 def test_build_universe_unknown_strategy_exits_nonzero():
     result = CliRunner().invoke(cli, ["build-universe", "--strategy", "nonexistent_xyz"])
     assert result.exit_code != 0
+
+
+# --- doe --is-start/--is-end override re-validation (審查缺陷 #11) ------------
+# The CLI window override used model_copy(update=), so a bad date exploded with a
+# bare ValueError traceback and an inverted window slipped through silently. Both
+# must now fail at the boundary with a clean ClickException.
+
+
+def test_doe_valid_window_override_dry_run():
+    result = CliRunner().invoke(
+        cli,
+        ["doe", "--strategy", "momentum",
+         "--is-start", "2018-01-01", "--is-end", "2019-01-01", "--dry-run"],
+    )
+    assert result.exit_code == 0, result.output
+    assert "2018-01-01" in result.output and "2019-01-01" in result.output
+
+
+def test_doe_bad_date_override_clean_error():
+    result = CliRunner().invoke(
+        cli,
+        ["doe", "--strategy", "momentum", "--is-start", "not-a-date", "--dry-run"],
+    )
+    assert result.exit_code != 0
+    # Clean ClickException message reaches the user (not an empty bare traceback).
+    assert "invalid" in result.output.lower()
+
+
+def test_doe_inverted_window_override_rejected():
+    result = CliRunner().invoke(
+        cli,
+        ["doe", "--strategy", "momentum",
+         "--is-start", "2025-01-01", "--is-end", "2020-01-01", "--dry-run"],
+    )
+    # model_copy used to let this pass with exit 0; re-validation must reject it.
+    assert result.exit_code != 0
+    assert "invalid" in result.output.lower()

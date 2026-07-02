@@ -315,14 +315,28 @@ def sweep_cmd(strategy, base_params, grid, stocks, start, end, out_csv) -> None:
 
 
 def _override_window(cfg, is_start: str | None, is_end: str | None):
-    """Return a copy of ``cfg`` with is_start/is_end overridden from ISO strings."""
-    from datetime import date as _date
-    updates = {}
+    """Return a copy of ``cfg`` with is_start/is_end overridden, RE-VALIDATED.
+
+    Re-validates at the boundary (審查缺陷 #11) rather than ``model_copy(update=...)``:
+    a malformed date, or an inverted is_start/is_end window, fails HERE as a clean
+    ClickException — not a bare ValueError traceback, and not a silently-accepted
+    illegal window that only explodes deep inside the workflow.
+    """
+    from pydantic import ValidationError
+
+    from backtest_platform.research.workflows.config import revalidate_with_overrides
+
+    overrides: dict[str, str] = {}
     if is_start:
-        updates["is_start"] = _date.fromisoformat(is_start)
+        overrides["is_start"] = is_start
     if is_end:
-        updates["is_end"] = _date.fromisoformat(is_end)
-    return cfg.model_copy(update=updates) if updates else cfg
+        overrides["is_end"] = is_end
+    try:
+        return revalidate_with_overrides(cfg, overrides)
+    except ValidationError as exc:
+        msg = "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}"
+                        for e in exc.errors())
+        raise click.ClickException(f"invalid --is-start/--is-end override: {msg}") from None
 
 
 @cli.command("doe")
