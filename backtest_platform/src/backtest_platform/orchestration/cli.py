@@ -183,5 +183,34 @@ def watch_status_cmd(strategy: str | None) -> None:
         )
 
 
+@watch_group.command("pause")
+@click.option("--strategy", required=True, help="active berth to pause (app-level)")
+def watch_pause_cmd(strategy: str) -> None:
+    """App-level pause: after-close skips this berth (benign, no Discord) while it
+    keeps its enrollment / expiry clock. Idempotent; only an active berth may pause.
+    Mirrors the GUI ``POST /monitor/watch/{strategy}/pause``."""
+    from backtest_platform.research.watch_registry import WatchRegistryError, pause
+
+    try:
+        st = pause(strategy)
+    except WatchRegistryError as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(f"⏸  {st.strategy} paused — after-close 將略過（保留到期 {st.expiry_date}）")
+
+
+@watch_group.command("resume")
+@click.option("--strategy", required=True, help="paused berth to resume")
+def watch_resume_cmd(strategy: str) -> None:
+    """Resume a paused berth back to active (after-close resumes collecting OOS).
+    Idempotent; only a paused berth may resume. Mirrors ``POST .../{strategy}/resume``."""
+    from backtest_platform.research.watch_registry import WatchRegistryError, resume
+
+    try:
+        st = resume(strategy)
+    except WatchRegistryError as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(f"▶  {st.strategy} resumed — state={st.state}（剩 {st.days_remaining} 天）")
+
+
 if __name__ == "__main__":
     cli()

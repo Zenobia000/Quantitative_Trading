@@ -117,6 +117,30 @@ def test_active_watch_is_allowed_to_run(tmp_path):
     assert runner.calls == [(_STRATEGY, date(2026, 7, 2))]
 
 
+def test_paused_watch_is_skipped_benignly_without_running_or_discord(tmp_path):
+    # An app-level pause (GUI / `watch pause`) means "stop collecting OOS for now"
+    # without exiting the berth. After-close must SKIP it: benign exit 0 (like a
+    # non-trading day), the daily flow never fires, and — crucially — NO Discord is
+    # pushed (a paused berth every day would be pure noise; a log line suffices).
+    runner = _RecordingRunner(ok=True)
+    paused = WatchStatus(
+        strategy=_STRATEGY, state="paused", enrolled_on=date(2026, 6, 1),
+        verdict_dsr=0.908, expiry_date=date(2026, 8, 30),
+        observed_trading_days=22, days_remaining=59,
+    )
+    notifier = _Notifier()
+    res = run_after_close(
+        _STRATEGY, date(2026, 7, 2),
+        session_runner=runner,
+        **_common(tmp_path, watch_status=lambda s, d: paused, notifier=notifier),
+    )
+    assert res.status is AfterCloseStatus.PAUSED
+    assert res.exit_code == 0  # a paused berth is a benign skip, not a failure
+    assert runner.calls == []  # the flow never fired
+    assert notifier.messages == []  # no Discord noise for a paused berth
+    assert not (tmp_path / "markers.jsonl").exists()  # nothing ran → no marker
+
+
 # --------------------------------------------------------------------------- #
 # no-data degrade — calendar says trading day but the source has no as-of row  #
 # --------------------------------------------------------------------------- #
