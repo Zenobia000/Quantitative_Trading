@@ -103,14 +103,19 @@ src/backtest_platform/
 │   ├── circuit_breaker.py        # 3 級熔斷狀態機
 │   └── types.py                  # AccountState / Order / Position
 │
-├── orchestration/                # 每日流程引擎
+├── orchestration/                # 每日流程引擎 + after-close 排程
 │   ├── daily_flow.py             # staged ETL→signals→risk→orders→log（fail-fast）
 │   ├── collaborators.py          # production 協作者工廠（真實倉位快照 + 批次現金遞減 + side 轉換）
-│   └── cli.py
+│   ├── after_close.py            # after-close 排程核心（交易日/收盤後/冪等守門 + Discord 告警，全注入式）
+│   └── cli.py                    # run / list-stages / after-close 子命令
 │
 ├── runtime/                      # paper 執行
 │   ├── paper_daemon.py           # 逐日重放 / 前進 daemon
-│   └── market_reader.py          # FinLab EOD 活 panel + make_position_signal_fn 通用 adapter
+│   ├── market_reader.py          # FinLab EOD 活 panel + make_position_signal_fn 通用 adapter
+│   └── trading_calendar.py       # 台股交易日 gate（XTAI 日曆；未裝 extra 退化週一至五近似）
+│
+├── deploy/                       # after-close 排程範例（systemd user units + cron + 安裝 SOP）
+│   ├── after-close.service / after-close.timer / after-close.cron.example / README.md
 │
 ├── adapters/
 │   └── brokers/paper_broker.py   # 紙上券商（簡化撮合 + heat）；shioaji（M5）
@@ -138,7 +143,7 @@ src/backtest_platform/
 | 模組 | 狀態 | 備註 |
 | :--- | :--- | :--- |
 | `config/` `data/` `strategies/` `research/` `validation/` `risk/` | ✅ 現行 | 研究迴圈 + 審判庭主體 |
-| `orchestration/` `runtime/` `adapters/brokers/paper_broker` | ✅ 現行 | paper 鏈；after-close 排程器待補（cron/systemd 級） |
+| `orchestration/` `runtime/` `adapters/brokers/paper_broker` | ✅ 現行 | paper 鏈 + after-close 排程器（cron/systemd 級，`deploy/` 附範例）已落地 |
 | `api/` `monitoring/` `jobs/` | ✅ 現行 | 15 routers；Discord 告警 |
 | `engines/zipline_adapter/` | ✅ 輔助 | 對拍 / bundle ingest；`engines/protocol.py` DEPRECATED |
 | `adapters/data_bundle` `data_feed` `dashboard/` | 空殼 | 保留套件位；React 前端已取代 dashboard |

@@ -15,10 +15,11 @@ forward. `live_config_for_date` binds it into `build_paper_collaborators`.
 of target holdings (e.g. the FinLab `stock_strategy/` references) drives the real
 chain (ETL→signals→risk→orders→log) through the platform's gate + broker.
 
-The **after-close scheduler** (firing `run_forward_session(today)` once per session
-close) is intentionally a thin stub: it needs real calendar time, can't be unit
-tested, and the cron/Prefect choice is a deployment concern — the per-date
-execution + persistence path is already proven by replay (②).
+The **after-close scheduler** that fires `run_forward_session(today)` once per
+session close now lives in `orchestration.after_close` (+ the `after-close` CLI
+subcommand): trading-day / after-close-time / idempotency guards over real calendar
+time, wired to cron / systemd timer (`deploy/`). Its decision path is fully
+injectable + unit-tested; this module stays the proven per-session execution core.
 """
 from __future__ import annotations
 
@@ -164,10 +165,10 @@ def make_position_signal_fn(
 def run_forward_session(as_of: date, config_for_date: Callable[[date], dict[str, Any]]) -> Any:
     """Run ONE forward session (after-close). Thin entry over the proven replay core.
 
-    The recurring after-close trigger (cron / Prefect / sleep-loop firing this once
-    per session close over real calendar time) is a deployment concern and is NOT
-    implemented here — it needs real time and cannot be unit tested. The per-date
-    execution + persistence is identical to replay (②), so this reuses it.
+    The recurring after-close trigger (the real-calendar cron / systemd timer that
+    fires this once per session close) lives in `orchestration.after_close`, not
+    here — this function stays the single-session execution primitive it schedules.
+    The per-date execution + persistence is identical to replay (②), so this reuses it.
     """
     from backtest_platform.runtime.paper_daemon import run_paper_replay
 
