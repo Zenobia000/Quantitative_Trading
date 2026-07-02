@@ -193,6 +193,45 @@ def test_slippage_missing_is_incomplete() -> None:
     assert r.verdict is TruthVerdict.INCOMPLETE
 
 
+def test_oos_holdout_collapse_rejected() -> None:
+    # ADR-030: the locked OOS holdout [oos_start, is_end] is a universal check.
+    inp = TruthGateInput(
+        survivorship_clean=True,
+        pre_registered=True,
+        wfa_oos_positive_frac=0.92,
+        dsr=0.97,
+        slippage_sharpe=1.0,
+        oos_holdout_sharpe=-0.3,  # the never-touched holdout period loses money
+    )
+    r = evaluate_truth_gate(inp)
+    assert r.verdict is TruthVerdict.REJECTED
+    assert any("holdout" in reason.lower() for reason in r.reasons)
+
+
+def test_oos_holdout_positive_allows_real() -> None:
+    inp = TruthGateInput(
+        survivorship_clean=True,
+        pre_registered=True,
+        wfa_oos_positive_frac=0.92,
+        dsr=0.97,
+        slippage_sharpe=1.0,
+        oos_holdout_sharpe=0.8,
+    )
+    assert evaluate_truth_gate(inp).verdict is TruthVerdict.REAL
+
+
+def test_oos_holdout_optional_defaults_none_keeps_prior_behaviour() -> None:
+    # Not providing the holdout must NOT flip an otherwise-REAL verdict.
+    inp = TruthGateInput(
+        survivorship_clean=True,
+        pre_registered=True,
+        wfa_oos_positive_frac=0.92,
+        dsr=0.97,
+        slippage_sharpe=1.0,
+    )
+    assert evaluate_truth_gate(inp).verdict is TruthVerdict.REAL
+
+
 def test_thresholds_are_data_constants() -> None:
     # Tuning a threshold must be a visible, recordable change — not a buried edit.
     assert PBO_MAX == 0.30

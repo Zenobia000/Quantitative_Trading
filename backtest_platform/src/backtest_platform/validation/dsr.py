@@ -155,6 +155,50 @@ def expected_max_sharpe(n_trials: int, variance_of_sharpes: float) -> float:
     return float(math.sqrt(variance_of_sharpes) * ((1.0 - g) * z1 + g * z2))
 
 
+#: Fraction of the single-trial Sharpe-estimator sampling variance below which a
+#: supplied ``sharpe_variance`` is treated as a units mistake (see the guard). A
+#: genuine cross-trial V[SR_n] is at least the estimation noise of one trial, so a
+#: value far below that floor is almost always a raw returns variance in disguise.
+_SHARPE_VARIANCE_FLOOR_FRACTION: float = 0.5
+
+
+def _single_trial_sharpe_variance(sr: float, n_obs: int, skew: float, kurtosis: float) -> float:
+    """Asymptotic sampling variance of a per-period Sharpe estimate (Lo 2002).
+
+    Equals the PSR denominator variance divided by ``(n_obs - 1)``. This is the
+    dispersion one trial's Sharpe already carries from estimation noise alone, so
+    it is the natural lower bound on any honest cross-trial ``V[SR_n]``.
+    """
+    return (1.0 - skew * sr + (kurtosis - 1.0) / 4.0 * sr**2) / (n_obs - 1)
+
+
+def _validate_dsr_inputs(
+    sr: float, n_trials: int, n_obs: int, skew: float, kurtosis: float, sharpe_variance: float
+) -> None:
+    """Fail fast on non-finite inputs and the classic annualized-SR + returns-variance
+    units mistake that silently inflated inst_flow's DSR to 1.0 (ADR-030)."""
+    for name, value in (
+        ("sr", sr), ("skew", skew), ("kurtosis", kurtosis), ("sharpe_variance", sharpe_variance)
+    ):
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be finite, got {value!r}")
+    if n_obs <= 1:
+        raise ValueError(f"n_obs must be > 1 to estimate DSR, got {n_obs}")
+    # Deflation is only active for n_trials > 1; an explicit 0 variance ("no
+    # cross-trial dispersion") is legitimate and left alone.
+    if n_trials > 1 and sharpe_variance > 0.0:
+        floor = _SHARPE_VARIANCE_FLOOR_FRACTION * _single_trial_sharpe_variance(
+            sr, n_obs, skew, kurtosis
+        )
+        if floor > 0.0 and sharpe_variance < floor:
+            raise ValueError(
+                f"sharpe_variance {sharpe_variance:.3g} is below the single-trial "
+                f"estimator floor {floor:.3g} for n_obs={n_obs}; this is the signature "
+                "of a units error — DSR needs the cross-trial variance of PER-PERIOD "
+                "Sharpe estimates V[SR_n], not a raw daily-returns variance (dev_docs/18 §4.4)"
+            )
+
+
 def deflated_sharpe_ratio(
     sr: float,
     n_trials: int,
@@ -194,6 +238,14 @@ def deflated_sharpe_ratio(
     -------
     float
         A probability in ``[0, 1]``; higher = more robust to overfitting.
+
+    Raises
+    ------
+    ValueError
+        On non-finite inputs, ``n_obs <= 1``, or a ``sharpe_variance`` far below
+        the single-trial estimator floor (the annualized-SR + returns-variance
+        units mistake — see :func:`_validate_dsr_inputs`).
     """
+    _validate_dsr_inputs(sr, n_trials, n_obs, skew, kurtosis, sharpe_variance)
     sr_star = expected_max_sharpe(n_trials, sharpe_variance)
     return psr(sr, n_obs=n_obs, skew=skew, kurtosis=kurtosis, sr_benchmark=sr_star)

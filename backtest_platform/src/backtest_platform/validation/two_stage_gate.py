@@ -45,6 +45,9 @@ WFA_OOS_POSITIVE_MIN: float = 0.60
 DSR_MIN: float = 0.95
 #: K3 robustness: OOS must not collapse under 0.3% per-leg slippage (Sharpe > 0).
 SLIPPAGE_SHARPE_MIN: float = 0.0
+#: The locked OOS holdout [oos_start, is_end] must not lose money (Sharpe > 0). This
+#: is the never-touched period; a negative Sharpe there is definitive overfit (ADR-030).
+OOS_HOLDOUT_SHARPE_MIN: float = 0.0
 
 
 class TruthVerdict(str, Enum):
@@ -67,6 +70,7 @@ class TruthGateInput:
     wfa_oos_positive_frac: float | None = None  # OOS>0 fold fraction (pre-registered)
     dsr: float | None = None                    # trials-deflated SR (pre-registered)
     slippage_sharpe: float | None = None        # K3 robustness (all paths)
+    oos_holdout_sharpe: float | None = None      # locked OOS holdout Sharpe (all paths)
 
 
 @dataclass(frozen=True)
@@ -98,6 +102,14 @@ def evaluate_truth_gate(inp: TruthGateInput) -> TruthGateResult:
         rejected.append(
             f"slippage Sharpe {inp.slippage_sharpe:.3g} <= {SLIPPAGE_SHARPE_MIN:.3g} "
             "(OOS collapses under 0.3% per-leg slippage)"
+        )
+
+    # 2b. Locked OOS holdout — optional (None ⇒ not evaluated), but when supplied a
+    # non-positive Sharpe on the never-touched period is definitive overfit (ADR-030).
+    if inp.oos_holdout_sharpe is not None and inp.oos_holdout_sharpe <= OOS_HOLDOUT_SHARPE_MIN:
+        rejected.append(
+            f"OOS holdout Sharpe {inp.oos_holdout_sharpe:.3g} <= {OOS_HOLDOUT_SHARPE_MIN:.3g} "
+            "(edge does not survive the locked out-of-sample holdout)"
         )
 
     # 3. overfit control — branch on how the config was obtained.
