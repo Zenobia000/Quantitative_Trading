@@ -43,7 +43,7 @@ _IS_DAYS = 3 * 365
 @dataclass(frozen=True)
 class TruthGateResult:
     strategy: str
-    verdict: str     # "REAL" | "REJECTED" | "INCOMPLETE"
+    verdict: str     # "REAL" | "PAPER_WATCH" | "REJECTED" | "INCOMPLETE" (ADR-025/033)
     dsr: float
     slippage_sharpe: float
     wfa_oos_positive_frac: float

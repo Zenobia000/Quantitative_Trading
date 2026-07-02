@@ -386,6 +386,19 @@ ADR-025 把單一 binary 通關拆成兩段，避免「部署閘與研究迭代�
 
 > **關鍵**：landscape PBO 衡量「**選** config」的過擬合，**不適用於否定** pre-registered 單一 config（該用 OOS breadth + DSR 判）。這把資金流 fixed-config 的「WFA median OOS 1.30 但 landscape PBO 43%」正確拆開。
 
+#### 真偽閘判決三態 → 倉位對映（[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）
+
+真偽閘 verdict 在 REAL/REJECTED 之間新增零資本 `PAPER_WATCH` 觀察艙態（`TruthVerdict`）：
+
+| verdict | 進入條件 | 目標倉位 | 說明 |
+| :--- | :--- | :--- | :--- |
+| **REAL** | 全 hard-fail 過 **且** DSR ≥ `DSR_MIN`（0.95）| 配置閘連續 size（> 0）| 可部署 |
+| **PAPER_WATCH** | 全 hard-fail 過 **且** DSR ∈ [`PAPER_WATCH_DSR_MIN`, `DSR_MIN`) 即 **[0.90, 0.95)** | **0.0（恆零資本）** | 觀察艙：零資本 paper 收 live OOS，上限 2 艙位 / 3 個月到期；晉升仍需重評後 DSR ≥ 0.95 |
+| **REJECTED** | 任一 hard-fail 不過（含 DSR < 0.90）| 0.0 | 假 edge / 過擬合 / 生存者膨脹，不進艙 |
+| **INCOMPLETE** | 必要指標缺失 | 0.0 | 無法完整評估，不得進艙（優先於 PAPER_WATCH）|
+
+> **零資本 ≠ 放寬部署門檻**：DSR ≥ 0.95 仍 gate 每一分資本；PAPER_WATCH 是資訊收集通道（收 live OOS 補強證據），非門檻購物。band 下限 0.90 的獨立理由＝「90% 機率真 Sharpe 超越 max-of-N-trials 噪音基準」仍屬高證據水位。
+
 #### 第二段：配置閘（Sizing Gate）— 連續，決定目標倉位
 
 過真偽閘後，按風險預算映射到**目標權重**（非 yes/no）：
@@ -589,3 +602,4 @@ class RiskConfig(BaseModel, frozen=True):
 | :--- | :--- | :--- |
 | v1.0 | 2026-05-31 | 初版（對應 plan §1 L5；擴充 13/14 風控細節） |
 | v1.1 | 2026-06-14 | 新增 §8.4 配置閘（真偽閘 + sizing 目標倉位，ADR-025 / `two_stage_gate.py`）；與 §8.1 升倉閘銜接 |
+| v1.2 | 2026-07-02 | §8.4 新增「真偽閘判決三態 → 倉位對映」表：`PAPER_WATCH` 零資本觀察艙（DSR ∈ [0.90, 0.95)，ADR-033 / `TruthVerdict`）|

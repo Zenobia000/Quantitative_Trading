@@ -411,6 +411,9 @@ def truth_gate_cmd(strategy, dry_run) -> None:
     click.echo(f"  verdict={result.verdict}  DSR={result.dsr:.4f}  "
                f"slip_sharpe={result.slippage_sharpe:.3f}  "
                f"WFA OOS+={result.wfa_oos_positive_frac:.2%}")
+    if result.verdict == "PAPER_WATCH":
+        click.echo("  🟡 觀察艙資格：零資本 paper 收 live OOS，3 個月到期"
+                   f"（position_size={result.position_size:.3f}，晉升仍需 DSR ≥ 0.95）")
     for r in result.reasons:
         click.echo(f"  ✗ {r}")
 

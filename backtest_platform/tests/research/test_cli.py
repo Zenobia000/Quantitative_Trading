@@ -245,6 +245,25 @@ def test_truth_gate_dry_run_momentum():
     assert result.exit_code == 0
 
 
+def test_truth_gate_paper_watch_prints_observation_banner(monkeypatch):
+    # ADR-033: a PAPER_WATCH verdict must surface the zero-capital / 3-month clause
+    # so an operator never mistakes the observation艙 for a deploy-ready REAL.
+    from backtest_platform.research.workflows import truth_gate as tg_mod
+
+    fake = tg_mod.TruthGateResult(
+        strategy="momentum", verdict="PAPER_WATCH", dsr=0.908,
+        slippage_sharpe=0.846, wfa_oos_positive_frac=1.0, oos_holdout_sharpe=0.892,
+        position_size=0.0,
+        reasons=("DSR 0.908 ∈ [0.9, 0.95) (paper-watch band ...)",),
+        details={},
+    )
+    monkeypatch.setattr(tg_mod, "run_truth_gate", lambda cfg: fake)
+    result = CliRunner().invoke(cli, ["truth-gate", "--strategy", "momentum"])
+    assert result.exit_code == 0
+    assert "🟡" in result.output
+    assert "觀察艙" in result.output
+
+
 def test_paper_replay_dry_run_momentum():
     result = CliRunner().invoke(cli, ["paper-replay", "--strategy", "momentum", "--dry-run"])
     assert result.exit_code == 0
