@@ -199,3 +199,62 @@ def test_expected_max_sharpe_rejects_negative_variance():
 def test_expected_max_sharpe_rejects_nonpositive_trials():
     with pytest.raises(ValueError):
         expected_max_sharpe(0, 0.25)
+
+
+# --------------------------------------------------------------------------- #
+# Input guards (ADR-030) — fail fast on the classic units mistake
+# --------------------------------------------------------------------------- #
+
+
+def test_dsr_rejects_annualized_sr_with_returns_variance_unit_mismatch():
+    """The 審判庭 bug: an annualized Sharpe paired with a raw daily-returns
+    variance (~1e-4) fed as the cross-trial Sharpe variance. That combination
+    silently deflated inst_flow's DSR to 1.0; it must now fail fast.
+
+    A genuine V[SR_n] cannot fall far below the single-trial Sharpe-estimator
+    sampling variance (~1/n_obs); 1e-4 << that for n_obs=1260 → units error.
+    """
+    with pytest.raises(ValueError, match="sharpe_variance"):
+        deflated_sharpe_ratio(
+            sr=0.333, n_trials=16, n_obs=1260, skew=0.0, kurtosis=3.0,
+            sharpe_variance=0.009**2,
+        )
+
+
+def test_dsr_rejects_nonfinite_inputs():
+    with pytest.raises(ValueError):
+        deflated_sharpe_ratio(
+            sr=float("nan"), n_trials=4, n_obs=100, skew=0.0, kurtosis=3.0,
+            sharpe_variance=0.25,
+        )
+    with pytest.raises(ValueError):
+        deflated_sharpe_ratio(
+            sr=0.5, n_trials=4, n_obs=100, skew=0.0, kurtosis=3.0,
+            sharpe_variance=float("inf"),
+        )
+
+
+def test_dsr_allows_explicit_zero_variance_no_deflation():
+    """``sharpe_variance == 0`` (no cross-trial dispersion) stays valid → SR* = 0."""
+    d = deflated_sharpe_ratio(
+        sr=0.05, n_trials=8, n_obs=500, skew=0.0, kurtosis=3.0, sharpe_variance=0.0
+    )
+    assert 0.0 <= d <= 1.0
+
+
+def test_dsr_accepts_single_trial_estimator_variance_floor():
+    """The per-period estimator variance (~1/n) is a legitimate V[SR_n] and passes."""
+    n_obs = 1260
+    est_var = (1.0 + 0.5 * 0.05**2) / (n_obs - 1)
+    d = deflated_sharpe_ratio(
+        sr=0.05, n_trials=8, n_obs=n_obs, skew=0.0, kurtosis=3.0, sharpe_variance=est_var
+    )
+    assert 0.0 <= d <= 1.0
+
+
+def test_dsr_single_trial_skips_variance_floor_guard():
+    """With one trial there is no deflation, so a tiny variance must not raise."""
+    d = deflated_sharpe_ratio(
+        sr=0.333, n_trials=1, n_obs=1260, skew=0.0, kurtosis=3.0, sharpe_variance=1e-6
+    )
+    assert 0.0 <= d <= 1.0

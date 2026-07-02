@@ -1,8 +1,26 @@
-"""ADR-025 two-stage truth gate workflow via strategy dispatch (ADR-028/029)."""
+"""ADR-025 two-stage truth gate workflow via strategy dispatch (ADR-028/029).
+
+The 審判庭: judge whether a pre-registered edge is REAL and, if so, size it.
+ADR-030 corrected four proven defects in the original implementation:
+
+  1. DSR was fed the *annualized* Sharpe (×√252) with a *daily returns variance* —
+     mixed units that inflated the Deflated Sharpe to 1.0. It now uses the
+     per-period Sharpe with a per-period cross-trial Sharpe variance V[SR_n].
+  2. The locked OOS holdout [oos_start, is_end] was never executed; it now runs
+     and gates the verdict (a negative holdout Sharpe is definitive overfit).
+  3. ``survivorship_clean`` was hardwired True; it is now config-driven (defaults
+     False) so the hard precondition is a claim to prove, not a free pass.
+  4. Downstream deflation guards live in ``validation/dsr.py`` (fail fast).
+
+A REAL verdict flows into the ADR-025 SizingGate → a continuous position weight.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+
+import numpy as np
+import pandas as pd
 
 # Import side-effect: ensure the built-in strategies are registered.
 from backtest_platform.research import runners as _runners  # noqa: F401
@@ -10,7 +28,11 @@ from backtest_platform.research.is_harness import load_merged_parquet
 from backtest_platform.research.workflows.config import TruthGateConfig
 from backtest_platform.strategies.protocol import Loader, get_strategy
 from backtest_platform.validation.dsr import deflated_sharpe_ratio
-from backtest_platform.validation.two_stage_gate import TruthGateInput, evaluate_truth_gate
+from backtest_platform.validation.two_stage_gate import (
+    SizingInput,
+    TruthGateInput,
+    evaluate_two_stage,
+)
 from backtest_platform.validation.wfa import walk_forward_splits
 
 _OOS_DAYS = 365
@@ -24,6 +46,8 @@ class TruthGateResult:
     dsr: float
     slippage_sharpe: float
     wfa_oos_positive_frac: float
+    oos_holdout_sharpe: float
+    position_size: float
     reasons: tuple[str, ...]
     details: dict[str, Any]
 
@@ -33,65 +57,110 @@ def run_truth_gate(cfg: TruthGateConfig, loader: Loader = load_merged_parquet) -
     runner = get_strategy(cfg.strategy)
     sconf = runner.config_model(**cfg.fixed_config.model_dump())
 
-    # --- 1. WFA on the IS span (strictly before OOS) ---
+    # --- 1. WFA OOS breadth on the IS span (strictly before the holdout) ---
+    frac, oos_sharpes, n_folds = _wfa_oos_breadth(runner, cfg, sconf, loader)
+
+    # --- 2. Full IS-span run → per-period trials-deflated DSR (units-correct) ---
+    full = runner.run(list(cfg.symbols), cfg.is_start, cfg.oos_start, sconf, loader)
+    dsr = _deflated_sharpe(full.returns, cfg.n_trials)
+
+    # --- 3. Locked OOS holdout [oos_start, is_end] — the never-touched period ---
+    oos_run = runner.run(list(cfg.symbols), cfg.oos_start, cfg.is_end, sconf, loader)
+    oos_holdout_sharpe = float(oos_run.metrics.get("sharpe", 0.0))
+
+    # --- 4. K3 slippage-robustness Sharpe ---
+    slippage_sharpe = _slippage_sharpe(runner, cfg, sconf, loader)
+
+    # --- 5. Two-stage gate: judge REAL, then size only if REAL ---
+    decision = evaluate_two_stage(
+        TruthGateInput(
+            survivorship_clean=cfg.survivorship_clean,
+            pre_registered=cfg.pre_registered,
+            wfa_oos_positive_frac=frac,
+            dsr=dsr,
+            slippage_sharpe=slippage_sharpe,
+            oos_holdout_sharpe=oos_holdout_sharpe,
+        ),
+        SizingInput(oos_sharpe=oos_holdout_sharpe),
+    )
+
+    return TruthGateResult(
+        strategy=cfg.strategy,
+        verdict=decision.truth.verdict.value,
+        dsr=dsr,
+        slippage_sharpe=slippage_sharpe,
+        wfa_oos_positive_frac=frac,
+        oos_holdout_sharpe=oos_holdout_sharpe,
+        position_size=decision.size,
+        reasons=decision.truth.reasons,
+        details={
+            "sharpe_is": float(full.metrics.get("sharpe", 0.0)),
+            "n_obs": int(full.returns.size),
+            "n_trials": cfg.n_trials,
+            "wfa_folds": n_folds,
+            "oos_sharpes": oos_sharpes,
+            "oos_holdout_sharpe": oos_holdout_sharpe,
+            "oos_window": (cfg.oos_start.isoformat(), cfg.is_end.isoformat()),
+            "survivorship_clean": cfg.survivorship_clean,
+        },
+    )
+
+
+def _wfa_oos_breadth(runner: Any, cfg: TruthGateConfig, sconf: Any, loader: Loader) -> tuple[float, list[float], int]:
+    """Fraction of WFA folds with OOS Sharpe > 0 (pre-registered breadth check)."""
     folds = walk_forward_splits(
         cfg.is_start, cfg.oos_start, is_days=_IS_DAYS, oos_days=_OOS_DAYS, step_days=_OOS_DAYS,
     )[: cfg.n_wfa_folds]
-    oos_sharpes: list[float] = []
-    for fold in folds:
-        run = runner.run(list(cfg.symbols), fold.oos_start, fold.oos_end, sconf, loader)
-        oos_sharpes.append(float(run.metrics.get("sharpe", 0.0)))
-    wfa_oos_positive_frac = (
-        sum(1 for s in oos_sharpes if s > 0) / len(oos_sharpes) if oos_sharpes else 0.0
+    oos_sharpes = [
+        float(runner.run(list(cfg.symbols), f.oos_start, f.oos_end, sconf, loader).metrics.get("sharpe", 0.0))
+        for f in folds
+    ]
+    frac = sum(1 for s in oos_sharpes if s > 0) / len(oos_sharpes) if oos_sharpes else 0.0
+    return frac, oos_sharpes, len(folds)
+
+
+def _deflated_sharpe(returns: pd.Series, n_trials: int) -> float:
+    """Trials-deflated Sharpe on a run's daily returns (Bailey & López de Prado).
+
+    DSR needs PER-PERIOD statistics — never the ×√252 annualized Sharpe the metrics
+    dict reports (mixing an annualized SR with per-period moments was the bug that
+    inflated DSR to 1.0). We recompute the Sharpe as ``mean / std`` on the raw daily
+    returns and supply the cross-trial Sharpe variance ``V[SR_n]`` in the SAME units.
+
+    For a pre-registered single config there is no landscape sweep to measure
+    ``V[SR_n]`` from, so we use the null-hypothesis floor: the sampling variance of
+    the per-period Sharpe estimator (Lo 2002). Under H0 (no trial has skill) the N
+    trial Sharpes are noisy draws about 0 with exactly this variance — the *most
+    lenient* honest deflation. If a strategy still fails here, it fails definitively.
+    """
+    arr = np.asarray(returns, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    n_obs = arr.size
+    if n_obs < 2:
+        return 0.0
+    sd = float(arr.std(ddof=0))
+    if sd <= 0.0:
+        return 0.0
+    sr_pp = float(arr.mean()) / sd
+    s = pd.Series(arr)
+    skew = float(s.skew()) if n_obs > 3 else 0.0
+    kurt = float(s.kurtosis()) + 3.0 if n_obs > 3 else 3.0  # pandas excess → raw (3 = Gaussian)
+    # V[SR_n] under H0 == the single-trial estimator variance (PSR denom / (n-1)).
+    estimator_var = (1.0 - skew * sr_pp + (kurt - 1.0) / 4.0 * sr_pp**2) / (n_obs - 1)
+    sharpe_variance = max(estimator_var, 0.0)
+    return deflated_sharpe_ratio(
+        sr=sr_pp, n_trials=n_trials, n_obs=n_obs,
+        skew=skew, kurtosis=kurt, sharpe_variance=sharpe_variance,
     )
 
-    # --- 2. Full IS-span Sharpe + DSR deflation ---
-    full = runner.run(list(cfg.symbols), cfg.is_start, cfg.oos_start, sconf, loader)
-    sr = float(full.metrics.get("sharpe", 0.0))
-    rets = full.returns
-    n_obs = max(len(rets), 2)
-    skew = float(rets.skew()) if len(rets) > 3 else 0.0
-    kurt = float(rets.kurtosis() + 3) if len(rets) > 3 else 3.0
-    sharpe_var = max(float(rets.var()), 1e-9) if len(rets) > 1 else 1e-9
-    dsr = (
-        deflated_sharpe_ratio(
-            sr=sr, n_trials=cfg.n_trials, n_obs=n_obs,
-            skew=skew, kurtosis=kurt, sharpe_variance=sharpe_var,
-        )
-        if n_obs > 1 else 0.0
-    )
 
-    # --- 3. K3 slippage-robustness Sharpe ---
+def _slippage_sharpe(runner: Any, cfg: TruthGateConfig, sconf: Any, loader: Loader) -> float:
+    """OOS Sharpe under the K3 slippage stress (edge must not collapse)."""
     slip_conf = runner.config_model(
         **{**cfg.fixed_config.model_dump(), **_add_slippage(cfg.fixed_config, cfg.slippage_stress)}
     )
     slip_run = runner.run(list(cfg.symbols), cfg.is_start, cfg.oos_start, slip_conf, loader)
-    slippage_sharpe = float(slip_run.metrics.get("sharpe", 0.0))
-
-    # --- 4. Evaluate the truth gate ---
-    gate = evaluate_truth_gate(TruthGateInput(
-        survivorship_clean=True,
-        pre_registered=cfg.pre_registered,
-        wfa_oos_positive_frac=wfa_oos_positive_frac,
-        dsr=dsr,
-        slippage_sharpe=slippage_sharpe,
-    ))
-
-    return TruthGateResult(
-        strategy=cfg.strategy,
-        verdict=gate.verdict.value,
-        dsr=dsr,
-        slippage_sharpe=slippage_sharpe,
-        wfa_oos_positive_frac=wfa_oos_positive_frac,
-        reasons=gate.reasons,
-        details={
-            "sharpe_is": sr,
-            "n_obs": n_obs,
-            "n_trials": cfg.n_trials,
-            "wfa_folds": len(folds),
-            "oos_sharpes": oos_sharpes,
-        },
-    )
+    return float(slip_run.metrics.get("sharpe", 0.0))
 
 
 def _add_slippage(config: Any, stress: float) -> dict[str, Any]:

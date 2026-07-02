@@ -76,6 +76,29 @@ def test_truth_gate_config_valid():
     assert cfg.pre_registered is True
 
 
+def test_truth_gate_survivorship_clean_defaults_false():
+    # ADR-030: survivorship cleanliness must be an explicit declaration, never a
+    # hardwired green light. Default False → the truth gate hard-fails until a
+    # strategy proves its universe is survivorship-clean.
+    from backtest_platform.strategies.momentum.strategy import MomentumConfig
+    cfg = TruthGateConfig(
+        strategy="momentum", fixed_config=MomentumConfig(), symbols=["2330"],
+        is_start=date(2015, 1, 1), oos_start=date(2021, 1, 1), is_end=date(2024, 12, 31),
+        n_trials=8,
+    )
+    assert cfg.survivorship_clean is False
+
+
+def test_truth_gate_survivorship_clean_can_be_declared():
+    from backtest_platform.strategies.momentum.strategy import MomentumConfig
+    cfg = TruthGateConfig(
+        strategy="momentum", fixed_config=MomentumConfig(), symbols=["2330"],
+        is_start=date(2015, 1, 1), oos_start=date(2021, 1, 1), is_end=date(2024, 12, 31),
+        n_trials=8, survivorship_clean=True,
+    )
+    assert cfg.survivorship_clean is True
+
+
 def test_truth_gate_rejects_unordered_oos():
     from backtest_platform.strategies.momentum.strategy import MomentumConfig
     with pytest.raises(ValidationError):
