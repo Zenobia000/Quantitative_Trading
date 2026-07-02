@@ -86,7 +86,7 @@ docker compose up -d influxdb grafana
 
 ## 3. 排程（after-close，收 live OOS）
 
-收 live OOS 的最後一塊——after-close 排程器（審查缺陷 #17）——已落地為 **cron / systemd timer 級**（不用企業 scheduler，對齊 PRD v4.0）。CLI 入口 `orchestration.cli after-close` 自帶三道守門，週末 / 假日 / 未到收盤 / 重複觸發都是乾淨 no-op（exit 0）；唯有 daily flow 失敗才 exit 1 並推 Discord 告警。
+收 live OOS 的最後一塊——after-close 排程器（審查缺陷 #17）——已落地為 **cron / systemd timer 級**（不用企業 scheduler，對齊 PRD v4.0）。CLI 入口 `orchestration.cli after-close` 自帶多道守門，週末 / 假日 / 未到收盤 / 重複觸發都是乾淨 no-op（exit 0）；daily flow 失敗 exit 1 並推 Discord 告警。**新增兩道資料品質前置（本 PR）**：(1) **觀察艙 enrollment 守門（ADR-033）**——策略未進艙 / 已到期 → 拒跑（exit 1），把「誰可以跑 paper」變成機器執行，安裝 timer 前必先 `watch enroll`（見 §3.1）；(2) **無資料日降級**——日曆說開市但資料源無今日資料（近似日曆誤判平日假期 / 台股臨時休市）→ 降級為 `NO_DATA` skip + Discord **info**（非 FAIL 告警，exit 0），避免假告警淹沒三個月觀察。
 
 ### 3.1 CLI 入口
 
@@ -115,16 +115,39 @@ uv run python -m backtest_platform.orchestration.cli \
 | 交易日 | XTAI 日曆（裝 `--extra mainframe`）；否則週一至五近似 | `NON_TRADING_DAY` no-op | 0 |
 | 收盤後 | 台北時區 ≥ 14:30（過去日期自動過；`--force` 跳過）| `TOO_EARLY` 拒跑 | 0 |
 | 冪等 | 同 (strategy, date) 已成功 → done-marker JSONL | `ALREADY_DONE` skip | 0 |
+| dry-run | `--dry-run`（純接線煙霧測試，不觸發 flow、不收 OOS）| `DRY_RUN` 報告 | 0 |
+| **觀察艙 enrollment（ADR-033）** | 策略在 `research/watch_registry.py` 的狀態（`default_watch_status`）| 未進艙 → `NOT_ENROLLED`；已到期 → `WATCH_EXPIRED`（提示含 live 證據重評）| **1** |
 | daily flow | 走既有 live-panel forward 鏈（`market_reader.live_config_for_date` → `run_forward_session`）| `FAILED` 推 Discord 告警 | **1** |
+| **無資料日（本 PR）** | flow 前 `check_panel_freshness`：panel 最新列 < as_of（`NoMarketDataError`）| `NO_DATA` skip + Discord **info**（非 FAIL）| 0 |
 
-> **日曆限制**：未裝 `mainframe` extra 時退化為週一至五近似——落在平日的國定 / 農曆假日會被誤判為交易日（年約 10–15 天）。裝 `uv sync --extra mainframe` 取得精確 XTAI sessions；冪等 + 風控仍限縮誤觸發的爆炸半徑。
+> **觀察艙 enrollment（ADR-033 enforcement）**：real（收 OOS）session 執行前查 registry——不在艙內拒跑並提示先 `watch enroll`，已到期拒跑並提示重評。dry-run 不收 OOS，於此守門前短路（免 enroll 亦可煙霧測試）。每次成功 session 後 `expire_due` 掃到期者，到期當日推「觀察期滿」Discord info；成功 digest 附「觀察日 N/~60 · 到期日 · 剩餘天數」一行。
+>
+> **日曆限制 + 無資料降級**：未裝 `mainframe` extra 時退化為週一至五近似——落在平日的國定 / 農曆假日會被誤判為交易日（年約 10–15 天，**假告警來源**）；日曆模式於首次觸發 log 一次（精確 XTAI → INFO，近似 → WARNING）。裝 `uv sync --all-extras`（或至少 `--extra mainframe`）取得精確 XTAI sessions（**強烈建議，見 §2.1**）。即使誤判為開市，flow 前的 `check_panel_freshness` 會攔截「資料源無今日資料」→ 降級為 `NO_DATA` skip + info（**非** FAILED 告警），把近似日曆的殘餘爆炸半徑限縮成一則安靜的 info；冪等 + 風控仍為額外護欄。真正的 daily flow 執行錯誤仍 `FAILED` + error 告警（只攔明確的 no-data 訊號，絕不 blanket except）。
 >
 > **收盤時間校準**：14:30 是台股 13:30 收盤後的 EOD 資料緩衝；若你的資料源較晚才發布三大法人 net-buy，把 timer 與 gate 一併後移（如 17:35）。
 >
 > **portfolio 狀態回填（限制已解除）**：每個 CLI process 仍起新 `PaperBroker`，但每個 session 現在會經 `data.db_reader.load_broker_state(strategy)` 從 telemetry 回填上一日的帳戶狀態——cash 取該策略 `equity_snapshots` 最新一筆（sink 直接寫入的實際 cash，最誠實來源），持倉由已落庫的 fills（`orders` 表）依時間序摺疊還原（鏡射 `PaperBroker` 加權成本邏輯；`positions` 表不由 paper 流程寫入）。回填後組合層風控（EX-002 單股上限 / EX-004 heat / EX-007 持股數）跨日看得到既有部位，Paper-Watch OOS 不再每日從空倉起算。首日（無 telemetry）→ 全新 broker；DB 錯誤 → fail loud（該次 session `FAILED` + Discord 告警，絕不靜默給空倉）；`--fresh` 明示放棄回填、從空倉起算。
 > **殘留限制**：`orders` 表無 strategy_id 欄，fills 還原為 portfolio-wide；今日僅 `inst_flow` 接入 paper（`build_session_runner` 拒其它策略），故 portfolio == 該策略、還原精確。接入第二個 paper 策略前須先為 `orders` 加策略辨識欄（寫側 migration）。
 
-### 3.2 安裝（systemd user timer，建議）
+### 3.2 觀察艙進艙（ADR-033，安裝 timer 前必做）
+
+real after-close 收 live OOS 前，策略必須先進觀察艙——否則排程被 `NOT_ENROLLED` 拒跑（機器強制「誰可以跑 paper」）。進艙前置：truth-gate 判決為 `PAPER_WATCH`（DSR ∈ [0.90, 0.95)、hard-fail 全過）。
+
+```bash
+# 1. 查判決（PAPER_WATCH 才具進艙資格；印出 DSR）
+uv run python -m backtest_platform.research.cli truth-gate --strategy inst_flow
+
+# 2. 進艙（DSR 必落 [0.90, 0.95) band，否則拒收；上限 2 艙位；曾到期退場者需 --evidence 才可再入）
+uv run python -m backtest_platform.orchestration.cli \
+    watch enroll --strategy inst_flow --dsr 0.908
+
+# 3. 查艙位狀態（進艙日 / 觀察日 N/~60 / 到期日 / 剩餘天數 / 狀態）
+uv run python -m backtest_platform.orchestration.cli watch status
+```
+
+registry 持久化於 `reports/watch_registry.jsonl`（append-only event log，比照 `runs.jsonl` / `promotion_events.jsonl`；屬 §4.1 不可再生的研究血統，一併備份）。3 個月到期後：用累積 live OOS 重算 DSR，過 0.95 → 走正常 sizing、`watch` 離艙；未過 → 離艙不晉升（一次性，無新證據不得再入艙）。
+
+### 3.3 安裝（systemd user timer，建議）
 
 `deploy/` 附完整範例（`after-close.service` / `after-close.timer` / `after-close.cron.example` / `README.md`）。
 

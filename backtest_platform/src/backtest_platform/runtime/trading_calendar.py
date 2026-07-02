@@ -26,6 +26,12 @@ from typing import Any
 from loguru import logger
 
 
+#: Latch so the calendar-mode banner (exact vs approximate) is logged exactly once
+#: per process — every after-close fire calls the gate, and we want one clear line
+#: telling the operator whether假日 false positives are possible, not a per-call spam.
+_calendar_mode_logged = False
+
+
 def _xtai_calendar() -> Any | None:
     """Return the ``exchange_calendars`` XTAI calendar, or None if unavailable.
 
@@ -40,6 +46,28 @@ def _xtai_calendar() -> Any | None:
         return None
 
 
+def _log_calendar_mode_once(xtai_available: bool) -> None:
+    """Log the active calendar mode once — exact XTAI vs the approximate fallback.
+
+    The approximate (Mon–Fri) path treats weekday Taiwan public / lunar holidays as
+    sessions, so the after-close scheduler can over-fire on ~10–15 days/year. A loud
+    one-time WARNING makes that data-quality risk visible; the exact path logs a
+    reassuring INFO. Injected-calendar callers (tests) never reach this.
+    """
+    global _calendar_mode_logged
+    if _calendar_mode_logged:
+        return
+    _calendar_mode_logged = True
+    if xtai_available:
+        logger.info("trading calendar: 精確 XTAI 日曆 (exchange_calendars) 生效")
+    else:
+        logger.warning(
+            "trading calendar: 近似日曆 (週一至五) — 平日國定/農曆假期會被誤判為交易日"
+            "（年約 10–15 天，assumed-open 假告警來源）；裝 `uv sync --extra mainframe` "
+            "取得精確 XTAI sessions"
+        )
+
+
 def is_taiwan_trading_day(d: date, *, calendar: Any | None = None) -> bool:
     """True if ``d`` is a TWSE trading session.
 
@@ -48,7 +76,11 @@ def is_taiwan_trading_day(d: date, *, calendar: Any | None = None) -> bool:
     the injection seam the tests drive. When omitted, XTAI is tried, then the
     weekday approximation (see module docstring for its documented limitation).
     """
-    cal = calendar if calendar is not None else _xtai_calendar()
+    if calendar is not None:
+        cal = calendar  # injected (tests) — authoritative, no auto-detect banner
+    else:
+        cal = _xtai_calendar()
+        _log_calendar_mode_once(cal is not None)
     if cal is not None:
         try:
             import pandas as pd

@@ -30,6 +30,29 @@ _TWT = timezone(timedelta(hours=8))
 _STRATEGY = "inst_flow"
 
 
+def _active_watch(_strategy: str, _as_of: date):
+    """Stub觀察艙 read: an active berth so the ADR-033 enrollment gate admits the run.
+
+    These tests pre-date the enrollment gate and exercise the OTHER guards
+    (trading-day / after-close time / idempotency / failure); an active berth keeps
+    them focused on the guard under test. Enrollment enforcement is pinned
+    separately in ``test_after_close_watch.py``."""
+    from datetime import date as _d
+
+    from backtest_platform.research.watch_registry import OBSERVATION_DAYS, WatchStatus
+
+    on = _d(2026, 6, 1)
+    return WatchStatus(
+        strategy=_strategy, state="active", enrolled_on=on, verdict_dsr=0.908,
+        expiry_date=on + timedelta(days=OBSERVATION_DAYS),
+        observed_trading_days=22, days_remaining=59,
+    )
+
+
+def _no_expiry(_as_of: date) -> list[str]:
+    return []
+
+
 class _FakeSummary:
     """Duck-types runtime.paper_daemon.ReplaySummary (only .ok + .summary())."""
 
@@ -114,6 +137,8 @@ def test_before_close_runs_with_force(tmp_path):
         session_runner=runner,
         notifier=_RecordingNotifier(),
         marker_path=tmp_path / "markers.jsonl",
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.SUCCESS
     assert runner.calls == [(_STRATEGY, date(2026, 7, 2))]
@@ -129,6 +154,8 @@ def test_past_date_is_after_close_regardless_of_time(tmp_path):
         session_runner=runner,
         notifier=_RecordingNotifier(),
         marker_path=tmp_path / "markers.jsonl",
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.SUCCESS
     assert runner.calls == [(_STRATEGY, date(2026, 6, 30))]
@@ -146,6 +173,8 @@ def test_idempotent_second_run_same_day_skips(tmp_path):
         session_runner=runner,
         notifier=_RecordingNotifier(),
         marker_path=marker,
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     first = run_after_close(_STRATEGY, date(2026, 7, 2), **common)
     second = run_after_close(_STRATEGY, date(2026, 7, 2), **common)
@@ -169,6 +198,8 @@ def test_dry_run_does_not_trigger_flow_or_marker(tmp_path):
         session_runner=runner,
         notifier=_RecordingNotifier(),
         marker_path=marker,
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.DRY_RUN
     assert res.exit_code == 0
@@ -190,6 +221,8 @@ def test_notify_failure_does_not_crash_run(tmp_path):
         session_runner=_RecordingRunner(ok=True),
         notifier=_raising_notifier,
         marker_path=tmp_path / "markers.jsonl",
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.SUCCESS  # run succeeded despite notify blow-up
 
@@ -213,6 +246,8 @@ def test_failed_session_exits_nonzero_and_alerts(tmp_path):
         session_runner=_RecordingRunner(ok=False),  # chain failed
         notifier=notifier,
         marker_path=tmp_path / "markers.jsonl",
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.FAILED
     assert res.exit_code == 1
@@ -231,6 +266,8 @@ def test_raising_session_runner_is_reported_as_failure(tmp_path):
         session_runner=_boom,
         notifier=notifier,
         marker_path=tmp_path / "markers.jsonl",
+        watch_status=_active_watch,
+        expire_watches=_no_expiry,
     )
     assert res.status is AfterCloseStatus.FAILED
     assert res.exit_code == 1
@@ -246,6 +283,7 @@ def test_failed_run_is_retryable_not_blocked_by_idempotency(tmp_path):
         now=_after_close_now(), is_trading_day=lambda d: True,
         session_runner=_RecordingRunner(ok=False),
         notifier=_RecordingNotifier(), marker_path=marker,
+        watch_status=_active_watch, expire_watches=_no_expiry,
     )
     assert first.status is AfterCloseStatus.FAILED
     assert already_done(_STRATEGY, date(2026, 7, 2), path=marker) is False

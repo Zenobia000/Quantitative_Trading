@@ -118,6 +118,7 @@ inst_flow（DSR 0.908 ∈ [0.90, 0.95)、hard-fail 全過）依本 ADR **具 Pap
 
 ### 4.5 後續動作
 
-- [ ] inst_flow 工作包：實際安排零資本觀察艙位（艙位管理由 paper 管線／營運工作包落地本 ADR §3.3 的上限 2 / 3 個月）。
+- [x] **艙位管理 enforcement 落地（本 PR）**：§3.3 的「上限 2 / 3 個月（90 日曆天）到期 / 一次性再入」由 `research/watch_registry.py`（append-only event-sourced JSONL）機器落地——`enroll` 驗 DSR band（[0.90, 0.95)）+ 艙位上限 + 一次性 bar，`expire_due` 冪等到期，`active_watches`/`status` 純讀取（預留 GUI/HTTP 讀取介面）。after-close 排程（`orchestration/after_close.py`）整合為守門：real session 執行前查艙位，未進艙 / 已到期拒跑（exit 1），成功後掃到期推「觀察期滿」Discord。CLI `orchestration.cli watch enroll/status`。同步補資料品質前置：近似日曆誤判平日假期 → `check_panel_freshness` 攔「無今日資料」→ `NO_DATA` skip + info（非假告警）。詳 [14 §3](../14_deployment_and_operations_guide.md)、[24 §8.4](../24_risk_management_spec.md)。
+- [ ] inst_flow 工作包：實際安排零資本觀察艙位（`watch enroll --strategy inst_flow --dsr 0.908`）。
 - [ ] paper 管線：以 inst_flow 為首個端到端 paper 標的，驗證 draft→paper 鏈路。
-- [ ] 3 個月到期後：用累積 live OOS 重算 DSR，過 0.95 → 走正常 sizing；未過 → 離艙。
+- [ ] 3 個月到期後：用累積 live OOS 重算 DSR，過 0.95 → 走正常 sizing、`watch` 離艙；未過 → 離艙不晉升。

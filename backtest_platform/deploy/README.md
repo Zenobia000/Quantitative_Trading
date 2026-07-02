@@ -2,15 +2,34 @@
 
 Fires the forward paper session once per weekday after the TWSE close, collecting
 live OOS. The CLI guards a real-calendar run itself (trading-day → 14:30 gate →
-idempotency), so a weekend / holiday / early / duplicate fire is a clean no-op
-(exit 0); only a failed daily flow exits non-zero and alerts Discord.
+idempotency → 觀察艙 enrollment), so a weekend / holiday / early / duplicate fire is
+a clean no-op (exit 0); a genuine daily-flow failure exits non-zero and alerts
+Discord, while a strategy with no active觀察艙 berth is refused before it runs.
 
 ## Prerequisites
 
-- `uv` on PATH and the project installed (`uv sync`); `--extra mainframe` gives the
-  exact XTAI holiday calendar (else the scheduler falls back to a Mon–Fri
-  approximation — see doc 14 §3).
+- `uv` on PATH and the project installed with the **exact XTAI holiday calendar**:
+
+  ```bash
+  uv sync --all-extras        # or, minimally: uv sync --extra mainframe
+  ```
+
+  The `mainframe` extra installs `exchange_calendars` (XTAI). Without it the
+  scheduler falls back to a Mon–Fri approximation that treats weekday Taiwan public
+  / lunar holidays as sessions — it over-fires on ~10–15 days/year, and each such
+  day is a false Discord alert source that would drown a 3-month observation in
+  noise. Installing the extra is therefore a data-quality prerequisite, not optional
+  polish (the calendar mode is logged once at first fire — see doc 14 §3).
 - `.env` filled with `FINLAB_API_TOKEN`, `POSTGRES_*`, and `DISCORD_*` (gitignored).
+- **The strategy is enrolled in the觀察艙** (ADR-033): a real after-close run is
+  refused unless the strategy holds an active berth. Enroll it *before* installing
+  the timer:
+
+  ```bash
+  uv run python -m backtest_platform.orchestration.cli \
+      watch enroll --strategy inst_flow --dsr 0.908
+  uv run python -m backtest_platform.orchestration.cli watch status
+  ```
 
 ## Option A — systemd user timer (recommended)
 

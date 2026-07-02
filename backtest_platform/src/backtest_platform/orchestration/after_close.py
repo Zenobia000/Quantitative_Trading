@@ -33,6 +33,7 @@ from typing import Any, Protocol
 
 from loguru import logger
 
+from backtest_platform.runtime.market_data_errors import NoMarketDataError
 from backtest_platform.runtime.trading_calendar import is_taiwan_trading_day
 
 #: Taiwan has no DST since 1980 → a fixed UTC+8 offset (mirrors collaborators._TWT).
@@ -50,10 +51,21 @@ class AfterCloseStatus(str, Enum):
 
     NON_TRADING_DAY = "non_trading_day"
     TOO_EARLY = "too_early"
+    NOT_ENROLLED = "not_enrolled"      # ADR-033: no active觀察艙 berth → refuse to run
+    WATCH_EXPIRED = "watch_expired"    # ADR-033: berth expired → refuse, prompt re-eval
     ALREADY_DONE = "already_done"
     DRY_RUN = "dry_run"
+    NO_DATA = "no_data"                # calendar said trading day but source had no as-of row
     SUCCESS = "success"
     FAILED = "failed"
+
+
+#: Statuses that surface a non-zero CLI exit: a genuine failure or a refused
+#: precondition an operator must fix (an unenrolled / expired berth). A NO_DATA skip
+#: is a benign no-op (exit 0), like a non-trading day.
+_NONZERO_EXIT = frozenset(
+    {AfterCloseStatus.FAILED, AfterCloseStatus.NOT_ENROLLED, AfterCloseStatus.WATCH_EXPIRED}
+)
 
 
 class SessionSummary(Protocol):
@@ -76,7 +88,7 @@ class AfterCloseResult:
 
     @property
     def exit_code(self) -> int:
-        return 1 if self.status is AfterCloseStatus.FAILED else 0
+        return 1 if self.status in _NONZERO_EXIT else 0
 
 
 # --------------------------------------------------------------------------- #
@@ -89,6 +101,35 @@ def _now_taipei() -> datetime:
 def default_is_trading_day(d: date) -> bool:
     """Production trading-day gate (XTAI if installed, else weekday fallback)."""
     return is_taiwan_trading_day(d)
+
+
+def default_watch_status(strategy: str, as_of: date) -> Any:
+    """Production觀察艙 read — the strategy's berth status from the real registry.
+
+    Lazily imported so the scheduler core stays free of pandas / the gate band
+    constants at import; returns a ``WatchStatus`` or None (never enrolled)."""
+    from backtest_platform.research.watch_registry import status
+
+    return status(strategy, as_of=as_of)
+
+
+def default_expire_watches(as_of: date) -> list[str]:
+    """Production expiry sweep — mark due berths expired, return newly expired ones."""
+    from backtest_platform.research.watch_registry import expire_due
+
+    return expire_due(as_of)
+
+
+def _watch_line(watch: Any) -> str:
+    """One-line observation digest for the Discord success message (empty if no berth)."""
+    if watch is None:
+        return ""
+    from backtest_platform.research.watch_registry import NOMINAL_TRADING_DAYS
+
+    return (
+        f"[paper-watch] 觀察日 {watch.observed_trading_days}/~{NOMINAL_TRADING_DAYS}"
+        f" · 到期 {watch.expiry_date}（剩 {watch.days_remaining} 天）"
+    )
 
 
 def safe_discord_notify(message: str, ok: bool) -> None:
@@ -201,14 +242,21 @@ def run_after_close(
     session_runner: Callable[[str, date], SessionSummary] | None = None,
     notifier: Callable[[str, bool], None] = safe_discord_notify,
     marker_path: Path | str = DEFAULT_MARKER_PATH,
+    watch_status: Callable[[str, date], Any] = default_watch_status,
+    expire_watches: Callable[[date], list[str]] = default_expire_watches,
 ) -> AfterCloseResult:
     """Run the after-close pipeline for ``(strategy, as_of)`` through the guards.
 
-    Order: trading-day → after-close time → idempotency → (dry-run report | run).
-    Returns an :class:`AfterCloseResult`; only ``FAILED`` yields a non-zero
-    ``exit_code``. On a real run the daily flow is executed via ``session_runner``
-    (required unless ``dry_run``), its success is recorded as a done-marker, and a
-    Discord digest / error alert is pushed.
+    Order: trading-day → after-close time → idempotency → dry-run report →
+    **觀察艙 enrollment (ADR-033)** → run. The觀察艙 gate makes "who may run paper"
+    a machine decision: a real session is refused (non-zero exit, flow never fires)
+    unless the strategy holds an active berth; an expired berth is refused with a
+    re-eval prompt. A dry-run is a wiring smoke test that touches no data and
+    collects no OOS, so it short-circuits *before* the gate. Returns an
+    :class:`AfterCloseResult`; a real run executes the daily flow via
+    ``session_runner``, records success as a done-marker, sweeps expiries, and
+    pushes a Discord digest / alert. A no-data session (``NoMarketDataError``)
+    degrades to a benign skip, not a FAILED alert.
     """
     now = now or _now_taipei()
     label = _marker_key(strategy, as_of)
@@ -227,10 +275,38 @@ def run_after_close(
         return _result(AfterCloseStatus.DRY_RUN, strategy, as_of,
                        f"DRY_RUN: would run the after-close session for {label} "
                        f"(daily flow NOT triggered).")
+    # 觀察艙 enrollment gate — only real (OOS-collecting) sessions are enforced.
+    refusal = _watch_gate(watch_status(strategy, as_of), strategy, as_of)
+    if refusal is not None:
+        return refusal
     if session_runner is None:
         raise ValueError("session_runner is required for a real (non-dry-run) after-close run")
 
-    return _execute(strategy, as_of, label, session_runner, notifier, marker_path)
+    return _execute(strategy, as_of, label, session_runner, notifier, marker_path,
+                    watch_status, expire_watches)
+
+
+def _watch_gate(watch: Any, strategy: str, as_of: date) -> AfterCloseResult | None:
+    """ADR-033 enrollment gate: None ⇒ admitted (active berth); else a refusal result.
+
+    An expired berth is refused with a re-eval prompt; anything else without an
+    active berth (never enrolled, or already exited) is refused with an enroll hint.
+    """
+    if watch is not None and getattr(watch, "state", None) == "active":
+        return None
+    if watch is not None and getattr(watch, "state", None) == "expired":
+        return _result(
+            AfterCloseStatus.WATCH_EXPIRED, strategy, as_of,
+            f"Refusing: {strategy}'s觀察艙 berth expired on {getattr(watch, 'expiry_date', '?')}"
+            " — 請執行含 live 證據的重評 (re-eval with the accumulated live OOS; 晉升仍需 "
+            "DSR ≥ 0.95) before scheduling further sessions.",
+        )
+    return _result(
+        AfterCloseStatus.NOT_ENROLLED, strategy, as_of,
+        f"Refusing: {strategy} holds no active觀察艙 berth — enroll it first: "
+        f"`... orchestration.cli watch enroll --strategy {strategy} --dsr <DSR>`. "
+        "Only enrolled strategies may run paper (ADR-033).",
+    )
 
 
 def _execute(
@@ -240,10 +316,18 @@ def _execute(
     session_runner: Callable[[str, date], SessionSummary],
     notifier: Callable[[str, bool], None],
     marker_path: Path | str,
+    watch_status: Callable[[str, date], Any],
+    expire_watches: Callable[[date], list[str]],
 ) -> AfterCloseResult:
     """Run the daily flow and turn its outcome into a result + alert + marker."""
     try:
         summary = session_runner(strategy, as_of)
+    except NoMarketDataError as exc:  # explicit no-data → benign skip, NOT a failure
+        detail = exc.detail or "no market data for this session"
+        _notify(notifier, f"[after-close] {label} SKIPPED — no market data ({detail})", ok=True)
+        return _result(AfterCloseStatus.NO_DATA, strategy, as_of,
+                       f"after-close {label} skipped: no market data ({detail}) — "
+                       "approximate-calendar false positive / TWSE halt, not a failure.")
     except Exception as exc:  # noqa: BLE001 — surface loudly (alert + exit 1), never silent
         detail = f"raised {type(exc).__name__}: {exc}"
         _notify(notifier, f"[after-close] {label} FAILED — {detail}", ok=False)
@@ -252,11 +336,41 @@ def _execute(
     body = summary.summary()
     if summary.ok:
         record_done(strategy, as_of, ok=True, detail=body, path=marker_path)
-        _notify(notifier, f"[after-close] {label} OK\n{body}", ok=True)
+        _notify_success(strategy, as_of, label, body, notifier, watch_status, expire_watches)
         return _result(AfterCloseStatus.SUCCESS, strategy, as_of, f"after-close {label} OK\n{body}")
 
     _notify(notifier, f"[after-close] {label} FAILED\n{body}", ok=False)
     return _result(AfterCloseStatus.FAILED, strategy, as_of, f"after-close {label} FAILED\n{body}")
+
+
+def _notify_success(
+    strategy: str,
+    as_of: date,
+    label: str,
+    body: str,
+    notifier: Callable[[str, bool], None],
+    watch_status: Callable[[str, date], Any],
+    expire_watches: Callable[[date], list[str]],
+) -> None:
+    """Push the OK digest (with the觀察日 line) then sweep + notify any expiry.
+
+    The observation line is read BEFORE the sweep so the expiry-day session still
+    reports its final N/~60; the maturity notice then fires once as INFO on the
+    crossing — never an error alert (a matured berth is an expected milestone)."""
+    watch_line = _watch_line(watch_status(strategy, as_of))
+    ok_msg = f"[after-close] {label} OK\n{body}"
+    if watch_line:
+        ok_msg += f"\n{watch_line}"
+    _notify(notifier, ok_msg, ok=True)
+
+    for expired in expire_watches(as_of):
+        if expired == strategy:
+            _notify(
+                notifier,
+                f"[paper-watch] {strategy} 觀察期滿（{as_of}）— 請執行含 live 證據的重評"
+                "（晉升仍需 DSR ≥ 0.95）",
+                ok=True,
+            )
 
 
 # --------------------------------------------------------------------------- #
@@ -360,7 +474,9 @@ def build_session_runner(
     cash = _resolve_equity(equity)
 
     from backtest_platform.runtime.market_reader import (
+        check_panel_freshness,
         live_config_for_date,
+        read_live_panel,
         run_forward_session,
     )
     from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
@@ -370,6 +486,13 @@ def build_session_runner(
 
     def _run(strat: str, as_of: date) -> Any:
         broker = _build_broker(strat, cash, fresh=fresh, state_loader=state_loader)
+        # Pre-flight no-data guard: an approximate-calendar false positive (weekday
+        # holiday) returns a panel whose newest row is the prior session. Detect it
+        # BEFORE running the chain (which would place orders on stale data) and let
+        # the NoMarketDataError propagate — the scheduler degrades it to a skip.
+        # FinLab caches ``data.get`` in-process, so this read is effectively free.
+        close, _flow, _volume = read_live_panel(symbols, as_of)
+        check_panel_freshness(close, as_of, strategy=strat)
         config_for_date = live_config_for_date(
             symbols, cfg, broker, run_id=run_id, strategy_id=strat, equity=cash,
         )
