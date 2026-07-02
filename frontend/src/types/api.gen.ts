@@ -205,6 +205,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}/candles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Candles Endpoint
+         * @description Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.
+         *
+         *     ``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).
+         *     Reads the run's ``stocks`` + IS window from the ledger (404 if the run is
+         *     unknown), then loads OHLC from the parquet cache and overlays markers derived
+         *     from the run's own signal pipeline (``research.run_candles``). A run with no
+         *     symbols, or a symbol absent from the parquet cache, returns a typed-empty
+         *     ``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).
+         */
+        get: operations["run_candles_endpoint_runs__run_id__candles_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/tag": {
         parameters: {
             query?: never;
@@ -2352,6 +2379,40 @@ export interface operations {
     run_trades_runs__run_id__trades_get: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_candles_endpoint_runs__run_id__candles_get: {
+        parameters: {
+            query?: {
+                /** @description symbol to chart; default = the run's first traded symbol */
+                symbol?: string | null;
+            };
             header?: never;
             path: {
                 run_id: string;

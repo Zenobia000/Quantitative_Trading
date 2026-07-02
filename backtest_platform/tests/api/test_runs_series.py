@@ -41,3 +41,74 @@ def test_trades_missing_is_pending(client, monkeypatch):
     body = client.get("/runs/ghost/trades").json()
     assert body["data"]["trades"] == []
     assert body["meta"]["data_source"] == "pending"
+
+
+# --- /runs/{id}/candles (Trade Review K-line) -----------------------------
+def test_candles_happy_path(client, write_runs, monkeypatch):
+    write_runs([{"run_id": "r1", "strategy": "four_layer", "stocks": ["2330", "2317"]}])
+    monkeypatch.setattr(
+        runs_series.run_candles,
+        "build_candles",
+        lambda record, stock, **kw: {
+            "candles": [{"time": "2020-01-01", "open": 1, "high": 2, "low": 0, "close": 1.5, "volume": 10}],
+            "markers": [{"time": "2020-01-01", "kind": "entry", "price": 1.5}],
+        },
+    )
+    body = client.get("/runs/r1/candles").json()
+    assert body["success"] is True
+    assert body["meta"] is None  # real data → no pending marker
+    assert body["data"]["symbol"] == "2330"  # default = first symbol
+    assert body["data"]["symbols"] == ["2330", "2317"]
+    assert len(body["data"]["candles"]) == 1
+    assert body["data"]["markers"][0]["kind"] == "entry"
+
+
+def test_candles_unknown_run_404_envelope(client):
+    resp = client.get("/runs/ghost/candles")
+    assert resp.status_code == 404
+    body = resp.json()
+    assert body["success"] is False
+    assert body["error"]["code"] == "NOT_FOUND"
+
+
+def test_candles_missing_parquet_is_pending(client, write_runs, monkeypatch):
+    write_runs([{"run_id": "r1", "strategy": "four_layer", "stocks": ["2330"]}])
+    monkeypatch.setattr(runs_series.run_candles, "build_candles", lambda record, stock, **kw: None)
+    body = client.get("/runs/r1/candles").json()
+    assert body["success"] is True
+    assert body["data"]["candles"] == []
+    assert body["data"]["markers"] == []
+    assert body["meta"]["data_source"] == "pending"
+
+
+def test_candles_symbol_param_selects_symbol(client, write_runs, monkeypatch):
+    write_runs([{"run_id": "r1", "strategy": "four_layer", "stocks": ["2330", "2317"]}])
+    seen: dict[str, str] = {}
+
+    def _fake(record, symbol, **kw):
+        seen["symbol"] = symbol
+        return {"candles": [{"time": "2020-01-01", "open": 1, "high": 2, "low": 0, "close": 1.5, "volume": 10}], "markers": []}
+
+    monkeypatch.setattr(runs_series.run_candles, "build_candles", _fake)
+    body = client.get("/runs/r1/candles", params={"symbol": "2317"}).json()
+    assert seen["symbol"] == "2317"
+    assert body["data"]["symbol"] == "2317"
+
+
+def test_candles_unknown_symbol_param_falls_back_to_first(client, write_runs, monkeypatch):
+    write_runs([{"run_id": "r1", "strategy": "four_layer", "stocks": ["2330", "2317"]}])
+    monkeypatch.setattr(
+        runs_series.run_candles,
+        "build_candles",
+        lambda record, symbol, **kw: {"candles": [{"time": "2020-01-01", "open": 1, "high": 2, "low": 0, "close": 1.5, "volume": 10}], "markers": []},
+    )
+    body = client.get("/runs/r1/candles", params={"symbol": "9999"}).json()
+    assert body["data"]["symbol"] == "2330"  # not-in-run symbol → first symbol
+
+
+def test_candles_run_without_symbols_is_pending(client, write_runs):
+    write_runs([{"run_id": "r1", "strategy": "four_layer"}])  # no stocks key
+    body = client.get("/runs/r1/candles").json()
+    assert body["data"]["symbol"] is None
+    assert body["data"]["candles"] == []
+    assert body["meta"]["data_source"] == "pending"
