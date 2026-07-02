@@ -254,3 +254,16 @@ def test_go_gates_undeclared_workflow_exits_nonzero():
     """four_layer declares only DOE — go-gates must fail clearly (not crash)."""
     result = CliRunner().invoke(cli, ["go-gates", "--strategy", "four_layer"])
     assert result.exit_code != 0
+
+
+def test_build_universe_dry_run_inst_flow():
+    """build-universe --dry-run prints the UniverseConfig without touching FinLab."""
+    result = CliRunner().invoke(cli, ["build-universe", "--strategy", "inst_flow", "--dry-run"])
+    assert result.exit_code == 0
+    assert "inst_flow" in result.output
+    assert "data/parquet_finlab_universe" in result.output
+
+
+def test_build_universe_unknown_strategy_exits_nonzero():
+    result = CliRunner().invoke(cli, ["build-universe", "--strategy", "nonexistent_xyz"])
+    assert result.exit_code != 0

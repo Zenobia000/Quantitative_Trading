@@ -7,13 +7,20 @@ declarations the generic workflows consume.
 from datetime import date
 
 from backtest_platform.config.universe import DEFAULT_UNIVERSE
+from backtest_platform.research.finlab_universe import cached_universe_symbols
 from backtest_platform.research.workflows.config import (
     DOEConfig,
     GOGatesConfig,
     PaperReplayConfig,
     TruthGateConfig,
+    UniverseConfig,
 )
 from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
+
+# Dedicated survivorship-clean FinLab cache (built by the build_universe workflow,
+# sub-project ②). The 2010-2024 full-span ingest lands here; when present it is the
+# survivorship-clean evidence that flips TRUTH_GATE below.
+_UNIVERSE_CACHE_DIR = "data/parquet_finlab_universe"
 
 # Survivor-only 40-stock universe (ADR-024's false-positive set). The corrected
 # truth gate (ADR-030) hard-fails it on survivorship until sub-project 2 rebuilds
@@ -50,17 +57,51 @@ GO_GATES = GOGatesConfig(
     is_end=date(2024, 12, 31),
 )
 
-TRUTH_GATE = TruthGateConfig(
+UNIVERSE = UniverseConfig(
     strategy="inst_flow",
-    fixed_config=_FIXED,
-    symbols=_WIDE,
-    is_start=date(2015, 1, 1),
-    oos_start=date(2021, 1, 1),
-    is_end=date(2024, 12, 31),
-    n_trials=16,  # 2x2x2x2 landscape (matches _GRID: rebalance × lookback × flow × vol_target)
-    pre_registered=True,
-    slippage_stress=0.003,
+    span_start=date(2010, 1, 1),
+    span_end=date(2024, 12, 31),
+    top_n=200,               # per-quarter top-N by market cap
+    min_turnover=2e7,        # 2,000萬 TWD trailing-20d avg (universe_builder floor)
+    cache_dir=_UNIVERSE_CACHE_DIR,
 )
+
+# TRUTH_GATE declaration follows the evidence (ADR-030/032 anti-self-deception):
+# the survivorship-clean claim is NOT a hardwired constant — it tracks whether the
+# FinLab survivorship-clean cache actually exists.
+#   • cache PRESENT → declare it clean, point the gate at that cache (parquet_dir),
+#     run the honest 2010→2024 full-span re-validation over the clean universe.
+#   • cache ABSENT  → fall back to the survivor-only _WIDE set (ADR-024's false-
+#     positive 40 names) with survivorship_clean left False, so the corrected gate
+#     (ADR-030) hard-fails on survivorship until sub-project ② rebuilds the cache.
+_CLEAN_UNIVERSE = cached_universe_symbols(_UNIVERSE_CACHE_DIR)
+
+if _CLEAN_UNIVERSE:
+    TRUTH_GATE = TruthGateConfig(
+        strategy="inst_flow",
+        fixed_config=_FIXED,
+        symbols=_CLEAN_UNIVERSE,
+        is_start=date(2010, 1, 1),
+        oos_start=date(2021, 1, 1),
+        is_end=date(2024, 12, 31),
+        n_trials=16,  # 2x2x2x2 landscape (matches _GRID)
+        pre_registered=True,
+        slippage_stress=0.003,
+        survivorship_clean=True,
+        parquet_dir=_UNIVERSE_CACHE_DIR,
+    )
+else:
+    TRUTH_GATE = TruthGateConfig(
+        strategy="inst_flow",
+        fixed_config=_FIXED,
+        symbols=_WIDE,
+        is_start=date(2015, 1, 1),
+        oos_start=date(2021, 1, 1),
+        is_end=date(2024, 12, 31),
+        n_trials=16,  # 2x2x2x2 landscape (matches _GRID: rebalance × lookback × flow × vol_target)
+        pre_registered=True,
+        slippage_stress=0.003,
+    )
 
 PAPER_REPLAY = PaperReplayConfig(
     strategy="inst_flow",

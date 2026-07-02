@@ -45,3 +45,13 @@ def test_post_doe_unknown_strategy_400():
 def test_post_unknown_workflow_404():
     r = client.post("/research/workflows/invalid_wf", json={"strategy": "momentum"})
     assert r.status_code == 404
+
+
+def test_post_build_universe_is_a_known_workflow():
+    """build_universe must be registered (400 for a bad strategy, never 404).
+
+    Uses an unknown strategy so the config getter fails before enqueue — proving the
+    workflow key is recognized without spawning a live FinLab ingest job.
+    """
+    r = client.post("/research/workflows/build_universe", json={"strategy": "nonexistent"})
+    assert r.status_code == 400

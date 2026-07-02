@@ -20,6 +20,7 @@ from backtest_platform.research.workflows.loader import (
     get_go_gates_config,
     get_paper_replay_config,
     get_truth_gate_config,
+    get_universe_config,
     list_workflow_configs,
 )
 
@@ -33,6 +34,10 @@ _WORKFLOWS: dict[str, tuple] = {
     "paper_replay": (
         get_paper_replay_config,
         "backtest_platform.research.workflows.paper_replay:run_paper_replay_workflow",
+    ),
+    "build_universe": (
+        get_universe_config,
+        "backtest_platform.research.workflows.universe:run_build_universe",
     ),
 }
 
