@@ -44,6 +44,45 @@ def run_record_to_db_row(record: Mapping) -> dict[str, Any]:
     }
 
 
+def config_to_status_row(cfg: Any, status: str) -> dict[str, Any]:
+    """Lifecycle row for a RunConfig that has no ledger record yet (A1 batch):
+    identity + window from the config, no metrics/gate, caller-chosen status."""
+    return {
+        "run_id": cfg.run_id,
+        "hypothesis": cfg.hypothesis,
+        "strategy": cfg.strategy,
+        "engine": cfg.engine,
+        "stocks": list(cfg.stocks),
+        "is_start": cfg.is_start,
+        "is_end": cfg.is_end,
+        "params": dict(cfg.params),
+        "metrics": None,
+        "gate_status": None,
+        "gate_summary": None,
+        "status": status,
+        "trials_count": 0,
+    }
+
+
+def mark_run_status(cfg: Any, status: str, *, writer: Any = None) -> bool:
+    """Best-effort lifecycle mark in the runs table (running|failed) so the run
+    board sees in-flight state. Same degrade-to-warning contract as
+    ``persist_run`` — never blocks or fails the run itself."""
+    try:
+        if writer is None:
+            from backtest_platform.data import db_writer as writer
+        writer.upsert_runs([config_to_status_row(cfg, status)])
+        return True
+    except Exception as exc:
+        logger.warning(
+            "runs status mark '{}' skipped for run_id={}: {}",
+            status,
+            getattr(cfg, "run_id", "?"),
+            exc,
+        )
+        return False
+
+
 def persist_run(
     record: Mapping,
     path: Path | str = DEFAULT_RUNS_PATH,
