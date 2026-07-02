@@ -19,7 +19,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（ADR-001~033） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（ADR-001~034） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 | 07 | [module_specification_and_tests.md](./07_module_specification_and_tests.md) | 模組規格（DbC） |
@@ -62,7 +62,7 @@
 
 ## 架構決策（ADR）
 
-[adrs/](./adrs/) — ADR-001~033。近期主軸：023 動能 NO-GO / 024 資金流 FAIL / 025 驗證閘兩段化 / 027 策略契約 + registry / 028 dispatch + preset 移除 / 029 研究工作流標準化 / 030 truth gate 判決修正 / 031 standalone auth / 032 survivorship universe 工作流 / 033 Paper-Watch 零資本觀察艙。
+[adrs/](./adrs/) — ADR-001~034。近期主軸：023 動能 NO-GO / 024 資金流 FAIL / 025 驗證閘兩段化 / 027 策略契約 + registry / 028 dispatch + preset 移除 / 029 研究工作流標準化 / 030 truth gate 判決修正 / 031 standalone auth / 032 survivorship universe 工作流 / 033 Paper-Watch 零資本觀察艙 / 034 逐筆覆盤 K 線改 lightweight-charts。
 
 ---
 

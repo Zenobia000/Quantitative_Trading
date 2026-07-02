@@ -4,7 +4,9 @@
 > 對齊 `03` §taxonomy「Trade markers 疊 K 線 + hover 回跳」（✅ ADR-017 重設進場最直接的 debug 工具）+ §1.5「逐筆 trade 表可回跳市場狀態」+「因子/層級歸因下鑽」。
 > **策略無關**：歸因維度依該策略 `reason_json` 動態決定（N 個因子/層），不寫死任一策略；four_layer_resonance 僅為 N=4 的特例。
 > 繼承 Global v2.0（**Grok 單色 dark** / Geist Mono 數值 / 白環 focus / 漲跌 ↑↓ 雙編碼）。
-> **狀態**：M3 設計 spec；assembly 隨 React 化再產出。
+> **狀態**：M3 設計 spec。**candlestick_chart 已實作（2026-07-02）**：`GET /runs/{id}/candles` + React `CandlestickChart`（entry ▲ / exit ▼ marker + SymbolSelector）。
+> **圖表庫**：spec 原指定 Plotly.js，實作改用 **TradingView lightweight-charts v5**（[ADR-034](../../adrs/ADR-034-trade-review-kline-lightweight-charts.md)：bundle ~45KB、專為 K 線設計）。停損線暫略（逐筆 trade 未帶停損欄位，不假造）。
+> **仍 deferred**：attribution（因子歸因）/ context_drawer / hover 回跳 / trade_list row→marker 高亮 —— 待後端 `/attribution`·`/day-context` 與訊號分數留存。
 
 ---
 

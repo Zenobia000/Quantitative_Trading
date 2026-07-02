@@ -221,7 +221,7 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/runs/{run_id}/trades` | ⬜ needs-work | `?symbol=`（選填，Trade review 逐股）→ `[{symbol,entry,exit,pnl,hold_days,reason,…}]`（`is_harness._trades` 持久化）| 404 | run_04、trade_review | M3.2 |
 | GET | `/runs/{run_id}/log` | ⬜ needs-work | — → `{lines[], status}`（job lifecycle log）| 404 | run_04 | M3.5 |
 | GET | `/runs/{run_id}/traded-symbols` | ⬜ needs-work | — → `[{symbol, trades, pnl_contrib}]`（有交易個股 + 貢獻排序）| 404 | trade_review | M3.2 |
-| GET | `/runs/{run_id}/candles` | ⬜ needs-data | `?symbol=&start=&end=` → `{ohlc[], markers:[{ts,side,price}]}`（個股 K 線 + entry/exit marker；K 線需 `market_reader`）| 404 | trade_review | M4 |
+| GET | `/runs/{run_id}/candles` | 🟡 ready | `?stock=`（選填，缺省=run 首檔）→ `{run_id, stock, stocks[], candles:[{time,open,high,low,close,volume}], markers:[{time,kind:entry\|exit,price,ret?}]}`（個股日 K + entry ▲/exit ▼ marker）。K 線讀 parquet OHLC 快取（`daily_bars__<sid>.parquet`）、window 取自 run record；marker 由 run 訊號管線重推（four_layer 有 per-bar 進出場，panel 策略無 → 空 marker）。lightweight-charts v5（[ADR-034](./adrs/ADR-034-trade-review-kline-lightweight-charts.md)，改 Plotly→lightweight-charts）。該股無 parquet → typed-empty `pending`（不假造）| 404（未知 run）| trade_review | ✅ M3.2 |
 | GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{factors:[{name, score}…], total}`（因子/層級歸因，**維度 N 由策略 `reason_json` 決定，不寫死層數**；four_layer 為 N=4 特例。需 harness 捕捉）| 404 | trade_review | M3.2 |
 | GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{factors:[{name, score}…], total, signal_reason}`（context_drawer 當日因子分數，策略無關 N 維）| 404 | trade_review | M3.2 |
 | GET | `/runs/estimate` | ⬜ ready | `?<grid params>` → `{n_configs, est_minutes}`（`sweep.expand_grid`）| 422 | run_02 | M3.1 |
@@ -340,12 +340,12 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | :--- | :--- | :--- | :--- |
 | **M3.0** | 契約合一閘（零新邏輯）| 升 `envelope.py`（error 物件）、修 `/runs` window bug、接 openapi-typescript（~~加 Bearer~~ → 移除，[ADR-031](./adrs/ADR-031-standalone-auth-decision.md) localhost-only）| （契約+型別 scaffold）|
 | **M3.1** | 便宜 config/catalog 讀路由 | `/research/universe-filters`、`/runs/estimate`、`/system/risk/*`、`/system/alerts/{rules,channels,test}`、`/strategies`（catalog + config schema，取代 `/presets` enrich）| run_02、sys_alerts(讀)、mon_d(config)|
-| **M3.2** | 暴露已算出的 series + 逐股 review | `/runs/{id}/equity`、`/runs/{id}/trades?symbol`、compare `?run_ids`、`/runs/{id}/{traded-symbols,attribution,day-context}` | run_04/05、mon_a(回測半)、trade_review(K線除外)|
+| **M3.2** | 暴露已算出的 series + 逐股 review | `/runs/{id}/equity`、`/runs/{id}/trades?symbol`、`/runs/{id}/candles?stock`（K 線讀 parquet + marker 重推，ADR-034）、compare `?run_ids`、`/runs/{id}/{traded-symbols,attribution,day-context}` | run_04/05、mon_a(回測半)、trade_review(K線 ✅、歸因除外)|
 | **M3.3** | strategy registry + 側存 + Home recent | `/research/strategies*`、`/research/saved-views`、`/runs/tag`、`/home/recent` | run_01/03、home(recent)|
 | **M3.4** | trials/DSR guardrail + Home 研究狀態 | `/runs/trials`、`/research/trials/increment`、`/home/research-status` | run_03/05、home(研究半)|
 | **M3.5** | async job（CRITICAL #2）+ bundle/DQ | `POST /runs`(async)、`/runs/{id}/log`、`/research/sweep/*`、`/system/{bundles,ingest}*` | run_06、sys_data、run_02(async)|
 | **M3.6** | validation+promotion service（CRITICAL #3）| `/research/validate/*`、`/research/promote/*` | run_07/08 |
-| **M4** | live-telemetry daemon（CRITICAL #1, needs-DATA）| 全 `/monitor/*`（含 `/monitor/fleet*`）、`/home/{fleet,system-health}`、`/runs/{id}/candles`、`/research/promote/{id}/observation`、editable alerts | mon_a/b/c/d、monitor_fleet、home(live 半)、trade_review(K線)、sys_alerts(編輯)|
+| **M4** | live-telemetry daemon（CRITICAL #1, needs-DATA）| 全 `/monitor/*`（含 `/monitor/fleet*`）、`/home/{fleet,system-health}`、`/research/promote/{id}/observation`、editable alerts | mon_a/b/c/d、monitor_fleet、home(live 半)、sys_alerts(編輯)|
 
 ---
 

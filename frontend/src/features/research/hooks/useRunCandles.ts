@@ -1,0 +1,17 @@
+/* useRunCandles — 個股 K 線 + 進出場 marker（GET /runs/{id}/candles，後端 S4）。 */
+import { useQuery } from '@tanstack/react-query'
+import { getRunCandles } from '../api/candles'
+import { ttlToMs } from '@/services/queryClient'
+
+/**
+ * @param runId run id（缺省時 disabled）
+ * @param stock 指定個股；缺省 → 後端選貢獻/清單第一檔（回應含 stocks 供 selector）
+ */
+export function useRunCandles(runId: string | undefined, stock?: string) {
+  return useQuery({
+    queryKey: ['run-candles', runId, stock ?? null],
+    queryFn: () => getRunCandles(runId as string, stock),
+    enabled: !!runId,
+    staleTime: ttlToMs(300, 300),
+  })
+}

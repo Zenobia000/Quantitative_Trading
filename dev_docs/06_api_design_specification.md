@@ -443,6 +443,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | GET | `/runs` | runs ledger 分頁列表（`?page=&limit=`） | `research.runs_store.read_runs` |
 | GET | `/runs/compare` | 跨 run 比較（`?baseline=`：delta/rank/sign） | `research.compare.compare_runs` |
 | GET | `/runs/{run_id}` | 單一 run 完整紀錄（未知→404） | `read_runs` |
+| GET | `/runs/{run_id}/candles` | 個股日 K + entry/exit marker（`?stock=`；讀 parquet OHLC + 訊號重推 marker，ADR-034；缺 parquet→typed-empty pending） | `research.run_candles` |
 | POST | `/runs` | 觸發一次 IS run（驗 RunConfig→判 gate→append，201） | `research.is_harness.run_and_judge` |
 | GET | `/gate/spec` | 審判庭預設準則（ADR-016 K1/K2/K3 + ADR-019 health） | `validation.gate_state.DEFAULT_GATE` |
 | POST | `/gate/evaluate` | 對任意 metrics dict 判 PASS/FAIL/INCOMPLETE | `evaluate_gate` |
