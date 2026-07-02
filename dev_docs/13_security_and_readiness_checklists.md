@@ -84,12 +84,12 @@
 
 ### D.2 備份（單人不可再生資產裸奔的緩解，審查缺陷 #10）
 
-不可再生資產有三類：FinLab 付費 ingest 的 parquet cache、研究血統 `reports/*.jsonl`、TimescaleDB telemetry。最小備份策略：
+不可再生資產有三類：FinLab 付費 ingest 的 parquet cache、研究血統 `reports/*.jsonl`、TimescaleDB telemetry。最小備份策略（**已由 `deploy/backup.sh` + systemd timer / cron 自動化**，成敗發 Discord；安裝 / 還原見 [deploy/README § backup](../backtest_platform/deploy/README.md)）：
 
-- [ ] **每日 `pg_dump`** TimescaleDB → 本機備份目錄（保留 N 份輪替）
-- [ ] **`rsync` `data/parquet*` + `reports/`** → 備份目錄 / 外接碟（付費資料 + 研究血統）
-- [ ] parquet cache 已具**原子寫回 + 缺口 merge**（`parquet_cache.py`），舊歷史不被新 ingest 覆蓋
-- [ ] 恢復演練：刪 1 日資料 → restore → smoke test 通過（詳見 [14 §災難恢復](./14_deployment_and_operations_guide.md)）
+- [x] **每日 `pg_dump`** TimescaleDB → `$BACKUP_DEST/pg/<date>.sql.gz`（保留最近 14 份輪替，`PG_KEEP` 可覆寫）— `deploy/backup.sh`
+- [x] **`rsync -a --delete` `data/parquet*` + `reports/`** → `$BACKUP_DEST/`（付費資料 + 研究血統）— `deploy/backup.sh`
+- [x] parquet cache 已具**原子寫回 + 缺口 merge**（`parquet_cache.py`），舊歷史不被新 ingest 覆蓋
+- [ ] 恢復演練：刪 1 日資料 → restore → smoke test 通過（詳見 [14 §災難恢復](./14_deployment_and_operations_guide.md)）— 一次性演練待跑（F.2）
 
 ---
 

@@ -1,0 +1,24 @@
+[Unit]
+Description=backtest_platform daily backup (TimescaleDB dump + reports/ + data/parquet* rsync)
+Documentation=file:%h/Quantitative_Trading/dev_docs/14_deployment_and_operations_guide.md
+# Docker must be up (pg_dump runs inside the timescaledb container) and the network
+# reachable (Discord success/failure alert).
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Absolute path to the checkout; override for your machine.
+WorkingDirectory=%h/Quantitative_Trading/backtest_platform
+# Loads POSTGRES_* / DISCORD_* and — importantly — BACKUP_DEST. Keep BACKUP_DEST in
+# .env (gitignored), or override just for this unit without touching .env:
+#   systemctl --user edit backup.service   → [Service] Environment=BACKUP_DEST=/mnt/nas/qt
+EnvironmentFile=%h/Quantitative_Trading/backtest_platform/.env
+# A missing BACKUP_DEST / unreachable container / rsync failure exits 1 → systemd marks
+# the unit failed AND the script fires a Discord error alert. Success alerts too.
+ExecStart=/usr/bin/env bash %h/Quantitative_Trading/backtest_platform/deploy/backup.sh
+# A large first parquet sync can take a while; a stuck run is killed, not left hanging.
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=default.target
