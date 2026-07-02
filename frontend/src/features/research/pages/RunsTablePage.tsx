@@ -16,23 +16,22 @@ import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
 import { FirstRunEmptyState } from '@/components/FirstRunEmptyState'
 
-function statusTone(s?: string): 'gain' | 'loss' | 'warning' | 'error' | 'muted' {
+// gate_status ∈ {PASS, FAIL, INCOMPLETE}（後端 GateStatus enum）
+function gateTone(s?: string | null): 'gain' | 'loss' | 'warning' | 'error' | 'muted' {
   switch (s) {
-    case 'done':
+    case 'PASS':
       return 'gain'
-    case 'error':
-    case 'failed':
+    case 'FAIL':
       return 'error'
-    case 'running':
-    case 'validating':
-    case 'queued':
+    case 'INCOMPLETE':
       return 'warning'
     default:
       return 'muted'
   }
 }
 
-const METRIC_COLS = ['sharpe', 'cagr', 'mdd', 'win_rate', 'trades'] as const
+// 後端 sim.metrics 真實鍵（four_layer）：trades/closed/cagr/sharpe/slippage_sharpe/maxdd/win/…
+const METRIC_COLS = ['sharpe', 'cagr', 'maxdd', 'win', 'trades'] as const
 
 function fmtMetric(v: unknown): string {
   if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
@@ -61,7 +60,7 @@ export function RunsTablePage() {
 
   const metricCols = useMemo(() => {
     const present = new Set<string>()
-    for (const r of rows) for (const m of METRIC_COLS) if (r[m] != null) present.add(m)
+    for (const r of rows) for (const m of METRIC_COLS) if (r.metrics?.[m] != null) present.add(m)
     return METRIC_COLS.filter((m) => present.has(m))
   }, [rows])
 
@@ -135,13 +134,13 @@ export function RunsTablePage() {
                   <th className="w-8 p-2"></th>
                   <th className="p-2 font-medium">run_id</th>
                   <th className="p-2 font-medium">策略</th>
-                  <th className="p-2 font-medium">狀態</th>
+                  <th className="p-2 font-medium">Gate</th>
                   {metricCols.map((m) => (
                     <th key={m} className="p-2 text-right font-medium">
                       {m}
                     </th>
                   ))}
-                  <th className="p-2 font-medium">建立時間</th>
+                  <th className="p-2 font-medium">假設</th>
                 </tr>
               </thead>
               <tbody>
@@ -164,17 +163,17 @@ export function RunsTablePage() {
                       />
                     </td>
                     <td className="p-2 font-mono text-xs tabular">{r.run_id}</td>
-                    <td className="p-2 text-text-secondary">{r.strategy_id ?? '—'}</td>
+                    <td className="p-2 text-text-secondary">{r.strategy ?? '—'}</td>
                     <td className="p-2">
-                      <StatusBadge tone={statusTone(r.status)}>{r.status ?? '—'}</StatusBadge>
+                      <StatusBadge tone={gateTone(r.gate_status)}>{r.gate_status ?? '—'}</StatusBadge>
                     </td>
                     {metricCols.map((m) => (
                       <td key={m} className="p-2 text-right font-mono tabular">
-                        {fmtMetric(r[m])}
+                        {fmtMetric(r.metrics?.[m])}
                       </td>
                     ))}
-                    <td className="p-2 font-mono text-xs text-text-muted tabular">
-                      {r.created_at ?? '—'}
+                    <td className="p-2 max-w-[280px] truncate text-xs text-text-muted" title={r.hypothesis ?? undefined}>
+                      {r.hypothesis ?? '—'}
                     </td>
                   </tr>
                 ))}

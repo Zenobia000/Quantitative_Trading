@@ -1,16 +1,18 @@
 /*
- * Research zone — compare（shipped：GET /runs/compare?baseline=）。
- * 後端以 baseline 為基準比較 runs ledger；回應 data 為 generic（view-model 暫承載）。
+ * Research zone — compare（shipped：GET /runs/compare?baseline=&run_ids=a,b,c）。
+ * 回應為「物件」（非陣列）：{baseline_id, metric_keys, sign_consistent, rankings, comparisons[]}。
+ * 形狀取自 OpenAPI 生成型別（禁手寫）。
  */
 import { http } from '@/services/http'
+import type { components } from '@/types/api.gen'
 import type { ApiResult } from '@/types/domain'
 
-export interface CompareRow {
-  run_id?: string
-  [k: string]: unknown
-}
+export type CompareReport = components['schemas']['CompareReportData']
+export type CompareRow = components['schemas']['RunComparisonRow']
 
-/** GET /runs/compare — 以 baseline 為基準的跨 run 比較 */
-export function getCompare(baseline?: string): Promise<ApiResult<CompareRow[] | Record<string, unknown>>> {
-  return http<CompareRow[] | Record<string, unknown>>('/runs/compare', { query: { baseline } })
+/** GET /runs/compare — baseline 為基準、run_ids 為比較子集（前端多選）。 */
+export function getCompare(params: { baseline?: string; run_ids?: string[] }): Promise<ApiResult<CompareReport>> {
+  const query: Record<string, string | undefined> = { baseline: params.baseline }
+  if (params.run_ids && params.run_ids.length > 0) query.run_ids = params.run_ids.join(',')
+  return http<CompareReport>('/runs/compare', { query })
 }

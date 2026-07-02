@@ -24,13 +24,23 @@ describe('ComparePage', () => {
   })
 
   it('≥2 run → 顯示 chips + metric 表 + 多個 pending', async () => {
+    // 真實 CompareReportData：回應為「物件」（非陣列），含 metric_keys + comparisons[]（doc 25 §6.1）
     vi.stubGlobal(
       'fetch',
       vi.fn(async () => ({
         status: 200,
         json: async () => ({
           success: true,
-          data: [{ run_id: 'run_a', sharpe: 1.1 }, { run_id: 'run_b', sharpe: 0.9 }],
+          data: {
+            baseline_id: 'run_a',
+            metric_keys: ['sharpe'],
+            sign_consistent: {},
+            rankings: {},
+            comparisons: [
+              { run_id: 'run_a', is_baseline: true, metrics: { sharpe: 1.1 }, delta: {}, rank: {}, gate_status: 'PASS' },
+              { run_id: 'run_b', is_baseline: false, metrics: { sharpe: 0.9 }, delta: { sharpe: -0.2 }, rank: {}, gate_status: 'FAIL' },
+            ],
+          },
           error: null,
           meta: {},
         }),
@@ -38,7 +48,9 @@ describe('ComparePage', () => {
     )
     renderAt('/research/compare?run_ids=run_a,run_b')
     await waitFor(() => expect(screen.getByText('1.10')).toBeInTheDocument())
-    expect(screen.getByText('★ run_a')).toBeInTheDocument()
+    // baseline 標記 ★ run_a 同時出現在 toolbar chip 與表格列（皆為 baseline 指示）
+    expect(screen.getAllByText('★ run_a').length).toBeGreaterThan(0)
+    expect(screen.getByText('0.90')).toBeInTheDocument() // run_b 的 sharpe
     expect(screen.getAllByText('待後端').length).toBeGreaterThan(1) // equity/parcoords/guardrail pending
   })
 })

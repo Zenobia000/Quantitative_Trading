@@ -2,10 +2,13 @@
  * Promote（/research/promote/:strategyId）— 不可逆晉升狀態機（後端 8.H.7 / S3）。
  * 接真實 GET /research/promote/{id}（current stage + gates）、POST（前進一階，draft→paper→live）、
  * GET /audit（immutable trail）。stepper 顯示已達階段，advance 鈕觸發 mutation。
+ * 前端防線（此工作包）：無 gate PASS 證據時 disable advance —— gate 證據取自 strategy roster
+ * （GET /research/strategies）的 validation_status（由各 run 的 gate_status 投影）。後端硬防線屬另一工作包。
  */
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { usePromoteAudit, usePromoteState, useAdvancePromote } from '../hooks/usePromote'
+import { useStrategies } from '../hooks/useStrategies'
 import { PageHeader } from '@/components/PageHeader'
 import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -18,12 +21,19 @@ export function PromotePage() {
   const state = usePromoteState(sid)
   const audit = usePromoteAudit(sid)
   const advance = useAdvancePromote(sid)
+  const roster = useStrategies()
   const [note, setNote] = useState('')
 
   const stage = state.data?.data?.stage ?? 'draft'
   const gates = state.data?.data?.gates ?? STAGES.map((s, i) => ({ stage: s, reached: i === 0 }))
   const curIdx = STAGES.indexOf(stage as (typeof STAGES)[number])
   const nextStage = curIdx >= 0 && curIdx < STAGES.length - 1 ? STAGES[curIdx + 1] : null
+
+  // gate PASS 前置：策略須有 IS PASS 的 run（roster validation_status==='is_pass'）方可晉升。
+  const rosterRows = roster.data?.data
+  const strategyRow = Array.isArray(rosterRows) ? rosterRows.find((r) => r.strategy_id === sid) : undefined
+  const gatePassed = strategyRow?.validation_status === 'is_pass'
+  const canAdvance = !advance.isPending && gatePassed
 
   return (
     <div>
@@ -67,21 +77,29 @@ export function PromotePage() {
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <h2 className="mb-2 text-[18px] font-semibold">晉升</h2>
         {nextStage ? (
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="晉升理由（記入 audit）"
-              className="min-w-[240px] flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5"
-            />
-            <button
-              onClick={() => advance.mutate({ to_stage: nextStage, note }, { onSuccess: () => setNote('') })}
-              disabled={advance.isPending}
-              className="rounded-md border border-border px-3 py-1.5 hover:text-text disabled:opacity-50"
-            >
-              {advance.isPending ? '晉升中…' : `晉升至 ${nextStage} →`}
-            </button>
-            {advance.isError && <span className="text-error">{(advance.error as Error)?.message}</span>}
+          <div className="flex flex-col gap-2 text-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="晉升理由（記入 audit）"
+                className="min-w-[240px] flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5"
+              />
+              <button
+                onClick={() => advance.mutate({ to_stage: nextStage, note }, { onSuccess: () => setNote('') })}
+                disabled={!canAdvance}
+                title={!gatePassed ? '需 gate PASS 證據方可晉升' : undefined}
+                className="rounded-md border border-border px-3 py-1.5 hover:text-text disabled:opacity-50"
+              >
+                {advance.isPending ? '晉升中…' : `晉升至 ${nextStage} →`}
+              </button>
+              {advance.isError && <span className="text-error">{(advance.error as Error)?.message}</span>}
+            </div>
+            {!gatePassed && (
+              <p className="text-xs text-warning">
+                此策略尚無 IS gate PASS 的 run，暫不可晉升（前端防線；晉升前須先通過驗證閘）。
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-sm text-text-muted">已達最終階段（live），無可晉升。</p>

@@ -12,9 +12,14 @@ export interface AlertRuleRow {
   title: string
 }
 
+/** GET /system/alerts/channels — bot_token 一律遮罩（rules/security.md §4）。 */
+export interface AlertChannels {
+  discord?: { enabled?: boolean; bot_token?: string }
+}
+
 export const useBundles = () => useEndpoint<unknown[]>('/system/bundles', 300)
 export const useAlertRules = () => useEndpoint<AlertRuleRow[]>('/system/alerts/rules', 300)
-export const useAlertChannels = () => useEndpoint<Record<string, unknown>>('/system/alerts/channels', 300)
+export const useAlertChannels = () => useEndpoint<AlertChannels>('/system/alerts/channels', 300)
 export const useRiskSpec = () => useEndpoint<{ rules?: unknown[] }>('/system/risk/spec', 300)
 
 /** Trigger an async ingest job; returns the job ref ({job_id,status}). */

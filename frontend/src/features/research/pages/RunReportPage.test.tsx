@@ -18,7 +18,15 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('RunReportPage', () => {
   it('顯示 KPI + reproduce + tear_sheet pending', async () => {
-    mockRun({ run_id: 'run_x', strategy_id: 's1', status: 'done', sharpe: 1.5, total_return: 0.32 })
+    // 真實 RunRecord：strategy / gate_status / 巢狀 metrics / window（doc 25 §6.1）
+    mockRun({
+      run_id: 'run_x',
+      strategy: 's1',
+      gate_status: 'PASS',
+      engine: 'sim',
+      window: ['2020-01-01', '2024-12-31'],
+      metrics: { sharpe: 1.5, cagr: 0.32, maxdd: -0.18, win: 0.55, trades: 42 },
+    })
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={qc}>
