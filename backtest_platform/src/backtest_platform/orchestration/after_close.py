@@ -53,6 +53,7 @@ class AfterCloseStatus(str, Enum):
     TOO_EARLY = "too_early"
     NOT_ENROLLED = "not_enrolled"      # ADR-033: no active觀察艙 berth → refuse to run
     WATCH_EXPIRED = "watch_expired"    # ADR-033: berth expired → refuse, prompt re-eval
+    PAUSED = "watch_paused"            # ADR-033: app-level pause → benign skip (exit 0)
     ALREADY_DONE = "already_done"
     DRY_RUN = "dry_run"
     NO_DATA = "no_data"                # calendar said trading day but source had no as-of row
@@ -251,7 +252,8 @@ def run_after_close(
     **觀察艙 enrollment (ADR-033)** → run. The觀察艙 gate makes "who may run paper"
     a machine decision: a real session is refused (non-zero exit, flow never fires)
     unless the strategy holds an active berth; an expired berth is refused with a
-    re-eval prompt. A dry-run is a wiring smoke test that touches no data and
+    re-eval prompt; an app-level *paused* berth is a benign skip (exit 0, no Discord).
+    A dry-run is a wiring smoke test that touches no data and
     collects no OOS, so it short-circuits *before* the gate. Returns an
     :class:`AfterCloseResult`; a real run executes the daily flow via
     ``session_runner``, records success as a done-marker, sweeps expiries, and
@@ -287,13 +289,28 @@ def run_after_close(
 
 
 def _watch_gate(watch: Any, strategy: str, as_of: date) -> AfterCloseResult | None:
-    """ADR-033 enrollment gate: None ⇒ admitted (active berth); else a refusal result.
+    """ADR-033 enrollment gate: None ⇒ admitted (active berth); else a skip/refusal.
 
-    An expired berth is refused with a re-eval prompt; anything else without an
-    active berth (never enrolled, or already exited) is refused with an enroll hint.
+    A *paused* berth (app-level pause via the GUI / ``watch pause``) is a benign skip
+    (exit 0, no Discord — a paused berth every day would be pure noise, a log line
+    suffices). An *expired* berth is refused with a re-eval prompt (exit 1); anything
+    else without an active berth (never enrolled, or already exited) is refused with
+    an enroll hint (exit 1).
     """
-    if watch is not None and getattr(watch, "state", None) == "active":
+    state = getattr(watch, "state", None) if watch is not None else None
+    if state == "active":
         return None
+    if state == "paused":
+        logger.info(
+            "after-close {}: 觀察艙已暫停 (app-level pause) → skip {} — no Discord (log only)",
+            strategy, as_of,
+        )
+        return _result(
+            AfterCloseStatus.PAUSED, strategy, as_of,
+            f"{strategy} 觀察艙已暫停（app-level pause）— skipping {as_of}. "
+            "Resume via the Monitor觀察艙 card or `... orchestration.cli watch resume "
+            f"--strategy {strategy}`.",
+        )
     if watch is not None and getattr(watch, "state", None) == "expired":
         return _result(
             AfterCloseStatus.WATCH_EXPIRED, strategy, as_of,

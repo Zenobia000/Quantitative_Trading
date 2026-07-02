@@ -18,6 +18,7 @@ import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { FleetPage } from '@/features/monitor/pages/FleetPage'
+import { WatchPage } from '@/features/monitor/pages/WatchPage'
 import { PerformancePage } from '@/features/monitor/pages/PerformancePage'
 import { PositionsPage } from '@/features/monitor/pages/PositionsPage'
 import { SignalsPage } from '@/features/monitor/pages/SignalsPage'
@@ -38,6 +39,7 @@ const REAL: Record<string, ReactElement> = {
   'research/promote/:strategyId': <PromotePage />,
   // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
   monitor: <FleetPage />,
+  'monitor/watch': <WatchPage />,
   'monitor/performance': <PerformancePage />,
   'monitor/positions': <PositionsPage />,
   'monitor/signals': <SignalsPage />,
@@ -70,6 +72,7 @@ const ROUTES: RouteDef[] = [
   { path: 'research/promote/:strategyId', title: 'Promote', spec: 'research_08_promote' },
   // Monitor
   { path: 'monitor', title: '策略艦隊總控', spec: 'monitor_fleet' },
+  { path: 'monitor/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
   { path: 'monitor/performance', title: '績效總覽', spec: 'monitor_a_performance' },
   { path: 'monitor/positions', title: '部位狀態', spec: 'monitor_b_positions' },
   { path: 'monitor/signals', title: '訊號日誌', spec: 'monitor_c_signals' },

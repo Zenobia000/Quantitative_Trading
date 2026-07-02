@@ -65,7 +65,7 @@ class WatchStatus:
     """Immutable folded view of one strategy's berth as of a given date."""
 
     strategy: str
-    state: str  # "active" | "expired" | "exited"
+    state: str  # "active" | "paused" | "expired" | "exited"
     enrolled_on: date
     verdict_dsr: float
     expiry_date: date
@@ -148,7 +148,10 @@ def _fold(
     """Fold a strategy's events into its current status, or None if never enrolled.
 
     Only the *latest* enrollment matters (a re-enrollment starts a fresh berth);
-    any ``expire`` / ``exit`` recorded after it decides the terminal state.
+    any ``expire`` / ``exit`` recorded after it decides the terminal state, while
+    ``pause`` / ``resume`` toggle the reversible active⇄paused axis. ``expire`` /
+    ``exit`` are terminal (sticky): a stray ``resume`` cannot un-expire a berth, and
+    ``pause`` only bites an active one — so the fold stays a well-defined machine.
     """
     evs = _events_for(strategy, events)
     enroll_idx = _last_enroll_index(evs)
@@ -162,10 +165,15 @@ def _fold(
 
     state = "active"
     for e in evs[enroll_idx + 1:]:
-        if e.get("event") == "expire":
+        ev = e.get("event")
+        if ev == "expire":
             state = "expired"
-        elif e.get("event") == "exit":
+        elif ev == "exit":
             state = "exited"
+        elif ev == "pause" and state == "active":
+            state = "paused"
+        elif ev == "resume" and state == "paused":
+            state = "active"
 
     expiry_date = enrolled_on + timedelta(days=OBSERVATION_DAYS)
     observed = _count_trading_days(enrolled_on, min(as_of, expiry_date), is_trading_day)
@@ -217,6 +225,27 @@ def active_watches(
     strategies = sorted({e.get("strategy") for e in events if e.get("strategy")})
     folded = (_fold(s, events, as_of=as_of, is_trading_day=itd) for s in strategies)
     return [w for w in folded if w is not None and w.state == "active"]
+
+
+def all_watches(
+    *,
+    as_of: date | None = None,
+    is_trading_day: TradingDayFn | None = None,
+    path: Path | str | None = None,
+) -> list[WatchStatus]:
+    """Every strategy's latest folded berth, any state, strategy-sorted.
+
+    Unlike :func:`active_watches` (the after-close gate's active-only view), this is
+    the GUI overview read: it surfaces paused / expired / exited berths too, so an
+    operator sees the full cabin — who is collecting OOS, who is paused, and who has
+    matured and awaits a re-eval.
+    """
+    as_of = as_of or _today()
+    itd = is_trading_day or _default_trading_day()
+    events = _read_events(path)
+    strategies = sorted({e.get("strategy") for e in events if e.get("strategy")})
+    folded = (_fold(s, events, as_of=as_of, is_trading_day=itd) for s in strategies)
+    return [w for w in folded if w is not None]
 
 
 # --------------------------------------------------------------------------- #
@@ -321,3 +350,58 @@ def record_exit(
     Terminal like ``expire`` for the one-shot bar: an exited strategy may not
     re-enter without fresh evidence."""
     _append({"strategy": strategy, "event": "exit", "reason": reason, "at": _now_iso()}, path)
+
+
+# --------------------------------------------------------------------------- #
+# app-level pause / resume — the GUI's reversible "stop collecting OOS" switch  #
+# --------------------------------------------------------------------------- #
+def pause(
+    strategy: str,
+    *,
+    is_trading_day: TradingDayFn | None = None,
+    path: Path | str | None = None,
+) -> WatchStatus:
+    """Pause an active berth (app-level): after-close will skip it while it keeps
+    its enrollment / expiry clock. Idempotent — pausing an already-paused berth
+    appends no second event. Only an *active* berth may pause: a missing berth or a
+    terminal (expired / exited) one raises ``WatchRegistryError``."""
+    itd = is_trading_day or _default_trading_day()
+    current = _fold(strategy, _read_events(path), as_of=_today(), is_trading_day=itd)
+    if current is None:
+        raise WatchRegistryError(f"{strategy} 未進觀察艙，無法暫停 (no berth to pause)")
+    if current.state == "paused":
+        return current  # idempotent — already paused, no duplicate event
+    if current.state != "active":
+        raise WatchRegistryError(
+            f"{strategy} 狀態為 {current.state} — 只有 active 艙位可暫停 "
+            "(only an active berth may be paused)"
+        )
+    _append({"strategy": strategy, "event": "pause", "at": _now_iso()}, path)
+    result = _fold(strategy, _read_events(path), as_of=_today(), is_trading_day=itd)
+    assert result is not None  # we just appended a pause to an existing berth
+    return result
+
+
+def resume(
+    strategy: str,
+    *,
+    is_trading_day: TradingDayFn | None = None,
+    path: Path | str | None = None,
+) -> WatchStatus:
+    """Resume a paused berth back to active (app-level). Idempotent — resuming an
+    already-active berth appends no event. A missing or terminal berth raises."""
+    itd = is_trading_day or _default_trading_day()
+    current = _fold(strategy, _read_events(path), as_of=_today(), is_trading_day=itd)
+    if current is None:
+        raise WatchRegistryError(f"{strategy} 未進觀察艙，無法恢復 (no berth to resume)")
+    if current.state == "active":
+        return current  # idempotent — already active, no duplicate event
+    if current.state != "paused":
+        raise WatchRegistryError(
+            f"{strategy} 狀態為 {current.state} — 只有 paused 艙位可恢復 "
+            "(only a paused berth may be resumed)"
+        )
+    _append({"strategy": strategy, "event": "resume", "at": _now_iso()}, path)
+    result = _fold(strategy, _read_events(path), as_of=_today(), is_trading_day=itd)
+    assert result is not None  # we just appended a resume to an existing berth
+    return result

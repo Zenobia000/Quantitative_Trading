@@ -11,7 +11,9 @@ the API (e.g. to serve ``/health``) does not drag in zipline/vectorbt.
 """
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +27,14 @@ RunExecutor = Callable[[RunConfig], dict[str, Any]]
 #: Env var overriding where the runs ledger lives (defaults to ``reports/runs.jsonl``).
 #: Read via ``config.settings.Settings.backtest_runs_path`` (ADR-027 Stage 2).
 RUNS_PATH_ENV = "BACKTEST_RUNS_PATH"
+
+#: Env vars overriding the觀察艙 registry / after-close marker stores (ADR-033).
+#: The GUI's ``/monitor/watch`` reads both; overridable so an operator can point the
+#: dashboard at a non-default ``reports/`` and tests at a tmp pair.
+WATCH_REGISTRY_PATH_ENV = "WATCH_REGISTRY_PATH"
+AFTER_CLOSE_MARKER_PATH_ENV = "AFTER_CLOSE_MARKER_PATH"
+
+_TWT = timezone(timedelta(hours=8))  # Taiwan is fixed UTC+8 (no DST)
 
 
 def get_runs_path() -> Path:
@@ -58,3 +68,42 @@ def get_telemetry_reader() -> Any:
     from backtest_platform.data.db_reader import TelemetryReader
 
     return TelemetryReader()
+
+
+# --------------------------------------------------------------------------- #
+# 觀察艙 (Paper-Watch) reads — path / clock / calendar seams for /monitor/watch #
+# --------------------------------------------------------------------------- #
+def get_watch_registry_path() -> Path:
+    """Resolve the觀察艙 event-log path (``$WATCH_REGISTRY_PATH`` or the default)."""
+    from backtest_platform.research.watch_registry import DEFAULT_WATCH_PATH
+
+    raw = os.environ.get(WATCH_REGISTRY_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_WATCH_PATH
+
+
+def get_after_close_marker_path() -> Path:
+    """Resolve the after-close done-marker path (``$AFTER_CLOSE_MARKER_PATH`` or default)."""
+    from backtest_platform.orchestration.after_close import DEFAULT_MARKER_PATH
+
+    raw = os.environ.get(AFTER_CLOSE_MARKER_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_MARKER_PATH
+
+
+def get_watch_today() -> date:
+    """Today's date in Asia/Taipei — the ``as_of`` the觀察艙 overview folds against.
+
+    A dependency (not an inline ``date.today()``) so tests pin a fixed ``as_of`` and
+    the timer-health / observed-day math stays deterministic without freezing time.
+    """
+    return datetime.now(_TWT).date()
+
+
+def get_watch_trading_day_fn() -> Callable[[date], bool]:
+    """The TWSE trading-day predicate used for observed-day + timer-stale math.
+
+    Injectable so tests drive a plain weekday lambda (no calendar extra); production
+    resolves the real ``is_taiwan_trading_day`` (XTAI if installed, weekday fallback).
+    """
+    from backtest_platform.runtime.trading_calendar import is_taiwan_trading_day
+
+    return is_taiwan_trading_day

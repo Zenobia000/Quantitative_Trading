@@ -195,9 +195,11 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 ---
 
-## §6 端點 registry（全 72）
+## §6 端點 registry（全 75）
 
 > **🔧 2026-07-02 對齊（審查缺陷 #20）**：移除已刪除的 `/presets` + `/presets/{name}`（由 `GET /strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；補 `GET /research/workflows/{strategy}` + `POST /research/workflows/{workflow}`（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md) 研究工作流 dispatch）。淨計數 71→72。
+
+> **🔧 2026-07-02 補（審查缺陷 #17，[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）**：Paper-Watch 觀察艙 GUI 補課——`GET /monitor/watch` + `POST /monitor/watch/{strategy}/pause|resume`（§6.2 觀察艙段）。與其餘 `/monitor/*`（M4 deferred-stub）不同，此三條**已 LIVE**（讀 event-sourced `watch_registry.jsonl` + `after_close_markers.jsonl`，非 daemon telemetry）。淨計數 72→75。
 
 > 圖例 — **Status**：`✅shipped`（v0.6 已實作）/ `🟡partial`（已實作但需擴充）/ `⬜missing` / `🔵deferred-stub`（§5.4）。
 > **就緒度**：`ready`（後端能力已存在、只缺接線）/ `needs-work`（需新後端邏輯）/ `needs-data`（需新資料源）。
@@ -254,14 +256,17 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/research/promote/{strategy_id}/audit` | ⬜ needs-work | — → `[{ts, from, to, actor}]`（immutable）| 404 | run_08 | M3.6 |
 | GET | `/research/promote/{strategy_id}/observation` | 🔵 needs-data | — → paper equity（hosted daemon）| 🔵 stub | run_08 | M4 |
 
-### §6.2 Monitor zone（全 `🔵 deferred-stub` 至 M4，§5.4）
+### §6.2 Monitor zone（多數 `🔵 deferred-stub` 至 M4，§5.4）
 
-> 以下端點 M3 期間以 typed 空 envelope（`meta.data_source:"pending_m4"`）上線，前端可建頁；M4 swap 真 producer，shape 不變。指標計算機 `/metrics/*` 為例外（已實作）。
+> 多數端點 M3 期間以 typed 空 envelope（`meta.data_source:"pending_m4"`）上線，前端可建頁；M4 swap 真 producer，shape 不變。**例外**：指標計算機 `/metrics/*`（已實作）與 `/monitor/watch*`（[ADR-033](./adrs/ADR-033-paper-watch-tier.md) 觀察艙，已 LIVE，讀 registry/marker JSONL 而非 daemon telemetry）。
 
 | Method | Path | Status / 就緒 | Resp（`data`，M4 後）| 消費頁 | 里程碑 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | POST | `/metrics/summary` | ✅ ready | `MetricsSummaryRequest{daily_returns[],risk_free}` → `{total_return,cagr,max_drawdown,ulcer_index,downside_deviation,sharpe,sortino,calmar}` | run_04、mon_a | — |
 | POST | `/metrics/trades` | ✅ ready | `TradeMetricsRequest{trades[]}` → `{win_rate,profit_factor,avg_hold,kelly_fraction}` | run_04、mon_c | — |
+| GET | `/monitor/watch` | ✅ ready | **LIVE**（[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）→ `[{strategy, status:active\|paused\|expired\|exited, enrolled_on, verdict_dsr, observed_trading_days, nominal_trading_days, expiry_date, days_remaining, timer_health:ok\|stale\|never_ran, last_session_date, last_session_at, last_trading_day, sessions:[{date,status}]}]`，`meta.data_source="watch_registry"`；每列附 after-close timer 健康度（讀 done-markers vs 交易日曆）+ 最近 10 筆 session 時間線 | — | monitor_watch | — |
+| POST | `/monitor/watch/{strategy}/pause` | ✅ ready | **LIVE** → `{…WatchStatus, status:"paused"}`；app 層暫停（after-close 略過此艙但保留到期鐘），冪等；只有 active 艙位可暫停 | **400**（未進艙 / 非 active）| monitor_watch | — |
+| POST | `/monitor/watch/{strategy}/resume` | ✅ ready | **LIVE** → `{…WatchStatus, status:"active"}`；恢復暫停艙位，冪等；只有 paused 艙位可恢復 | **400**（未進艙 / 非 paused）| monitor_watch | — |
 | GET | `/monitor/strategies` | 🔵 needs-work | strategy selector（live）| mon_a | M4 |
 | GET | `/monitor/fleet` | 🔵 needs-data | 各策略 stage / 健康評分 / live KPI / 退化旗標（艦隊板）| monitor_fleet | M4 |
 | GET | `/monitor/portfolio-summary` | 🔵 needs-data | 組合 equity / 曝險 / Heat / 計數 | monitor_fleet | M4 |

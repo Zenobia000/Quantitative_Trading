@@ -1992,6 +1992,114 @@
         }
       }
     },
+    "/monitor/watch": {
+      "get": {
+        "tags": [
+          "monitor-watch"
+        ],
+        "summary": "Watch Overview",
+        "description": "觀察艙 overview: every berth (any state) + timer health + recent sessions.\n\nEach row carries the folded berth (status / 觀察日 N/~60 / expiry / DSR) enriched\nwith the after-close **timer health** (``ok`` / ``stale`` / ``never_ran``) so the\noperator can see at a glance whether the systemd timer is still firing — a silent\ndead timer would otherwise stall OOS collection with no alert.",
+        "operationId": "watch_overview_monitor_watch_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monitor/watch/{strategy}/pause": {
+      "post": {
+        "tags": [
+          "monitor-watch"
+        ],
+        "summary": "Watch Pause",
+        "description": "App-level pause: after-close will skip this berth (benign, no Discord) while it\nkeeps its enrollment / expiry clock. Idempotent; only an active berth may pause.",
+        "operationId": "watch_pause_monitor_watch__strategy__pause_post",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monitor/watch/{strategy}/resume": {
+      "post": {
+        "tags": [
+          "monitor-watch"
+        ],
+        "summary": "Watch Resume",
+        "description": "Resume a paused berth back to active. Idempotent; only a paused berth may resume.",
+        "operationId": "watch_resume_monitor_watch__strategy__resume_post",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/system/risk/spec": {
       "get": {
         "tags": [

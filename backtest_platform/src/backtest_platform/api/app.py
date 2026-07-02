@@ -35,6 +35,7 @@ from backtest_platform.api.routers import (
     runs_tags,
     strategies,
     system,
+    watch,
 )
 
 API_VERSION = "0.6.0"
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
     app.include_router(research_sweep.router)  # M3 seam: S2 async sweep (8.H.6)
     app.include_router(research_workflows.router)  # ADR-029: research workflow jobs (①.5)
     app.include_router(monitor.router)
+    app.include_router(watch.router)  # ADR-033: Paper-Watch 觀察艙 overview + pause/resume
     app.include_router(system.router)
     app.include_router(home.router)
 

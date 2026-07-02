@@ -164,6 +164,25 @@ journalctl --user -u after-close.service -n 50     # 看最近一次結果
 
 Timer：`OnCalendar=Mon..Fri 14:35 Asia/Taipei` + `Persistent=true`（補跑睡眠中錯過的觸發，冪等擋雙跑）。cron 替代方案見 `deploy/after-close.cron.example`（cron 無時區，假設 host 為 Asia/Taipei）。service 讀 `.env`（`FINLAB_API_TOKEN` / `POSTGRES_*` / `DISCORD_*`）。成功推 `INFO` digest、失敗推 `ERROR` 告警。
 
+### 3.4 暫停 / 恢復觀察（app 層 pause，ADR-033）
+
+排程本體留 systemd（OS 保證準時）；若要**暫時停收某艙位的 live OOS**（如策略疑似異常、想暫停觀察但又不願 `exit` 觸發一次性再入艙門檻），用 **app 層 pause**——after-close 會 `PAUSED` skip 該艙（exit 0，**只 log 不發 Discord**，避免每日噪音），但艙位保留進艙日 / 到期鐘，恢復即續。
+
+兩種操作等價入口（皆走同一 event-sourced registry，冪等）：
+
+```bash
+# CLI（部署主機）
+uv run python -m backtest_platform.orchestration.cli watch pause  --strategy inst_flow
+uv run python -m backtest_platform.orchestration.cli watch resume --strategy inst_flow
+
+# GUI（Monitor → 觀察艙卡的暫停/恢復鈕；等價 REST）
+# POST /monitor/watch/{strategy}/pause | resume
+```
+
+語意：只有 `active` 艙位可 `pause`、只有 `paused` 艙位可 `resume`（其餘狀態回 400 / ClickException）；重複 pause / resume 為 no-op（不追加事件）。`pause` / `resume` 為新事件型別，摺疊出 `paused` 狀態（`expire` / `exit` 仍為終態，`resume` 無法解除到期）。**paused 艙位不佔 ≤2 艙位上限**（可 pause 一艙位挪出空間給新策略）。
+
+> **Timer 健康度（GUI）**：觀察艙卡讀 after-close done-markers 對照交易日曆，顯示 `ok` / `stale` / `never_ran`。看到 `stale`（最後成功 session 落後上一交易日）或 `never_ran`（從未跑）時，多半是 timer 沒裝 / 沒啟用——卡片直接給可複製的 `systemctl --user enable --now after-close.timer`，照 §3.3 裝好即恢復。
+
 ---
 
 ## 4. 備份與災難恢復

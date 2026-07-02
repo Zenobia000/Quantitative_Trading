@@ -1038,6 +1038,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/monitor/watch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Watch Overview
+         * @description 觀察艙 overview: every berth (any state) + timer health + recent sessions.
+         *
+         *     Each row carries the folded berth (status / 觀察日 N/~60 / expiry / DSR) enriched
+         *     with the after-close **timer health** (``ok`` / ``stale`` / ``never_ran``) so the
+         *     operator can see at a glance whether the systemd timer is still firing — a silent
+         *     dead timer would otherwise stall OOS collection with no alert.
+         */
+        get: operations["watch_overview_monitor_watch_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitor/watch/{strategy}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Watch Pause
+         * @description App-level pause: after-close will skip this berth (benign, no Discord) while it
+         *     keeps its enrollment / expiry clock. Idempotent; only an active berth may pause.
+         */
+        post: operations["watch_pause_monitor_watch__strategy__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/monitor/watch/{strategy}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Watch Resume
+         * @description Resume a paused berth back to active. Idempotent; only a paused berth may resume.
+         */
+        post: operations["watch_resume_monitor_watch__strategy__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/risk/spec": {
         parameters: {
             query?: never;
@@ -3489,6 +3555,88 @@ export interface operations {
             header?: never;
             path: {
                 event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    watch_overview_monitor_watch_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+        };
+    };
+    watch_pause_monitor_watch__strategy__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    watch_resume_monitor_watch__strategy__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy: string;
             };
             cookie?: never;
         };
