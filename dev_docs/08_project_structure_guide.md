@@ -63,6 +63,7 @@ src/backtest_platform/
 │   ├── adjustment.py             # 除權息還原
 │   ├── universe_builder.py       # point-in-time universe 過濾
 │   ├── universe.py               # universe 輔助
+│   ├── bundle_registry.py        # 掃 data/parquet* manifest → bundle 讀模型（GET /system/bundles 後端）
 │   ├── db_writer.py / db_reader.py  # TimescaleDB upsert / telemetry 讀取
 │   └── schemas.py                # Pydantic 資料 schema
 │
@@ -121,7 +122,8 @@ src/backtest_platform/
 │   ├── after-close.service / after-close.timer / after-close.cron.example / README.md
 │
 ├── adapters/
-│   └── brokers/paper_broker.py   # 紙上券商（簡化撮合 + heat）；shioaji（M5）
+│   ├── brokers/paper_broker.py   # 紙上券商（簡化撮合 + heat）；shioaji（M5）
+│   └── data_feed/                # 讀取層 seam（ADR-035）：DataFeed Protocol + EODParquetFeed（realtime 延後）
 │
 ├── engines/                      # zipline 整合（研究迴圈主力是離線 sim）
 │   ├── protocol.py               # DEPRECATED（ADR-027 策略契約取代）
@@ -149,7 +151,8 @@ src/backtest_platform/
 | `orchestration/` `runtime/` `adapters/brokers/paper_broker` | ✅ 現行 | paper 鏈 + after-close 排程器（cron/systemd 級，`deploy/` 附範例）已落地 |
 | `api/` `monitoring/` `jobs/` | ✅ 現行 | 15 routers；Discord 告警 |
 | `engines/zipline_adapter/` | ✅ 輔助 | 對拍 / bundle ingest；`engines/protocol.py` DEPRECATED |
-| `adapters/data_bundle` `data_feed` `dashboard/` | 空殼 | 保留套件位；React 前端已取代 dashboard |
+| `adapters/data_feed/` | 🟡 seam | 讀取層介面已定義（DataFeed Protocol + EODParquetFeed，ADR-035）；realtime 實作延後、未 rewire 既有 caller |
+| `adapters/data_bundle` `dashboard/` | 空殼 | 保留套件位；React 前端已取代 dashboard |
 | `adapters/brokers/shioaji_broker` | M5 | 實盤下單（未實作） |
 
 ---

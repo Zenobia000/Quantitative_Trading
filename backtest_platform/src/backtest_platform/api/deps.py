@@ -43,6 +43,19 @@ def get_runs_path() -> Path:
     return configured if configured is not None else DEFAULT_RUNS_PATH
 
 
+def get_data_root() -> Path:
+    """Root dir holding the parquet bundle caches (``data/`` by default).
+
+    Injected so tests point ``GET /system/bundles`` at a ``tmp_path`` of synthetic
+    manifests via ``app.dependency_overrides`` — no real parquet cache touched. The
+    scan root itself (``bundle_registry.DEFAULT_DATA_ROOT``) is a cwd-relative path,
+    the same convention every other ``data/parquet`` reference uses.
+    """
+    from backtest_platform.data.bundle_registry import DEFAULT_DATA_ROOT
+
+    return DEFAULT_DATA_ROOT
+
+
 def get_run_executor() -> RunExecutor:
     """Return the real IS executor (``run_and_judge_persist``), imported lazily.
 

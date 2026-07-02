@@ -42,8 +42,8 @@ graph TD
         Config["config/<br/>universe·settings"]
     end
     subgraph Infra["Infrastructure / Adapters 層"]
-        Data["data/<br/>finlab_source·finmind_etl·db_reader/writer"]
-        Adapters["adapters/<br/>brokers·data_bundle"]
+        Data["data/<br/>finlab_source·finmind_etl·db_reader/writer·bundle_registry"]
+        Adapters["adapters/<br/>brokers·data_feed（seam, ADR-035）"]
         Engines["engines/<br/>zipline_adapter（event 引擎）"]
         Monitoring["monitoring/<br/>influx·discord·alerts"]
     end
@@ -66,6 +66,7 @@ graph TD
     Research --> Validation
     Research --> StratImpl
     Orch --> Adapters
+    Adapters --> Engines
     Orch --> Risk
     Runtime --> Orch
     Runtime --> Data

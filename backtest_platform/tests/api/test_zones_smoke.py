@@ -33,10 +33,15 @@ def test_all_get_endpoints_return_envelope(client):
 
 @pytest.mark.parametrize(
     "path",
-    ["/monitor/correlation", "/monitor/risk/metrics", "/system/bundles", "/home/research-status"],
+    ["/monitor/correlation", "/monitor/risk/metrics", "/home/research-status"],
 )
 def test_pending_endpoints_tagged(client, path):
-    """Deferred endpoints carry meta.data_source (pending) — 不假造資料。"""
+    """Deferred endpoints carry meta.data_source (pending) — 不假造資料。
+
+    ``/system/bundles`` used to sit here as a pending stub; it is now a real
+    manifest scan (``data_source="parquet_scan"``), so it is asserted separately in
+    ``tests/api/test_system.py`` and no longer belongs on the pending list.
+    """
     body = client.get(path).json()
     # home/research-status 為真聚合（無 data_source）；其餘 pending
     if path != "/home/research-status":
