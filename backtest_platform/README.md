@@ -1,6 +1,6 @@
 # 四層共振戰法回測平台
 
-> 基於 `../strategy/v2.md` 規格書打造的台股量化交易系統（含回測 / paper / 實盤三模式）。
+> 基於 `../strategy/archive/v2.md` 規格書打造的台股量化交易系統（含回測 / paper / 實盤三模式）。
 
 ## 狀態
 
@@ -100,9 +100,9 @@ uv run --extra sprint1 --extra dev python -m \
 
 ## 紀律
 
-- `strategy/v2.md` 是契約，偏離操作需在 Part 6.3 變更紀錄留下文字
+- `strategy/archive/v2.md` 是契約，偏離操作需在 Part 6.3 變更紀錄留下文字
 - 訊號邏輯抽象成 pure function，三模式（backtest/paper/live）都呼叫同一份
 - 每個 milestone 通不過 → 不晉升，不允許「再調一下」
 - **狀態追蹤集中在 `dev_docs/16_wbs_development_plan.md`，其他文件不重複**
 - **架構變更必寫 ADR**（已 11 份）
-- **策略變更必更新 `strategy/v2.md` §6.3**
+- **策略變更必更新 `strategy/archive/v2.md` §6.3**

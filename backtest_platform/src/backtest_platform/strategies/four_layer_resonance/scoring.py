@@ -1,6 +1,6 @@
 """Four-layer resonance scoring — pure function.
 
-Mirrors ``strategy/v2.md`` 2.3 and the XScript in 2.7. This function is the
+Mirrors ``strategy/archive/v2.md`` 2.3 and the XScript in 2.7. This function is the
 single implementation shared by the rqalpha engine and vectorbt parameter
 sweeps — both must call ``compute_scores`` for v2.md 5.3.3 signal reproduction
 to hold.

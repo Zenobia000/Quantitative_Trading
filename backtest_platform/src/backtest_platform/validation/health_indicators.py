@@ -6,7 +6,7 @@ strategy across 13 dimensions? (green/yellow/red)" — a richer diagnostic for t
 research/validate UI, not a deploy gate.
 
 Thresholds are **data** (``HEALTH_INDICATORS``), transcribed verbatim from
-``strategy/v2.md`` §4.3.1, so tuning a band is a visible, recordable edit rather
+``strategy/archive/v2.md`` §4.3.1, so tuning a band is a visible, recordable edit rather
 than buried logic. Pure functions, no IO. Each indicator reads its metric (or an
 alias) from the metrics dict; a missing metric yields ``na`` (never silently
 green). Tiering directions:

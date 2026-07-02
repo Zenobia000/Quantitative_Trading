@@ -1,6 +1,6 @@
 """Four-Layer Resonance Backtest Platform.
 
-Specification lives in ``strategy/v2.md``. This package implements the engineering
+Specification lives in ``strategy/archive/v2.md``. This package implements the engineering
 side: data ingestion, signal computation, backtesting, validation, and execution.
 """
 
