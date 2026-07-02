@@ -48,15 +48,21 @@ def _stub_bundle(stock_id: str, n_rows: int = 5) -> ETLBundle:
 
 
 def test_finmind_bundle_registered_in_zipline_registry():
-    """Importing zipline_adapter package should register 'finmind' bundle."""
-    # Ensure adapter import has run (registers via side-effect)
-    import backtest_platform.engines.zipline_adapter  # noqa: F401
+    """``ensure_registered()`` registers the 'finmind' bundle with zipline.
+
+    Registration is now an explicit call (dependency-untangle refactor), not a
+    package-import side-effect — so we invoke it directly instead of relying on
+    importing ``engines.zipline_adapter``.
+    """
+    from backtest_platform.engines.zipline_adapter.bundles import finmind_bundle
+
+    finmind_bundle.ensure_registered()
     from zipline.data import bundles
 
     # zipline-reloaded exposes the registry via `bundles.bundles` mapping
     registered = set(bundles.bundles.keys())
     assert "finmind" in registered, (
-        f"'finmind' must be registered in zipline bundle registry; got {registered}"
+        f"'finmind' must be registered after ensure_registered(); got {registered}"
     )
 
 

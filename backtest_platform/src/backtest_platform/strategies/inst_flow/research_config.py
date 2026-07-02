@@ -6,7 +6,7 @@ declarations the generic workflows consume.
 """
 from datetime import date
 
-from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import DEFAULT_UNIVERSE
+from backtest_platform.config.universe import DEFAULT_UNIVERSE
 from backtest_platform.research.workflows.config import (
     DOEConfig,
     GOGatesConfig,
@@ -55,7 +55,7 @@ TRUTH_GATE = TruthGateConfig(
     is_start=date(2015, 1, 1),
     oos_start=date(2021, 1, 1),
     is_end=date(2024, 12, 31),
-    n_trials=24,  # 2x2x2x3 landscape (matches scripts/inst_flow_truth_gate)
+    n_trials=16,  # 2x2x2x2 landscape (matches _GRID: rebalance × lookback × flow × vol_target)
     pre_registered=True,
     slippage_stress=0.003,
 )

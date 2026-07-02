@@ -8,7 +8,7 @@ NEGATIVE); attempting those workflows raises a clear "not declared" error.
 """
 from datetime import date
 
-from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import DEFAULT_UNIVERSE
+from backtest_platform.config.universe import DEFAULT_UNIVERSE
 from backtest_platform.research.workflows.config import DOEConfig
 
 DOE = DOEConfig(
