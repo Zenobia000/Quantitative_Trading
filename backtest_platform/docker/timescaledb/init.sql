@@ -100,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_trades_signal_type ON trades (signal_type, signal
 CREATE TABLE IF NOT EXISTS runs (
     run_id            TEXT PRIMARY KEY,        -- deterministic RunConfig hash
     hypothesis        TEXT NOT NULL,           -- pre-registered (anti-overfit)
-    preset            TEXT NOT NULL,           -- strategy preset (v2 / v3 / ...)
+    strategy          TEXT NOT NULL,           -- registered strategy name (ADR-028, replaces preset)
     engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
     stocks            JSONB NOT NULL,          -- universe for this run
     is_start          DATE NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS runs (
     CONSTRAINT runs_window_ck CHECK (is_start < is_end),
     CONSTRAINT runs_status_ck CHECK (status IN ('created', 'running', 'done', 'failed'))
 );
-CREATE INDEX IF NOT EXISTS idx_runs_preset_created ON runs (preset, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_runs_strategy_created ON runs (strategy, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_runs_status ON runs (status, created_at DESC);
 
 -- ============================================================

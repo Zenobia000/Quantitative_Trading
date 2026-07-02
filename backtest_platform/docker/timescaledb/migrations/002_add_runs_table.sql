@@ -6,8 +6,9 @@
 --
 -- v0.1-min scope: table only. Retroactive FK constraints from the four
 -- time-series tables (equity_snapshots / positions / signals / risk_metrics)
--- onto runs(run_id) are deferred to migration 003 (v0.2-full) — they require
+-- onto runs(run_id) are deferred to a later v0.2-full migration — they require
 -- every orphan run_id to first have a matching `runs` row, i.e. a backfill.
+-- (Migration 003 was taken by the ADR-028 preset→strategy column rename.)
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
