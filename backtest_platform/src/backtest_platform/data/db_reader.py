@@ -9,7 +9,11 @@ telemetry exists yet (graceful degradation — never fabricated data).
 """
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
+from dataclasses import dataclass, field
 from typing import Any
+
+from loguru import logger
 
 from backtest_platform.data.db_writer import DBConfig, _connection
 
@@ -137,3 +141,146 @@ class TelemetryReader:
             }
             for r in rows
         ]
+
+
+# =========================================================================== #
+# Broker-state restore — rehydrate a PaperBroker's book across daily restarts. #
+#
+# The after-close scheduler starts a fresh ``PaperBroker`` per CLI process, so
+# without this the portfolio risk gates (EX-002 single-name / EX-004 heat /
+# EX-007 max holdings) run from an empty book every session — the cross-day
+# twin of a known review defect, and dishonest Paper-Watch OOS. This reads the
+# daemon's own telemetry back into a seedable state.
+#
+# Data-source choice (schema-driven — the honest source per column):
+#   * cash      — latest ``equity_snapshots.cash`` for the strategy (mode=paper).
+#                 That column is written straight from the broker's
+#                 ``portfolio_snapshot()['cash']`` at each session close, so it is
+#                 the exact, per-strategy cash — the most honest source available.
+#   * positions — folded from the persisted *fills* (``orders`` rows, the fill
+#                 log the sink writes), NOT the ``positions`` table: the paper/live
+#                 flow never writes ``positions`` (only tests call
+#                 ``upsert_positions``), and ``equity_snapshots.open_positions`` is
+#                 a count only — too coarse for EX-002 / EX-004 which need per-name
+#                 qty + cost basis. Folding the fill log mirrors PaperBroker's own
+#                 weighted-average book-keeping, so the reconstruction is exact.
+#
+# LIMITATION (documented, not hidden): ``orders`` has no strategy_id column, so
+# fills are folded portfolio-wide. Today only ``inst_flow`` is wired for paper
+# (``after_close.build_session_runner`` rejects any other), so portfolio == the
+# strategy and the reconstruction is exact. Wiring a second paper strategy first
+# needs a strategy discriminator on ``orders`` (a write-side migration).
+# =========================================================================== #
+@dataclass(frozen=True, slots=True)
+class PositionState:
+    """A restored holding: net quantity + weighted-average cost basis (per share)."""
+
+    qty: int
+    cost_basis: float
+
+
+@dataclass(frozen=True, slots=True)
+class BrokerState:
+    """A restorable broker book — the seed for :meth:`PaperBroker.from_seed`."""
+
+    cash: float
+    positions: dict[str, PositionState] = field(default_factory=dict)
+
+
+#: DB side vocabulary (``_SIDE_DB`` writes 'Buy'/'Sell') → normalized buy/sell.
+_BUY_SIDES = frozenset({"buy", "add"})
+_SELL_SIDES = frozenset({"sell", "reduce", "exit", "stoploss", "takeprofit"})
+
+
+def reconstruct_positions(
+    fills: Iterable[Mapping[str, Any]],
+) -> dict[str, PositionState]:
+    """Fold chronologically-ordered fills into net open holdings.
+
+    Mirrors ``PaperBroker._apply_buy`` / ``_apply_sell``: a buy weighted-averages
+    the cost basis on price only; a sell reduces quantity and leaves the basis
+    unchanged, dropping the name once flat. ``fills`` must be oldest-first. Each
+    fill is a mapping with ``stock_id`` / ``side`` (case-insensitive, 'Buy'/'Sell'
+    from the DB) / ``quantity`` / ``price``.
+    """
+    book: dict[str, PositionState] = {}
+    for fill in fills:
+        sid = str(fill["stock_id"])
+        side = str(fill["side"]).strip().lower()
+        qty = int(fill["quantity"])
+        price = float(fill["price"])
+        held = book.get(sid)
+        if side in _BUY_SIDES:
+            book[sid] = _fold_buy(held, qty, price)
+        elif side in _SELL_SIDES:
+            new = _fold_sell(held, qty)
+            if new is None:
+                book.pop(sid, None)
+            else:
+                book[sid] = new
+        else:  # never guess — an unknown side must surface, not be swallowed
+            raise ValueError(f"unknown fill side {fill['side']!r} for {sid}")
+    return book
+
+
+def _fold_buy(held: PositionState | None, qty: int, price: float) -> PositionState:
+    if held is None:
+        return PositionState(qty=qty, cost_basis=price)
+    new_qty = held.qty + qty
+    new_basis = (held.cost_basis * held.qty + price * qty) / new_qty
+    return PositionState(qty=new_qty, cost_basis=new_basis)
+
+
+def _fold_sell(held: PositionState | None, qty: int) -> PositionState | None:
+    remaining = (held.qty if held else 0) - qty
+    if remaining <= 0:
+        return None  # fully closed (or oversold in the log) → drop the name
+    assert held is not None
+    return PositionState(qty=remaining, cost_basis=held.cost_basis)
+
+
+_LATEST_CASH_SQL = (
+    "SELECT cash FROM equity_snapshots WHERE strategy_id = %s AND mode = %s "
+    "ORDER BY snapshot_time DESC LIMIT 1"
+)
+_PAPER_FILLS_SQL = (
+    "SELECT stock_id, side, quantity, limit_price FROM orders "
+    "WHERE broker = %s AND status = 'filled' ORDER BY created_at ASC"
+)
+
+
+def load_broker_state(
+    strategy: str,
+    *,
+    mode: str = "paper",
+    broker: str = "paper",
+    cfg: DBConfig | None = None,
+) -> BrokerState | None:
+    """Reconstruct ``strategy``'s last-persisted broker book from telemetry.
+
+    Returns a :class:`BrokerState` (cash + folded holdings) to seed a
+    ``PaperBroker`` on the next session, or ``None`` when no equity snapshot
+    exists yet (first session — nothing to restore). A DB failure **propagates**:
+    a restore path must never silently hand back an empty book, which would make
+    the Paper-Watch OOS dishonest (fail loud > fake-empty).
+    """
+    cfg = cfg or DBConfig.from_env()
+    with _connection(cfg) as conn, conn.cursor() as cur:
+        cur.execute(_LATEST_CASH_SQL, [strategy, mode])
+        cash_row = cur.fetchone()
+        if cash_row is None:
+            return None  # first session for this strategy — nothing persisted yet
+        cur.execute(_PAPER_FILLS_SQL, [broker])
+        fill_rows = cur.fetchall()
+
+    fills = [
+        {"stock_id": r[0], "side": r[1], "quantity": r[2], "price": r[3]}
+        for r in fill_rows
+        if r[3] is not None  # a filled paper order always carries its fill price
+    ]
+    positions = reconstruct_positions(fills)
+    logger.info(
+        "load_broker_state {}: restored cash={} with {} open positions",
+        strategy, float(cash_row[0]), len(positions),
+    )
+    return BrokerState(cash=float(cash_row[0]), positions=positions)

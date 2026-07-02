@@ -77,6 +77,8 @@ def list_stages_cmd() -> None:
               help="comma-separated symbols; else env AFTER_CLOSE_UNIVERSE")
 @click.option("--equity", type=float, default=None,
               help="starting paper cash; else env AFTER_CLOSE_EQUITY or 10,000,000")
+@click.option("--fresh", is_flag=True, default=False,
+              help="skip DB position restore; start from an empty book (cash only)")
 def after_close_cmd(
     strategy: str,
     date_str: str | None,
@@ -84,17 +86,20 @@ def after_close_cmd(
     force: bool,
     universe: str | None,
     equity: float | None,
+    fresh: bool,
 ) -> None:
     """Run the forward after-close session for one strategy/date (cron/systemd entry).
 
     Guards a real-calendar run (trading-day → after-close time → idempotency) then
     drives the proven live-panel forward chain. Non-trading / too-early / already-done
     exit 0 with a clear message; a failed daily flow exits 1 (and alerts Discord).
+    By default the session rehydrates the strategy's persisted book (cross-day
+    position restore); ``--fresh`` opts out and starts from an empty book.
     """
     as_of = date.fromisoformat(date_str) if date_str else _today_taipei()
 
     def _lazy_runner(strat: str, on: date):  # built only if the guards actually run it
-        return build_session_runner(strategy, universe, equity)(strat, on)
+        return build_session_runner(strategy, universe, equity, fresh=fresh)(strat, on)
 
     # Defer the production wiring (broker / live-panel / universe requirement) until
     # AFTER the cheap guards pass — a non-trading / too-early / already-done day must

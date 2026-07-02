@@ -21,6 +21,7 @@ from backtest_platform.orchestration.after_close import (
     safe_discord_notify,
 )
 from backtest_platform.orchestration.after_close import (
+    _build_broker,
     _resolve_equity,
     _resolve_universe,
 )
@@ -294,7 +295,75 @@ def test_build_session_runner_rejects_unknown_strategy():
 
 
 def test_build_session_runner_inst_flow_returns_callable_without_touching_finlab():
-    # Assembling the runner constructs broker/config + binds the live-panel path but
-    # does NOT read a panel (finlab is only hit when the returned callable is invoked).
+    # Assembling the runner binds the live-panel path but does NOT read a panel or
+    # the DB (both are only hit when the returned callable is invoked per session).
     runner = build_session_runner("inst_flow", "2330,2317", 1_000_000.0)
     assert callable(runner)
+
+
+# --------------------------------------------------------------------------- #
+# _build_broker — cross-day position restore wiring (the PR #151 limitation)   #
+# --------------------------------------------------------------------------- #
+def test_build_broker_seeds_from_restored_state():
+    """(a) telemetry present → broker rehydrated with the persisted cash + book."""
+    from backtest_platform.data.db_reader import BrokerState, PositionState
+
+    def loader(_strategy):
+        return BrokerState(cash=850_000.0, positions={"2330": PositionState(1_000, 500.0)})
+
+    br = _build_broker("inst_flow", 10_000_000.0, state_loader=loader)
+    assert br.cash == 850_000.0
+    assert br.positions["2330"].qty == 1_000
+    assert br.positions["2330"].cost_basis == 500.0
+
+
+def test_build_broker_first_day_none_is_fresh():
+    """(b) first session (loader → None) → a fresh broker at the configured cash."""
+    br = _build_broker("inst_flow", 10_000_000.0, state_loader=lambda _s: None)
+    assert br.cash == 10_000_000.0
+    assert br.positions == {}
+
+
+def test_build_broker_db_error_propagates_never_silent_empty():
+    """(c) a DB failure fails loud (propagates) — never a silent empty book."""
+    def loader(_strategy):
+        raise RuntimeError("db down")
+
+    with pytest.raises(RuntimeError, match="db down"):
+        _build_broker("inst_flow", 10_000_000.0, state_loader=loader)
+
+
+def test_build_broker_fresh_flag_skips_restore():
+    """(d) --fresh → skip restore entirely; the loader is never consulted."""
+    def loader(_strategy):
+        raise AssertionError("state_loader must not be called when fresh=True")
+
+    br = _build_broker("inst_flow", 10_000_000.0, fresh=True, state_loader=loader)
+    assert br.cash == 10_000_000.0
+    assert br.positions == {}
+
+
+def test_restored_broker_positions_are_seen_by_risk_gate():
+    """(e) integration: a restored position makes EX-002 reject an over-concentrating
+    buy that a fresh (empty) broker would have approved — the whole point of the fix."""
+    from backtest_platform.data.db_reader import BrokerState, PositionState
+    from backtest_platform.orchestration.collaborators import make_risk_check
+
+    # Restored: 2330 already ~6.5% of equity, so a +100k buy tips it over the 8% cap.
+    def loader(_strategy):
+        return BrokerState(cash=2_900_000.0, positions={"2330": PositionState(2_000, 100.0)})
+
+    restored = _build_broker("inst_flow", 10_000_000.0, state_loader=loader)
+    fresh = _build_broker("inst_flow", 3_000_000.0, state_loader=lambda _s: None)
+
+    signal = {
+        "stock_id": "2330", "side": "buy", "qty": 1_000, "price": 100.0,
+        "stop_loss": 95.0, "prev_close": 100.0, "avg_volume_20d": 10_000_000.0,
+        "industry": "semi",
+    }
+    ok_fresh, _ = make_risk_check(fresh)([signal])
+    ok_restored, why = make_risk_check(restored)([signal])
+
+    assert ok_fresh is True  # empty book: the buy is only 3.3% of equity → allowed
+    assert ok_restored is False  # restored 2330 (200k) + 100k = ~9.7% → EX-002 rejects
+    assert "2330" in why
