@@ -22,7 +22,10 @@ jobs:
       - name: Export locked requirements
         run: uv export --all-extras --no-emit-project --format requirements-txt > /tmp/requirements.txt
       - name: pip-audit against the lockfile
-        run: uvx pip-audit --strict -r /tmp/requirements.txt --disable-pip
+        # CVE-2025-71176（pytest，fix=9.0.3）明文豁免：pyproject 刻意 pin pytest<9
+        # （pytest-asyncio 尚未相容 pytest 9，tech-debt #4）；pytest 為 dev-only 依賴、
+        # 不在 production 路徑。pin 解除時移除此豁免。
+        run: uvx pip-audit --strict -r /tmp/requirements.txt --disable-pip --ignore-vuln CVE-2025-71176
 
   npm-audit:
     runs-on: ubuntu-latest
