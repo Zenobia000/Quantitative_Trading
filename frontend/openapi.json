@@ -204,7 +204,7 @@
           "runs"
         ],
         "summary": "Estimate",
-        "description": "Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.\n\nGrid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``\n→ 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same\ngrid; we compute the cardinality directly (product of axis lengths) so no base\nconfig is required just to count. ``preset`` is ignored as an axis.",
+        "description": "Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.\n\nGrid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``\n→ 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same\ngrid; we compute the cardinality directly (product of axis lengths) so no base\nconfig is required just to count. ``strategy`` is ignored as an axis.",
         "operationId": "estimate_runs_estimate_get",
         "responses": {
           "200": {
@@ -623,64 +623,21 @@
         }
       }
     },
-    "/presets": {
+    "/strategies": {
       "get": {
         "tags": [
-          "presets"
+          "strategies"
         ],
-        "summary": "List Presets",
-        "description": "List preset names plus each preset's full parameter dict.",
-        "operationId": "list_presets_presets_get",
+        "summary": "List Strategies Endpoint",
+        "description": "Return all registered strategies with name, title, description, and config JSON-schema.",
+        "operationId": "list_strategies_endpoint_strategies_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Envelope_PresetsListData_"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/presets/{name}": {
-      "get": {
-        "tags": [
-          "presets"
-        ],
-        "summary": "Get One Preset",
-        "description": "Return one preset's parameters; 404 if the name is unknown.",
-        "operationId": "get_one_preset_presets__name__get",
-        "parameters": [
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Name"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Envelope_PresetData_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/Envelope"
                 }
               }
             }
@@ -752,7 +709,7 @@
           "research"
         ],
         "summary": "Strategy Versions",
-        "description": "Version timeline for a strategy — runs of this preset, newest first (real projection).",
+        "description": "Version timeline for a strategy — runs of this strategy, newest first (real projection).",
         "operationId": "strategy_versions_research_strategies__strategy_id__versions_get",
         "parameters": [
           {
@@ -1283,6 +1240,102 @@
         ],
         "responses": {
           "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/workflows/{strategy}": {
+      "get": {
+        "tags": [
+          "research-workflows"
+        ],
+        "summary": "List Strategy Workflows",
+        "description": "List which workflow configs this strategy declares.",
+        "operationId": "list_strategy_workflows_research_workflows__strategy__get",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/workflows/{workflow}": {
+      "post": {
+        "tags": [
+          "research-workflows"
+        ],
+        "summary": "Submit Workflow",
+        "description": "Enqueue a research workflow as a background job; returns {job_id, status}.",
+        "operationId": "submit_workflow_research_workflows__workflow__post",
+        "parameters": [
+          {
+            "name": "workflow",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workflow"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/_WorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -2777,96 +2830,6 @@
         ],
         "title": "Envelope[MetricsData]"
       },
-      "Envelope_PresetData_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PresetData"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "error": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ApiError"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "meta": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Meta"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success"
-        ],
-        "title": "Envelope[PresetData]"
-      },
-      "Envelope_PresetsListData_": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success"
-          },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PresetsListData"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "error": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ApiError"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "meta": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Meta"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success"
-        ],
-        "title": "Envelope[PresetsListData]"
-      },
       "Envelope_PromotionStateData_": {
         "properties": {
           "success": {
@@ -3607,32 +3570,6 @@
         "title": "MetricsSummaryRequest",
         "description": "Compute the A/B/C performance metrics over a daily-returns series."
       },
-      "PresetData": {
-        "properties": {},
-        "additionalProperties": true,
-        "type": "object",
-        "title": "PresetData",
-        "description": "One preset's StrategyConfig dump (``GET /presets/{name}``); shape varies."
-      },
-      "PresetsListData": {
-        "properties": {
-          "presets": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Presets"
-          },
-          "configs": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Configs"
-          }
-        },
-        "additionalProperties": true,
-        "type": "object",
-        "title": "PresetsListData"
-      },
       "PromoteRequest": {
         "properties": {
           "to_stage": {
@@ -3843,10 +3780,16 @@
             "title": "Hypothesis",
             "description": "預先註冊：這個 run 在驗什麼"
           },
-          "preset": {
+          "strategy": {
             "type": "string",
-            "title": "Preset",
-            "description": "StrategyConfig preset name (v2 / v3 / ...)"
+            "title": "Strategy",
+            "description": "Registered strategy name (see GET /strategies)"
+          },
+          "params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Params",
+            "description": "Strategy params — validated at dispatch"
           },
           "stocks": {
             "items": {
@@ -3878,7 +3821,7 @@
         "type": "object",
         "required": [
           "hypothesis",
-          "preset",
+          "strategy",
           "stocks",
           "is_start",
           "is_end"
@@ -3907,7 +3850,7 @@
             "type": "string",
             "title": "Run Id"
           },
-          "preset": {
+          "strategy": {
             "anyOf": [
               {
                 "type": "string"
@@ -3916,7 +3859,7 @@
                 "type": "null"
               }
             ],
-            "title": "Preset"
+            "title": "Strategy"
           },
           "gate_status": {
             "anyOf": [
@@ -4292,6 +4235,25 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "_WorkflowRequest": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "overrides": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Overrides",
+            "default": {}
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy"
+        ],
+        "title": "_WorkflowRequest"
       }
     }
   }

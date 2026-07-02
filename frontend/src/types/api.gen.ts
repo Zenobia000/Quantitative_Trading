@@ -89,7 +89,7 @@ export interface paths {
          *     Grid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``
          *     → 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same
          *     grid; we compute the cardinality directly (product of axis lengths) so no base
-         *     config is required just to count. ``preset`` is ignored as an axis.
+         *     config is required just to count. ``strategy`` is ignored as an axis.
          */
         get: operations["estimate_runs_estimate_get"];
         put?: never;
@@ -305,7 +305,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/presets": {
+    "/strategies": {
         parameters: {
             query?: never;
             header?: never;
@@ -313,30 +313,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Presets
-         * @description List preset names plus each preset's full parameter dict.
+         * List Strategies Endpoint
+         * @description Return all registered strategies with name, title, description, and config JSON-schema.
          */
-        get: operations["list_presets_presets_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/presets/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get One Preset
-         * @description Return one preset's parameters; 404 if the name is unknown.
-         */
-        get: operations["get_one_preset_presets__name__get"];
+        get: operations["list_strategies_endpoint_strategies_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -374,7 +354,7 @@ export interface paths {
         };
         /**
          * Strategy Versions
-         * @description Version timeline for a strategy — runs of this preset, newest first (real projection).
+         * @description Version timeline for a strategy — runs of this strategy, newest first (real projection).
          */
         get: operations["strategy_versions_research_strategies__strategy_id__versions_get"];
         put?: never;
@@ -607,6 +587,46 @@ export interface paths {
         get: operations["sweep_status_research_sweep__job_id__status_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/workflows/{strategy}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Strategy Workflows
+         * @description List which workflow configs this strategy declares.
+         */
+        get: operations["list_strategy_workflows_research_workflows__strategy__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/workflows/{workflow}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Workflow
+         * @description Enqueue a research workflow as a background job; returns {job_id, status}.
+         */
+        post: operations["submit_workflow_research_workflows__workflow__post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1409,28 +1429,6 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        /** Envelope[PresetData] */
-        Envelope_PresetData_: {
-            /** Success */
-            success: boolean;
-            data?: components["schemas"]["PresetData"] | null;
-            error?: components["schemas"]["ApiError"] | null;
-            /** Meta */
-            meta?: {
-                [key: string]: unknown;
-            } | null;
-        };
-        /** Envelope[PresetsListData] */
-        Envelope_PresetsListData_: {
-            /** Success */
-            success: boolean;
-            data?: components["schemas"]["PresetsListData"] | null;
-            error?: components["schemas"]["ApiError"] | null;
-            /** Meta */
-            meta?: {
-                [key: string]: unknown;
-            } | null;
-        };
         /** Envelope[PromotionStateData] */
         Envelope_PromotionStateData_: {
             /** Success */
@@ -1670,24 +1668,6 @@ export interface components {
             risk_free: number;
         };
         /**
-         * PresetData
-         * @description One preset's StrategyConfig dump (``GET /presets/{name}``); shape varies.
-         */
-        PresetData: {
-            [key: string]: unknown;
-        };
-        /** PresetsListData */
-        PresetsListData: {
-            /** Presets */
-            presets?: string[];
-            /** Configs */
-            configs?: {
-                [key: string]: unknown;
-            };
-        } & {
-            [key: string]: unknown;
-        };
-        /**
          * PromoteRequest
          * @description Advance a strategy one stage forward.
          */
@@ -1795,10 +1775,17 @@ export interface components {
              */
             hypothesis: string;
             /**
-             * Preset
-             * @description StrategyConfig preset name (v2 / v3 / ...)
+             * Strategy
+             * @description Registered strategy name (see GET /strategies)
              */
-            preset: string;
+            strategy: string;
+            /**
+             * Params
+             * @description Strategy params — validated at dispatch
+             */
+            params?: {
+                [key: string]: unknown;
+            };
             /**
              * Stocks
              * @description Stock ids to run
@@ -1839,8 +1826,8 @@ export interface components {
         RunSummary: {
             /** Run Id */
             run_id: string;
-            /** Preset */
-            preset?: string | null;
+            /** Strategy */
+            strategy?: string | null;
             /** Gate Status */
             gate_status?: string | null;
             /** Hypothesis */
@@ -1998,6 +1985,18 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** _WorkflowRequest */
+        _WorkflowRequest: {
+            /** Strategy */
+            strategy: string;
+            /**
+             * Overrides
+             * @default {}
+             */
+            overrides: {
+                [key: string]: unknown;
+            };
         };
     };
     responses: never;
@@ -2458,7 +2457,7 @@ export interface operations {
             };
         };
     };
-    list_presets_presets_get: {
+    list_strategies_endpoint_strategies_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2473,38 +2472,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Envelope_PresetsListData_"];
-                };
-            };
-        };
-    };
-    get_one_preset_presets__name__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Envelope_PresetData_"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["Envelope"];
                 };
             };
         };
@@ -2945,6 +2913,72 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_strategy_workflows_research_workflows__strategy__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_workflow_research_workflows__workflow__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["_WorkflowRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };
