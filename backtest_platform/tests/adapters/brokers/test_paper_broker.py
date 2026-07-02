@@ -296,3 +296,44 @@ def test_snapshot_empty_portfolio() -> None:
     assert snap["cash"] == 1_000_000.0
     assert snap["equity"] == 1_000_000.0
     assert snap["heat"] == 0.0
+
+
+# --------------------------------------------------------------------------- #
+# from_seed() — rehydrate a broker from persisted cash + positions (restore)
+# --------------------------------------------------------------------------- #
+def test_from_seed_restores_cash_and_positions() -> None:
+    """A seeded broker carries the restored cash + holdings, with cost basis as the
+    mark fallback so equity marks-to-cost without any explicit prices."""
+    br = PaperBroker.from_seed(
+        cash=850_000.0, positions={"2330": (1_000, 500.0), "2317": (2_000, 50.0)},
+        config=ZERO_COST,
+    )
+    assert br.cash == 850_000.0
+    assert br.positions["2330"].qty == 1_000
+    assert br.positions["2330"].cost_basis == 500.0
+    assert br.positions["2317"].qty == 2_000
+    # equity with no marks falls back to cost basis: 850k + 1000*500 + 2000*50
+    assert br.equity() == pytest.approx(850_000.0 + 500_000.0 + 100_000.0)
+
+
+def test_from_seed_does_not_log_seeded_positions_as_fills() -> None:
+    """Seeded holdings are pre-existing, not this-session fills → empty trade log."""
+    br = PaperBroker.from_seed(cash=1_000_000.0, positions={"2330": (1_000, 500.0)})
+    assert br.trade_log == []
+
+
+def test_from_seed_positions_are_real_and_sellable() -> None:
+    """A restored position is a real holding (not a read-only view): it can be sold."""
+    br = PaperBroker.from_seed(
+        cash=100_000.0, positions={"2330": (1_000, 500.0)}, config=ZERO_COST,
+    )
+    fill = br.submit_order("2330", OrderSide.SELL, qty=400, price=520.0)
+    assert fill.qty == 400
+    assert br.positions["2330"].qty == 600
+    assert br.cash == pytest.approx(100_000.0 + 400 * 520.0)
+
+
+def test_from_seed_empty_positions_is_plain_broker() -> None:
+    br = PaperBroker.from_seed(cash=1_000_000.0, positions={})
+    assert br.cash == 1_000_000.0
+    assert br.positions == {}

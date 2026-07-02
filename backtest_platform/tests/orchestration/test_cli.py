@@ -57,7 +57,7 @@ def test_after_close_dry_run_does_not_build_session_runner(monkeypatch):
 def test_after_close_success_exit_zero(monkeypatch):
     calls: list[tuple[str, date]] = []
 
-    def _fake_builder(strategy, universe, equity):
+    def _fake_builder(strategy, universe, equity, *, fresh=False):
         def _run(strat, as_of):
             calls.append((strat, as_of))
             return _FakeSummary()
@@ -73,6 +73,26 @@ def test_after_close_success_exit_zero(monkeypatch):
         )
     assert res.exit_code == 0, res.output
     assert calls == [("inst_flow", date(2026, 7, 2))]
+
+
+def test_after_close_fresh_flag_is_forwarded(monkeypatch):
+    """--fresh reaches build_session_runner so restore can be opted out of."""
+    seen: dict[str, bool] = {}
+
+    def _fake_builder(strategy, universe, equity, *, fresh=False):
+        seen["fresh"] = fresh
+        return lambda strat, as_of: _FakeSummary()
+
+    monkeypatch.setattr(cli_mod, "build_session_runner", _fake_builder)
+    monkeypatch.setattr(cli_mod, "safe_discord_notify", lambda *_a, **_k: None)
+    with CliRunner().isolated_filesystem():
+        res = CliRunner().invoke(
+            cli,
+            ["after-close", "--strategy", "inst_flow", "--date", "2026-07-02",
+             "--force", "--universe", "2330,2317", "--fresh"],
+        )
+    assert res.exit_code == 0, res.output
+    assert seen == {"fresh": True}
 
 
 def test_after_close_non_trading_day_exit_zero(monkeypatch):
@@ -98,7 +118,7 @@ def test_after_close_failed_session_exit_nonzero(monkeypatch):
         def summary(self) -> str:
             return "REPLAY: 0/1 sessions green"
 
-    def _fake_builder(strategy, universe, equity):
+    def _fake_builder(strategy, universe, equity, *, fresh=False):
         return lambda strat, as_of: _FailSummary()
 
     monkeypatch.setattr(cli_mod, "build_session_runner", _fake_builder)

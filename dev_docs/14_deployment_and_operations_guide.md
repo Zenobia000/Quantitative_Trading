@@ -102,6 +102,10 @@ uv run python -m backtest_platform.orchestration.cli \
 # 煙霧測試：過守門但不觸發 daily flow（不碰 finlab / DB）
 uv run python -m backtest_platform.orchestration.cli \
     after-close --strategy inst_flow --dry-run --force
+
+# 放棄跨日回填、從空倉起算（escape hatch；正常情況預設會回填）
+uv run python -m backtest_platform.orchestration.cli \
+    after-close --strategy inst_flow --universe 2330,2317 --fresh
 ```
 
 守門順序與行為：
@@ -117,7 +121,8 @@ uv run python -m backtest_platform.orchestration.cli \
 >
 > **收盤時間校準**：14:30 是台股 13:30 收盤後的 EOD 資料緩衝；若你的資料源較晚才發布三大法人 net-buy，把 timer 與 gate 一併後移（如 17:35）。
 >
-> **portfolio 狀態限制**：每次 CLI process 起一個全新 `PaperBroker`；每日 signals / fills / equity 皆經 sink 落庫，但跨日的 in-process 倉位尚未從 DB 回填（屬 db hardening 工作包）。足以觀察每日 live 訊號。
+> **portfolio 狀態回填（限制已解除）**：每個 CLI process 仍起新 `PaperBroker`，但每個 session 現在會經 `data.db_reader.load_broker_state(strategy)` 從 telemetry 回填上一日的帳戶狀態——cash 取該策略 `equity_snapshots` 最新一筆（sink 直接寫入的實際 cash，最誠實來源），持倉由已落庫的 fills（`orders` 表）依時間序摺疊還原（鏡射 `PaperBroker` 加權成本邏輯；`positions` 表不由 paper 流程寫入）。回填後組合層風控（EX-002 單股上限 / EX-004 heat / EX-007 持股數）跨日看得到既有部位，Paper-Watch OOS 不再每日從空倉起算。首日（無 telemetry）→ 全新 broker；DB 錯誤 → fail loud（該次 session `FAILED` + Discord 告警，絕不靜默給空倉）；`--fresh` 明示放棄回填、從空倉起算。
+> **殘留限制**：`orders` 表無 strategy_id 欄，fills 還原為 portfolio-wide；今日僅 `inst_flow` 接入 paper（`build_session_runner` 拒其它策略），故 portfolio == 該策略、還原精確。接入第二個 paper 策略前須先為 `orders` 加策略辨識欄（寫側 migration）。
 
 ### 3.2 安裝（systemd user timer，建議）
 

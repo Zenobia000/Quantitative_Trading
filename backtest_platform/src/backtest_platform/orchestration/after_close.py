@@ -279,8 +279,63 @@ def _resolve_equity(equity: float | None) -> float:
     return float(raw) if raw else _DEFAULT_EQUITY
 
 
+def _default_state_loader(strategy: str) -> Any:
+    """Production restore seam: read the strategy's last-persisted book from telemetry.
+
+    Lazily imports ``db_reader`` so the DB dependency is only pulled in when a real
+    session actually restores (keeps assembly + DB-less tests clean). A DB failure
+    propagates by design — see ``_build_broker``."""
+    from backtest_platform.data.db_reader import load_broker_state
+
+    return load_broker_state(strategy)
+
+
+def _build_broker(
+    strategy: str,
+    cash: float,
+    *,
+    fresh: bool = False,
+    state_loader: Callable[[str], Any] | None = None,
+) -> Any:
+    """Build the session's ``PaperBroker``, rehydrating yesterday's book when present.
+
+    Restore precedence:
+      * ``fresh`` → skip restore entirely, start from an empty book at ``cash``
+        (explicit escape hatch; the loader is never consulted).
+      * loader returns ``None`` (first session) → a fresh broker at ``cash``.
+      * loader returns a ``BrokerState`` → seed cash + holdings so the portfolio
+        risk gates see the real cross-day exposure (EX-002 / EX-004 / EX-007).
+
+    A DB failure inside the loader **propagates** (never a silent empty book):
+    the caller runs this inside the after-close try/except, turning it into a
+    FAILED result + Discord alert rather than dishonest empty-book OOS.
+    """
+    from backtest_platform.adapters.brokers.paper_broker import PaperBroker
+
+    if fresh:
+        logger.info("after-close {}: --fresh → empty book, cash={}", strategy, cash)
+        return PaperBroker(initial_cash=cash)
+
+    loader = state_loader or _default_state_loader
+    state = loader(strategy)  # DB error propagates — fail loud, never fake-empty
+    if state is None:
+        logger.info("after-close {}: no prior telemetry (first session) → fresh cash={}",
+                    strategy, cash)
+        return PaperBroker(initial_cash=cash)
+
+    seed = {sid: (p.qty, p.cost_basis) for sid, p in state.positions.items()}
+    logger.info("after-close {}: restored {} positions + cash={} from telemetry",
+                strategy, len(seed), state.cash)
+    return PaperBroker.from_seed(state.cash, seed)
+
+
 def build_session_runner(
-    strategy: str, universe: str | None, equity: float | None
+    strategy: str,
+    universe: str | None,
+    equity: float | None,
+    *,
+    fresh: bool = False,
+    state_loader: Callable[[str], Any] | None = None,
 ) -> Callable[[str, date], Any]:
     """Assemble the production per-session runner over the proven live-panel path.
 
@@ -289,11 +344,12 @@ def build_session_runner(
     chain forward through the real RiskGate + PaperBroker + TimescaleDB sink.
 
     Only ``inst_flow`` is wired today (the sole validated-shape edge); an unknown
-    strategy fails loud rather than silently running the wrong thing. LIMITATION:
-    each CLI process starts a fresh ``PaperBroker`` — the per-session signals /
-    fills / equity ARE persisted via the sink, but in-process portfolio state is
-    not yet rehydrated from the DB across daily restarts (that belongs to the db
-    hardening work package). This is sufficient for observing daily live signals.
+    strategy fails loud rather than silently running the wrong thing. The broker is
+    (re)built inside the returned runner via :func:`_build_broker`, so each session
+    rehydrates the latest persisted book from telemetry — closing the PR #151
+    cross-day gap. ``fresh`` skips restore (empty-book escape hatch); ``state_loader``
+    is injected in tests. Assembly touches neither FinLab nor the DB (both are hit
+    only when the returned callable runs).
     """
     if strategy != "inst_flow":
         raise ValueError(
@@ -303,18 +359,17 @@ def build_session_runner(
     symbols = _resolve_universe(universe)
     cash = _resolve_equity(equity)
 
-    from backtest_platform.adapters.brokers.paper_broker import PaperBroker
     from backtest_platform.runtime.market_reader import (
         live_config_for_date,
         run_forward_session,
     )
     from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
 
-    broker = PaperBroker(initial_cash=cash)
     cfg = InstFlowConfig()
     run_id = f"afterclose_{strategy}"
 
     def _run(strat: str, as_of: date) -> Any:
+        broker = _build_broker(strat, cash, fresh=fresh, state_loader=state_loader)
         config_for_date = live_config_for_date(
             symbols, cfg, broker, run_id=run_id, strategy_id=strat, equity=cash,
         )

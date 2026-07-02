@@ -119,6 +119,34 @@ class PaperBroker:
         self.cash = float(self.initial_cash)
 
     # ------------------------------------------------------------------ #
+    # Restore — rehydrate a book persisted by a previous session
+    # ------------------------------------------------------------------ #
+    @classmethod
+    def from_seed(
+        cls,
+        cash: float,
+        positions: Mapping[str, tuple[int, float]],
+        *,
+        config: StrategyConfig | None = None,
+    ) -> PaperBroker:
+        """Build a broker pre-loaded with restored ``cash`` + ``positions``.
+
+        ``positions`` maps ``stock_id -> (qty, cost_basis)`` (the shape
+        ``data.db_reader.load_broker_state`` reconstructs from persisted fills).
+        This is the cross-day restore path for the after-close daemon: without it
+        the portfolio risk gates (EX-002 / EX-004 / EX-007) would run from an empty
+        book every session. A fresh object is built (never mutating a shared one);
+        seeded holdings are pre-existing state, so they are *not* logged as
+        this-session fills, and each name's last price defaults to its cost basis
+        so ``equity()`` can mark-to-cost with no explicit prices.
+        """
+        broker = cls(initial_cash=cash, config=config or StrategyConfig())
+        for stock_id, (qty, cost_basis) in positions.items():
+            broker._positions[stock_id] = Position(qty=int(qty), cost_basis=float(cost_basis))
+            broker._last_price[stock_id] = float(cost_basis)
+        return broker
+
+    # ------------------------------------------------------------------ #
     # Read-only views (return copies so callers cannot mutate internals)
     # ------------------------------------------------------------------ #
     @property
