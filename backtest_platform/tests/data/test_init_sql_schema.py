@@ -63,6 +63,31 @@ def _has_index_on(sql: str, table: str) -> bool:
     return bool(pattern.search(sql))
 
 
+_COLUMN_TYPE_RE = re.compile(
+    r"^\s*(\w+)\s+"
+    r"(TEXT|JSONB|DATE|TIMESTAMPTZ|INTEGER|INT|BIGINT|NUMERIC|BOOLEAN|UUID|BIGSERIAL)\b",
+    re.IGNORECASE,
+)
+# Line-leading tokens that are constraints, not columns (defensive; the type
+# whitelist above already excludes them since none is followed by a type kw).
+_NON_COLUMN_TOKENS = {"CONSTRAINT", "PRIMARY", "UNIQUE", "FOREIGN", "CHECK"}
+
+
+def _column_names(body: str) -> set[str]:
+    """Extract column identifiers from a CREATE TABLE body.
+
+    A column line is ``<name> <TYPE> ...``; constraint lines (CONSTRAINT / PRIMARY
+    KEY / UNIQUE / CHECK) never have a type keyword in that position, so the type
+    whitelist filters them out.
+    """
+    names: set[str] = set()
+    for line in body.splitlines():
+        m = _COLUMN_TYPE_RE.match(line)
+        if m and m.group(1).upper() not in _NON_COLUMN_TOKENS:
+            names.add(m.group(1))
+    return names
+
+
 # ---------------------------------------------------------------------------
 # 3.D.4.1 — equity_snapshots hypertable + retention policy
 # ---------------------------------------------------------------------------
@@ -370,3 +395,48 @@ def test_all_thirteen_tables_present(init_sql: str) -> None:
     )
     missing = expected - found
     assert not missing, f"missing tables in init.sql: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# 8.G.1 — runs main table: DDL must stay in lock-step with db_writer._RUNS_COLS.
+# ADR-028 renamed preset→strategy in the writer; the DDL layer was left behind,
+# which makes upsert_runs INSERT an undefined column at runtime. This drift
+# guard fails the build the moment the two diverge again.
+# ---------------------------------------------------------------------------
+def test_runs_table_columns_match_db_writer_cols(init_sql: str) -> None:
+    from backtest_platform.data.db_writer import _RUNS_COLS
+
+    body = _table_block(init_sql, "runs")
+    assert body, "runs CREATE TABLE missing"
+    ddl_cols = _column_names(body)
+    # _RUNS_COLS omits created_at (DB-defaulted, callers never pass it); the DDL
+    # carries it, so the expected set is the writer columns plus created_at.
+    expected = set(_RUNS_COLS) | {"created_at"}
+    assert ddl_cols == expected, (
+        f"runs DDL columns drifted from db_writer._RUNS_COLS.\n"
+        f"  only in DDL: {ddl_cols - expected}\n"
+        f"  only in writer: {expected - ddl_cols}"
+    )
+
+
+def test_runs_table_has_no_legacy_preset_column(init_sql: str) -> None:
+    # ADR-028 removed `preset` entirely; its reappearance means a partial revert.
+    body = _table_block(init_sql, "runs")
+    assert body, "runs CREATE TABLE missing"
+    assert "preset" not in _column_names(body), (
+        "runs.preset is a legacy column removed by ADR-028 (use `strategy`)"
+    )
+
+
+def test_runs_index_references_strategy_not_preset(init_sql: str) -> None:
+    # The lookup index must target the live column name, else CREATE INDEX aborts.
+    assert re.search(
+        r"CREATE\s+INDEX[^;]*ON\s+runs\s*\(\s*strategy\b",
+        init_sql,
+        re.IGNORECASE,
+    ), "expected an index on runs(strategy, ...)"
+    assert not re.search(
+        r"CREATE\s+INDEX[^;]*ON\s+runs\s*\(\s*preset\b",
+        init_sql,
+        re.IGNORECASE,
+    ), "runs index still references the removed `preset` column"

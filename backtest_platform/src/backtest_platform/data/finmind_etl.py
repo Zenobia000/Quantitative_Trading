@@ -15,7 +15,9 @@ mock it without installing the package.
 """
 from __future__ import annotations
 
+import os
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
@@ -241,17 +243,37 @@ def _col_or_zero(df: pd.DataFrame, name: str) -> pd.Series:
     return pd.Series(0, index=df.index, dtype="int64")
 
 
+def _atomic_to_parquet(df: pd.DataFrame, path: Path) -> None:
+    """Write ``df`` to ``path`` atomically: write a temp sibling then os.replace.
+
+    A crash mid-write leaves the previous parquet intact rather than a truncated
+    file. ``os.replace`` is atomic on POSIX when src/dst share a directory, so the
+    temp file is created alongside the target (not in the system temp dir).
+    """
+    tmp = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        df.to_parquet(tmp, index=False)
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
 def write_parquet(bundle: ETLBundle, root: Path) -> dict[str, Path]:
-    """Write three parquet files; returns paths keyed by table name."""
+    """Write three parquet files atomically; returns paths keyed by table name.
+
+    Each file is written to a temp sibling and renamed into place, so a partial
+    write never corrupts an existing cache (see ``_atomic_to_parquet``).
+    """
     root.mkdir(parents=True, exist_ok=True)
     paths = {
         "daily_bars": root / f"daily_bars__{bundle.stock_id}.parquet",
         "institutional": root / f"institutional__{bundle.stock_id}.parquet",
         "broker_chips": root / f"broker_chips__{bundle.stock_id}.parquet",
     }
-    bundle.daily_bars.to_parquet(paths["daily_bars"], index=False)
-    bundle.institutional.to_parquet(paths["institutional"], index=False)
-    bundle.broker_chips.to_parquet(paths["broker_chips"], index=False)
+    _atomic_to_parquet(bundle.daily_bars, paths["daily_bars"])
+    _atomic_to_parquet(bundle.institutional, paths["institutional"])
+    _atomic_to_parquet(bundle.broker_chips, paths["broker_chips"])
     return paths
 
 

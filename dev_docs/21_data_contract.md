@@ -279,11 +279,14 @@ zipline-reloaded 3.x `asset_db_writer.write()` 要求的欄位（`_build_asset_m
 
 | 項目 | 規格 |
 | :--- | :--- |
-| 類別 | `ParquetCache(cache_dir: Path)` |
-| 入口函式 | `cached_or_fetch(symbol, start, end, *, cache_dir, fetcher) -> ETLBundle` |
-| 命中策略 | 檔名 `{cache_dir}/finmind/{symbol}_{start}_{end}.parquet`；存在則直接讀，否則呼叫 `fetcher()` 並寫入 |
+| 類別 | `ParquetCache(root: Path)` |
+| 入口函式 | `cached_or_fetch(stock_id, start, end, cache, fetch_fn=None) -> ETLBundle` |
+| 檔案佈局 | 每檔三個檔：`{root}/daily_bars__{stock_id}.parquet`、`institutional__…`、`broker_chips__…`；另有 `{root}/manifest.json` 血緣側車 |
+| 完全命中 | `cached.start ≤ start ≤ end ≤ cached.end` → 直接回傳快取，零 API 呼叫 |
+| 部分命中（day-incremental）| **只抓缺口區間**（head / tail），與既有快取 concat → 依 `(stock_id, trade_date)` 去重（`keep='last'`，新資料勝）→ 排序 → **原子寫回**（temp + `os.replace`）。已修正舊 bug：部分覆蓋時整檔覆寫會毀掉歷史（付費資料丟失） |
+| 血緣 manifest | 每次 ingest 更新 `manifest.json`：`{schema_version, stock_count, coverage{start,end}, data_hash, generated_at, stocks{<id>:{start,end,rows,data_hash}}}`；讀-改-寫累積整個 universe，供 `runs.bundle_ref` 記錄該 run 消費的資料版本 |
 | 預期 API 量降幅 | 100 stocks × 7 年 = 2100 API request → **< 7 / day**（首次後幾乎全 cache hit） |
-| 失敗策略 | 寫 cache 失敗不阻塞 ingest（log warning，下次重試） |
+| 失敗策略 | 寫 cache 失敗不阻塞 ingest（log warning，下次重試）；原子寫入確保中途崩潰不留半截檔 |
 
 ### 3.5 Ingest 模式
 
@@ -388,15 +391,14 @@ CREATE TABLE runs (
     run_id            TEXT PRIMARY KEY,        -- 決定性 RunConfig hash
     hypothesis        TEXT NOT NULL,           -- 預先註冊（反過擬合）
     strategy          TEXT NOT NULL,           -- 註冊策略名稱 (ADR-028, 取代 preset)
-    params            JSONB NOT NULL DEFAULT '{}',  -- 策略參數快照
     engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
     stocks            JSONB NOT NULL,          -- 此 run 的 universe
     is_start          DATE NOT NULL,
     is_end            DATE NOT NULL,
     git_sha           TEXT,                    -- 程式碼血緣
-    bundle_ref        TEXT,                    -- 資料 bundle 血緣
+    bundle_ref        TEXT,                    -- 資料 bundle 血緣（parquet manifest.json hash）
     cost_assumptions  JSONB,                   -- 手續費 / 稅 / 滑點
-    params            JSONB,                   -- 進出場參數
+    params            JSONB,                   -- 策略 / 進出場參數快照
     metrics           JSONB,                   -- 結果摘要 (cagr / sharpe / ...)
     status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
     trials_count      INTEGER NOT NULL DEFAULT 0,
@@ -408,7 +410,9 @@ CREATE INDEX ON runs (strategy, created_at DESC);
 CREATE INDEX ON runs (status, created_at DESC);
 ```
 
-> **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。四張時序表（equity_snapshots / positions / signals / risk_metrics）回補 `run_id → runs(run_id)` FK 屬 v0.2-full（migration 003，需先 backfill 每個孤兒 run_id 對應的 `runs` 列）。寫入器見 `data/db_writer.py:upsert_runs`；migration 見 `docker/timescaledb/migrations/002_add_runs_table.sql`。
+> 欄位順序與 `data/db_writer.py:_RUNS_COLS`（+ DB 預設的 `created_at`）逐欄對齊；`tests/data/test_init_sql_schema.py::test_runs_table_columns_match_db_writer_cols` 為防漂移守門，任何一邊改欄位另一邊未跟上即紅燈。`params` 只出現一次（於 `cost_assumptions` 之後），承載策略／進出場參數快照。
+
+> **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。四張時序表（equity_snapshots / positions / signals / risk_metrics）回補 `run_id → runs(run_id)` FK 屬 v0.2-full（需先 backfill 每個孤兒 run_id 對應的 `runs` 列），排入日後的 migration。寫入器見 `data/db_writer.py:upsert_runs`；建表 migration 見 `docker/timescaledb/migrations/002_add_runs_table.sql`，`preset → strategy` 欄位改名（ADR-028 對齊既有 DB）見 `003_rename_runs_preset_to_strategy.sql`。
 
 ### 4.3 新增表 — equity_snapshots（M2）
 

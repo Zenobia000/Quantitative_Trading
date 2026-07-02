@@ -110,7 +110,11 @@ def test_ingest_single_stock_falls_back_to_fetch_on_miss(tmp_path):
 
 
 def test_ingest_single_stock_refetches_when_cache_range_insufficient(tmp_path):
-    """Cache covers Jan only, request goes to Feb → must refetch."""
+    """Cache covers Jan only, request goes to Feb → fetch the gap and merge.
+
+    The merge policy fetches only the missing tail and unions it with the cached
+    rows, so the returned bundle is a *new merged* bundle spanning both — never a
+    raw overwrite that would drop cached history."""
     from backtest_platform.engines.zipline_adapter.bundles.parquet_cache import (
         ParquetCache,
         cached_or_fetch,
@@ -119,7 +123,7 @@ def test_ingest_single_stock_refetches_when_cache_range_insufficient(tmp_path):
     cache = ParquetCache(root=tmp_path)
     cached = _stub_bundle("2317")  # covers 2024-01-02..2024-01-08 only
 
-    new_bundle = _stub_bundle("2317", n_rows=20)
+    new_bundle = _stub_bundle("2317", n_rows=20)  # spans 2024-01-02..2024-01-29
     fake_fetch = MagicMock(return_value=new_bundle)
 
     with patch.object(ParquetCache, "load_or_none", return_value=cached), patch(
@@ -129,9 +133,14 @@ def test_ingest_single_stock_refetches_when_cache_range_insufficient(tmp_path):
             "2317", date(2024, 1, 2), date(2024, 2, 28), cache, fetch_fn=fake_fetch
         )
 
-    # Range doesn't fit → fetch called, returns new bundle
+    # Range doesn't fit → only the missing tail is fetched, then merged.
     fake_fetch.assert_called_once()
-    assert result is new_bundle
+    gap_start = fake_fetch.call_args.args[1]
+    assert gap_start > cached.end_date  # no re-fetch of cached history
+    assert result is not new_bundle  # merged bundle, not the raw fetch
+    assert result.stock_id == "2317"
+    assert result.start_date == date(2024, 1, 2)  # cached head preserved
+    assert result.end_date == new_bundle.end_date  # extended by fetched tail
 
 
 # ===== 5.A.7.2 — ingest_universe batch =====
