@@ -68,7 +68,7 @@
 
 - [x] 提交 lock file（`uv.lock` / `package-lock.json`）
 - [x] 不裝來源不明套件
-- [ ] `pip-audit` / `npm audit` 排程掃描（hardening 待辦）
+- [x] `pip-audit` / `npm audit` 排程掃描 — `.github/workflows/dependency-audit.yml`（每週一 + 手動觸發；pip-audit 掃 uv lockfile、npm audit high+；非阻塞、發現即標紅）
 
 ---
 

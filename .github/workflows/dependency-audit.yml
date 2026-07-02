@@ -1,0 +1,41 @@
+# 依賴安全掃描（doc 13 hardening 最後一項）：每週一 02:00 UTC 掃 Python + npm 依賴。
+# 非阻塞（不擋 PR）——排程掃描的目的是「知道」，修復節奏由人決定；
+# 發現漏洞時 job 標紅 + Actions 摘要列出，據此開修復 PR。
+name: dependency-audit
+
+on:
+  schedule:
+    - cron: "0 2 * * 1" # 每週一 02:00 UTC（台北 10:00）
+  workflow_dispatch: {} # 手動觸發
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backtest_platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Export locked requirements
+        run: uv export --all-extras --no-emit-project --format requirements-txt > /tmp/requirements.txt
+      - name: pip-audit against the lockfile
+        run: uvx pip-audit --strict -r /tmp/requirements.txt --disable-pip
+
+  npm-audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: npm audit (high+ 才視為失敗)
+        run: npm audit --audit-level=high
