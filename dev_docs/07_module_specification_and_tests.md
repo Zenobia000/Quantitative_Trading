@@ -1,351 +1,280 @@
-# 模組規格與測試案例 — backtest_platform
+# 模組規格與測試 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **狀態：** M1 模組已完成
+> 對應架構文件 [05](./05_architecture_and_design_document.md)、類別關係 [10](./10_class_relationships_template.md)、BDD [03](./03_behavior_driven_development_guide.md)。本檔以契約式設計（DbC）規格核心模組，每模組列職責 / 公開介面 / 前置後置條件 / 對應測試檔（`backtest_platform/tests/` 現行檔案）。
 
-**對應架構文件**：[05_architecture_and_design_document.md](./05_architecture_and_design_document.md)
-**對應 BDD**：[03_behavior_driven_development_guide.md](./03_behavior_driven_development_guide.md)
+## 產品定位
+
+backtest_platform 是 **個人量化 edge 驗證工廠 + 晉升管線**。核心資產是審判庭。以下規格的重心依價值鏈排列：**策略契約 → 研究工作流 → 審判庭 → 風控 → 每日鏈 → 資料層**。策略是消耗品，這些模組是資產——所以它們的前置後置條件寫得比策略本身嚴。
 
 ---
 
-## 模組一：`config.strategy_config.StrategyConfig`
+## 一、策略契約層 `strategies/`
 
-### 規格：建構與驗證
+### 1.1 `strategies.protocol` — StrategyRunner 契約 + registry（ADR-027/028）
 
-**描述**：13 個策略參數的 Pydantic frozen model，加 3 個交叉驗證規則與 3 個衍生 cost rate property。
+**職責**：定義平台↔策略的唯一接縫（畫在**輸出** `StrategyRun`），並提供 name→runner registry 供上層 dispatch。
 
-**契約式設計 (DbC)**：
+**公開介面**：
+- `StrategyRunner`（Protocol）：`config_model` / `title` / `gate` ClassVar + `run(symbols, start, end, config, loader) -> StrategyRun`
+- `register_strategy(name)` 裝飾器、`get_strategy(name)`、`get_strategy_gate(name)`、`list_strategies()`、`describe_strategies()`
+- `StrategyRun`（frozen）：`metrics` / `returns` / `trades`；`GateSpec = tuple[Criterion, ...]`
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. 所有欄位符合 Field 範圍（如 `box_period ∈ [10, 250]`）<br>2. `warning_threshold < strong_buy_threshold`<br>3. `add_score_threshold >= strong_buy_threshold`<br>4. 無未知欄位（`extra="forbid"`） |
-| **後置條件** | 1. instance frozen，不可修改<br>2. `cost_buy_rate / cost_sell_rate / cost_round_rate` property 可呼叫且 > 0 |
-| **不變性** | 1. instance hash 一致（同參數 hash 相同）<br>2. 衍生 cost 隨 fee/discount/slip/tax 變動 |
+| **前置** | 1. `name` 已註冊（否則 `get_strategy` raise ValueError 附可選清單）<br>2. `config` 是 `config_model(**params)` 的已驗證輸出（runner 不得再包 isinstance 守衛）|
+| **後置** | 1. `run(...)` 回 `StrategyRun`，`metrics ⊇ {cagr, sharpe, slippage_sharpe, maxdd, trades, bars}`（空結果亦全填 0）<br>2. `get_strategy_gate(name)` 回策略宣告的 `gate`；未宣告 = hard error（拒用別人的尺）|
+| **不變性** | 1. 重複註冊同名 raise ValueError（抓 duplicate import）<br>2. registry 為 name→instance dict |
 
-### 測試案例
+**對應測試**：`tests/strategies/test_protocol.py`、`test_dependency_untangle.py`
 
-#### TC-001：預設值符合 v2.md 2.7.1
-- **Arrange**：無
-- **Act**：`config = StrategyConfig()`
-- **Assert**：`config.box_period == 60`、`config.strong_buy_threshold == 5` 等 13 個欄位
+### 1.2 `strategies.conformance` — 契約合規閘
 
-#### TC-002：違反交叉驗證拋 ValidationError
-- **Arrange**：`warning_threshold=5, strong_buy_threshold=3`
-- **Act**：`StrategyConfig(warning_threshold=5, strong_buy_threshold=3)`
-- **Assert**：拋 `ValidationError` 含 "warning_threshold must be < strong_buy_threshold"
+**職責**：對任一已註冊 runner 證明其滿足契約，供 CI parametrized 與 CLI `validate-strategy`。
 
-#### TC-003：frozen 不可修改
-- **Arrange**：`config = StrategyConfig()`
-- **Act**：`config.box_period = 90`
-- **Assert**：拋 `ValidationError`（frozen）
-
-#### TC-004：衍生 cost 計算正確
-- **Arrange**：預設 config
-- **Act**：`config.cost_round_rate`
-- **Assert**：≈ 0.0067 (`0.001425*0.6 + 0.001 + 0.001425*0.6 + 0.003 + 0.001`)
-
----
-
-## 模組二：`data.finmind_etl.fetch_bundle`
-
-### 規格
-
-**描述**：拉一檔股票的 OHLCV + 法人 + 當沖三表，normalize 後組成 ETLBundle。
-
-**契約式設計 (DbC)**：
+**公開介面**：`synthetic_loader(n_bars, seed) -> Loader`、`check_conformance(name) -> ConformanceReport`；`REQUIRED_METRIC_KEYS = {cagr, sharpe, slippage_sharpe, maxdd, trades, bars}`
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. `stock_id` 非空字串<br>2. `start <= end`<br>3. `loader` 為 None 時環境有 FinMind 套件可載入 |
-| **後置條件** | 1. 回傳 `ETLBundle` 含三個 DataFrame（即使空也有 columns）<br>2. 三個 DataFrame 的 `stock_id` 都等於輸入 `stock_id`<br>3. `apply_adjustment=True` 時 daily 含 `adj_factor` 欄位 |
-| **不變性** | 1. 同樣 input 同樣 output（loader mock 時）<br>2. rate_limit_seconds 不會被忽略（避免 FinMind 封鎖） |
+| **前置** | runner 已註冊；synthetic loader 產出正規化 merged panel（doc 21 欄位）|
+| **後置** | `ConformanceReport.ok` ⟺ `config_model()` 無參可建 ∧ `run` 不 raise ∧ metrics ⊇ 必需 keys ∧ gate 已宣告且 criterion key ⊆ 產出 metrics |
+| **不變性** | 對合成資料同 seed 同結果 |
 
-### 測試案例
-
-#### TC-001：正常路徑（mock loader）
-- **Arrange**：mock loader 回三表 fixture
-- **Act**：`fetch_bundle("2330", date(2024,1,1), date(2024,1,31), loader=mock_loader)`
-- **Assert**：
-  - `bundle.daily_bars["stock_id"].unique() == ["2330"]`
-  - `len(bundle.daily_bars) == 21`
-  - 三表的 columns 符合 schema
-
-#### TC-002：空回應處理
-- **Arrange**：mock loader 回空 DataFrame
-- **Act**：`fetch_bundle(...)`
-- **Assert**：bundle 三表都是 empty 但有正確 columns，不拋例外
-
-#### TC-003：FinMind exception 直接拋出
-- **Arrange**：mock loader 拋 `Exception("rate_limit")`
-- **Act**：`fetch_bundle(...)`
-- **Assert**：例外被往上拋（不應靜默吞掉）
-
-#### TC-004：apply_adjustment=False 時 adj_factor 全 1.0
-- **Arrange**：mock loader 三表，dividend 表非空
-- **Act**：`fetch_bundle(..., apply_adjustment=False)`
-- **Assert**：`bundle.daily_bars["adj_factor"].unique() == [1.0]`
+**對應測試**：`tests/strategies/test_conformance.py`（parametrized over `list_strategies()`，4/4 PASS）
 
 ---
 
-## 模組三：`data.adjustment.compute_adj_factor`
+## 二、研究工作流 `research/workflows/`（ADR-029/032）
 
-### 規格
+五個泛用工作流，全走 `get_strategy(name).run(...)` dispatch，**絕不直接 import 策略 backtest 函式**（AST 測試守 invariant）。各策略以 `research_config.py` 宣告 config。
 
-**描述**：從 FinMind dividend 資料反推前復權因子 series。
+### 2.1 `run_doe(cfg: DOEConfig, loader) -> DOEResult`
 
-**契約式設計**：
+**職責**：對參數網格系統化掃描（first-read）。
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. `daily` 已按 `trade_date` 升序<br>2. `daily` 含 `trade_date` 與 `close` 欄位 |
-| **後置條件** | 1. 回傳 Series 長度 == len(daily)<br>2. 最後一個值 == 1.0<br>3. 較早日期的 factor <= 較晚日期的 factor |
-| **不變性** | 1. dividend 為空時所有 factor == 1.0<br>2. factor > 0（除權息不會導致負價） |
+| **前置** | `cfg.grid` 非空、`cfg.symbols` 非空、`is_start < is_end`（frozen validator）|
+| **後置** | 回 `n_configs = Π(grid 軸長)` 筆結果；`DOEResult.best(key)` / `.to_dataframe()` 可用 |
+| **不變性** | 每筆經 registry dispatch，不假設 `name==目錄名` |
 
-### 測試案例
+**對應測試**：`tests/research/workflows/test_doe.py`
 
-#### TC-001：無除權息資料
-- **Arrange**：daily 100 列 + dividends 空表
-- **Act**：`compute_adj_factor(daily, empty_div)`
-- **Assert**：所有 factor == 1.0
+### 2.2 `run_go_gates(cfg: GOGatesConfig, loader) -> GOGatesResult`
 
-#### TC-002：單次現金股利
-- **Arrange**：daily 含 2024-07-15 ex-div、cash_div = 10、前一日 close = 100
-- **Act**：`compute_adj_factor(daily, div)`
-- **Assert**：2024-07-15 前的 factor == 0.9 (=(100-10)/100)；當天及之後 == 1.0
-
-#### TC-003：壞 ratio 跳過 + log warning
-- **Arrange**：cash_div > pre_close（不可能但測 robustness）
-- **Act**：`compute_adj_factor(daily, div)`
-- **Assert**：壞事件跳過，log 出現 "bad ratio"，其他事件正常
-
----
-
-## 模組四：`data.db_writer.upsert_bundle`
-
-### 規格
-
-**描述**：將 ETLBundle 三表 upsert 進 TimescaleDB，重跑結果一致（idempotent）。
-
-**契約式設計**：
+**職責**：對 fixed_config 跑 WFA + 對 landscape 跑 PBO（config_grid=None → 只跑 WFA）。
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. TimescaleDB 已建表 (init.sql 跑過)<br>2. bundle 三表的 columns 符合 schema |
-| **後置條件** | 1. 回傳 dict 含 `{"daily_bars": n1, "institutional_flows": n2, "broker_chips": n3}`<br>2. 同 bundle 重跑後 DB 狀態一致（rows 不重複） |
-| **不變性** | 1. ON CONFLICT (stock_id, trade_date) DO UPDATE 確保 idempotent<br>2. 任一表 fail → rollback 全部（事務） |
+| **前置** | `fixed_config` 為策略的 config model；`n_wfa_folds ∈ [2,20]`、`pbo_n_splits ≥ 2`（偶數）|
+| **後置** | 回 WFA OOS 廣度 + PBO（若有 grid）；PBO 走 `validation.pbo.probability_of_backtest_overfitting` |
 
-### 測試案例
+**對應測試**：`tests/research/workflows/test_go_gates.py`
 
-#### TC-001：空 bundle 不寫 DB
-- **Arrange**：empty_etl_bundle fixture
-- **Act**：`upsert_bundle(bundle)`（mock conn）
-- **Assert**：cursor.execute_values 未被呼叫
+### 2.3 `run_truth_gate(cfg: TruthGateConfig, loader=None) -> TruthGateResult`（審判庭主線）
 
-#### TC-002：缺欄位拋 ValueError
-- **Arrange**：daily_bars 缺 `adj_factor`
-- **Act**：`upsert_bundle(bundle)`
-- **Assert**：`ValueError` 含 "missing columns: ['adj_factor']"
-
-#### TC-003 (integration, @integration)：實際 DB 重跑
-- **Arrange**：跑 docker-compose up + 跑兩次 upsert
-- **Act**：兩次都用同 bundle
-- **Assert**：DB rows 不重複，最終值等於 bundle 內容
-
----
-
-## 模組五：`data.universe.apply_filters`
-
-### 規格
-
-**描述**：對 metadata DataFrame 套用 v2.md 2.2 過濾規則，回傳含 excluded_reason 的全表。
-
-**契約式設計**：
+**職責**：ADR-025 兩段閘的可重現判決入口。真偽閘 hard-fail + 配置閘 sizing。
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. metadata 含 `UNIVERSE_METADATA_COLUMNS` 全 16 欄 |
-| **後置條件** | 1. 回傳 DataFrame 長度 == 輸入<br>2. 新增 `excluded_reason` 欄位（"" = 通過）<br>3. 第一個觸發的 reason 留下（不會被後續覆蓋） |
-| **不變性** | 1. 輸入 metadata 不被修改（copy）<br>2. 通過所有條件的 row：excluded_reason == "" |
+| **前置** | `is_start < oos_start < is_end`（frozen validator）；`survivorship_clean` 由策略 `research_config` 或 universe builder 宣告 True 才可能 REAL（預設 False）|
+| **後置** | 1. 真正讀 OOS holdout `[oos_start, is_end]`（非全在 IS 內）<br>2. DSR 走 `validation.dsr` 正確路徑（per-period SR + cross-trial variance），缺誠實來源即 raise<br>3. 回 `TruthVerdict.{REAL, REJECTED, INCOMPLETE}`（ADR-030）|
+| **不變性** | `parquet_dir` 設定時經 `_resolve_loader` 路由至該快取（[ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md)），caller 免傳 loader；滑價壓力測試走契約 `slippage_sharpe`，不另造第三套 |
 
-### 測試案例
+**對應測試**：`tests/research/workflows/test_truth_gate.py`、`test_truth_gate_judgement.py`（含已知 REJECTED oracle）、`test_truth_gate_parquet_dir.py`
 
-#### TC-001：大型股全通過
-- **Arrange**：metadata 含 1 檔市值 100 億、量 5000 張、上市 5 年的股票
-- **Act**：`apply_filters(metadata)`
-- **Assert**：`excluded_reason == ""`
+### 2.4 `run_paper_replay_workflow(cfg: PaperReplayConfig, loader) -> PaperReplayResult`
 
-#### TC-002：ETF 被排除
-- **Arrange**：`is_etf=True` 的 row
-- **Act**：`apply_filters(metadata)`
-- **Assert**：`excluded_reason == "etf"`
-
-#### TC-003：第一個 reason 優先
-- **Arrange**：同時 `is_etf=True` + `market_cap < 50 億`
-- **Act**：`apply_filters(metadata)`
-- **Assert**：`excluded_reason == "etf"`（ETF 先於 market_cap_low 檢查）
-
-#### TC-004：缺欄位拋 ValueError
-- **Arrange**：metadata 缺 `industry`
-- **Act**：`apply_filters(metadata)`
-- **Assert**：`ValueError` 含 "missing columns"
-
----
-
-## 模組六：`strategy.indicators`
-
-### 規格：`stochastic_kd / macd_weighted / rsi / rolling_swing_high / rolling_swing_low`
-
-**描述**：技術指標純函式，對齊 XQ XScript 語意。
-
-**契約式設計**：
+**職責**：對過真偽閘候選逐日跑 chain（接真 daemon 前先驗晉升鏈）。
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. 輸入為 pandas Series，index 已 align |
-| **後置條件** | 1. 輸出 Series 長度 == 輸入<br>2. 暖機期回 NaN，不是 0<br>3. `rolling_swing_*` 已 shift(1) 確保 breakout 可比 |
-| **不變性** | 1. 函式 pure，無副作用<br>2. 同樣 input 同樣 output |
+| **前置** | `as_of` 提供、`lookback_buffer_days ≥ 30` 讓 runner 有足夠歷史 |
+| **後置** | 跑 `runner.run(symbols, as_of - lookback, as_of, fixed_config, loader)` → 經 `get_strategy_gate` 判決 |
 
-### 測試案例
+**對應測試**：`tests/research/workflows/test_paper_replay.py`
 
-#### TC-001：rsi 飆漲時應接近 100
-- **Arrange**：close 連續上漲 14 天
-- **Act**：`rsi(close, 14).iloc[-1]`
-- **Assert**：> 80
+### 2.5 `run_build_universe(cfg: UniverseConfig, getter=None) -> UniverseBuildResult`（ADR-032）
 
-#### TC-002：rolling_swing_high 已 shift(1)
-- **Arrange**：series = [1,2,3,4,5]
-- **Act**：`rolling_swing_high(series, 3).iloc[-1]`
-- **Assert**：== 4 (NOT 5; 5 是當前 bar，不應在 window 內)
-
-#### TC-003：stochastic 暖機期 NaN
-- **Arrange**：3 列資料、n=5
-- **Act**：`stochastic_kd(high, low, close, 5, 3, 3)`
-- **Assert**：rsv 全部 NaN
-
----
-
-## 模組七：`strategy.scoring.compute_scores`
-
-### 規格
-
-**描述**：給含 14 欄位的 DataFrame，加上四層計分 + total_score。
-
-**契約式設計**：
+**職責**：從 FinLab 寬表建 survivorship-clean universe → ingest → 寫 provenance。
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. df 含 `REQUIRED_COLUMNS` (14 欄)<br>2. df 按 date 升序、無重複 |
-| **後置條件** | 1. df 新增 score 欄位（structure / direction / chip / momentum / total）<br>2. score 落在 v2.md 2.3 範圍內<br>3. 暖機期（前 box_period 列）score 可能為 NaN |
-| **不變性** | 1. 輸入 df 不被修改（copy）<br>2. 同 config 同 input 同 output |
+| **前置** | `span_start < span_end`、`top_n ≥ 1`、`min_turnover ≥ 0`；`finlab` 僅 `getter=None` 時 lazy import（頂層零依賴）|
+| **後置** | 季度 rebalance → `select_survivorship_universe` → `ingest_universe_finlab` → 寫 `universe_manifest.json`（bundle provenance）|
 
-### 測試案例
-
-#### TC-001：突破箱頂時結構分 = 2
-- 已在 `test_scoring.py::test_structure_breakout_scores_two` 實作
-
-#### TC-002：scores 落在範圍內
-- 已在 `test_scoring.py::test_scores_within_documented_ranges`
-
-#### TC-003：缺欄位拋 ValueError
-- 已在 `test_scoring.py::test_missing_columns_raises`
-
-#### TC-004：L2 方向分各組合
-- 已在 `test_scoring.py::test_l2_direction_both_positive_scores_two`
-
-#### TC-005：L3 籌碼超門檻
-- 已在 `test_scoring.py::test_l3_chip_ratio_above_threshold_scores_two`
-
-#### TC-006：L4 三陽開泰
-- 已在 `test_scoring.py`
-
-#### TC-007：L4 熄火
-- 已在 `test_scoring.py`
+**對應測試**：`tests/research/workflows/test_universe.py`；config/loader → `test_workflow_config.py`、`test_workflow_loader.py`
 
 ---
 
-## 模組八：`strategy.signals.evaluate_bar / compute_signals`
+## 三、審判庭 `validation/`（核心資產）
 
-### 規格
+> gate-as-code：門檻是資料（`Criterion` / 模組常數），調門檻 = 可見可記錄決策。純函式，零 IO。
 
-**描述**：給 scored DataFrame + position state，產出最高優先序的 action。
+### 3.1 `two_stage_gate` — 真偽閘 + 配置閘（ADR-025）
 
-**契約式設計**：
+**公開介面**：`evaluate_truth_gate(TruthGateInput) -> TruthGateResult`、`compute_position_size(SizingInput, SizingConfig) -> float`、`evaluate_two_stage(...) -> GateDecision`、`fleet_correlation(candidate, fleet) -> float`
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. df 已過 compute_scores（含 score 欄位）<br>2. `EvaluateBar` 包含完整 21 欄位 |
-| **後置條件** | 1. action 為 SIGNAL_PRIORITY 中第一個觸發的訊號<br>2. 風控訊號（stoploss/exit）不被 cost filter 阻擋<br>3. 主動訊號（buy/add）必須過 edge_ok / profit_ok |
-| **不變性** | 1. 同樣 bar + config + position → 同樣 action<br>2. 優先序固定：stoploss > exit > takeprofit > reduce > add > buy > hold |
+| **前置** | `TruthGateInput.survivorship_clean` / `pre_registered` 決定分支；門檻常數 `PBO_MAX=0.30`、`WFA_OOS_POSITIVE_MIN=0.60`、`DSR_MIN=0.95` |
+| **後置** | 1. `pre_registered=True` 用 WFA OOS 廣度 + DSR（不用 landscape PBO）；`False` 用 PBO<br>2. survivorship 不 clean / 滑價 ≤0 / OOS holdout ≤0 → REJECTED（REJECTED 蓋過 INCOMPLETE）<br>3. `compute_position_size`：Sharpe≤0 → 0；否則 `max_weight × conviction × diversification × capacity`；絕對 CAGR 永不 size |
+| **不變性** | truth 非 REAL → `GateDecision.size == 0.0` |
 
-### 測試案例
+**對應測試**：`tests/validation/test_two_stage_gate.py`
 
-#### TC-001：強多首次成立觸發 buy
-- 已在 `test_signals.py`
+### 3.2 `dsr` — Deflated Sharpe Ratio（Bailey & López de Prado 2014）
 
-#### TC-002：跌破箱底觸發 stoploss
-- 已在 `test_signals.py`
-
-#### TC-003：多訊號同時為真，回傳優先序最高
-- 已在 `test_signals.py`
-
-#### TC-004：風控不被 cost 擋
-- 已在 `test_signals.py::test_stoploss_ignores_cost`
-
-#### TC-005：未過 edge_ok 不買
-- 已在 `test_signals.py`
-
----
-
-## 模組九：`pipeline.run_pipeline`
-
-### 規格
-
-**描述**：端到端 ETL → Scoring → Signals 編排，產出可消費 calendar。
-
-**契約式設計**：
+**公開介面**：`deflated_sharpe_ratio(sr, n_trials, n_obs, skew, kurtosis, sharpe_variance) -> float`、`psr(...)`、`expected_max_sharpe(n_trials, variance_of_sharpes)`
 
 | 類型 | 條件 |
 | :--- | :--- |
-| **前置條件** | 1. FinMind API 可用<br>2. `start <= end` |
-| **後置條件** | 1. 回傳 signaled DataFrame 含完整欄位<br>2. 暖機後 ready rows >= 1（如資料足夠） |
-| **不變性** | 1. 內部呼叫 compute_scores / compute_signals 純函式 |
+| **前置** | `n_obs > 1`、`n_trials ≥ 1`、`sharpe_variance ≥ 0`（輸入衛兵 raise on 違反）|
+| **後置** | 回 `PSR(SR*)`，`SR* = E[max_n SR_n]`；ADR-016 M3 門檻 `DSR > 0.95` |
+| **不變性** | DSR 對 `n_trials` 單調不增（試驗越多、通縮越狠）|
 
-### 測試案例（手動 integration）
+**對應測試**：`tests/validation/test_dsr.py`（對 Bailey 論文範例數值匹配）
 
-#### TC-001：2330 跑 2023–2024 兩年
-- **Arrange**：FINMIND_TOKEN 已設
-- **Act**：`run_pipeline("2330", date(2023,1,1), date(2024,12,31))`
-- **Assert**：
-  - signaled 長度 >= 480 bars
-  - 暖機後 >= 420 bars
-  - `action` 含 "buy" / "exit" / "hold" 至少各一次
+### 3.3 `pbo` — Probability of Backtest Overfitting（CSCV，自寫避 pypbo AGPL）
 
-實際結果（M1 已驗證）：481 bars → 421 ready → 8 buy / 8 exit / 6 reduce / 4 add。
+**公開介面**：`probability_of_backtest_overfitting(returns_matrix, n_splits=16, metric=sharpe_metric) -> float`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `returns_matrix` shape `(T, N_configs)`；`n_splits` 為偶數 |
+| **後置** | 回 `[0,1]`；列舉 `C(S, S/2)` 對稱 IS/OOS 切分（S=16 → 12870 組合）|
+
+**對應測試**：`tests/validation/test_pbo.py`
+
+### 3.4 `wfa` — Walk-Forward 切分器
+
+**公開介面**：`walk_forward_splits(start, end, is_days, oos_days, step_days=None, purge_days=0, embargo_days=0, *, anchored=False) -> list[WFAFold]`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `[start, end)`（end 排他）；`is_days`/`oos_days > 0` |
+| **後置** | 回 `WFAFold` 列表；`step_days=None` → OOS 相鄰不重疊；purge/embargo 依 AFML §7.4.1 |
+| **不變性** | fold 之間 OOS 不重疊（property 測試守）|
+
+**對應測試**：`tests/validation/test_wfa.py`
+
+### 3.5 `gate_state` + `gate_machine` — 逐 criterion 判決 + 晉升狀態機
+
+**公開介面**：`evaluate_gate(metrics, gate) -> GateResult`；`ValidationGate`（`submit_is` → `submit_wfa` → `submit_oos` → `approve`）、`OOSSealedError`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | metrics 為 mapping；gate 為 `Criterion` 元組 |
+| **後置** | 缺 metric → `INCOMPLETE`（絕不假 PASS）；OOS sealed vault：前置 gate 未過前 `read_oos` raise `OOSSealedError`、存取計次留痕 |
+| **不變性** | 狀態不可回退（IS→WFA→OOS→APPROVED 單向）|
+
+**對應測試**：`tests/validation/test_gate_state.py`、`test_gate_machine.py`
 
 ---
 
-## 測試覆蓋現況
+## 四、風控 `risk/`（spec 24）
 
-| 模組 | 測試檔 | 單元測試數 |
-| :--- | :--- | :---: |
-| config/strategy_config | tests/test_strategy_config.py | 6 |
-| data/finmind_etl | tests/data/test_finmind_etl.py | 5 |
-| data/adjustment | tests/data/test_adjustment.py | 6 |
-| data/db_writer | tests/data/test_db_writer.py | 3 (含 1 integration) |
-| data/universe | tests/data/test_universe.py | 8 |
-| strategy/scoring | tests/strategy/test_scoring.py | 8 |
-| strategy/signals | tests/strategy/test_signals.py | 12 |
-| **總計** | | **48** |
+### 4.1 `risk_gate.RiskGate` — 12 個 pre-trade 檢查（EX-001..EX-012）
 
-執行：
-```bash
-PYTHONPATH=src python3 -m pytest -p no:asyncio
-```
+**職責**：strategy-agnostic ex-ante 風控閘，注入 `AccountState` 快照 + `RiskGateConfig` 門檻，回可否下單。
+
+**公開介面**：`RiskGate.check(order, account_state, *, collect_all=False) -> RiskGateResult`；12 個 `check_exNNN` 純函式；`risk_spec(config)` 唯讀投影
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `order.side ∈ {buy,add,sell,reduce,exit,stoploss}`、`qty ≥ 0`、`equity ≥ 0`（否則 raise ValueError）|
+| **後置** | `allowed ⟺ rejections 空`；`rejections` 為有序 `(rule_id, reason)`（審計軌）；預設 fail-fast，`collect_all=True` 全掃 |
+| **不變性** | 依 spec §2.2 優先序（EX-012 熔斷最先、heat 較後）；EX-012 對 `L3`/`HALTED` 皆 reject；never mutate 輸入（frozen 值物件）|
+
+**對應測試**：`tests/risk/test_risk_gate.py`
+
+### 4.2 `circuit_breaker.CircuitBreaker` — 三級熔斷狀態機
+
+**公開介面**：`evaluate(RiskMetrics) -> BreakerState`、`reset(reason)`、`should_halt()` / `should_reduce()` / `should_block_new_entries()`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `CircuitBreakerConfig` 門檻（DD / 連虧等）；`RiskMetrics` 快照 |
+| **後置** | 產生瞬態 `L3` 後 latch 進終端 `HALTED`（只有 `reset` 清）；`transitions` 留完整軌跡 |
+| **不變性** | `BreakerState.severity` 單調；與 `risk_gate` 共用單一 `risk/types.BreakerState`（避免 enum 分岔）|
+
+**對應測試**：`tests/risk/test_circuit_breaker.py`
 
 ---
 
-## 未覆蓋（M2 補）
+## 五、編排 `orchestration/`
 
-- 端到端 pipeline integration test（目前手動驗證）
-- 各 engine wrapper 測試（rqalpha / vectorbt）
-- 對齊測試（兩 engine 結果一致性）
-- WFA / PBO / MC 演算法測試
+### 5.1 `daily_flow` — staged 每日鏈引擎
+
+**公開介面**：`run_flow(stages, ctx) -> FlowRun`、`build_daily_stages()`（etl→signals→risk_gate→orders→log）、`demo_stages()`、`as_prefect_flow(...)`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | collaborators（`ingest`/`signal_fn`/`risk_check`/`place`/`sink`）經 `FlowContext.config` 注入；缺席 → stage `ok=False`（非 raise）|
+| **後置** | 依序跑，**fail-fast**（首個 `ok=False` 或 raise 即停）；raise 被捕捉成失敗 stage，**永不 crash 排程器**；`FlowRun` 列所有實際執行 stage |
+| **不變性** | stage body 只編排；risk_gate reject → 不下單（halt）|
+
+**對應測試**：`tests/orchestration/test_daily_flow.py`
+
+### 5.2 `collaborators` — production paper 鏈接線工廠
+
+**職責**：把 `PaperBroker` / `RiskGate` / DB sink wire 成 daily_flow collaborators。
+
+**公開介面**：`build_paper_collaborators(...)`、`make_risk_check(broker, gate)`、`make_place(broker)`、`make_ingest(source=)`、`make_db_sink(...)`
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `broker` 為 `PaperBroker`；side 詞彙需轉換（`add→buy`、`reduce/exit/stoploss→sell`，`_broker_side`）|
+| **後置** | `make_risk_check` 從 `broker.portfolio_snapshot` 建 `AccountState`（真實部位、非空倉）、批次內遞減現金；`make_place` 撮合並回 `Fill`；`make_db_sink` upsert signals/orders/fills/equity |
+
+**對應測試**：`tests/orchestration/test_collaborators.py`、`test_chain_integration.py`
+
+---
+
+## 六、資料層 `data/`
+
+### 6.1 `finlab_source` — FinLab 付費主源（ADR-006/032）
+
+**職責**：FinLab 全史寬表 → per-stock `ETLBundle`、survivorship universe 建構、ingest。
+
+**公開介面**：`ingest_universe_finlab(...)`、`build_survivorship_universe(...)`、`login()`；`Getter` 抽象（測試注入）
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `finlab` 僅 `getter=None` 時 lazy import；日期窗序正確 |
+| **後置** | 回 `FinlabIngestResult`；FinLab 已預調整（無需前復權）|
+
+**對應測試**：`tests/data/test_finlab_source.py`
+
+### 6.2 `finmind_etl.fetch_bundle` — FinMind 免費 fallback
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | `stock_id` 非空、`start ≤ end`；`FinMind` lazy import |
+| **後置** | 回 `ETLBundle` 三表（即使空亦有 columns）；`_normalize_*` 隔離 FinMind raw schema；rate-limit 不被忽略 |
+| **不變性** | FinMind exception 往上拋，不靜默吞 |
+
+**對應測試**：`tests/data/test_finmind_etl.py`、`test_adjustment.py`
+
+### 6.3 `db_writer` / `db_reader` — TimescaleDB IO
+
+| 類型 | 條件 |
+| :--- | :--- |
+| **前置** | DDL 已建（`docker/timescaledb/init.sql`）；欄位符合 doc 21 契約（`test_init_sql_schema.py` 守 drift）|
+| **後置** | `upsert_*` idempotent（`ON CONFLICT DO UPDATE`）；`db_reader.fleet_summary` DISTINCT-ON 每策略最新淨值 |
+
+**對應測試**：`tests/data/test_db_writer.py`（含 `@integration`）、`test_init_sql_schema.py`、`test_universe_builder.py`
+
+---
+
+## 測試體系總覽
+
+| 層 | 目錄 | 重點 |
+| :--- | :--- | :--- |
+| 策略契約 | `tests/strategies/` | 契約 + conformance（parametrized）+ dependency-untangle |
+| 研究工作流 | `tests/research/workflows/` | dispatch invariant（AST）+ truth-gate 判決 oracle |
+| 審判庭 | `tests/validation/` | DSR/PBO/WFA 對論文範例；two-stage 判決 |
+| 風控 | `tests/risk/` | 12 檢查 + 熔斷 latch |
+| 編排 / 運維 | `tests/orchestration/`、`tests/runtime/` | staged flow + paper 鏈整合 |
+| 資料 / API | `tests/data/`、`tests/api/` | schema drift + envelope 契約 + zones smoke |
+
+執行：`uv run pytest`（現況 1116 passed / coverage ~92.6%）；CI 三 job hard gate（pytest+coverage / tsc+vitest / contract-drift）。標記：`@integration`（DB/FinMind/FinLab）、`@slow`、`@recon`（跨引擎對拍）、`@e2e`、`@live`（Shioaji，M5）。

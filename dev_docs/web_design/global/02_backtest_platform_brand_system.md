@@ -3,7 +3,7 @@
 > 本專案的 Global Design System（玩具城規則書）。
 > **設計來源**：**Grok 單色 dark 設計語言**（忠實還原自 `cloning/clones/grok`，目標 grok.com）。v1 曾誤用 x.ai 行銷頁 + teal 差異化，已修正為 Grok 單色。
 > **對齊**：`BASE_DESIGN_SYSTEM.md` 分層 + `dev_docs/20_dashboard_specification.md`（面板 A–E 規格）+ `dev_docs/21_data_contract.md`（資料 schema）。
-> **設計更新動機**：把現行 Streamlit `primaryColor #00d4ff` 的臨時主題，升級為 Grok 式單色 dark、達 WCAG、token 化的設計系統，供 Lovable 產出 React 版監控儀表板。
+> **設計意圖**：Grok 式單色 dark、達 WCAG、token 化的設計系統（取代早期 `#00d4ff` cyan 臨時主題），供 React 監控儀表板消費。
 > **註**：Grok 精確 token（hex/字型）為路徑 2 重建近似值（grok.com 受 CF 擋無法擷取），待 DevTools 手動擷取補正；設計語言（單色 dark / 大圓角 / flat / 極簡）為 high 信心。
 
 ---
@@ -14,14 +14,14 @@
 
 ## [PRODUCT CONTEXT LAYER]
 
-- **產品名稱**：backtest_platform 監控儀表板（L7 監控與歸因層）
-- **一句話**：量化策略研究者的「我這支策略賺不賺 / 系統還活著嗎」單一真相儀表板。
-- **目標用戶**：
-  - 主要：量化策略研究者（每日 1–2 次深度檢視）
-  - 次要：運維者（隨時巡檢系統健康）
+- **產品名稱**：backtest_platform — 個人量化 edge 驗證工廠 + 晉升管線（本監控儀表板為其 L7 監控與歸因層）
+- **一句話**：單人量化研究者的 edge 驗證工作台——「這支候選有沒有真 edge / 過不過審判庭 / 上線後還活著嗎」的單一真相儀表板。
+- **產品定位**：策略是消耗品、審判庭是資產、連續 NO-GO 是平台正常運作的證據。監控區服務「已晉升 paper/live 的少數策略」，研究區服務「持續掃描下一個候選」。
+- **目標用戶**：單人雙帽——研究者（每日 1–2 次深度檢視候選/在營運策略）為主、運維者（巡檢系統健康）為次。
 - **核心價值**：把策略績效、部位、訊號、風控、統計驗證，用一致視覺語言可視化，降低判讀成本。
-- **網站類型**：Data-dense Monitoring Dashboard（內部工具，非行銷站）
-- **平台映射**：現行 Streamlit（面板 A–E）→ 本設計系統定義其 **React 升級版**；Grafana（系統健康 F–I）與 Discord（告警）沿用既有，僅色彩 token 對齊。
+- **部署假設**：single-user standalone、localhost-only 綁定（ADR-031），非多租戶行銷站。
+- **網站類型**：Data-dense Monitoring Dashboard（內部工具）
+- **系統邊界**：本設計系統定義監控面板 A–D 的 React 前端；Grafana（系統健康 F–I）與 Discord（告警）沿用既有，僅色彩 token 對齊。
 
 ## [BRAND & VOICE LAYER]
 

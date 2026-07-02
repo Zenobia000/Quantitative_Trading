@@ -1,161 +1,89 @@
 # backtest_platform — 開發文檔總覽
 
-> 依 `VibeCoding_Workflow_Templates` v3.0 模板產出，對應實際 `backtest_platform/` 程式碼狀態。
-> **產出日期**：2026-05-26 | **對應版本**：backtest_platform 0.1.0 (M1)
-> **2026-06-01 更新**：階段 7 完整定版（11 份 ADR + 7 份規格文檔 17/18/20-24，原 19 已併入 01 §5.A）；16 WBS 升 v2.0 為單一狀態真相源（見 15 §10 規則）
->
-> **2026-06-02 更新**：universe ingest（`ingest` CLI）完成、R14 關閉；**M2 IS gate FAIL → 回 M0 重設進場（ADR-017）**；ADR 數量 16→17；16 WBS 升 v2.5
->
-> **2026-06-02 更新（二）**：大廠 UI/UX deep-research 對標完成 → **監控優先 → 研究迴圈優先 pivot（ADR-018）**：Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate 工作流；新增 `web_design/03_uiux_benchmark_and_reinforcement_plan.md`（10 平台對標 + 10 維度差距 + 7 流程圖 + roadmap）；ADR 數量 17→18；16 WBS 升 v2.6（§8.G 研究迴圈 UX）
-> **2026-06-03 更新**：研究迴圈 CLI 補 `validate`+`promote-check`（8.G.5 封頂）；large-cap v3 IS FAIL → **escalate 候選 D（ADR-020 提案中）**：換 point-in-time 中小型動能 universe（rank 51-300、反 survivorship），機制凍結、資料 spike（FinLab 進階券商分點）為 go/no-go gating；新增設計 spec `specs/2026-06-03-candidate-d-smallcap-universe-design.md`；ADR 數量 19→20
-> **2026-06-04 更新**：前後端契約優先盤點（FE 14 頁需求 ↔ FastAPI 11 條供給 ↔ 既有契約）→ **REST 契約合一（ADR-021）**：三處分裂（06 §9 / 21 §8 / per-page）併入新建 **25_fe_be_rest_contract.md**（71→83 端點 registry + 單一 envelope/錯誤碼/分頁/裸 root/Bearer/realtime + OpenAPI→TS）；06 §9 / 21 §8 / 20 / 12 §7 加降級 banner；ADR 數量 20→21
-> **2026-06-04 更新（二）**：Trade Review 去 four_layer_resonance 策略耦合（泛化為 reason_json 動態 N 因子歸因）；**多策略艦隊營運 lite（ADR-022）**：營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略），改寫 PRD「❌ 多策略管理」+ D-018；ADR 數量 21→22
-> **2026-06-09 更新**：R9 edge 掃描收斂 — 動能 NO-GO（ADR-023，守 ADR-016 + 四層廢止）、資金流 survivorship-clean NO-GO（ADR-024）；4 結構同 ~0.9 Sharpe 牆；ADR 數量 22→24
-> **2026-06-14 更新**：驗證機制設計修正 — **驗證閘從 binary 絕對通關改兩段式（ADR-025）**：真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；修正部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖；不翻案 ADR-023/024（死於真偽閘）；16 WBS 升 v3.4；ADR 數量 24→25
-> **2026-06-16 更新**：`backtest_platform` 結構整理（ADR-026）— 抽出 `strategies/common`（中立回測機制 `clean_returns`/`rebalance_dates`/`vol_target`/`TRADING_DAYS`），解 inst_flow/multi_factor/paper_daemon 反向挖 momentum 私有函式的 leaky abstraction，策略間零互相依賴；保留 momentum（乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/`；測試 989 passed / coverage 94%；ADR 數量 25→26
-> **2026-06-16 更新（二）**：`backtest_platform` 重構 Stage 1 — **策略契約 + registry（ADR-027）**：平台不再硬綁 four_layer。新增 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + `register_strategy`/`get_strategy` 輕量 registry）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾，玩家複製 `strategies/_template/` 即得新策略）；橫斷面共用抽 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；four_layer 降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保向後相容）；新增策略 7-12 檔→2-3 檔；測試 1000 passed / coverage 94%；ADR 數量 26→27
-> **2026-07-02 更新**：全平台多視角審查（4 階段 16-agent workflow：六區域掃描 + 四路競品 + PM/架構/設計模式/QA/UIUX 五視角 + 綜合）→ 新增 [platform_full_audit_2026-07-02.md](./platform_full_audit_2026-07-02.md)（產品正名「edge 驗證工廠」+ 缺陷矛盾 Top 25〔Top 5 CRITICAL 已實地覆核〕+ 三階段路線圖 + 8 個 worktree 平行工作包）與 [competitive_analysis_2026-07-02.md](./competitive_analysis_2026-07-02.md)（開源引擎/機構系統/散戶 SaaS/內部調研檢驗 + 五視角全文）；WP1-WP5（審判庭 DSR/OOS、paper 風控、runs DDL/parquet 血統、前端契約重對齊、最小 CI）同日以隔離 worktree 平行啟動
-> **2026-06-17 更新**：研究流程標準化（sub-project ①.5，**ADR-029**）— 7 支 `scripts/inst_flow_*.py` 一次性腳本刪除，邏輯拆成「平台通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 ADR-028 dispatch）+ 策略宣告 `strategies/<name>/research_config.py`」；CLI 加 doe/go-gates/truth-gate/paper-replay、HTTP 加 `POST /research/workflows/{workflow}`（非同步 job）+ `GET /research/workflows/{strategy}`；新增一隻策略只要寫 `research_config.py` 即可參與所有工作流，零新腳本；測試 1053 passed / coverage 92.9%；ADR 數量 28→29（含補登 028 dispatch contract）
-> **2026-07-02 更新**：真偽閘（審判庭）判決缺陷修正（**ADR-030**）— `research/workflows/truth_gate.py` 五缺陷：DSR 單位錯配（年化 SR + 日變異數 → DSR 誤判 1.0，改 per-period SR + 虛無假設 V[SR_n]，示例 0.333 年化 → DSR 1.0→0.145 REJECTED）、OOS holdout 從未評估（實跑並入判）、`survivorship_clean` 寫死 True（config 化預設 False）、`dsr.py` 加單位 fail-fast 衛兵、SizingGate 接線（REAL→倉位）；**既往 inst_flow TRUTH GATE REAL 判決作廢須用修正後閘重驗**；補登 ADR-028/029 至階段 7 表；測試 1064 passed / coverage 93.2%；ADR 數量 29→30
-> **2026-07-02 更新（敘事償還，審查缺陷 #15/#16/#20）**：承 [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md)——(1) **02 PRD v4.0 正名重寫**：產品從「四層共振回測平台」正名為「**個人量化 edge 驗證工廠 + 晉升管線**」（策略是消耗品、審判庭是資產、連續 NO-GO 是正常運作證據）；Persona 單人雙帽正式化、standalone 部署假設明文、平台/策略 KPI 兩層分列、決策沿革補 ADR-016~031、US 去四層耦合 + 補研究工作流 US。(2) **16 WBS 自我對帳**：§1 banner（86%/1053）↔ §4（原 80%/786）數字統一、§6 里程碑補現況註記（M2 ❌ 與 M3/M4 交付並存＝里程碑定義已被 ADR-025 重構）、Sprint 0 Gate ⏳→✅、M3 Streamlit→React。(3) **Tombstone 凍結 banner**：01/05/17/20/22/23 檔首加統一 drift 警示。(4) **doc 25 §6 registry 對齊**：移除已刪 `/presets*`、補 `/strategies` + `/research/workflows/*`。(5) **ADR-031 standalone auth 裁決**：localhost-only 綁定 + 移除 Bearer 承諾（降 M5 重議）。ADR 數量 30→**31**（補 031）
-> **2026-07-02 更新（三）**：inst_flow 重驗（ADR-030 後續）— 修正後審判庭 REJECTED 現行 config（survivor-only 40 檔 + DSR 0.789 + WFA OOS+ 33%）；既往 REAL 判決現行路徑無法重現，paper-ready 暫停 gated 於 sub-project ②；新增 [inst_flow_truth_gate_revalidation_2026-07-02.md](./inst_flow_truth_gate_revalidation_2026-07-02.md)；16 WBS 升 v3.26
-> **2026-07-02 更新（四）**：survivorship-clean universe 建構平台化（sub-project ②，**ADR-032**）— ADR-029 刻意延後的 `inst_flow_revalidate_finlab` 從 git 歷史重建為平台工作流 `research/workflows/universe.py::run_build_universe`（fetch FinLab 寬表 → `select_survivorship_universe` 季度 rebalance → `ingest_universe_finlab` → 寫 `universe_manifest.json` provenance）；`UniverseConfig` 宣告 + `get_universe_config` + CLI `build-universe` + HTTP `_WORKFLOWS` 加 `build_universe`；`TruthGateConfig.parquet_dir` + `run_truth_gate(loader=None)` 讓資料快取覆蓋生效；**inst_flow `TRUTH_GATE` 宣告跟著 cache 走**（`cached_universe_symbols` 掃到料 → survivorship_clean=True + 乾淨 universe + 2010/2024 窗口；缺席 → survivor-only `_WIDE` fallback，反自欺 ADR-030 原則）；finlab 僅 `getter=None` 時 lazy import，頂層零依賴；測試 1116 passed / coverage 92.6%；ADR 數量 31→**32**（等待真實重驗執行）；16 WBS 升 v3.27
+本目錄是 backtest_platform（**個人量化 edge 驗證工廠 + 晉升管線**）的工程文檔。狀態真相源為 [16 WBS](./16_wbs_development_plan.md)、架構決策見 [adrs/](./adrs/)、REST 契約見 [25](./25_fe_be_rest_contract.md)。更新歷史見 git log。
 
 ---
 
 ## 文檔清單
 
-### 階段 0：總覽
+### 階段 0–1：總覽與規劃
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 01 | [workflow_manual.md](./01_workflow_manual.md) | 開發流程選擇（MVP 模式） |
+| 00 | [system_architecture_overview.md](./00_system_architecture_overview.md) | 系統架構總覽 |
+| 01 | [workflow_manual.md](./01_workflow_manual.md) | 開發流程手冊（研究迴圈 + 工程流程） |
+| 02 | [project_brief_and_prd.md](./02_project_brief_and_prd.md) | 專案簡報與 PRD v4.0 |
+| 03 | [behavior_driven_development_guide.md](./03_behavior_driven_development_guide.md) | BDD scenarios（策略無關工作流） |
 
-### 階段 1：規劃
-
-| # | 檔名 | 用途 |
-| :---: | :--- | :--- |
-| 02 | [project_brief_and_prd.md](./02_project_brief_and_prd.md) | 專案簡報與 PRD（**v4.0 正名：個人量化 edge 驗證工廠 + 晉升管線**）|
-| 03 | [behavior_driven_development_guide.md](./03_behavior_driven_development_guide.md) | BDD scenarios |
-
-### 階段 2：架構與設計
+### 階段 2–3：架構與詳細設計
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**31 份 ADR**：001~031）：…023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）/028（strategy dispatch contract + preset 移除）/029（研究工作流標準化）/031（standalone auth：localhost-only 綁定 + 移除 Bearer 承諾） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（ADR-001~032） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
-
-### 階段 3：詳細設計
-
-| # | 檔名 | 用途 |
-| :---: | :--- | :--- |
 | 07 | [module_specification_and_tests.md](./07_module_specification_and_tests.md) | 模組規格（DbC） |
 | 08 | [project_structure_guide.md](./08_project_structure_guide.md) | 專案結構 |
 | 09 | [file_dependencies_template.md](./09_file_dependencies_template.md) | 依賴關係 |
 | 10 | [class_relationships_template.md](./10_class_relationships_template.md) | 類別關係 |
 
-### 階段 4：開發與品質
+### 階段 4–5：開發、品質、安全、部署
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 11 | [code_review_and_refactoring_guide.md](./11_code_review_and_refactoring_guide.md) | 程式碼審查指南 |
-| 12 | [frontend_architecture_specification.md](./12_frontend_architecture_specification.md) | 前端架構（React/TS stack、分層、效能/a11y 量化）；IA 真相源在 `web_design/`，契約在 25（2026-06-04 對齊現實啟用）|
-
-### 階段 5：安全與部署
-
-| # | 檔名 | 用途 |
-| :---: | :--- | :--- |
+| 11 | [code_review_and_refactoring_guide.md](./11_code_review_and_refactoring_guide.md) | 程式碼審查與重構 |
+| 12 | [frontend_architecture_specification.md](./12_frontend_architecture_specification.md) | 前端架構（React/TS） |
 | 13 | [security_and_readiness_checklists.md](./13_security_and_readiness_checklists.md) | 安全與生產準備 |
-| 14 | [deployment_and_operations_guide.md](./14_deployment_and_operations_guide.md) | 部署與運維 |
+| 14 | [deployment_and_operations_guide.md](./14_deployment_and_operations_guide.md) | 部署與運維（另見 [runbooks/](./runbooks/)） |
 
-### 階段 6：維護與管理
+### 階段 6：維護與計畫
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 15 | [documentation_and_maintenance_guide.md](./15_documentation_and_maintenance_guide.md) | 文檔維護 |
-| 16 | [wbs_development_plan.md](./16_wbs_development_plan.md) | WBS 開發計劃 |
+| 15 | [documentation_and_maintenance_guide.md](./15_documentation_and_maintenance_guide.md) | 文檔維護（含狀態真相源規則） |
+| 16 | [wbs_development_plan.md](./16_wbs_development_plan.md) | **WBS 開發計劃（狀態真相源）** |
 
-### 階段 7：M2+ 策略選型與規劃（2026-05-31 新增）
+### 階段 7：規格擴充
 
-> 配合 M1 完成、進入 M2 之際的重大架構決策變更（rqalpha → TQuant-Lab → zipline-reloaded（ADR-013）、FinMind → FinLab、新增三模式+雙儀表板）
-> **2026-05-31 整併**：原 19 號 sprint_0_design 已合併入 01 §5.A 並撤回；21/22/23/24 為既有 05/03/14/13 的**擴充版** source of truth
-
-| # | 檔名 | 用途 | 與既有檔關係 |
-| :---: | :--- | :--- | :--- |
-| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | **M2-M5 總體規劃**（路線、17 週時程、Verification） | 獨立（02/16 已加 v2.0 banner 指向）|
-| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | 業界 7 層 reference + 30+ 指標 taxonomy | 獨立（M3 指標實作時 single source of truth）|
-| ~~19~~ | ~~sprint_0_design.md~~ | ~~Sprint 0 spike 細部規格~~ | **已合併入 [01 §5.A](./01_workflow_manual.md)，本檔撤回** |
-| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 雙儀表板 + Discord 告警 spec（原 Telegram 已 superseded by ADR-010） | 獨立（UI 詳設）|
-| 21 | [data_contract.md](./21_data_contract.md) | FinLab/FinMind/Shioaji schema + TimescaleDB 13 表 DDL | **擴充** [05 §4](./05_architecture_and_design_document.md)（05 為 M1 baseline，21 為 M2+ 完整版）|
-| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 + CI/CD YAML 草案 | **擴充** [03](./03_behavior_driven_development_guide.md)（03 §6 加金字塔摘要 + 指向 22）|
-| 23 | [deployment_topology.md](./23_deployment_topology.md) | Dev/Staging/Production 三環境拓撲 + docker-compose | **擴充** [14 §1](./14_deployment_and_operations_guide.md)（14 為 SOP，23 為拓撲設計）|
-| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 12 條 ex-ante 規則 + 3 級熔斷狀態機 + SOP | **擴充** [13 §J](./13_security_and_readiness_checklists.md)（13 §J 為摘要 + 指向 24）|
-| 25 | [fe_be_rest_contract.md](./25_fe_be_rest_contract.md) | **前後端 REST 契約唯一真相源**（71 端點 registry + 單一 envelope/錯誤碼/分頁/auth/realtime + OpenAPI→TS bridge，ADR-021）| **合一** 06 §9 + 21 §8 + per-page `[DATA & API]`（三者降為 feeder by reference）|
-| — | [research_open_source_backtest_platforms.md](./research_open_source_backtest_platforms.md) | 開源回測平台選型調研報告（決策依據，已 freeze） | 獨立 |
-
-#### 階段 7 新增 ADR
-
-| ADR | 主題 | Supersedes |
+| # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md) | ~~主骨架選定 TQuant-Lab（Zipline 台股 fork）~~ — 已 superseded by ADR-013 | **ADR-001** |
-| [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) | 資料源改 FinLab 付費版 + FinMind fallback | — |
-| [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) | 雙引擎：Zipline event-driven + vectorbt vectorized（vectorbt 半邊已由 ADR-014 恢復） | — |
-| [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) | 三模式共用 strategy code (backtest/paper/live) | — |
-| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) | 雙儀表板（Streamlit+Grafana）+ 告警（Telegram 路線，已部分 superseded） | 被 ADR-010 部分取代 |
-| [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) | Discord 取代 Telegram 為告警通道 | 部分 supersede **ADR-009** |
-| [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) | M2 目錄結構與模組邊界（追溯 commit `ae869f5`） | — |
-| [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) | 採用 uv 為 Python 套件管理器（取代 poetry） | poetry 用法 |
-| [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) | 主骨架切換 zipline-tej → zipline-reloaded（0 商業綁定） | **ADR-005**（§ 4 後果部分由 ADR-014 修正）|
-| [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) | zipline-reloaded 3.0.4 → 3.1.1 升級，解鎖 pandas 2 / numpy 2 / vectorbt | amends **ADR-013** § 4 |
-| [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) | 儀表板設計系統 + React 升級（5 面板規格 + Assembly + REST API 契約） | — |
-| [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) | M2 acceptance KPI 凍結（CAGR>18% / Sharpe>1.0 / 滑點 0.3% 穩健性）— 彙整 01/02/v2.md 既有數字 | — |
-| [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設進場假設；附帶修 `_format_perf_summary` ffill metric bug | 記錄 ADR-016 gate 的執行結果 |
-| [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) | 監控優先 → 研究迴圈優先：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | **重定位** ADR-009/ADR-015 產物（不取代分層/設計系統）；UX 化 ADR-017 |
-| [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) | v3 進場重設：參數化分級放寬（必含層+可選，非純 N-of-4 — L2⊂L3）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline；反過擬合硬約束（v0.1 不 sweep、進場數非 edge） | ADR-017 的 M0 進場 hypothesis 定稿；v0.1 策略側 |
-| [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) | **候選 D（提案中）**：large-cap v3 IS FAIL → escalate 換 point-in-time 中小型動能 universe（rank 51-300、季 rebalance、反 survivorship）；機制凍結、成本上調；資料 spike（FinLab 進階券商分點 ~250 檔）為 go/no-go gating | ADR-017 §5 退場路徑落地；ADR-019 機制不動 |
-| [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) | **前後端 REST 契約合一**：三處分裂（06 §9 / 21 §8 / per-page）→ 單一契約 doc 25 + OpenAPI 機器真相；envelope error 字串→物件、offset 分頁、裸 root、single-user Bearer、polling+單一 WS、Monitor stub | **supersede** ADR-015 §4/§5 + ADR-018 契約落點指派 |
-| [ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md) | **多策略艦隊營運（lite）**：營運層擴張為同時監控/操作數隻已晉升策略 + 退化換掉（研究層仍單策略）；處置複用 ADR-018 晉升 audit；仍排除跨人 leaderboard/staking/完整 registry/多人簽核；gated 於 M4 + ≥1 可部署策略 | **部分放寬** 03 §5.3「刻意不做 champion/challenger」+ PRD「❌ 多策略管理」（D-018）|
-| [ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) | **動能 NO-GO**：大 universe + survivorship-clean WFA OOS 0.63-0.86、final CAGR 7.1% 仍未過 ADR-016；守門檻不放寬 → 動能廢止、四層廢止、艦隊轉掃描下一候選 | 記錄 ADR-016 gate 對動能的執行結果 |
-| [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) | **三大法人資金流候選 → 🔴 survivorship-clean FAIL**：survivor-only 40 檔條件式 GO 係生存者膨脹假陽性；含下市股 116 檔複驗 CAGR 13.1%/Sharpe 0.90/PBO 42.9% → NO-GO，條件式 GO 撤回 | 記錄 ADR-016 gate 對資金流的執行結果 |
-| [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) | **驗證閘兩段化 + paper 前移**：修正 ADR-016 binary 絕對通關三缺陷（部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖）→ 真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；不翻案 ADR-023/024（死於真偽閘）| **amends** ADR-016（binary→兩段閘）|
-| [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) | **共用回測機制抽出 → `strategies/common`**：momentum 的私有 `_clean_returns`/`_rebalance_dates`/`_vol_target`/`TRADING_DAYS` 被 inst_flow/multi_factor/paper_daemon 反向 import（leaky abstraction）→ 抽成中立 public 層，策略間零互相依賴；保留 momentum（解耦後乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/` | — |
-| [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) | **策略契約 + registry**：平台硬綁 four_layer（唯一被引擎掛載、`Engine.run` 焊死其 config、每策略一 harness、新策略要動 7-12 檔）→ 接縫畫在**輸出**（`StrategyRunner.run → StrategyRun`）+ 輕量 name→runner registry；four_layer 純 sim 下移 `sim.py`、降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保相容）；新策略 7-12→2-3 檔；CLI `--strategy`/per-strategy preset 留待 Stage 2 | 接續 ADR-026（策略↔平台零硬綁）；沿用 ADR-003 純函式；registry 輕量化守 ADR-022 |
-| [ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) | **策略派發契約 + preset 移除**：`RunConfig{strategy, params}` 經 registry dispatch（`config_model(**params)` 嚴格驗證）→ 任意已註冊策略可由 HTTP `POST /runs` / CLI 啟動；`StrategyRunner` 加 `config_model`/`title` ClassVar 自描述（feeds `GET /strategies`）；generic conformance gate（`check_strategy`）+ parametrized CI；修 18 處契約違規（V1-V4）；`preset`/`get_preset` 全移除、`StrategyConfig` 下沉至 four_layer 目錄 | **supersedes** preset dispatch 路徑；**extends** ADR-027 |
-| [ADR-029](./adrs/ADR-029-research-workflow-standardization.md) | **研究工作流標準化**：7 支 `scripts/inst_flow_*.py`（既是 workflow 又是 strategy-specific runner、繞過 dispatch）刪除 → 通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 `get_strategy(name).run()`，AST 測試守門）+ 策略宣告 `strategies/<name>/research_config.py`；name→package 由 registry 解析（不假設 name==目錄）；CLI 4 命令 + `POST /research/workflows/{workflow}`（非同步 job）+ `GET /research/workflows/{strategy}` | **extends** ADR-028（dispatch）/ ADR-027（registry）|
-| [ADR-030](./adrs/ADR-030-truth-gate-judgement-fix.md) | **真偽閘判決缺陷修正**：修 `research/workflows/truth_gate.py` 五缺陷 — DSR 單位錯配（年化 SR + 日變異數 → 誤判 1.0，改 per-period SR + 虛無假設 V[SR_n]）、OOS holdout 從未評估（實跑 [oos_start,is_end] 並入判）、`survivorship_clean` 寫死 True（改 config 化預設 False）、`dsr.py` 無單位衛兵（加 fail-fast）、SizingGate 零呼叫者（真偽閘 REAL 後接 `evaluate_two_stage` 產倉位）；**既往 inst_flow REAL 判決作廢須重驗** | **amends** ADR-025 §3.1（僅修實作、不改判準）|
-| [ADR-031](./adrs/ADR-031-standalone-auth-decision.md) | **standalone auth 裁決**：doc 25 承諾 static Bearer、後端零實作、前端硬編碼 `dev-token` 三方矛盾 → 依 PRD v4.0 standalone 假設裁決**採 localhost-only 綁定為唯一安全邊界、移除 Bearer 承諾**（降 M5 遠端存取時重議）；20 行 static Bearer 對 localhost 不增實質安全、卻增每 client 摩擦 | **amends** ADR-021（single-user Bearer 承諾）|
-| [ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md) | **survivorship-clean universe 建構平台化**（sub-project ②）：ADR-029 延後的 `inst_flow_revalidate_finlab` 自 git 歷史重建為工作流 `research/workflows/universe.py::run_build_universe`（FinLab 寬表 → `select_survivorship_universe` 季度 rebalance → `ingest_universe_finlab` → `universe_manifest.json`）；`UniverseConfig` 宣告 + CLI `build-universe` + HTTP `build_universe`；`TruthGateConfig.parquet_dir` + `run_truth_gate(loader=None)` 快取覆蓋；**inst_flow `TRUTH_GATE` 宣告跟著 cache 走**（`cached_universe_symbols` 有料→survivorship_clean+乾淨 universe，缺席→`_WIDE` fallback，反自欺）；finlab 僅 `getter=None` 時 lazy import | **extends** ADR-029（workflow 標準化）；**落地** ADR-030 反自欺於資料層 |
+| 17 | [m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) | M2–M5 總體規劃 |
+| 18 | [reference_architecture_and_metrics.md](./18_reference_architecture_and_metrics.md) | reference 架構 + 指標 taxonomy |
+| 20 | [dashboard_specification.md](./20_dashboard_specification.md) | 儀表板 + Discord 告警 spec |
+| 21 | [data_contract.md](./21_data_contract.md) | 資料契約 + TimescaleDB DDL |
+| 22 | [test_strategy.md](./22_test_strategy.md) | 測試金字塔 + 對拍矩陣 |
+| 23 | [deployment_topology.md](./23_deployment_topology.md) | 部署拓撲 |
+| 24 | [risk_management_spec.md](./24_risk_management_spec.md) | 風控規則 + 熔斷狀態機 |
+| 25 | [fe_be_rest_contract.md](./25_fe_be_rest_contract.md) | **前後端 REST 契約唯一真相源** |
+
+> 19（sprint_0_design）已撤回，內容併入 01。
 
 ---
 
-### 階段 8：UI / 設計系統參考（2026-06-01 新增）
+## 架構決策（ADR）
 
-> 與核心 dev_docs 並行的設計系統工作區。M3 Streamlit 面板 + M5 React 前端的視覺基礎；目前內容以「AI 網頁開發流水線」為框架，含 design-system specs + 既有 UI clone 分析（x.ai、Grok）。
-
-| 路徑 | 用途 | 對應 |
-| :--- | :--- | :--- |
-| [web_design/README.md](./web_design/README.md) | 模組化 AI 網頁開發流水線總覽 | 獨立 |
-| [web_design/design-system-specs/cloning/clones/xai/](./web_design/design-system-specs/cloning/clones/xai/) | x.ai UI 5 層設計分析（L0-L4；原始擷取產物 raw/extracted 已剪除） | 設計參考 |
-| [web_design/design-system-specs/cloning/clones/grok/](./web_design/design-system-specs/cloning/clones/grok/) | Grok 完整 UI 5 層分析 | 設計參考 |
-| web_design/{global,modules,pages,assembly,guides,references}/ | base design system 框架（**WIP，多數尚未 commit**） | M3 dashboard 啟用時對齊 |
-| [web_design/03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md) | **大廠量化/回測平台 UI/UX deep-research 對標**（10 平台）+ 10 維度差距分析 + 7 張 Mermaid 使用者旅程/流程圖 + 補強 roadmap（ADR-018 證據包） | ADR-018 / ADR-015 / 20 |
+[adrs/](./adrs/) — ADR-001~032。近期主軸：023 動能 NO-GO / 024 資金流 FAIL / 025 驗證閘兩段化 / 027 策略契約 + registry / 028 dispatch + preset 移除 / 029 研究工作流標準化 / 030 truth gate 判決修正 / 031 standalone auth / 032 survivorship universe 工作流。
 
 ---
 
-## 與上游文件的關係
+## 審查報告
 
-```
-strategy/v2.md (策略規格 v2.1.0)
-    ↓ 實作對應
-backtest_platform/ (程式碼 M1)
-    ↓ 文檔對應
-dev_docs/ (本目錄)
-    ↓ 後續驗證
-strategy/research/ (DOE 模板與 IC 測試計畫)
-```
+- [platform_full_audit_2026-07-02.md](./platform_full_audit_2026-07-02.md) — 全平台多視角審查（缺陷 Top 25 + 三階段路線圖 + 平行工作包）
+- [competitive_analysis_2026-07-02.md](./competitive_analysis_2026-07-02.md) — 競品分析 + 五視角附錄
 
-`v2.md` 是策略契約，`backtest_platform/` 是其 Python 實作，`dev_docs/` 是工程文檔，`strategy/research/` 是驗證計畫。
+---
+
+## 研究證據檔（一次性判決紀錄，已 freeze）
+
+- [inst_flow_truth_gate_verdicts.md](./inst_flow_truth_gate_verdicts.md) — inst_flow 三輪 truth-gate 判決總表
+- [momentum_go_nogo_result_2026-06-05.md](./momentum_go_nogo_result_2026-06-05.md)（ADR-023 依據）
+- [factor_baseline_diagnostic_result_2026-06-04.md](./factor_baseline_diagnostic_result_2026-06-04.md)
+
+---
+
+## UI / 設計系統
+
+[web_design/](./web_design/) — 設計系統參考 + 大廠量化平台 UI/UX 對標（[03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md)，ADR-018 證據包）。
 
 ---
 
@@ -163,8 +91,9 @@ strategy/research/ (DOE 模板與 IC 測試計畫)
 
 | 角色 | 常用文檔 |
 | :--- | :--- |
-| 策略設計者 | 02、05、07 |
+| 策略研究者 | 01 → 02 → 06（CLI）→ 03 |
 | 後端 DEV | 05、07、08、09、10、11 |
+| 前端 DEV | 12、25 |
 | ARCH | 04、05、09、10 |
-| OPS | 13、14 |
+| OPS | 13、14、23、24 |
 | 新人 | 01 → 02 → 08 → 05 |

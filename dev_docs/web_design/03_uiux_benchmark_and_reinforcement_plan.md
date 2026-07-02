@@ -1,7 +1,7 @@
 # 回測平台 UI/UX 大廠對標 + 使用者流程 + 補強規劃
 
 > **產出**：2026-06-02 ｜ **方法**：deep-research 多 agent workflow（10 平台研究 + 模式彙整 + 10 維度差距分析 + 7 流程設計）
-> **對象**：backtest_platform（台股四層共振 研究/回測平台，單人開發、Python/CLI 後端、zipline+vectorbt 雙引擎、Grok 單色 dark）
+> **對象**：backtest_platform（台股個人量化 edge 驗證工廠 / 回測平台，單人開發、Python/CLI 後端、zipline+vectorbt 雙引擎、Grok 單色 dark）
 > **脈絡**：M2 IS gate FAIL → 回 M0 重設進場（ADR-017）。目前無已實作前端。
 > **性質**：設計研究 + 規劃草案，非實作承諾；標 [不確定] 處待拍板。**本文件未自動 commit**。
 > **關聯**：`20_dashboard_specification.md`（面板真相源）、`02_backtest_dashboard_design_update.md`（React 化總綱）、`global/02_backtest_platform_brand_system.md`（設計系統）、ADR-015 / ADR-017。

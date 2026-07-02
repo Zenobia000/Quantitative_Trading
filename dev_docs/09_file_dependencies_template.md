@@ -1,33 +1,10 @@
-# 模組依賴關係分析 — backtest_platform
+# 模組依賴關係 — backtest_platform
 
-> **版本：** v1.1 | **更新：** 2026-05-31 | **狀態：** M1 已實作 / M2 重組已完成
-> **與 C4 的關係**：本檔為 **Clean Architecture 分層依賴**（模組 import），不是 C4 Container 圖。部署 / runtime 邊界見 `05_architecture_and_design_document.md` §1.1（C4 嚴格版）。
->
-> **v1.1 註記（2026-05-31）**：本檔下方圖表多處以 `strategy/`、`engines/` 等 M1 名稱呈現概念依賴關係。實際 M2 重組後（commit `ae869f5`）對應如下，請讀者自行 substitute：
->
-> | 本檔提及 (M1 概念) | M2 實際路徑 |
-> | :--- | :--- |
-> | `strategy/` | `strategies/four_layer_resonance/`（多策略 namespace，ADR-008）|
-> | `engines/rqalpha_runner` | 廢止（ADR-001 superseded by ADR-005）|
-> | `engines/vectorbt_runner` | `engines/vectorbt_adapter.py`（M3）|
-> | `live/paper_trader` | `adapters/brokers/paper_broker.py` |
-> | `live/shioaji_executor` | `adapters/brokers/shioaji_broker.py` |
-> | （新增）`adapters/` | data_bundle / data_feed / brokers — 視為 Infrastructure 層 |
-> | （新增）`orchestration/` | 視為 Application 層（取代 pipeline.py 為 M2+ 主入口）|
-> | （新增）`monitoring/`、`dashboard/` | 側邊掛接 read-only 消費者，不被上游 import |
->
-> **新層依賴規則**：
-> - `adapters/` 依賴 `config/` + `strategies/`（為使其可注入）；不依賴 `data/`（FinMind ETL 是 fallback adapter 之一）
-> - `orchestration/` 可 import 任何下層
-> - `monitoring/` / `dashboard/` 只 read TimescaleDB / InfluxDB，不被任何業務模組 import
->
-> 完整目錄結構詳見 [08_project_structure_guide.md](./08_project_structure_guide.md) v1.1。
->
-> 待完整重寫的依賴圖排程：M2 Sprint 1 結束後（屆時 `adapters/`、`engines/` 有實際程式碼可畫）。
->
-> **ADR-026 註記（2026-06-16）**：策略間的隱性依賴已消除。重構前 `inst_flow` / `multi_factor` / `runtime.paper_daemon` 反向 import `momentum.strategy` 的私有函式（`_clean_returns` / `_rebalance_dates` / `_vol_target`）— 一個策略挖另一個策略的 `_private` API，破壞封裝。現抽出中立共用層 `strategies/common`（`mechanics.py`，public：`TRADING_DAYS` / `clean_returns` / `rebalance_dates` / `vol_target`），所有策略 → `strategies/common`，**策略之間不再互相依賴**。`common` 屬 Domain 層，不依賴任何下層。詳見 [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md)。
->
-> **ADR-027 註記（2026-06-16）**：策略與**平台**的硬綁已消除。重構前只有 four_layer 被引擎掛載、`engines.protocol.Engine.run` 焊死其 `StrategyConfig`、每策略一個 harness。現新增策略契約層 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + name→runner registry，Domain 層只依賴 pydantic/pandas）；**每隻策略自包含**——`strategies/<name>/runner.py` 實作契約並 `@register_strategy`，依賴 `strategies.common.panel` + `strategies.protocol` + `validation`（`strategies → validation` 無循環，已驗證 validation 不 import strategies）；four_layer 純 sim helper 下移 `strategies/four_layer_resonance/sim.py`；橫斷面共用建構抽 `strategies/common/panel.py`。`research/runners.py` 降為 **aggregator**（import 四隻 runner 觸發註冊 + re-export 舊名），`is_harness`/`momentum_harness` → `research/runners`（委派）。詳見 [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md)。
+> **本檔為 Clean Architecture 分層依賴（Python import 方向）**，不是 C4 Container 圖。部署 / runtime 邊界見 [05 §1](./05_architecture_and_design_document.md)；目錄結構真相源見 [08](./08_project_structure_guide.md)。
+
+## 產品定位
+
+backtest_platform 是 **個人量化 edge 驗證工廠 + 晉升管線**（single-user、standalone、台股專用）。審判庭是核心資產。本檔的依賴紀律直接服務這個定位：**上層依賴穩定的策略契約，永不硬綁具體策略**——這是「新增策略只碰 2-3 檔、平台判每隻策略用同一套 plumbing」的結構前提。
 
 ---
 
@@ -35,9 +12,10 @@
 
 | 原則 | 要點 |
 | :--- | :--- |
-| **依賴倒置 (DIP)** | `strategy/` 為 domain，不依賴 `data/` 的具體實現；ETL 用 `Protocol` 抽象 FinMind interface |
-| **無循環依賴 (ADP)** | 依賴形成 DAG，禁止雙向 import |
-| **穩定依賴 (SDP)** | 依賴方向朝向更穩定的模組（`config/` > `strategy/` > `engines/`） |
+| **依賴倒置（DIP）** | 上層（research / orchestration / api）依賴策略**契約** `strategies.protocol.StrategyRunner`，經 `get_strategy(name)` dispatch，不 import 任何具體策略的 backtest 函式（AST 測試守門，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）|
+| **無循環依賴（ADP）** | 依賴形成 DAG；關鍵不變式：`validation` 不 import `strategies`，故 `strategies → validation` 無循環（已驗證）|
+| **穩定依賴（SDP）** | 依賴朝更穩定模組：`config` > `strategies.protocol`/`validation`/`risk` > `research` > `orchestration`/`api` |
+| **策略間零互賴** | 策略之間不互相 import；共用回測機制走中立層 `strategies.common`（[ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md)）|
 
 ---
 
@@ -45,53 +23,74 @@
 
 ```mermaid
 graph TD
-    Pipeline[pipeline.py<br/>Application]
-    Engines[engines/<br/>Application M2+]
-    Validation[validation/<br/>Application M3+]
-    Research[research/<br/>Application v0.1+<br/>run loop]
-    Api[api/<br/>Application v0.6<br/>FastAPI 薄轉接]
-    Live[live/<br/>Application M4+/M5]
+    subgraph Interface["Interface 層"]
+        Api["api/<br/>FastAPI 15 router"]
+    end
+    subgraph App["Application / Use-case 層"]
+        ResWf["research/workflows/<br/>doe·go_gates·truth_gate·paper_replay·universe"]
+        Research["research/<br/>is_harness·runs_store·sweep·promotion"]
+        Orch["orchestration/<br/>daily_flow·collaborators"]
+        Runtime["runtime/<br/>paper_daemon·market_reader"]
+        Jobs["jobs/<br/>async job store"]
+    end
+    subgraph Domain["Domain 層（純函式，零 IO）"]
+        Proto["strategies/protocol.py<br/>StrategyRunner + registry"]
+        StratImpl["strategies/&lt;name&gt;/<br/>four_layer·momentum·inst_flow·_template"]
+        Common["strategies/common/<br/>panel·mechanics"]
+        Validation["validation/<br/>two_stage_gate·dsr·pbo·wfa·gate_state"]
+        Risk["risk/<br/>risk_gate·circuit_breaker"]
+        Config["config/<br/>universe·settings"]
+    end
+    subgraph Infra["Infrastructure / Adapters 層"]
+        Data["data/<br/>finlab_source·finmind_etl·db_reader/writer"]
+        Adapters["adapters/<br/>brokers·data_bundle"]
+        Engines["engines/<br/>zipline_adapter（event 引擎）"]
+        Monitoring["monitoring/<br/>influx·discord·alerts"]
+    end
 
-    Strategy[strategy/<br/>Domain<br/>純函式]
-    Config[config/<br/>Domain<br/>Pydantic models]
+    FinLab[("FinLab API（主）")]
+    FinMind[("FinMind API（fallback）")]
+    TSDB[("TimescaleDB")]
 
-    Data[data/<br/>Infrastructure<br/>FinMind + DB]
-    Schemas[data/schemas.py<br/>Boundary models]
-
-    FinMind[(FinMind API)]
-    TSDB[(TimescaleDB)]
-    Shioaji[(Shioaji API)]
-
-    Pipeline --> Engines
-    Pipeline --> Data
-    Pipeline --> Strategy
-    Engines --> Strategy
-    Engines --> Data
-    Validation --> Data
-    Research --> Strategy
-    Research --> Validation
-    Research --> Config
     Api --> Research
+    Api --> ResWf
     Api --> Validation
-    Api --> Config
-    Live --> Strategy
-    Live --> Data
-    Live -.->|M5| Shioaji
-    Strategy --> Config
-    Data --> Schemas
+    Api --> Risk
+    Api --> Jobs
+    Api --> Data
+    ResWf --> Research
+    ResWf --> Proto
+    ResWf --> Validation
+    ResWf --> Data
+    Research --> Proto
+    Research --> Validation
+    Research --> StratImpl
+    Orch --> Adapters
+    Orch --> Risk
+    Runtime --> Orch
+    Runtime --> Data
+    Runtime --> StratImpl
+    StratImpl --> Proto
+    StratImpl --> Common
+    StratImpl --> Validation
+    StratImpl --> Config
+    Proto --> Validation
+    Data --> FinLab
     Data --> FinMind
     Data --> TSDB
+    Monitoring --> TSDB
+    Engines -.DEPRECATED.-> Research
 
-    style Strategy fill:#cfc
+    style Proto fill:#cfc
+    style Validation fill:#cfc
+    style Risk fill:#cfc
     style Config fill:#cfc
-    style Schemas fill:#cfc
+    style Common fill:#cfc
 ```
 
-**規則**：
-- Domain（`strategy/`、`config/`） → 不依賴任何下層
-- Application（`pipeline.py`、`engines/`、`validation/`） → 依賴 Domain + Data
-- Infrastructure（`data/`） → 依賴 Schemas 與外部
-- 顏色（綠）標示零外部 IO 依賴 — 最穩定，可放心 import
+- 綠色 = 零外部 IO 的 Domain 核心，最穩定、可放心 import。
+- `strategies.protocol` 是**平台↔策略的唯一接縫**：上層只認 `StrategyRunner` 契約 + registry。
+- `Engines -.DEPRECATED.->`：`engines/protocol.py` 的 `Engine` Protocol 已被策略契約取代（zipline/vectorbt 成員為 `_StubEngine` 幻影），保留只為既有 importer 解析，不建新呼叫點。
 
 ---
 
@@ -99,91 +98,84 @@ graph TD
 
 | 層級 | 職責 | 程式碼路徑 |
 | :--- | :--- | :--- |
-| **Application** | 編排業務流程、CLI 入口 | `pipeline.py`、`engines/*.py`、`validation/*.py`、`live/*.py` |
-| **Domain** | 業務邏輯（策略計算、參數模型） | `strategy/`、`config/` |
-| **Infrastructure** | 外部 API、DB IO | `data/finmind_etl.py`、`data/db_writer.py` |
-| **Boundary** | 跨層資料契約 | `data/schemas.py` |
-
----
-
-## 檔案級依賴圖
-
-```mermaid
-graph LR
-    %% Application
-    Pipeline[pipeline.py]
-
-    %% Engines（M2+）
-    RQ[engines/rqalpha_runner.py]
-    VB[engines/vectorbt_runner.py]
-
-    %% Strategy（Domain）
-    Sig[strategy/signals.py]
-    Score[strategy/scoring.py]
-    Indi[strategy/indicators.py]
-
-    %% Config
-    Conf[config/strategy_config.py]
-
-    %% Data
-    ETL[data/finmind_etl.py]
-    Adj[data/adjustment.py]
-    DBW[data/db_writer.py]
-    Univ[data/universe.py]
-    UnivB[data/universe_builder.py]
-    Sch[data/schemas.py]
-
-    %% External
-    FM[(FinMind)]
-    PG[(TimescaleDB)]
-
-    Pipeline --> ETL
-    Pipeline --> Score
-    Pipeline --> Sig
-    Pipeline --> Conf
-
-    RQ -.M2.-> Sig
-    RQ -.M2.-> Conf
-    VB -.M3.-> Sig
-    VB -.M3.-> Conf
-
-    Sig --> Score
-    Sig --> Conf
-    Sig --> Indi
-    Score --> Indi
-    Score --> Conf
-
-    ETL --> Sch
-    ETL --> Adj
-    DBW --> Sch
-    Univ -.-> Sch
-
-    ETL --> FM
-    DBW --> PG
-```
+| **Interface** | HTTP 邊界、envelope、路由 | `api/` |
+| **Application** | 編排研究工作流 / 每日鏈 / 非同步 job | `research/`、`orchestration/`、`runtime/`、`jobs/` |
+| **Domain** | 策略契約 + 純邏輯、審判庭、風控、參數 | `strategies/`、`validation/`、`risk/`、`config/` |
+| **Infrastructure** | 外部資料源、券商、引擎、DB IO、監控 | `data/`、`adapters/`、`engines/`、`monitoring/` |
 
 ---
 
 ## 關鍵依賴路徑
 
-### 場景：執行 `pipeline run --stock-id 2330`
+### 場景 A：`research truth-gate --strategy inst_flow`（審判庭主線）
 
 ```
-1. CLI 進入 pipeline.run_pipeline (Application)
-2. → data.finmind_etl.fetch_bundle (Infrastructure)
-     → FinMind API（外部）
-     → data.schemas.ETLBundle (Boundary)
-     → data.adjustment.compute_adj_factor / apply_adjustment (Infrastructure)
-3. → ETLBundle.merged() (Boundary)
-4. → strategy.scoring.compute_scores (Domain)
-     → strategy.indicators.* (Domain)
-     → config.strategy_config.StrategyConfig (Domain)
-5. → strategy.signals.compute_signals (Domain)
-     → strategy.signals._evaluate_priority (Domain 內部)
-6. → 寫 calendar CSV / print summary (Application)
+1. research/cli.py  →  research/workflows/loader.get_truth_gate_config("inst_flow")
+2.   → 動態 import strategies/inst_flow/research_config.py（讀 TRUTH_GATE 宣告）
+3. research/workflows/truth_gate.run_truth_gate(cfg, loader)
+4.   → strategies.protocol.get_strategy("inst_flow")   ← registry dispatch
+5.   → runner.run(symbols, start, end, config, loader) → StrategyRun（絕不 import backtest 函式）
+6.   → validation.wfa.walk_forward_splits / validation.dsr.deflated_sharpe_ratio
+7.   → validation.two_stage_gate.evaluate_truth_gate（真偽閘）→ REAL / REJECTED
 ```
 
-**注意**：Domain 層（步驟 4–5）完全不知道資料來自哪裡，純函式接收 DataFrame、回傳 DataFrame。
+**紀律**：步驟 5 只透過契約 dispatch，讓 truth_gate 對任意策略同構——這是「判決可重現」的結構保證。
+
+### 場景 B：`paper_daemon` 每日鏈（Paper 運維）
+
+```
+runtime/paper_daemon
+  → orchestration.collaborators.build_paper_collaborators
+      → adapters.brokers.paper_broker.PaperBroker（撮合 + 成本模型）
+      → risk.risk_gate.RiskGate（12 pre-trade 檢查，注入 AccountState 快照）
+  → orchestration.daily_flow.run_flow（ETL→signals→risk→orders→log，fail-fast）
+```
+
+---
+
+## Import 規則
+
+### 允許的方向
+
+```python
+# 上層（api / research / orchestration）→ 依賴契約，經 registry dispatch
+from backtest_platform.strategies.protocol import get_strategy, get_strategy_gate
+runner = get_strategy(name)            # ✅ 不 import 具體策略 backtest 函式
+
+# 每隻策略的 runner.py 實作契約，依賴中立層 + validation
+from backtest_platform.strategies.protocol import StrategyRunner, register_strategy
+from backtest_platform.strategies.common.panel import column_panel, panel_metrics
+from backtest_platform.validation.gate_state import PANEL_GATE
+
+# research_config.py 依賴中立 universe，不拉引擎（WP6 解纏後）
+from backtest_platform.config.universe import DEFAULT_UNIVERSE   # ✅ 不再 import finmind_bundle / zipline
+```
+
+### 嚴禁
+
+```python
+# ❌ 上層直接 import 具體策略的 backtest 函式（繞過 dispatch）
+# from backtest_platform.strategies.inst_flow.strategy import backtest_inst_flow
+
+# ❌ 策略之間互相 import，更不可挖對方私有函式（ADR-026）
+# from backtest_platform.strategies.momentum.strategy import _rebalance_dates
+#   → 一律走中立層 strategies.common
+
+# ❌ Domain 依賴 Infrastructure
+# strategies/*/strategy.py 內 from backtest_platform.data import ...
+
+# ❌ validation import strategies（會造成 strategies → validation 循環）
+```
+
+### 策略註冊聚合點
+
+`import backtest_platform.strategies`（`strategies/__init__.py`）import 四隻 runner，觸發 `@register_strategy` 填 registry。註冊聚合住在**策略層自身**（非 research 上層），任何 entry point 不需知道該 import 哪個模組即可 `get_strategy(name)`。`research/runners.py` 降為薄 back-compat re-export。
+
+### Lazy import
+
+- `data/finlab_source.py`：`finlab` 僅在 `getter=None`（真呼叫 API）時 lazy import，頂層零依賴（[ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md)）。
+- `data/finmind_etl.py` / `data/db_writer.py`：`FinMind` / `psycopg2` lazy import，測試環境免裝即可 unit test。
+- `orchestration/daily_flow.py`：`prefect` 為 optional extra，缺席時 fallback 至 inline runner。
 
 ---
 
@@ -191,118 +183,29 @@ graph LR
 
 | 風險 | 解決策略 |
 | :--- | :--- |
-| 循環依賴 | `strategy/` 內 `scoring.py` ↔ `signals.py` 嚴禁 — 兩者用 indicator + config |
-| FinMind API 改 schema | `_normalize_*` 函式集中處理 + Pydantic 驗證 |
-| rqalpha vs vectorbt 訊號分歧 | 共用 `_evaluate_priority`（pure function），加對齊測試 |
-| Pydantic v1 → v2 升級 | 已用 v2，不混用 v1 syntax |
-| pandas 版本破壞變更 | 限定 `>= 2.2`，CI 鎖定 lock file（M2 引入） |
+| 上層繞過契約直呼策略 | AST 測試守 dispatch invariant（`tests/research/workflows/`）；conformance gate 驗每隻策略滿足契約 |
+| `strategies → validation` 循環 | `validation` 保持不 import `strategies`（測試 `test_dependency_untangle.py` 守）|
+| FinLab / FinMind schema 變動 | `finlab_source._bundle_for` / `finmind_etl._normalize_*` 集中處理 + Pydantic 邊界驗證 |
+| 引擎精度分歧 | zipline vs vectorbt 對拍（`engines/zipline_adapter/validation/cross_check_vectorbt.py`）|
+| DEPRECATED `engines/protocol` 殘留耦合 | 標記 deprecated、幻影 stub raise `NotImplementedError`；full removal 為 follow-up ADR |
 
 ---
 
-## 外部依賴清單
+## 外部依賴清單（核心）
 
-| 依賴 | 版本 | 用途 | 風險 |
-| :--- | :--- | :--- | :--- |
-| pandas | >= 2.2 | 資料運算核心 | 低（穩定） |
-| numpy | >= 1.26 | 向量運算 | 低 |
-| pyarrow | >= 15.0 | parquet IO | 低 |
-| duckdb | >= 1.0 | 快速查詢（M2 EDA） | 低 |
-| psycopg2-binary | >= 2.9 | TimescaleDB driver | 低 |
-| sqlalchemy | >= 2.0 | （備用） | 低 |
-| FinMind | >= 1.7 | 資料源 | **中**（API 可能變動、免費版功能變） |
-| scipy | >= 1.12 | 統計檢驗 | 低 |
-| pydantic | >= 2.6 | 驗證 | 低 |
-| pydantic-settings | >= 2.2 | env 配置 | 低 |
-| loguru | >= 0.7 | logging | 低 |
-| click | >= 8.1 | CLI | 低 |
-| python-dotenv | >= 1.0 | .env 載入 | 低 |
-| rqalpha | >= 5.4 | 回測引擎 | 中（社群維護） |
-| vectorbt | >= 0.26 | 參數網格 | 中 |
-| quantstats | >= 0.0.62 | 報表 | 中 |
-| pyfolio-reloaded | >= 0.9.6 | 績效分析 | 中 |
-| empyrical-reloaded | >= 0.5.10 | 績效指標 | 中 |
-| hmmlearn | >= 0.3 | regime 偵測（M3+） | 中 |
-| ruptures | >= 1.1 | 變點偵測（M3+） | 中 |
-| fastapi | >= 0.110 | API（M5） | 低 |
-| streamlit | >= 1.32 | UI Phase 1 | 中 |
-| shioaji | >= 1.2 | 永豐金下單（M5） | 高（官方但二進制） |
-| pytest | >= 8.0 | 測試 | 低 |
-| pytest-cov | >= 4.1 | 覆蓋率 | 低 |
-| ruff | >= 0.3 | lint | 低 |
-| mypy | >= 1.9 | 型別檢查 | 低 |
+| 依賴 | 用途 | 風險 |
+| :--- | :--- | :--- |
+| pandas / numpy | 資料運算核心 | 低 |
+| pydantic ≥2 / pydantic-settings | schema 邊界驗證 + env 配置 | 低 |
+| zipline-reloaded | event 回測引擎主骨架（[ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)）| 中 |
+| vectorbt | 向量參數網格副引擎 | 中 |
+| finlab | 付費主資料源（lazy） | 中 |
+| FinMind | 免費 fallback 資料源（lazy） | 中 |
+| scipy | PBO/DSR/WFA 統計 | 低 |
+| fastapi / uvicorn | HTTP API | 低 |
+| psycopg2 | TimescaleDB driver（lazy） | 低 |
+| click / loguru | CLI / logging | 低 |
+| prefect | 排程（optional extra） | 低 |
+| shioaji | 永豐金下單（M5） | 高（二進制） |
 
-### 更新策略
-
-- **每月**：`pip list --outdated` 檢查
-- **變更前**：跑完整 test suite
-- **重大變更**：M2 引入 lock file `uv.lock`（ADR-012）
-
----
-
-## Import 規則
-
-### 允許的 import 方向
-
-```python
-# orchestration/cli.py 或 pipeline.py（最上層）可 import 所有東西
-from backtest_platform.data import ...
-from backtest_platform.strategies.four_layer_resonance import ...
-from backtest_platform.adapters.data_bundle.finlab_bundle import ...
-from backtest_platform.config import ...
-
-# strategies/four_layer_resonance/signals.py 可 import（intra-package 用 relative）
-from backtest_platform.config import ...
-from .scoring import ...
-from .indicators import ...
-
-# 嚴禁
-# strategies/four_layer_resonance/scoring.py 不可
-# from backtest_platform.data import ...  ❌ Domain 不依賴 Infrastructure
-# from backtest_platform.adapters import ...  ❌ Domain 不依賴 Adapter
-
-# 嚴禁（ADR-026）— 策略之間不可互相 import，更不可挖對方私有函式
-# strategies/inst_flow/strategy.py 不可
-# from backtest_platform.strategies.momentum.strategy import _rebalance_dates  ❌ 跨策略挖 _private
-# 共用回測機制一律走中立層：
-# from backtest_platform.strategies.common import TRADING_DAYS, clean_returns, rebalance_dates, vol_target  ✅
-
-# 嚴禁
-# adapters/data_bundle/finlab_bundle.py 不可
-# from backtest_platform.adapters.brokers import ...  ❌ Adapter 互不依賴
-```
-
-**M2 重組後（2026-05-31）import path 變更**：
-| 舊 (M1) | 新 (M2+) |
-| :--- | :--- |
-| `backtest_platform.strategy.scoring` | `backtest_platform.strategies.four_layer_resonance.scoring` |
-| `backtest_platform.strategy.signals` | `backtest_platform.strategies.four_layer_resonance.signals` |
-| `backtest_platform.strategy.indicators` | `backtest_platform.strategies.four_layer_resonance.indicators` |
-
-### Lazy import（延遲載入）
-
-部分模組用 lazy import 減少測試環境壓力：
-
-```python
-# data/finmind_etl.py
-def _build_loader(token):
-    from FinMind.data import DataLoader  # lazy
-    ...
-
-# data/db_writer.py
-@contextmanager
-def _connection(cfg):
-    import psycopg2  # lazy
-    ...
-```
-
-理由：測試環境不需裝 FinMind / psycopg2 也能 import 模組做 unit test。
-
----
-
-## 依賴檢查工具（建議）
-
-| 工具 | 用途 |
-| :--- | :--- |
-| `ruff check --select TID` | 偵測絕對 / 相對 import 規範 |
-| `pydeps` | 視覺化依賴圖 |
-| `import-linter` | 強制執行 import 規則（M3 引入） |
+版本鎖定於 `uv.lock`（[ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md)）。依賴檢查建議：`import-linter`（強制 import 規則）、`pydeps`（視覺化）。

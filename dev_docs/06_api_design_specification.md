@@ -1,16 +1,16 @@
 # API 設計規範 — backtest_platform
 
-> **版本：** v1.5 | **更新：** 2026-06-16 (ADR-028: preset→strategy+params dispatch) | **狀態：** M1 + M2 zipline_adapter CLI（`ingest` / `backtest-run` / `list-bundles`，ADR-013）+ **研究迴圈 CLI（§3.5：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate / promote-check）** + **v0.6 HTTP API（FastAPI，§9）**
+> **範圍：本文是 CLI + Python API 規範。** HTTP/REST 契約的唯一真相源是 [25_fe_be_rest_contract.md](./25_fe_be_rest_contract.md) + FastAPI OpenAPI（`/docs`）；§9 僅為已實作 HTTP 端點的便覽，任何歧異以 doc 25 與 OpenAPI 為準。
 
 ---
 
 ## 1. API 形式
 
-當前提供三種介面：
+提供三種介面：
 
-1. **CLI（Click）** — 端到端操作（ETL / zipline 回測 / **研究迴圈 `research.cli`：run-is〔+`--tearsheet`〕/ runs / sweep / compare / validate / promote-check**，詳見 §3.5）
+1. **CLI（Click）** — 端到端操作：ETL（`finmind_etl`）、zipline 回測（`zipline_adapter`：`ingest` / `backtest-run` / `list-bundles`）、每日管線（`orchestration.cli`）、**研究迴圈與工作流 `research.cli`**（§3.5：`run-is` / `runs` / `sweep` / `compare` / `validate` / `promote-check` / `validate-strategy` / `doe` / `go-gates` / `truth-gate` / `build-universe` / `paper-replay`）
 2. **Python API** — 程式內呼叫（pure functions + Pydantic models）
-3. **HTTP API（FastAPI，v0.6）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate審判庭 / metrics / strategies），詳見 §9。原規劃 M3（8.A.3）才做，因平台優先策略提前交付。
+3. **HTTP API（FastAPI）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate 審判庭 / metrics / strategies / research workflows），已實作端點見 §9。
 
 ---
 
@@ -137,6 +137,7 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | `doe` | DOE 參數網格掃描（讀 `research_config.DOE`）；`--dry-run`/`--is-start`/`--is-end`/`--out-csv`（ADR-029）| `research.workflows.doe.run_doe` |
 | `go-gates` | WFA + PBO GO 閘（讀 `research_config.GO_GATES`）| `research.workflows.go_gates.run_go_gates` |
 | `truth-gate` | ADR-025 兩段式真偽閘（讀 `research_config.TRUTH_GATE`）| `research.workflows.truth_gate.run_truth_gate` |
+| `build-universe` | survivorship-clean FinLab universe 建構（讀 `research_config.UNIVERSE`，ADR-032）；`--dry-run` | `research.workflows.universe.run_build_universe` |
 | `paper-replay` | paper 重放 sim（讀 `research_config.PAPER_REPLAY`）| `research.workflows.paper_replay.run_paper_replay_workflow` |
 
 > `run-is`／`validate`／`promote-check` 區別：`run-is` 是**唯讀審判庭**（`evaluate_gate` 逐條綠紅）；`validate` 是**有狀態工作流 gate**（`ValidationGate`，強制 IS→WFA→OOS 不可逆推進 + OOS 封存）；`promote-check` 是**唯讀晉升資格查詢**（不推進狀態，只回報距 APPROVED 還缺哪些階段）。
@@ -401,14 +402,10 @@ action, in_position
 
 ---
 
-## 9. HTTP API（v0.6 Wave B，FastAPI）
+## 9. HTTP API（FastAPI）
 
-> ⚠️ **降級 banner（ADR-021，2026-06-04）**：本節是前後端 REST 契約的 **v0.6 已實作子集**（11 條路由），**不再是契約真相源**。
-> 完整契約（71 端點 registry、單一 envelope/錯誤碼/分頁/auth/realtime）見 **[`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md)**；歧異一律以 25 為準。
-> 機器真相 = FastAPI `/docs` 的 OpenAPI。本節端點表（§9.3）仍為準確的已實作清單，但 **envelope `error` 自 v1.0 起升級為結構化 `{code,message,detail}`**（25 §1.1/§2）。
->
-> 原 WBS 8.A.3（M3 / Sprint 11）任務，因「先把系統平台做完」策略提前於 v0.6 交付。
-> 模組：`src/backtest_platform/api/`（app 工廠 + 4 個 router；薄轉接層，零業務邏輯）。
+> 本節是已實作 HTTP 端點的便覽（§9.3），**契約真相源是 [`25_fe_be_rest_contract.md`](./25_fe_be_rest_contract.md) + FastAPI OpenAPI（`/docs`）**，歧異以 doc 25 與 OpenAPI 為準。
+> 模組：`src/backtest_platform/api/`（app 工廠 + router 群；薄轉接層，零業務邏輯）。
 
 ### 9.1 啟動
 
