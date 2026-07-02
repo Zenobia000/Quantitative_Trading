@@ -24,6 +24,7 @@ def test_gate_state_empty_then_recorded(client, isolate_stores):
         "r1",
         {"cagr": 0.25, "sharpe": 1.3, "slippage_sharpe": 1.1,
          "struct1_pct": 0.1, "churn_pct": 0.1, "avg_hold": 8.0},
+        strategy="four_layer",  # judged by four-layer's declared gate (審查缺陷 #8)
     )
     body = client.get("/research/validate/r1/gate-state").json()
     assert body["data"]["validation_status"] == "is_pass"

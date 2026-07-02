@@ -124,6 +124,13 @@ def test_equity_drawdown_empty() -> None:
     assert equity_drawdown(pd.Series(dtype=float)) == ([], [])
 
 
+def test_run_and_judge_created_at_is_utc_and_injectable() -> None:
+    from datetime import datetime, timezone
+    fixed = datetime(2026, 7, 2, 3, 4, 5, tzinfo=timezone.utc)
+    rec = run_and_judge(_cfg(), loader=_synthetic_loader, clock=lambda: fixed)
+    assert rec["created_at"] == "2026-07-02T03:04:05+00:00"
+
+
 def test_run_and_judge_persist_writes_sidecar(tmp_path) -> None:
     cfg = _cfg(hypothesis="persist series")
     rec = run_and_judge_persist(cfg, loader=_synthetic_loader, series_dir=tmp_path)

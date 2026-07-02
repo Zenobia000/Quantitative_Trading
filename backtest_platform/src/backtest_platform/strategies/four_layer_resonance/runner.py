@@ -15,14 +15,19 @@ import pandas as pd
 from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
 from backtest_platform.strategies.four_layer_resonance import sim
 from backtest_platform.strategies.protocol import (
+    GateSpec,
     Loader,
     StrategyRun,
     register_strategy,
 )
+from backtest_platform.validation.gate_state import DEFAULT_GATE
 
 _EMPTY_METRICS: dict = {
     "trades": 0, "bars": 0,
     "cagr": 0.0, "sharpe": 0.0, "slippage_sharpe": 0.0, "maxdd": 0.0,
+    # health keys the DEFAULT_GATE reads — present (=0) so an empty run is judged
+    # FAIL, never INCOMPLETE (審查缺陷 #8): gate keys ⊆ metrics keys unconditionally.
+    "struct1_pct": 0.0, "churn_pct": 0.0, "avg_hold": 0.0,
 }
 
 
@@ -32,6 +37,9 @@ class FourLayerRunner:
 
     config_model: ClassVar[type[StrategyConfig]] = StrategyConfig
     title: ClassVar[str] = "Four-Layer Resonance"
+    # ADR-016 edge + ADR-019 §11 entry-quality health (struct1_pct/churn_pct/avg_hold);
+    # these health keys are produced ONLY by four-layer's sim.
+    gate: ClassVar[GateSpec] = DEFAULT_GATE
 
     def run(
         self,

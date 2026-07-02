@@ -34,6 +34,28 @@ def cli() -> None:
     """Research loop: run-is / validate-strategy / runs / compare / validate / sweep."""
 
 
+def _gate_for_record(rec: dict):
+    """The审判庭 criteria for a ledger record — dispatched from its strategy.
+
+    A run is judged only by its own strategy's declared gate (審查缺陷 #8), never a
+    silent four-layer default. A record whose strategy is unknown / declares no
+    gate fails loudly rather than being mis-judged.
+    """
+    from backtest_platform.research import runners as _runners  # noqa: F401 — register
+    from backtest_platform.strategies.protocol import get_strategy_gate
+
+    strat = rec.get("strategy") or rec.get("preset")
+    if not strat:
+        raise click.ClickException(
+            f"run {rec.get('run_id')!r} has no strategy field; cannot dispatch a "
+            f"validation gate (審查缺陷 #8)."
+        )
+    try:
+        return get_strategy_gate(strat)
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from None
+
+
 @cli.command("run-is")
 @click.option("--strategy", required=True, help="Registered strategy name (see validate-strategy --list)")
 @click.option("--params", default="{}", help="JSON dict of strategy params (e.g. '{\"lookback_days\": 120}')")
@@ -161,7 +183,7 @@ def validate_cmd(run_id, runs_path) -> None:
         raise click.ClickException(f"run {run_id!r} not found in {runs_path}")
 
     metrics = rec.get("metrics") or {}
-    gate = ValidationGate()
+    gate = ValidationGate(gate=_gate_for_record(rec))
     state = gate.submit_is(metrics)
     result = gate.last_is_result
     strat = rec.get("strategy") or rec.get("preset", "?")
@@ -195,7 +217,7 @@ def _resolve_validation_status(rec: dict) -> GateState:
     state = coerce_gate_state(rec.get("validation_status"))
     if state is not None:
         return state
-    return derive_is_state(rec.get("metrics") or {})
+    return derive_is_state(rec.get("metrics") or {}, _gate_for_record(rec))
 
 
 def _outstanding_phases(state: GateState) -> list[str]:

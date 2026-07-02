@@ -99,15 +99,24 @@ DEFAULT_GATE: tuple[Criterion, ...] = (
     Criterion("avg_hold", ">=", 6.0, "health", "平均持有>=6 bar"),
 )
 
-# Momentum gate: the SAME strategy-agnostic edge criteria (K1/K2/K3) + a
-# momentum-appropriate health check (diversification) instead of the four-layer
-# entry-quality ones. Demonstrates the gate is data, not four-layer-bound.
-MOMENTUM_GATE: tuple[Criterion, ...] = (
+# Panel gate: the SAME strategy-agnostic edge criteria (K1/K2/K3) + the one
+# health check every cross-sectional (panel) strategy produces — diversification
+# (avg_holdings) — instead of four-layer's entry-quality checks. Used by any
+# strategy whose only family-specific health signal is holding breadth
+# (inst_flow, template, …). Its health key is ⊆ what ``strategies.common.panel``
+# emits, so panel runs get a real PASS/FAIL verdict, never INCOMPLETE (審查缺陷 #8).
+PANEL_GATE: tuple[Criterion, ...] = (
     Criterion("cagr", ">", 0.18, "edge", "K1 CAGR>18%"),
     Criterion("sharpe", ">", 1.0, "edge", "K2 Sharpe>1.0"),
     Criterion("slippage_sharpe", ">", 1.0, "edge", "K3 滑點 0.3% 下 Sharpe>1.0"),
     Criterion("avg_holdings", ">=", 5.0, "health", "平均持有檔數>=5 (分散，非單壓)"),
 )
+
+# Momentum gate: same criteria as the generic panel gate today (momentum's only
+# family health signal is also diversification). Kept as a named alias so momentum
+# can tune its own threshold independently without disturbing other panel
+# strategies. Demonstrates the gate is data, not four-layer-bound.
+MOMENTUM_GATE: tuple[Criterion, ...] = PANEL_GATE
 
 
 def evaluate_gate(

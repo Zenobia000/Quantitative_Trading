@@ -36,6 +36,11 @@ class GateEvaluateRequest(BaseModel):
     metrics: dict[str, float] = Field(
         ..., description="run metrics, e.g. {cagr, sharpe, struct1_pct, ...}"
     )
+    strategy: str | None = Field(
+        None,
+        description="registered strategy name → judge by ITS declared gate; "
+        "omit for the four-layer DEFAULT_GATE (審查缺陷 #8)",
+    )
 
 
 class MetricsSummaryRequest(BaseModel):

@@ -32,14 +32,32 @@ _STAGE_BY_VERDICT: dict[GateStatus, str] = {
 }
 
 
-def _is_status(metrics: Mapping[str, float], gate=None) -> tuple[str, str]:
+def _resolve_gate(gate, strategy):
+    """Pick the审判庭 criteria: explicit ``gate`` wins; else dispatch the run's
+    strategy's declared gate (審查缺陷 #8); a bare call with neither is a loud error
+    rather than a silent four-layer default that mis-judges panel strategies."""
+    if gate is not None:
+        return gate
+    if strategy is None:
+        raise ValueError(
+            "record_is_result needs an explicit `gate` or a `strategy` to dispatch "
+            "its declared gate; refusing to fall back to a foreign strategy's gate "
+            "(審查缺陷 #8)."
+        )
+    from backtest_platform.research import runners as _runners  # noqa: F401 — register
+    from backtest_platform.strategies.protocol import get_strategy_gate
+
+    return get_strategy_gate(strategy)
+
+
+def _is_status(metrics: Mapping[str, float], gate=None, strategy=None) -> tuple[str, str]:
     """Map an IS gate verdict to (validation_status, stage).
 
     The status string comes from the shared ``IS_VERDICT_TO_STATUS`` bridge so
     the CLI (which reads it back via ``coerce_gate_state``) and this writer share
     one vocabulary — they cannot drift (code-audit 2026-06-10).
     """
-    result = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
+    result = evaluate_gate(metrics, _resolve_gate(gate, strategy))
     verdict = result.status  # GateStatus.PASS | FAIL | INCOMPLETE
     return IS_VERDICT_TO_STATUS[verdict], _STAGE_BY_VERDICT[verdict]
 
@@ -48,10 +66,15 @@ def record_is_result(
     run_id: str,
     metrics: Mapping[str, float],
     gate=None,
+    strategy: str | None = None,
     path=None,
 ) -> dict[str, Any]:
-    """Judge a run's IS metrics and persist the transition; returns current state."""
-    status, stage = _is_status(metrics, gate)
+    """Judge a run's IS metrics and persist the transition; returns current state.
+
+    Pass ``strategy`` (or an explicit ``gate``) so the run is judged by the right
+    审判庭; a strategy is judged only by its own declared gate (審查缺陷 #8).
+    """
+    status, stage = _is_status(metrics, gate, strategy)
     validation_store.record(run_id, status, stage, note="IS gate evaluated", path=path)
     return {"run_id": run_id, "validation_status": status, "stage": stage}
 

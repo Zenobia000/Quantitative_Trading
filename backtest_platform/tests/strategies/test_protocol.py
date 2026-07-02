@@ -43,6 +43,7 @@ def test_register_and_resolve_a_new_strategy(clean_registry):
     class FakeRunner:
         config_model: _CV[type[_BM]] = _BM
         title: _CV[str] = "Fake v0"
+        gate: _CV = ()  # declares a (here empty) validation gate — part of the contract
         def run(self, symbols, start, end, config, loader):
             return StrategyRun({"trades": len(symbols)}, pd.Series([0.01, 0.02]))
 

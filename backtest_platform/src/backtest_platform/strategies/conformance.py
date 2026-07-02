@@ -13,7 +13,7 @@ from datetime import date
 import numpy as np
 import pandas as pd
 
-from backtest_platform.strategies.protocol import Loader, get_strategy
+from backtest_platform.strategies.protocol import Loader, get_strategy, get_strategy_gate
 
 # Universal edge keys every strategy must return — aligns with gate_state.py
 # DEFAULT_GATE + MOMENTUM_GATE common keys. Health keys are family-specific (excluded).
@@ -89,6 +89,9 @@ def check_strategy(
     3. runner.run() completes without exception.
     4. Return is a StrategyRun with metrics ⊇ REQUIRED_METRIC_KEYS,
        returns is pd.Series, trades is list.
+    5. The strategy declares a validation gate whose every criterion key ⊆ the
+       metrics it actually produces — otherwise the gate references a metric the
+       strategy never emits and every run is judged INCOMPLETE (審查缺陷 #8).
     """
     errors: list[str] = []
 
@@ -120,10 +123,12 @@ def check_strategy(
         return ConformanceReport(name=name, ok=False, errors=errors)
 
     # 4. Validate output
+    produced_keys: frozenset[str] = frozenset()
     if not isinstance(result.metrics, dict):
         errors.append("StrategyRun.metrics is not a dict")
     else:
-        missing = REQUIRED_METRIC_KEYS - result.metrics.keys()
+        produced_keys = frozenset(result.metrics.keys())
+        missing = REQUIRED_METRIC_KEYS - produced_keys
         if missing:
             errors.append(f"metrics missing required keys: {sorted(missing)}")
 
@@ -132,5 +137,18 @@ def check_strategy(
 
     if not isinstance(result.trades, list):
         errors.append("StrategyRun.trades is not a list")
+
+    # 5. Gate declared + every gate key ⊆ produced metrics
+    try:
+        gate = get_strategy_gate(name)
+    except ValueError as exc:
+        errors.append(str(exc))
+    else:
+        gate_keys = {c.key for c in gate}
+        unbacked = gate_keys - produced_keys
+        if unbacked:
+            errors.append(
+                f"gate references metrics the strategy never produces: {sorted(unbacked)}"
+            )
 
     return ConformanceReport(name=name, ok=len(errors) == 0, errors=errors)
