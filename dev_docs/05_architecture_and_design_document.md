@@ -1,5 +1,7 @@
 # 架構與設計文件 — backtest_platform
 
+> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件部分內容凍結於 2026-05/06（承諾的 v2.0 C4 重畫未兌現，FastAPI=M5、React=M6+ 與實況相反——實際 FastAPI 已於 M3 落地、React 前端已上線），與現況（ADR-023~030、React 前端、研究工作流標準化）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3）。
+
 > **版本：** v1.5 | **更新：** 2026-06-01 | **狀態：** M1 已實作 / **M2+ 路線變更**
 > **v1.5 變更 (2026-06-01)**：主骨架再從 `TQuant-Lab (zipline-tej)` 切到 `zipline-reloaded`（Sprint 0 S1 spike 揭露 zipline-tej import 階段強制要 TEJ API key）。詳見 [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)。下文「TQuant-Lab」/「zipline-tej」字樣為歷史脈絡保留，現況皆指 zipline-reloaded。
 > **v1.4 變更 (2026-05-31)**：M2 啟動前重大架構變更，原 L2 Container 圖中的 `engines/rqalpha_runner` 替換為 `TQuant-Lab (Zipline)` 主骨架（**已於 v1.5 再次取代為 zipline-reloaded**）；新增 `adapters/` 層（data_bundle/data_feed/brokers）、`monitoring/`、`dashboard/`、`orchestration/` 模組。詳見下方 v1.4 變更通告。

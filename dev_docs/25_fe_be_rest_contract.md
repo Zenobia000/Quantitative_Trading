@@ -23,7 +23,7 @@
 
 ## §0 為什麼需要這份文件
 
-截至 v0.6，後端 FastAPI 只落地 **11 條路由**（`/runs`、`/gate`、`/metrics`、`/presets` + `/health`），而 `web_design/` 的 **17 個頁面**（Research 8 + Monitor 4 + System 2 + Home cockpit `/` + Monitor fleet `/monitor` + Trade review `/research/runs/:id/trades` 3 新，2026-06-04）共需要約 **83 條端點**。在本檔之前，契約**分裂於三處且互相衝突**：
+截至 v0.6，後端 FastAPI 只落地 **11 條路由**（`/runs`、`/gate`、`/metrics`、`/presets`〔後由 `/strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)〕 + `/health`），而 `web_design/` 的 **17 個頁面**（Research 8 + Monitor 4 + System 2 + Home cockpit `/` + Monitor fleet `/monitor` + Trade review `/research/runs/:id/trades` 3 新，2026-06-04）共需要約 **83 條端點**。在本檔之前，契約**分裂於三處且互相衝突**：
 
 | 衝突項 | `06 §9`（已實作） | `21 §8`（Monitor A–E） | per-page `[DATA & API]` |
 | :--- | :--- | :--- | :--- |
@@ -66,7 +66,7 @@
 
 | 前綴 | 區 | 內容 |
 | :--- | :--- | :--- |
-| `/runs`、`/gate`、`/metrics`、`/presets` | Research（已實作） | run 帳本、IS gate、指標計算機、preset（**v0.6 已落地，路徑零改動**）；run 子資源含 equity/trades/log/traded-symbols/candles/attribution/day-context（Trade review）|
+| `/runs`、`/gate`、`/metrics`、`/strategies` | Research（已實作） | run 帳本、IS gate、指標計算機、策略 catalog（`/strategies` **取代 v0.6 的 `/presets`**，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；run 子資源含 equity/trades/log/traded-symbols/candles/attribution/day-context（Trade review）|
 | `/research/*` | Research（新增） | strategies、saved-views、trials、sweep、validate、promote |
 | `/monitor/*` | Monitor | performance、positions、signals、risk（**全 stub 至 M4**，§5.4）；`/monitor/fleet*` 艦隊板 |
 | `/system/*` | System | bundles、ingest、alerts、risk-spec |
@@ -98,7 +98,7 @@
 | 422 | `VALIDATION_ERROR` | schema 驗證失敗（逐欄）| `[{loc, msg}]`（per-field）| RunConfig（New Run）、所有 `extra='forbid'` body |
 | 409 | `IS_GATE_NOT_PASSED` | 違反 IS-gate 前置（如 pin 未過 IS 的候選）| `{run_id, gate_status}` | Runs Table tag/pin、Promote advance |
 | 423 | `OOS_VAULT_LOCKED` | sealed OOS 在條件未滿足前被存取 | `{run_id, reason}` | Validate-gate OOS unseal |
-| 404 | `NOT_FOUND` | 資源不存在 | `{resource, id}` | `/runs/{id}`、`/presets/{name}`、compare baseline |
+| 404 | `NOT_FOUND` | 資源不存在 | `{resource, id}` | `/runs/{id}`、`/research/promote/{strategy_id}`、compare baseline |
 | 400 | `BAD_REQUEST` | 請求語意錯（如 trade record 缺 key）| `{hint}` | `/metrics/trades` |
 | 401 | `UNAUTHORIZED` | 缺/錯 Bearer（§4）| `null` | 全端點（單人防呆）|
 | 504 | `QUERY_TIMEOUT` | 後端查詢/計算逾時 | `{op}` | 重查詢（sweep heatmap、telemetry）|
@@ -121,16 +121,20 @@
 
 ---
 
-## §4 認證（single-user static Bearer）
+## §4 認證（standalone = localhost-only 綁定，[ADR-031](./adrs/ADR-031-standalone-auth-decision.md)）
 
-**單人自託管平台**，認證從簡但**從 day-one 預留**（避免 M5 回頭硬補）：
+> **🔧 2026-07-02 裁決（[ADR-031](./adrs/ADR-031-standalone-auth-decision.md)，審查缺陷 #20）**：本節原承諾「M3.0 起全端點 static Bearer」為**三方矛盾**——後端 `api/` 零實作、前端 `http.ts` 硬編碼 `?? 'dev-token'`。依 [PRD v4.0](./02_project_brief_and_prd.md) §2.3 standalone 假設（單機、內網 localhost、無多人協作）裁決：**採 localhost-only 綁定為唯一安全邊界，移除 Bearer 承諾**（降為 M5 遠端存取時重議）。理由：20 行 static Bearer 對 localhost 威脅模型不增實質安全（能存取 `127.0.0.1` 者已擁有這台機器）、卻增加每個 client 的摩擦；loopback bind 才是真正的邊界。
 
-- 機制：**static Bearer token**（`Authorization: Bearer <token>`），token 由後端環境變數持有；或前置 reverse-proxy guard。
-- 範圍：所有非 `/health` 端點要求 Bearer；缺/錯 → `401 UNAUTHORIZED`（§2）。`/health` 永遠開放（liveness probe）。
-- 前端：API client wrapper **day-one 帶 auth header slot**（即使開發期 token 為固定值）。401/403 → 導向登入為防呆，**非多角色 RBAC**（對齊 `12 §7`）。
-- 秘密：`FINLAB_API_TOKEN`、`DISCORD_*`、`INFLUX_*` **僅後端持有，絕不出現在任何回應或前端 bundle**（`rules/security.md`）；`/system/alerts/channels` 回傳一律 **遮罩**（`bot_token` → `"***"`）。
+**standalone 現行機制（ADR-031）：**
 
-> v0.6 現況為**無 auth**；M3.0 加 Bearer dependency + 環境變數，11 條既有端點一律納入（測試用固定 token）。
+- **邊界**：後端 API **MUST 綁 `127.0.0.1`**（loopback），前端走 vite proxy 同機存取，無公網暴露。綁定本身即安全邊界，**無 app 層 auth**。
+- **前端**：`http.ts` 的 `?? 'dev-token'` 為**無害殘留**（後端不檢查、不授予任何權限）；header slot 保留與否為前端清理 follow-up，非 auth 前置。
+- **秘密（不放鬆）**：`FINLAB_API_TOKEN`、`DISCORD_*`、`INFLUX_*` **僅後端持有，絕不出現在任何回應或前端 bundle**（`rules/security.md`）；`/system/alerts/channels` 回傳一律 **遮罩**（`bot_token` → `"***"`）。
+- **`401 UNAUTHORIZED`（§2）**：保留於錯誤碼 enum，供 M5 遠端存取啟用 auth 時使用；standalone 期不觸發。
+
+> **M5 遠端存取重議項**：若需跨機/遠端存取，於 M5 重開 auth 決策——reverse-proxy guard 或 static Bearer dependency（+ 環境變數 + CORS）。本節不預先實作，避免 gold-plating（ADR-031 §4 follow-up）。
+>
+> **~~原承諾（已由 ADR-031 移除，保留為脈絡）~~**：~~M3.0 加 Bearer dependency + 環境變數，所有非 `/health` 端點要求 Bearer。~~
 
 ---
 
@@ -191,7 +195,9 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 ---
 
-## §6 端點 registry（全 71）
+## §6 端點 registry（全 72）
+
+> **🔧 2026-07-02 對齊（審查缺陷 #20）**：移除已刪除的 `/presets` + `/presets/{name}`（由 `GET /strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；補 `GET /research/workflows/{strategy}` + `POST /research/workflows/{workflow}`（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md) 研究工作流 dispatch）。淨計數 71→72。
 
 > 圖例 — **Status**：`✅shipped`（v0.6 已實作）/ `🟡partial`（已實作但需擴充）/ `⬜missing` / `🔵deferred-stub`（§5.4）。
 > **就緒度**：`ready`（後端能力已存在、只缺接線）/ `needs-work`（需新後端邏輯）/ `needs-data`（需新資料源）。
@@ -231,6 +237,8 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | POST | `/research/sweep` | ⬜ needs-work | `{param_space, …}` → `{job_id, status:"queued"}`（§5.2）| 422 | run_06 | M3.5 |
 | GET | `/research/sweep/{id}/status` | ⬜ needs-work | — → `{status, progress}` | 404 | run_06 | M3.5 |
 | GET | `/research/sweep/{id}/heatmap` | ⬜ needs-work | — → `{axes, z[][]}`（`to_heatmap` np→JSON, nan→null）| 409(running)/404 | run_06 | M3.5 |
+| GET | `/research/workflows/{strategy}` | ✅ ready | — → `{strategy, workflows[]}`（列該策略宣告的工作流 doe/go_gates/truth_gate/paper_replay；[ADR-029](./adrs/ADR-029-research-workflow-standardization.md)）| 400（未知 strategy）| run_01 | — |
+| POST | `/research/workflows/{workflow}` | ✅ ready | `{strategy, overrides?}` → **202** `{job_id, status}`（非同步 job，§5.2；workflow ∈ doe/go_gates/truth_gate/paper_replay，[ADR-029](./adrs/ADR-029-research-workflow-standardization.md)）| 404（未知 workflow）/ 400（未知 strategy）| run_01 | — |
 | GET | `/gate/spec` | ✅ ready | — → `{criteria:[{key,op,threshold,kind,label}]}` | — | run_07 | — |
 | POST | `/gate/evaluate` | ✅ ready | `GateEvaluateRequest{metrics:dict}` → `{status, passed, summary, results[]}` | 422 | run_07 | — |
 | GET | `/research/validate/{run_id}/gate-state` | ⬜ needs-work | — → `{validation_status, stage, is, wfa, oos}`（stateful，持久化）| 404 | run_07 | M3.6 |
@@ -281,8 +289,7 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 | Method | Path | Status / 就緒 | Req → Resp（`data`）| 錯誤 | 消費頁 | 里程碑 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/presets` | ✅ ready | — → `{presets[], configs{}}` | — | run_02、sys_data | — |
-| GET | `/presets/{name}` | ✅ ready | — → cfg dict（M3.1 enrich bounds/desc）| 404 | run_02 | M3.1（enrich）|
+| GET | `/strategies` | ✅ ready | — → `[{name, title, description, config_schema}]`（已註冊策略 catalog + config JSON-schema；**取代已刪除的 `/presets`**，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）| — | run_02、run_01、sys_data | — |
 | GET | `/system/risk/spec` | ⬜ ready | — → `{rules:[EX-001..012]}`（mirror gate.py）| — | mon_d(config)、sys_alerts | M3.1 |
 | POST | `/system/risk/evaluate` | ⬜ ready | `{metrics}` → `{results[]}`（on-demand check）| 422 | mon_d(config) | M3.1 |
 | GET | `/system/alerts/rules` | ⬜ ready | — → `[{rule}]`（static RULES catalog, read-only）| — | sys_alerts | M3.1 |
@@ -331,8 +338,8 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 | 里程碑 | 目標 | 端點 | 解鎖頁面 |
 | :--- | :--- | :--- | :--- |
-| **M3.0** | 契約合一閘（零新邏輯）| 升 `envelope.py`（error 物件）、修 `/runs` window bug、接 openapi-typescript、加 Bearer | （契約+型別 scaffold）|
-| **M3.1** | 便宜 config/catalog 讀路由 | `/research/universe-filters`、`/runs/estimate`、`/system/risk/*`、`/system/alerts/{rules,channels,test}`、`/presets/{name}` enrich | run_02、sys_alerts(讀)、mon_d(config)|
+| **M3.0** | 契約合一閘（零新邏輯）| 升 `envelope.py`（error 物件）、修 `/runs` window bug、接 openapi-typescript（~~加 Bearer~~ → 移除，[ADR-031](./adrs/ADR-031-standalone-auth-decision.md) localhost-only）| （契約+型別 scaffold）|
+| **M3.1** | 便宜 config/catalog 讀路由 | `/research/universe-filters`、`/runs/estimate`、`/system/risk/*`、`/system/alerts/{rules,channels,test}`、`/strategies`（catalog + config schema，取代 `/presets` enrich）| run_02、sys_alerts(讀)、mon_d(config)|
 | **M3.2** | 暴露已算出的 series + 逐股 review | `/runs/{id}/equity`、`/runs/{id}/trades?symbol`、compare `?run_ids`、`/runs/{id}/{traded-symbols,attribution,day-context}` | run_04/05、mon_a(回測半)、trade_review(K線除外)|
 | **M3.3** | strategy registry + 側存 + Home recent | `/research/strategies*`、`/research/saved-views`、`/runs/tag`、`/home/recent` | run_01/03、home(recent)|
 | **M3.4** | trials/DSR guardrail + Home 研究狀態 | `/runs/trials`、`/research/trials/increment`、`/home/research-status` | run_03/05、home(研究半)|

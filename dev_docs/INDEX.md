@@ -17,6 +17,7 @@
 > **2026-07-02 更新**：全平台多視角審查（4 階段 16-agent workflow：六區域掃描 + 四路競品 + PM/架構/設計模式/QA/UIUX 五視角 + 綜合）→ 新增 [platform_full_audit_2026-07-02.md](./platform_full_audit_2026-07-02.md)（產品正名「edge 驗證工廠」+ 缺陷矛盾 Top 25〔Top 5 CRITICAL 已實地覆核〕+ 三階段路線圖 + 8 個 worktree 平行工作包）與 [competitive_analysis_2026-07-02.md](./competitive_analysis_2026-07-02.md)（開源引擎/機構系統/散戶 SaaS/內部調研檢驗 + 五視角全文）；WP1-WP5（審判庭 DSR/OOS、paper 風控、runs DDL/parquet 血統、前端契約重對齊、最小 CI）同日以隔離 worktree 平行啟動
 > **2026-06-17 更新**：研究流程標準化（sub-project ①.5，**ADR-029**）— 7 支 `scripts/inst_flow_*.py` 一次性腳本刪除，邏輯拆成「平台通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 ADR-028 dispatch）+ 策略宣告 `strategies/<name>/research_config.py`」；CLI 加 doe/go-gates/truth-gate/paper-replay、HTTP 加 `POST /research/workflows/{workflow}`（非同步 job）+ `GET /research/workflows/{strategy}`；新增一隻策略只要寫 `research_config.py` 即可參與所有工作流，零新腳本；測試 1053 passed / coverage 92.9%；ADR 數量 28→29（含補登 028 dispatch contract）
 > **2026-07-02 更新**：真偽閘（審判庭）判決缺陷修正（**ADR-030**）— `research/workflows/truth_gate.py` 五缺陷：DSR 單位錯配（年化 SR + 日變異數 → DSR 誤判 1.0，改 per-period SR + 虛無假設 V[SR_n]，示例 0.333 年化 → DSR 1.0→0.145 REJECTED）、OOS holdout 從未評估（實跑並入判）、`survivorship_clean` 寫死 True（config 化預設 False）、`dsr.py` 加單位 fail-fast 衛兵、SizingGate 接線（REAL→倉位）；**既往 inst_flow TRUTH GATE REAL 判決作廢須用修正後閘重驗**；補登 ADR-028/029 至階段 7 表；測試 1064 passed / coverage 93.2%；ADR 數量 29→30
+> **2026-07-02 更新（敘事償還，審查缺陷 #15/#16/#20）**：承 [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md)——(1) **02 PRD v4.0 正名重寫**：產品從「四層共振回測平台」正名為「**個人量化 edge 驗證工廠 + 晉升管線**」（策略是消耗品、審判庭是資產、連續 NO-GO 是正常運作證據）；Persona 單人雙帽正式化、standalone 部署假設明文、平台/策略 KPI 兩層分列、決策沿革補 ADR-016~031、US 去四層耦合 + 補研究工作流 US。(2) **16 WBS 自我對帳**：§1 banner（86%/1053）↔ §4（原 80%/786）數字統一、§6 里程碑補現況註記（M2 ❌ 與 M3/M4 交付並存＝里程碑定義已被 ADR-025 重構）、Sprint 0 Gate ⏳→✅、M3 Streamlit→React。(3) **Tombstone 凍結 banner**：01/05/17/20/22/23 檔首加統一 drift 警示。(4) **doc 25 §6 registry 對齊**：移除已刪 `/presets*`、補 `/strategies` + `/research/workflows/*`。(5) **ADR-031 standalone auth 裁決**：localhost-only 綁定 + 移除 Bearer 承諾（降 M5 重議）。ADR 數量 30→**31**（補 031）
 
 ---
 
@@ -32,14 +33,14 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 02 | [project_brief_and_prd.md](./02_project_brief_and_prd.md) | 專案簡報與 PRD |
+| 02 | [project_brief_and_prd.md](./02_project_brief_and_prd.md) | 專案簡報與 PRD（**v4.0 正名：個人量化 edge 驗證工廠 + 晉升管線**）|
 | 03 | [behavior_driven_development_guide.md](./03_behavior_driven_development_guide.md) | BDD scenarios |
 
 ### 階段 2：架構與設計
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（**29 份 ADR**：…023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）/028（strategy dispatch contract + preset 移除）/029（研究工作流標準化）） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（**31 份 ADR**：001~031）：…023（動能 NO-GO）/024（資金流 NO-GO）/025（驗證閘兩段化）/026（共用機制抽 common + legacy 封存）/027（策略契約 + registry）/028（strategy dispatch contract + preset 移除）/029（研究工作流標準化）/031（standalone auth：localhost-only 綁定 + 移除 Bearer 承諾） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 
@@ -118,9 +119,10 @@
 | [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) | **驗證閘兩段化 + paper 前移**：修正 ADR-016 binary 絕對通關三缺陷（部署閘≠研究迭代閘混用、絕對 CAGR 對市場中性錯配、gate 排序死鎖）→ 真偽閘（PBO/DSR/WFA/survivorship-clean hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續，絕對 CAGR 降參考）+ paper 前移；不翻案 ADR-023/024（死於真偽閘）| **amends** ADR-016（binary→兩段閘）|
 | [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) | **共用回測機制抽出 → `strategies/common`**：momentum 的私有 `_clean_returns`/`_rebalance_dates`/`_vol_target`/`TRADING_DAYS` 被 inst_flow/multi_factor/paper_daemon 反向 import（leaky abstraction）→ 抽成中立 public 層，策略間零互相依賴；保留 momentum（解耦後乾淨對等策略）；封存 multi_factor/spikes/舊 scripts 至 `legacy/`、刪空 `engines/zipline_adapter/adapters/` | — |
 | [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) | **策略契約 + registry**：平台硬綁 four_layer（唯一被引擎掛載、`Engine.run` 焊死其 config、每策略一 harness、新策略要動 7-12 檔）→ 接縫畫在**輸出**（`StrategyRunner.run → StrategyRun`）+ 輕量 name→runner registry；four_layer 純 sim 下移 `sim.py`、降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保相容）；新策略 7-12→2-3 檔；CLI `--strategy`/per-strategy preset 留待 Stage 2 | 接續 ADR-026（策略↔平台零硬綁）；沿用 ADR-003 純函式；registry 輕量化守 ADR-022 |
-| [ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) | **策略 dispatch 契約**：`config_model` ClassVar + `title` 擴充策略契約，registry 成自描述目錄（dispatch 驗參 `config_model(**params)`、API 曝 JSON-schema、conformance gate 建預設 config）；上層以名稱解析策略、不再直呼策略函式 | 補登；接續 ADR-027 |
-| [ADR-029](./adrs/ADR-029-research-workflow-standardization.md) | **研究流程標準化**：7 支 `scripts/inst_flow_*.py` 一次性腳本刪除，拆成「平台通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 ADR-028 dispatch）+ 策略宣告 `strategies/<name>/research_config.py`」；CLI 加 4 子命令、HTTP 加 `POST/GET /research/workflows`；新策略只寫 `research_config.py` 即參與所有工作流 | 接續 ADR-028 dispatch |
+| [ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) | **策略派發契約 + preset 移除**：`RunConfig{strategy, params}` 經 registry dispatch（`config_model(**params)` 嚴格驗證）→ 任意已註冊策略可由 HTTP `POST /runs` / CLI 啟動；`StrategyRunner` 加 `config_model`/`title` ClassVar 自描述（feeds `GET /strategies`）；generic conformance gate（`check_strategy`）+ parametrized CI；修 18 處契約違規（V1-V4）；`preset`/`get_preset` 全移除、`StrategyConfig` 下沉至 four_layer 目錄 | **supersedes** preset dispatch 路徑；**extends** ADR-027 |
+| [ADR-029](./adrs/ADR-029-research-workflow-standardization.md) | **研究工作流標準化**：7 支 `scripts/inst_flow_*.py`（既是 workflow 又是 strategy-specific runner、繞過 dispatch）刪除 → 通用工作流 `research/workflows/`（doe/go_gates/truth_gate/paper_replay，全走 `get_strategy(name).run()`，AST 測試守門）+ 策略宣告 `strategies/<name>/research_config.py`；name→package 由 registry 解析（不假設 name==目錄）；CLI 4 命令 + `POST /research/workflows/{workflow}`（非同步 job）+ `GET /research/workflows/{strategy}` | **extends** ADR-028（dispatch）/ ADR-027（registry）|
 | [ADR-030](./adrs/ADR-030-truth-gate-judgement-fix.md) | **真偽閘判決缺陷修正**：修 `research/workflows/truth_gate.py` 五缺陷 — DSR 單位錯配（年化 SR + 日變異數 → 誤判 1.0，改 per-period SR + 虛無假設 V[SR_n]）、OOS holdout 從未評估（實跑 [oos_start,is_end] 並入判）、`survivorship_clean` 寫死 True（改 config 化預設 False）、`dsr.py` 無單位衛兵（加 fail-fast）、SizingGate 零呼叫者（真偽閘 REAL 後接 `evaluate_two_stage` 產倉位）；**既往 inst_flow REAL 判決作廢須重驗** | **amends** ADR-025 §3.1（僅修實作、不改判準）|
+| [ADR-031](./adrs/ADR-031-standalone-auth-decision.md) | **standalone auth 裁決**：doc 25 承諾 static Bearer、後端零實作、前端硬編碼 `dev-token` 三方矛盾 → 依 PRD v4.0 standalone 假設裁決**採 localhost-only 綁定為唯一安全邊界、移除 Bearer 承諾**（降 M5 遠端存取時重議）；20 行 static Bearer 對 localhost 不增實質安全、卻增每 client 摩擦 | **amends** ADR-021（single-user Bearer 承諾）|
 
 ---
 

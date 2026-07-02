@@ -1,6 +1,7 @@
 # WBS 開發計劃 — backtest_platform
 
-> **版本：** v3.23 | **更新：** 2026-06-16 | **狀態：** M1 ✅ + **M3 研究迴圈後端 ✅ + 模組 6.0 統計驗證收尾**（統計驗證 / 研究迴圈 + gate machine / risk + 監控 + paper broker / REST API / orchestration / Grafana / momentum / inst-flow / multi-factor / long-short；整體 86%、1007 test pass / 5 skip / ~94% + FE 44 vitest）。**策略終局**：四層共振經 3 階段（large/mid + M0-v3 進場 + 中小型探針）+ **對照診斷**證實為**負 edge、毀價值**（同股票 buy-hold +12~22%、四層做成負）→ 應**砍**。動能（12-1）經完整防過擬合（對抗 + PBO 21%/DSR 1.00/WFA OOS 0.84）＝**真實溢酬但波動大、未達可部署門檻**——對的 family，需大 universe + 崩盤風控。**平台完整驗證 pipeline 首次端到端證實可用、給校準真相**（抓出四層毀價值 + 動能未達標）——「平台優先」獲鐵證。前端（v0.4）/實盤（v1.0）仍 gated 於可部署 edge。**REST API v0.6 58 端點已部署（PR #71/#72；`/runs/estimate` + `/research/universe-filters` 真接、其餘 Monitor/System 為 ADR-021 typed-stub `data_source:"pending_m4"`）；8.H.1 contract 合規已落地（`error→{code,message,detail}` ✅ + 泛型 `Envelope[T]` + `api/response_models.py` infra ✅ + 20 真實端點 typed〔batch1 runs 5 + batch2 gate/metrics/presets/research/system 15〕+ regen `api.gen.ts`，PR #98-100；pending-stub 端點留待 M4 producer）、8.G.1 runs DDL ✅、8.H.5 trials 持久化 ✅。7.A.2 paper trade-log DB writers + 7.D real daily-flow collaborators 落地（PR #101/#102：`db_writer` upsert signals/orders/fills/equity + `orchestration/collaborators.py` production factory + `make_db_sink` 真持久化；`signal_fn` 仍為 edge-gated 注入 seam）。FinLab 設為主資料源（`data/finlab_source.py`：實測全史 2007→今 + 原生 survivorship-clean〔2753 檔含 369 下市〕，ADR-006 realized；FinMind 留 fallback；`make_ingest(source=)` 切換）。inst_flow 經 FinLab survivorship-clean 全史（2010-2024）重驗（②）→ TRUTH GATE: REAL（ADR-025）：full-span CAGR 16-20%／OOS Sharpe ~1.5／DSR≈1.0，跨 universe breadth（78↔423 檔）皆 REAL（verdict 靠 OOS 廣度非絕對 CAGR；landscape PBO 42.9% 對 pre-registered 單 config 不適用，ADR-025 論點獲實證）→ paper-ready。market_reader + forward 接線落地（③，`runtime/market_reader.py`：`read_live_panel` FinLab EOD 活 panel + `live_config_for_date` 接 daemon replay core〔stub getter+memory sink 跑 chain GREEN〕+ `make_position_signal_fn` 通用 adapter 讓任意策略〔含 `stock_strategy/` FinLab 參考〕跑平台 chain）→ **僅剩 after-close 排程器（真實日曆時間，部署層 stub）才能收 live OOS**。**Monitor 前端 zone 落地（8.A.1/8.A.2 React，5 頁：Fleet/Performance/Positions/Signals/Risk，接 /monitor/* telemetry，4 態 loading/error/pending/data，daemon 餵入即點亮，10 vitest）**。**System 前端 zone 落地（Data：bundle 清單 + 互動 ingest 觸發接 8.H.6 `POST /system/ingest` async→輪詢；Alerts：內建告警規則表 + 風控規格計數，真實投影；3 vitest）**。**Cmd-K 命令面板落地（8.G.6：⌘K/Ctrl+K 全域開啟，過濾/↑↓/Enter 跳轉/Esc，命令源 nav.ts；接 AppShell topbar；5 vitest）→ 前端三 zone（Research/Monitor/System）+ Cmd-K 全實頁**。**Monitor aggregate producers 接真（8.H.8：`db_reader.fleet_summary` DISTINCT-ON 每策略最新淨值 → `/monitor/fleet`〔live 艦隊〕+ `/monitor/portfolio-summary`〔總淨值/策略數/持倉 roll-up〕；`/monitor/strategies` 投影 ADR-027 策略 registry catalog；FleetPage 接真）→ Monitor 區彙總 telemetry-driven、daemon 餵入即點亮**。R9「策略無 edge」風險 ✅ CLOSED（ADR-023）。**
+> **版本：** v3.25 | **更新：** 2026-07-02 | **狀態：** M1 ✅ + **M3 研究迴圈後端 ✅ + 模組 6.0 統計驗證收尾**（統計驗證 / 研究迴圈 + gate machine / risk + 監控 + paper broker / REST API / orchestration / Grafana / momentum / inst-flow / multi-factor / long-short；整體 **86%**、**1053 test pass** / 5 skip / **~92.9%** + FE 44 vitest）。
+> **v3.25 自我對帳（2026-07-02，審查缺陷 #16）**：承 [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) §3 #16——本檔 §1 banner（86%/1053 pass）曾與 §4 進度摘要（80%/786 pass）自我矛盾。以 §1 banner + §2 工作包統計（合計 1144h / 990h / 86%）為準統一 §4 數字；§6 里程碑補審查後現況註記（M2 ❌ 回 M0 與 M3/M4 交付物並存的兩套現實 = 里程碑定義已被 ADR-025 兩段閘重構）、Sprint 0 Gate ⏳→✅ Conditional Pass、M3 交付物 Streamlit→React；ADR 計數 25→31（補 ADR-023~029 + 031；ADR-030 truth gate 於另分支 PR #137）。§7 Sprint 看板為 `tools/scrum_board` 自動生成區塊，不手改（reconciliation 屬 pivot 後 sprint 重排規劃決策，留待另跑 `sync_wbs.py`）。**策略終局**：四層共振經 3 階段（large/mid + M0-v3 進場 + 中小型探針）+ **對照診斷**證實為**負 edge、毀價值**（同股票 buy-hold +12~22%、四層做成負）→ 應**砍**。動能（12-1）經完整防過擬合（對抗 + PBO 21%/DSR 1.00/WFA OOS 0.84）＝**真實溢酬但波動大、未達可部署門檻**——對的 family，需大 universe + 崩盤風控。**平台完整驗證 pipeline 首次端到端證實可用、給校準真相**（抓出四層毀價值 + 動能未達標）——「平台優先」獲鐵證。前端（v0.4）/實盤（v1.0）仍 gated 於可部署 edge。**REST API v0.6 58 端點已部署（PR #71/#72；`/runs/estimate` + `/research/universe-filters` 真接、其餘 Monitor/System 為 ADR-021 typed-stub `data_source:"pending_m4"`）；8.H.1 contract 合規已落地（`error→{code,message,detail}` ✅ + 泛型 `Envelope[T]` + `api/response_models.py` infra ✅ + 20 真實端點 typed〔batch1 runs 5 + batch2 gate/metrics/presets/research/system 15〕+ regen `api.gen.ts`，PR #98-100；pending-stub 端點留待 M4 producer）、8.G.1 runs DDL ✅、8.H.5 trials 持久化 ✅。7.A.2 paper trade-log DB writers + 7.D real daily-flow collaborators 落地（PR #101/#102：`db_writer` upsert signals/orders/fills/equity + `orchestration/collaborators.py` production factory + `make_db_sink` 真持久化；`signal_fn` 仍為 edge-gated 注入 seam）。FinLab 設為主資料源（`data/finlab_source.py`：實測全史 2007→今 + 原生 survivorship-clean〔2753 檔含 369 下市〕，ADR-006 realized；FinMind 留 fallback；`make_ingest(source=)` 切換）。inst_flow 經 FinLab survivorship-clean 全史（2010-2024）重驗（②）→ TRUTH GATE: REAL（ADR-025）：full-span CAGR 16-20%／OOS Sharpe ~1.5／DSR≈1.0，跨 universe breadth（78↔423 檔）皆 REAL（verdict 靠 OOS 廣度非絕對 CAGR；landscape PBO 42.9% 對 pre-registered 單 config 不適用，ADR-025 論點獲實證）→ paper-ready。market_reader + forward 接線落地（③，`runtime/market_reader.py`：`read_live_panel` FinLab EOD 活 panel + `live_config_for_date` 接 daemon replay core〔stub getter+memory sink 跑 chain GREEN〕+ `make_position_signal_fn` 通用 adapter 讓任意策略〔含 `stock_strategy/` FinLab 參考〕跑平台 chain）→ **僅剩 after-close 排程器（真實日曆時間，部署層 stub）才能收 live OOS**。**Monitor 前端 zone 落地（8.A.1/8.A.2 React，5 頁：Fleet/Performance/Positions/Signals/Risk，接 /monitor/* telemetry，4 態 loading/error/pending/data，daemon 餵入即點亮，10 vitest）**。**System 前端 zone 落地（Data：bundle 清單 + 互動 ingest 觸發接 8.H.6 `POST /system/ingest` async→輪詢；Alerts：內建告警規則表 + 風控規格計數，真實投影；3 vitest）**。**Cmd-K 命令面板落地（8.G.6：⌘K/Ctrl+K 全域開啟，過濾/↑↓/Enter 跳轉/Esc，命令源 nav.ts；接 AppShell topbar；5 vitest）→ 前端三 zone（Research/Monitor/System）+ Cmd-K 全實頁**。**Monitor aggregate producers 接真（8.H.8：`db_reader.fleet_summary` DISTINCT-ON 每策略最新淨值 → `/monitor/fleet`〔live 艦隊〕+ `/monitor/portfolio-summary`〔總淨值/策略數/持倉 roll-up〕；`/monitor/strategies` 投影 ADR-027 策略 registry catalog；FleetPage 接真）→ Monitor 區彙總 telemetry-driven、daemon 餵入即點亮**。R9「策略無 edge」風險 ✅ CLOSED（ADR-023）。**
 > **v3.16 結構整理（[ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md)，2026-06-16）**：`backtest_platform` 重構——抽出 `strategies/common`（中立回測機制 `clean_returns`/`rebalance_dates`/`vol_target`/`TRADING_DAYS`），解 inst_flow/multi_factor/`runtime.paper_daemon` 反向 import momentum 私有函式的 leaky abstraction，策略間零互相依賴；**保留 momentum**（解耦後乾淨對等策略，research IS harness 承重）、four_layer_resonance（pipeline 承重）；**封存** multi_factor + sprint_0_spikes + 非 inst_flow_* 舊驗證 scripts 至 `legacy/`（src 外，不打包不進 CI）、刪空 `engines/zipline_adapter/adapters/`；primitive 測試抽至 `tests/strategies/common/`。純結構整理零行為變更，989 pass / coverage 94%。
 > **v3.17 重構 Stage 1（[ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md)，2026-06-16）**：**策略契約 + registry**——解除平台對 four_layer 的硬綁（重構前只有 four_layer 被引擎掛載、`Engine.run` 焊死其 config、每策略一 harness、新策略要動 7-12 檔）。新增 `strategies/protocol.py`（`StrategyRunner` 輸出契約 + `register_strategy`/`get_strategy` 輕量 registry）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）、新增可複製骨架 `strategies/_template/`（註冊 "template" baseline）+ 橫斷面共用 `strategies/common/panel.py` + four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；four_layer 降級為契約實作之一、is_harness/momentum_harness 委派 runner（re-export 保向後相容）。新增策略 7-12→2-3 檔；`FourLayerRunner` 路徑與 legacy `run_is` 數值逐項等價。**CLI `--strategy` + per-strategy preset 留待後續**（依賴 preset 統一）。1000 pass / coverage 94%。
 > **v3.18 重構 Stage 2（[ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) Stage 2，2026-06-16）**：**metrics 去重 + config 集中**。① Sharpe 公式四份複製（four_layer `sim`、zipline `cli.sharpe_naive`、`cross_check._sharpe_from_equity`、panel 策略）收斂到單一規範源 `validation.metrics.sharpe`，four_layer `sim.cagr` 亦改 `validation.metrics.cagr`（`maxdd` 維持負值報表慣例，非 gated）；② 新增 `config/settings.py`（`Settings/BaseSettings`），把 `data/`/`api/`/`engines/` 散落的憑證（FINMIND/FINLAB token）、Postgres、runs 路徑收斂到單一型別來源（只讀真實 env，保持原 `os.environ.get` 行為；env-IPC `UNIVERSE_FINMIND`/`STRATEGY_PRESET` 保留）。1000 pass / coverage 94.22%。per-strategy preset + CLI `--strategy` 仍待後續（feature 非 cleanup）。
@@ -27,7 +28,7 @@
 | **技術主導** | Self |
 | **總工期估算** | M0-M5 約 17 週純工作量；兼職 10h/週 → 約 12 個月（含 buffer） |
 | **開始日期** | 2026-05-15（M0 開始） |
-| **目前進度** | **M1 完成 + Sprint 0 Gate Conditional Pass + Sprint 1 完成 + Sprint 2 完成（pandas 2 升級 ADR-014、wrapper bug fix `evaluate_bar`、validation 三件套 regression_vs_m1 / cross_check_vectorbt / vectorized_pnl_check）/ Sprint 3 active：universe ingest helper（PR #15）+ M2+ DB schema（PR #16）+ coverage 93.74% gate→80（PR #17）+ R-15 doc sweep（PR #18）已合入；live 9 檔 ingest + portfolio 回測為剩餘關鍵路徑** |
+| **目前進度** | **以 §1 banner + §2 工作包統計為準（整體 86% / 1053 pass / ~92.9%）**。〔以下為 2026-06-02 Sprint 3 期敘述，已被 banner 取代、保留為歷史脈絡〕M1 完成 + Sprint 0 Gate Conditional Pass + Sprint 1/2 完成（pandas 2 升級 ADR-014、wrapper bug fix `evaluate_bar`、validation 三件套）/ Sprint 3 active：universe ingest + M2+ DB schema + coverage gate→80 + R-15 doc sweep 已合入 |
 | **目前 git 分支** | `main`（6/1–6/2 PR #2/#3/#5/#10/#12/#15/#16/#17/#18 全數合入）；本次 WBS 同步走 `docs/wbs-sync-2026-06-02` |
 | **最新 commit** | `a75c0af`（Merge PR #15 data-universe-ingest；後續 main HEAD 隨 merge commit 推進）|
 
@@ -375,15 +376,15 @@
 
 | 項目 | 當前值 | 目標值 |
 |:--|:---:|:---:|
-| 整體進度 | **80%**（與 §2 工作包統計合計一致：905h/1126h；含模組 6.0 收尾 6.2.2/6.5.x 結、DOE 結構性定論）| 100% |
+| 整體進度 | **86%**（對齊 §1 banner + §2 工作包統計合計：990h/1144h；含模組 6.0 收尾 6.2.2/6.5.x 結、DOE 結構性定論、8.G/8.H 前端與契約落地）| 100% |
 | M1 完成度 | 100% | 100% |
 | Sprint 0 scaffolding | 100% | — |
 | Discord 遷移 | 100% | — |
-| 單元測試覆蓋率 | **93.77%**（#48-#53 merged 786 pass / 4 skip；`--cov-fail-under` gate 80） | 80%+ |
+| 單元測試覆蓋率 | **~92.9%**（v3.24 後 1053 pass / 5 skip；`--cov-fail-under` gate 80） | 80%+ |
 | 開放 P0 Bug | 0 | 0 |
 | 技術債項目 | 4（見下） | < 3 |
-| ADR 數量 | 25（+021 REST 契約合一 / 022 多策略艦隊 lite / 023 動能 NO-GO + 四層廢止 / 024 資金流 NO-GO / **025 驗證閘兩段化（真偽閘+配置閘）+ paper 前移，修正 ADR-016 binary**） | 持續 |
-| 文檔完整度 | ~97%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / **25 前後端 REST 契約合一（ADR-021）**） | 100% |
+| ADR 數量 | **31**（ADR-001~031；本 worktree 現存 001~029〔+023 動能 NO-GO+四層廢止 / 024 資金流 / 025 兩段閘 / 026 common 抽出 / 027 契約+registry / 028 dispatch+preset 移除 / 029 研究工作流〕+ 本次補 031 standalone auth；**ADR-030 truth gate 修正於另分支 PR #137**） | 持續 |
+| 文檔完整度 | ~97%（dev_docs 階段 1-7 + 儀表板 Design System / web_design 流水線 / 25 前後端 REST 契約合一 / **02 PRD v4.0 正名重寫（ADR-023~031）**） | 100% |
 
 ### 技術債（M2 待處理）
 
@@ -424,17 +425,19 @@
 
 | 里程碑 | 預計日期 | 交付物 | 狀態 |
 |:--|:--|:--|:---:|
-| **M0** 規格定稿 | 2026-05-25 | `strategy/v2.md` v2.1 | ✅ |
+| **M0** 規格定稿 | 2026-05-25 | `strategy/v2.md` v2.1（四層，legacy）| ✅ |
 | **M1** 資料+策略骨架 | 2026-05-26 | 44 tests 全綠 + 端到端跑通 | ✅ |
 | **M2 預備** Sprint 0 scaffolding + 結構重組 + Discord | 2026-06-01 | scaffolding/docs/結構/Discord 全綠 + 11 ADR | ✅ |
-| **Sprint 0 Gate** 6 spike 跑通 | 2026-06-08（暫定） | 6 spike PASS + gate_review.md | ⏳ |
+| **Sprint 0 Gate** 6 spike 跑通 | 2026-06-01 | 6 spike 執行（S1 ❌→ADR-013、S2/S3 ⚠️、S4/S5/S6 ✅）+ `sprint_0_gate_review.md` | ✅ **Conditional Pass** |
 | **M2** zipline-reloaded IS 回測通過 | 2026-08（暫定） | Zipline portfolio backtest + 綠燈（ADR-013）| ❌ **IS gate FAIL**（2026-06-02，ADR-017）→ 退場條件觸發，回 M0 重設進場 |
-| **M3** OOS+統計驗證 | 2026-11 | PBO < 30% + DOE 完整 + Streamlit MVP | ⏳ |
+| **M3** OOS+統計驗證 + 研究前端 | 2026-11 | PBO < 30% + DOE 完整 + **React 研究前端 MVP**（原寫 Streamlit，ADR-015/021 後改 React）| ⏳ |
 | **M4** Paper trading + 監控 | 2027-02 | 3 個月模擬報告 + Discord + Grafana | ⏳ |
 | **M5** 小倉位實盤 | 2027-05 | Shioaji + 完整 dashboard + 1/4 倉位 | ⏳ |
 | **全倉** | 2027-08 | 連續 3 月不退化 | ⏳ |
 
-**M2 退場條件**：若 IS 跑不到綠燈 → 回 M0 重新檢視策略
+> **⚠️ 2026-07-02 審查後現況註記（缺陷 #16）**：本表存在**兩套並存的現實**——M2 標 ❌「退場回 M0」（四層 IS FAIL），但 M3/M4 交付物（統計驗證後端 / 研究前端 / paper broker / REST API）**已照建並大量落地**（見 §2 工作包統計 86%）。原因：**里程碑定義已被 [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) 兩段閘 + [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) 研究迴圈 pivot 重構**——「M2 IS 綠燈才進 M3」的線性 gate 已改為「平台優先、策略連續 NO-GO 為常態」的框架（見 [02 PRD v4.0](./02_project_brief_and_prd.md) §3）。M2 的 ❌ 記錄的是**四層策略的判決**（legacy，已廢止），非平台建置進度。平台實際進度以 §2 工作包統計 + 版本 Roadmap 為準。里程碑表結構待架構文件償還 sweep（audit 路線圖 Phase 3）重畫對齊 ADR-025 框架。
+
+**M2 退場條件**：若 IS 跑不到綠燈 → 回 M0 重新檢視策略（**legacy**：已由 ADR-025 兩段閘重構，見上方註記）
 **Sprint 0 退場條件**：見 `01_workflow_manual.md §5.A.4` 決策樹
 
 ### M2 acceptance「綠燈」門檻（凍結於 [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md)）
