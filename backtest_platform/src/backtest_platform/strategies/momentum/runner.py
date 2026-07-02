@@ -15,16 +15,21 @@ from backtest_platform.strategies.momentum.strategy import (
     backtest_momentum,
 )
 from backtest_platform.strategies.protocol import (
+    GateSpec,
     Loader,
     StrategyRun,
     register_strategy,
 )
+from backtest_platform.validation.gate_state import MOMENTUM_GATE
 
 _SLIP_STRESS = 0.003
 
 _EMPTY_METRICS: dict = {
     "trades": 0, "bars": 0,
     "cagr": 0.0, "sharpe": 0.0, "slippage_sharpe": 0.0, "maxdd": 0.0,
+    # diversification health key the MOMENTUM_GATE reads — present (=0) so an empty
+    # run is judged FAIL, never INCOMPLETE (審查缺陷 #8): gate keys ⊆ metrics keys.
+    "avg_holdings": 0.0,
 }
 
 
@@ -34,6 +39,8 @@ class MomentumRunner:
 
     config_model: ClassVar[type[MomentumConfig]] = MomentumConfig
     title: ClassVar[str] = "12-1 Cross-sectional Momentum"
+    # K1/K2/K3 edge + diversification health (avg_holdings) — its keys ⊆ panel_metrics.
+    gate: ClassVar[GateSpec] = MOMENTUM_GATE
 
     def run(
         self,

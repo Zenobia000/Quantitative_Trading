@@ -7,11 +7,14 @@ Two endpoints:
 * ``POST /gate/evaluate`` — feed a metrics dict, get per-criterion PASS/FAIL +
   signed gap + the overall PASS/FAIL/INCOMPLETE status.
 
-Pure pass-through to ``validation.gate_state.evaluate_gate``; no IO.
+Both accept an optional ``strategy`` so the审判庭 dispatches that strategy's own
+declared gate (``get_strategy_gate``) — a panel strategy is judged by its panel
+gate, not four-layer's health checks it never produces (審查缺陷 #8). Omitting
+``strategy`` keeps the four-layer ``DEFAULT_GATE`` for back-compat.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, Query
 
 from backtest_platform.api.envelope import Envelope, ok
 from backtest_platform.api.response_models import GateEvalData, GateSpecData
@@ -21,9 +24,30 @@ from backtest_platform.validation.gate_state import DEFAULT_GATE, evaluate_gate
 router = APIRouter(prefix="/gate", tags=["gate"])
 
 
+def _resolve_gate(strategy: str | None):
+    """The strategy's declared gate, or the four-layer DEFAULT_GATE when omitted.
+
+    Unknown strategy / a strategy without a declared gate raise ValueError, which
+    the callers map to HTTP 400 (bad request, not a server fault).
+    """
+    if not strategy:
+        return DEFAULT_GATE
+    from backtest_platform.research import runners as _runners  # noqa: F401 — register
+    from backtest_platform.strategies.protocol import get_strategy_gate
+
+    return get_strategy_gate(strategy)
+
+
 @router.get("/spec", response_model=Envelope[GateSpecData])
-def gate_spec() -> Envelope:
-    """Return the default gate's criteria (key / op / threshold / kind / label)."""
+def gate_spec(strategy: str | None = Query(None)) -> Envelope:
+    """Return a gate's criteria (key / op / threshold / kind / label).
+
+    ``strategy`` → that strategy's declared gate; omitted → four-layer DEFAULT_GATE.
+    """
+    try:
+        gate = _resolve_gate(strategy)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
     criteria = [
         {
             "key": c.key,
@@ -32,15 +56,22 @@ def gate_spec() -> Envelope:
             "kind": c.kind,
             "label": c.label,
         }
-        for c in DEFAULT_GATE
+        for c in gate
     ]
     return ok({"criteria": criteria})
 
 
 @router.post("/evaluate", response_model=Envelope[GateEvalData])
 def gate_evaluate(req: GateEvaluateRequest) -> Envelope:
-    """Judge a metrics dict against the default gate."""
-    result = evaluate_gate(req.metrics)
+    """Judge a metrics dict against a gate.
+
+    ``req.strategy`` → that strategy's declared gate; omitted → four-layer default.
+    """
+    try:
+        gate = _resolve_gate(req.strategy)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    result = evaluate_gate(req.metrics, gate)
     payload = {
         "status": result.status.value,
         "passed": result.passed,

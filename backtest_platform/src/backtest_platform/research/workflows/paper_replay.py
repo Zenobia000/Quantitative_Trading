@@ -9,7 +9,7 @@ from typing import Any
 from backtest_platform.research import runners as _runners  # noqa: F401
 from backtest_platform.research.is_harness import load_merged_parquet
 from backtest_platform.research.workflows.config import PaperReplayConfig
-from backtest_platform.strategies.protocol import Loader, get_strategy
+from backtest_platform.strategies.protocol import Loader, get_strategy, get_strategy_gate
 from backtest_platform.validation.gate_state import evaluate_gate
 
 
@@ -36,7 +36,9 @@ def run_paper_replay_workflow(
     window_start = cfg.as_of - timedelta(days=cfg.lookback_buffer_days)
     run = runner.run(list(cfg.symbols), window_start, cfg.as_of, sconf, loader)
 
-    gate = evaluate_gate(run.metrics)
+    # Judge by the strategy's own declared gate, not a shared four-layer default,
+    # so a panel replay reaches a real verdict instead of INCOMPLETE (審查缺陷 #8).
+    gate = evaluate_gate(run.metrics, get_strategy_gate(cfg.strategy))
     run_id = f"{cfg.run_id_prefix}_{cfg.strategy}_{cfg.as_of:%Y%m%d}"
 
     return PaperReplayResult(

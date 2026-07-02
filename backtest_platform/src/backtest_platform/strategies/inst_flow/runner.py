@@ -15,16 +15,21 @@ from backtest_platform.strategies.inst_flow.strategy import (
     backtest_inst_flow,
 )
 from backtest_platform.strategies.protocol import (
+    GateSpec,
     Loader,
     StrategyRun,
     register_strategy,
 )
+from backtest_platform.validation.gate_state import PANEL_GATE
 
 _SLIP_STRESS = 0.003
 
 _EMPTY_METRICS: dict = {
     "trades": 0, "bars": 0,
     "cagr": 0.0, "sharpe": 0.0, "slippage_sharpe": 0.0, "maxdd": 0.0,
+    # diversification health key the PANEL_GATE reads — present (=0) so an empty
+    # run is judged FAIL, never INCOMPLETE (審查缺陷 #8): gate keys ⊆ metrics keys.
+    "avg_holdings": 0.0,
 }
 
 
@@ -34,6 +39,8 @@ class InstFlowRunner:
 
     config_model: ClassVar[type[InstFlowConfig]] = InstFlowConfig
     title: ClassVar[str] = "Institutional Net-Buy Flow"
+    # Cross-sectional panel strategy → the generic panel gate (edge + avg_holdings).
+    gate: ClassVar[GateSpec] = PANEL_GATE
 
     def run(
         self,

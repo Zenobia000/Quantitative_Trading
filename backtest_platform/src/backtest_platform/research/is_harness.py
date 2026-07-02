@@ -14,15 +14,21 @@ relative read + health checks, not absolute CAGR.
 from __future__ import annotations
 
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 
 from backtest_platform.research import runners as _runners  # noqa: F401 — registers all strategies
 from backtest_platform.research.run_config import RunConfig
 from backtest_platform.strategies.four_layer_resonance import sim as _fl_sim
-from backtest_platform.strategies.protocol import get_strategy
+from backtest_platform.strategies.protocol import get_strategy, get_strategy_gate
 from backtest_platform.validation.gate_state import GateResult, evaluate_gate
+
+
+def _utc_now() -> datetime:
+    """Default clock: timezone-aware UTC now. Injectable so records are testable
+    (a naive ``datetime.now()`` produced ambiguous, non-comparable timestamps)."""
+    return datetime.now(timezone.utc)
 
 # Back-compat re-exports (ADR-027): the four-layer sim helpers used to be defined
 # in this module; engines.protocol (SimEngine) and research.sweep still import
@@ -110,27 +116,35 @@ def run_and_judge(
     cfg: RunConfig,
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
     gate=None,
+    clock: Callable[[], datetime] = _utc_now,
 ) -> dict:
     """run_is → evaluate_gate → a complete, ledger-ready run record."""
-    return run_and_judge_with_returns(cfg, loader, gate)[0]
+    return run_and_judge_with_returns(cfg, loader, gate, clock)[0]
 
 
 def run_and_judge_with_returns(
     cfg: RunConfig,
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
     gate=None,
+    clock: Callable[[], datetime] = _utc_now,
 ) -> tuple[dict, pd.Series]:
     """One sim pass → ``(ledger-ready run record, portfolio daily returns)``.
 
     The record is identical to ``run_and_judge``'s; returning the returns series
     alongside it lets a caller that wants both (e.g. ``run-is --tearsheet``) avoid
     running the sim twice.
+
+    When ``gate`` is omitted the审判庭 criteria are dispatched from the run's own
+    strategy (``get_strategy_gate``) — NOT a shared four-layer default — so a panel
+    strategy is judged by its own gate and reaches a real verdict (審查缺陷 #8).
+    An explicit ``gate`` always wins (back-compat).
     """
     metrics, returns, _trades_list = _run_is_core(cfg, loader)
-    result: GateResult = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
+    resolved_gate = gate if gate is not None else get_strategy_gate(cfg.strategy)
+    result: GateResult = evaluate_gate(metrics, resolved_gate)
     record = {
         "run_id": cfg.run_id,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": clock().isoformat(timespec="seconds"),
         "hypothesis": cfg.hypothesis,
         "strategy": cfg.strategy,
         "params": cfg.params,
@@ -162,6 +176,7 @@ def run_and_judge_persist(
     loader: Callable[[str], pd.DataFrame] = load_merged_parquet,
     gate=None,
     series_dir=None,
+    clock: Callable[[], datetime] = _utc_now,
 ) -> dict:
     """run_and_judge + persist the per-run equity/drawdown/trades sidecar.
 
@@ -169,14 +184,19 @@ def run_and_judge_persist(
     populates ``run_series_store`` for ``GET /runs/{id}/equity`` · ``/trades``
     without a second sim pass. Returns the ledger record (same shape as
     ``run_and_judge``); the heavy series go to the sidecar, not the ledger line.
+
+    Like ``run_and_judge``, an omitted ``gate`` is dispatched from the run's own
+    strategy so an API/GUI-triggered panel run is no longer stuck at INCOMPLETE
+    (審查缺陷 #8). An explicit ``gate`` still wins.
     """
     from backtest_platform.research import run_series_store
 
     metrics, returns, trades = _run_is_core(cfg, loader)
-    result: GateResult = evaluate_gate(metrics) if gate is None else evaluate_gate(metrics, gate)
+    resolved_gate = gate if gate is not None else get_strategy_gate(cfg.strategy)
+    result: GateResult = evaluate_gate(metrics, resolved_gate)
     record = {
         "run_id": cfg.run_id,
-        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "created_at": clock().isoformat(timespec="seconds"),
         "hypothesis": cfg.hypothesis,
         "strategy": cfg.strategy,
         "params": cfg.params,

@@ -47,3 +47,33 @@ def test_gate_evaluate_rejects_extra_field(client):
     resp = client.post("/gate/evaluate", json={"metrics": {}, "bogus": 1})
     assert resp.status_code == 422
     assert resp.json()["success"] is False
+
+
+# ---- per-strategy gate dispatch (審查缺陷 #8) ----------------------------------
+
+def test_gate_spec_dispatches_strategy_gate(client):
+    """?strategy=momentum → momentum's panel gate (avg_holdings health), not the
+    four-layer entry-quality health checks."""
+    body = client.get("/gate/spec", params={"strategy": "momentum"}).json()
+    keys = {c["key"] for c in body["data"]["criteria"]}
+    assert "avg_holdings" in keys
+    assert "struct1_pct" not in keys  # four-layer-only health check
+
+
+def test_gate_evaluate_momentum_metrics_not_incomplete(client):
+    """Momentum metrics (no four-layer health keys) reach a real verdict when
+    judged by momentum's own gate — the whole point of the fix."""
+    momentum_metrics = {
+        "cagr": 0.25, "sharpe": 1.5, "slippage_sharpe": 1.2, "avg_holdings": 8.0,
+    }
+    body = client.post(
+        "/gate/evaluate", json={"metrics": momentum_metrics, "strategy": "momentum"}
+    ).json()
+    assert body["data"]["status"] == "PASS"
+
+
+def test_gate_evaluate_unknown_strategy_is_400(client):
+    resp = client.post(
+        "/gate/evaluate", json={"metrics": {}, "strategy": "does_not_exist"}
+    )
+    assert resp.status_code == 400

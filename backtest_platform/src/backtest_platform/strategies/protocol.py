@@ -34,14 +34,26 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
-from typing import Any, ClassVar, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, runtime_checkable
 
 import pandas as pd
 from pydantic import BaseModel
 
+if TYPE_CHECKING:
+    from backtest_platform.validation.gate_state import Criterion
+
 # A loader maps a stock id → its merged daily/institutional/chip frame.
 # Every strategy slices the columns it needs — ONE data-access seam.
 Loader = Callable[[str], pd.DataFrame]
+
+# GateSpec: the strategy's own validation gate — a tuple of
+# ``validation.gate_state.Criterion`` (the审判庭's threshold set as data). It is
+# written as a forward-ref string so the strategy *contract* stays import-light on
+# the validation layer: the concrete Criterion tuples are built in each runner
+# (which legitimately imports ``validation.gate_state``), while this module only
+# names the shape. Reusing gate_state's Criterion avoids inventing a parallel gate
+# type — the seam declares WHICH gate, never a second gate structure.
+GateSpec = tuple["Criterion", ...]
 
 
 @dataclass(frozen=True)
@@ -81,14 +93,21 @@ class StrategyRunner(Protocol):
     ``config_model`` is the strategy's Pydantic config class — callers use it to
     validate ``params`` and to expose JSON-schema. ``title`` is a short human label.
 
+    ``gate`` is the strategy's own validation gate (the审判庭 criteria that judge
+    its runs). It MUST be declared — four-layer's health checks are meaningless for
+    a panel strategy and vice-versa, so dispatch resolves each run's gate from the
+    strategy that produced it (``get_strategy_gate``) instead of a shared default.
+
     Contract invariants enforced by the conformance gate:
     - ``config_model()`` (no args) must succeed (all fields have defaults or none).
     - ``run(...)`` must not raise on synthetic data.
     - ``run(...)`` metrics dict ⊇ {cagr, sharpe, slippage_sharpe, maxdd, trades, bars}.
+    - ``gate`` is declared and every ``gate`` criterion key ⊆ the produced metrics.
     """
 
     config_model: ClassVar[type[BaseModel]]
     title: ClassVar[str]
+    gate: ClassVar[GateSpec | None]
 
     def run(
         self,
@@ -130,6 +149,32 @@ def get_strategy(name: str) -> "StrategyRunner":
         raise ValueError(
             f"unknown strategy {name!r}; choose from {sorted(_REGISTRY)}"
         ) from None
+
+
+def get_strategy_gate(name: str) -> GateSpec:
+    """Resolve a strategy's declared validation gate (審查缺陷 #8 / completes ADR-027).
+
+    The platform judges every run through ``validation.gate_state.evaluate_gate``,
+    but *which* criteria apply is strategy-specific: four-layer's health checks
+    (struct1_pct/churn_pct/avg_hold) are entry-quality signals only four-layer
+    produces; a cross-sectional panel strategy (momentum/inst_flow) never carries
+    them, so judging it by four-layer's DEFAULT_GATE left it perpetually
+    INCOMPLETE. Each runner therefore declares its own ``gate`` ClassVar and
+    dispatch resolves it here.
+
+    A strategy that declares no gate is a hard error — the platform refuses to
+    judge a strategy by a foreign strategy's ruler, and refuses to silently claim
+    a verdict it cannot justify.
+    """
+    runner = get_strategy(name)  # ValueError on unknown name
+    gate = getattr(runner, "gate", None)
+    if gate is None:
+        raise ValueError(
+            f"strategy {name!r} declares no validation gate; set its `gate` "
+            f"ClassVar on the runner (see strategies/_template/runner.py). "
+            f"Refusing to fall back to another strategy's gate."
+        )
+    return gate
 
 
 def list_strategies() -> list[str]:

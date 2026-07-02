@@ -34,8 +34,11 @@ def test_validation_current_none_when_absent(tmp_path):
 
 def test_record_is_result_pass_and_fail(tmp_path):
     p = tmp_path / "val.jsonl"
-    assert promotion_service.record_is_result("rp", _PASS, path=p)["validation_status"] == "is_pass"
-    assert promotion_service.record_is_result("rf", _FAIL, path=p)["validation_status"] == "is_fail"
+    # _PASS/_FAIL carry four-layer health keys → judged by four_layer's gate.
+    assert promotion_service.record_is_result(
+        "rp", _PASS, strategy="four_layer", path=p)["validation_status"] == "is_pass"
+    assert promotion_service.record_is_result(
+        "rf", _FAIL, strategy="four_layer", path=p)["validation_status"] == "is_fail"
     state = promotion_service.gate_state("rp", path=p)
     assert state["stage"] == "is_validated"
     assert len(state["history"]) == 1
@@ -43,8 +46,15 @@ def test_record_is_result_pass_and_fail(tmp_path):
 
 def test_record_is_incomplete_when_metric_missing(tmp_path):
     p = tmp_path / "val.jsonl"
-    out = promotion_service.record_is_result("ri", {"cagr": 0.2}, path=p)
+    out = promotion_service.record_is_result("ri", {"cagr": 0.2}, strategy="four_layer", path=p)
     assert out["validation_status"] == "incomplete"
+
+
+def test_record_is_result_requires_gate_or_strategy(tmp_path):
+    import pytest
+    # neither explicit gate nor strategy → loud error, not a silent four-layer default.
+    with pytest.raises(ValueError, match="explicit `gate` or a `strategy`"):
+        promotion_service.record_is_result("rx", _PASS, path=tmp_path / "v.jsonl")
 
 
 # ---- promotion_service: ordered promotion -------------------------------

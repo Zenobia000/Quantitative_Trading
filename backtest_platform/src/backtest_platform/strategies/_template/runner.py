@@ -20,16 +20,21 @@ from backtest_platform.strategies._template.strategy import (
 )
 from backtest_platform.strategies.common.panel import column_panel, panel_metrics
 from backtest_platform.strategies.protocol import (
+    GateSpec,
     Loader,
     StrategyRun,
     register_strategy,
 )
+from backtest_platform.validation.gate_state import PANEL_GATE
 
 _SLIP_STRESS = 0.003
 
 _EMPTY_METRICS: dict = {
     "trades": 0, "bars": 0,
     "cagr": 0.0, "sharpe": 0.0, "slippage_sharpe": 0.0, "maxdd": 0.0,
+    # diversification health key the PANEL_GATE reads — present (=0) so an empty
+    # run is judged FAIL, never INCOMPLETE (審查缺陷 #8): gate keys ⊆ metrics keys.
+    "avg_holdings": 0.0,
 }
 
 
@@ -39,6 +44,9 @@ class TemplateRunner:
 
     config_model: ClassVar[type[TemplateConfig]] = TemplateConfig
     title: ClassVar[str] = "Template (equal-weight buy-and-hold)"
+    # Panel strategy → the generic panel gate. Copy this line (and pick/author a
+    # gate whose keys ⊆ your metrics) when you adapt the template.
+    gate: ClassVar[GateSpec] = PANEL_GATE
 
     def run(
         self,
