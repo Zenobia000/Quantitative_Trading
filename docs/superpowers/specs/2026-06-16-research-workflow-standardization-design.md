@@ -1,6 +1,6 @@
 # Research Workflow Standardization — Design Spec (Sub-project ①.5)
 
-> **Status:** Draft for review · **Date:** 2026-06-16 · **Author:** Sunny + Claude
+> **Status:** Shipped (ADR-029) · **Date:** 2026-06-16 · **Author:** Sunny + Claude
 > **Workflow:** sunnydata-design Phase 1 (Brainstorm) output
 
 **Goal:** Turn the seven one-off `scripts/inst_flow_*.py` research scripts into a

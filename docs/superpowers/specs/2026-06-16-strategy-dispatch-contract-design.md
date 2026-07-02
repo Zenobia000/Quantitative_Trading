@@ -1,6 +1,6 @@
 # Strategy Dispatch & Contract — Design Spec (Sub-project ①)
 
-> **Status:** Draft for review · **Date:** 2026-06-16 · **Author:** Sunny + Claude
+> **Status:** Shipped (ADR-028) · **Date:** 2026-06-16 · **Author:** Sunny + Claude
 > **Workflow:** sunnydata-design Phase 1 (Brainstorm) output
 
 **Goal:** Make every strategy a first-class, self-describing citizen the platform can

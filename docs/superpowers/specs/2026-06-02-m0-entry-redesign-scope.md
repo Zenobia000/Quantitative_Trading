@@ -1,5 +1,7 @@
 # M0 Re-scope — 進場假設重設（v2 → v3）
 
+> ⚠️ 本文件主題（四層共振）已於 ADR-023 判負 edge 廢止，僅存 audit trail。
+
 > **狀態：** 證據彙整 / 待下一個 design cycle 細化
 > **日期：** 2026-06-02
 > **觸發：** [[ADR-017]] M2 IS gate FAIL → 回 M0 重設進場
