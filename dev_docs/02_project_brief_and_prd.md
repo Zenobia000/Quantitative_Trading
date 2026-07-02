@@ -1,27 +1,53 @@
 # 專案簡報與 PRD — backtest_platform
 
-> **版本：** v3.0 | **更新：** 2026-06-01
+> **版本：** v4.0 | **更新：** 2026-07-02
 > **進度狀態：** 詳見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源，見 [`15 §10`](./15_documentation_and_maintenance_guide.md) 規則）
 >
 > **v1.0** (2026-05-26)：M1 完成時的 PRD 基線版本（原 rqalpha + FinMind 路線）
 > **v2.0** (2026-05-31)：M2+ 重大路線變更，以 Pivot Banner 標示過時段落
 > **v3.0** (2026-06-01)：§1-§7 全面對齊 ADR-013（zipline-reloaded 主骨架），移除過時標示；完整規劃見 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md)
+> **v4.0** (2026-07-02)：**產品正名重寫**。承 [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) §1/§3 缺陷 #15：v3.0 仍以已判死刑的四層共振為產品主軸（[ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) 判其負 edge 廢止），ADR-023~031 定義現今產品的決策全部缺席於決策沿革——依 v3.0 判準專案已「失敗」，敘事真空是最大產品風險。v4.0 把產品從「四層共振回測平台」正名為「**個人量化 edge 驗證工廠 + 晉升管線**」：策略是消耗品、審判庭是資產、連續 NO-GO 是產品正常運作的證據。Persona 正式化、部署假設明文、平台/策略 KPI 分列、❌ 清單收斂。**§1-§4 描述現況主軸；四層共振相關敘述一律標 legacy**。
 
 ---
 
 ## 決策沿革（Decision Lineage）
 
-本文 §1-§7 已對齊以下決策的最新狀態。完整 M2-M5 規劃以 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) 為準。
+本文 §1-§7 已對齊以下決策的最新狀態。完整 M2-M5 規劃以 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) 為準；里程碑狀態以 [16 WBS](./16_wbs_development_plan.md) 為單一真相源。
+
+### 骨架與基礎建設（M1-M2 定案，維持有效）
 
 | 主題 | 最終決策（最新） | 沿革 | 正式文檔 |
 | :--- | :--- | :--- | :--- |
 | **回測引擎主骨架** | **zipline-reloaded**（社群版，免商業綁定） | rqalpha → TQuant-Lab/zipline-tej → zipline-reloaded | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)（supersedes [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)、[ADR-001](./adrs/ADR-001-engine-rqalpha-plus-vectorbt.md)）|
-| **資料源** | **付費 FinLab** 為主 + FinMind 免費版 fallback | FinMind 免費版 + sponsor → 付費 FinLab | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
+| **資料源** | **付費 FinLab** 為主（全史 2007→今 + 原生 survivorship-clean）+ FinMind 免費版 fallback | FinMind 免費版 + sponsor → 付費 FinLab（[ADR-006 realized](./adrs/ADR-006-data-source-finlab-paid.md)）| [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
 | **引擎策略** | **雙引擎**（Zipline event 主 + vectorbt vector） | 單引擎 → 雙引擎 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md)（vector 半邊隨 [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) 恢復）|
-| **系統定位** | **完整交易系統**（backtest / paper / live 三模式共用 strategy code） | 純回測平台 → 三模式 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
-| **監控架構** | **Streamlit + Grafana + Discord** 三層 | Grafana 單一 → 三層（Telegram → Discord）| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) |
+| **系統定位** | **三模式共用 strategy code**（backtest / paper / live） | 純回測平台 → 三模式 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
+| **監控/告警** | **React 儀表板 + Discord** 主線（Grafana 為系統面板輔） | Grafana 單一 → Streamlit → **React（ADR-021/015）** + Discord（Telegram → Discord）| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) + [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) |
+| **前後端契約** | **單一 REST 契約 doc 25 + OpenAPI 機器真相**（envelope / 錯誤碼 / 分頁 / polling） | 三處分裂 → 合一 | [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) |
 | **套件管理** | **uv** | poetry → uv | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) |
 | **M2 目錄結構** | engines/ + adapters/ + validation/ 模組邊界 | — | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) |
+
+### 產品主軸與審判庭（現今產品由此定義 — v4.0 補登 ADR-016~031）
+
+> **這一段是 v4.0 的核心補課**：以下決策定義了「產品實際在做什麼」，在 v3.0 決策沿革中全數缺席。閱讀順序 = 產品演化順序：ADR-016 立絕對門檻 → ADR-017/019/020 四層 IS 重設探索 → ADR-022 艦隊營運 → ADR-023/024 連續 NO-GO → ADR-025 驗證機制修正 → ADR-026~029 平台契約化 → ADR-030/031 審判庭與部署收尾。
+
+| 主題 | 最終決策（最新） | 一句話摘要 | 正式文檔 |
+| :--- | :--- | :--- | :--- |
+| **M2 acceptance 門檻** | binary 絕對門檻（CAGR>18% / Sharpe>1.0 / 滑點 Sharpe>1.0）— **已由 ADR-025 修正為兩段閘** | 凍結審慎下限；後被檢出對研究迭代與市場中性策略錯配 | [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) |
+| **四層 IS gate FAIL** | 觸發退場 → 回 M0 重設**進場**假設 | 參數探針定位約束在進場非出場（legacy 探索）| [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) |
+| **監控 → 研究迴圈優先 pivot** | Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate + OOS sealed vault + 試驗次數 deflate + 晉升狀態機 | 產品主軸從「監控」轉「研究迴圈與審判庭」| [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) |
+| **v3 進場重設** | 四層參數化分級放寬 + flameout 最小 exit（legacy）| 四層探索最後一輪；反過擬合硬約束 | [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) |
+| **候選 D 中小型 universe** | escalate 換 point-in-time 中小型動能 universe（legacy）| large-cap IS FAIL 後的 universe 升級探針 | [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) |
+| **多策略艦隊營運（lite）** | 營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略）| gated 於 ≥1 策略完成 3 個月 paper（現 0）| [ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md) |
+| **策略評估第一輪結論** | **四層共振廢止（負 edge、毀價值）+ 動能 12-1 NO-GO**（真實但太溫和，守 ADR-016 不放寬）| 平台量出「過擬合/偏誤稅」擋下壞策略 = 平台優先鐵證 | [ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) |
+| **三大法人資金流候選** | binary ADR-016 下 survivorship-clean FAIL → **ADR-025 兩段閘 + FinLab 全史重驗 = TRUTH GATE REAL / paper-ready** | 平台首個 paper-ready 候選；剩 forward live OOS | [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) |
+| **驗證閘兩段化 + paper 前移** | 真偽閘（PBO/DSR/WFA/survivorship-clean，hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續；絕對 CAGR 降參考）| 修正 ADR-016 binary 三缺陷；不翻案 ADR-023/024 | [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) |
+| **共用回測機制抽出** | `rebalance_dates`/`vol_target`/`clean_returns`/`TRADING_DAYS` 抽至 `strategies/common` | 解策略間反向 import 私有函式的 leaky abstraction | [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) |
+| **策略契約 + registry** | 接縫畫在**輸出**邊界（`StrategyRunner.run → StrategyRun`）+ 輕量 name→runner registry | 解除 four_layer 引擎特權；新增策略 7-12→2-3 檔 | [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) |
+| **策略派發契約 + preset 移除** | `POST /runs {strategy, params}` 經 registry dispatch；策略自描述（`GET /strategies`）+ conformance gate | 任意 AI-authored 策略可由 HTTP/CLI 啟動；preset 路徑全移除 | [ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) |
+| **研究工作流標準化** | 通用工作流 `doe`/`go_gates`/`truth_gate`/`paper_replay` 住 `research/workflows/`；各策略以 `research_config.py` 宣告參數 | 新增策略只寫 `research_config.py` 即參與所有工作流，零新腳本 | [ADR-029](./adrs/ADR-029-research-workflow-standardization.md) |
+| **審判庭真偽閘修正** | truth gate DSR 單位 / OOS holdout / survivorship 判準修正 | 修復審判庭核心可信度（**本 worktree 未含，另分支 PR #137**）| ADR-030（truth gate 修正，PR #137）|
+| **standalone auth 裁決** | **localhost-only 綁定宣告 + 移除 doc 25 的 Bearer 承諾**（降為 M5 遠端存取時重議）| 20 行 static Bearer 對 localhost 不增實質安全、卻增每 client 摩擦 | [ADR-031](./adrs/ADR-031-standalone-auth-decision.md) |
 
 ---
 
@@ -29,69 +55,144 @@
 
 | 項目 | 內容 |
 | :--- | :--- |
-| **專案名稱** | backtest_platform — 四層共振戰法回測平台 |
+| **專案名稱** | backtest_platform — **個人量化 edge 驗證工廠 + 晉升管線**（single-user、standalone、台股專用）|
+| **一句話定位** | 一座能誠實殺掉壞策略、讓極少數真 edge 走不可逆 backtest→paper→live 晉升管線的個人審判系統 |
 | **狀態** | 詳見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源）|
-| **目標 M5 上線** | 2027-Q2（暫定，含 M2 重組緩衝）|
-| **核心團隊** | 單人開發（Zenobia000） |
-| **策略契約** | `strategy/v2.md` v2.1.0 |
+| **目標里程碑** | M5 小倉位實盤 2027-Q2（暫定）；**下一個價值里程碑 = 修好審判庭（ADR-030）→ 用可信的閘重驗 inst_flow → after-close 排程器收 live OOS**|
+| **核心團隊** | 單人開發（Zenobia000），單人雙帽（見 §2 Persona）|
+| **策略契約** | 現行真相源 = [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md)/[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) `StrategyRunner` 輸出契約 + registry；`strategy/v2.md`（四層共振 v2.1.0）為 **legacy**（已廢止）|
+
+### 產品哲學（v4.0 正名）
+
+- **策略是消耗品，審判庭是資產。** 四層共振（負 edge 廢止）、動能/多因子/long-short/資金流四結構撞 ~0.9 Sharpe survivorship-clean 牆——這些策略被殺掉不是失敗，是產品在正常工作。平台的核心資產是**審判庭本身**：PBO/DSR/WFA/survivorship-clean 強制 gate + 兩段閘 + OOS sealed vault + 試驗計數 deflate。
+- **連續 NO-GO 是產品正常運作的最強證據。** 天真回測器會部署一個「看似 1.28、實際 OOS 0.63」的策略然後在真錢上虧；本平台量出「過擬合/偏誤稅」（WFA OOS 1.28→1.07→0.63，每剝一層 degree of freedom 就掉）並擋下它。
+- **唯一護城河是「驗證信心」。** 零售市場沒有任何 SaaS 把 PBO/DSR/WFA/survivorship-clean 做成強制 gate（FinLab 只做 lookahead 偵測、TradingView/Composer 幾乎不做、QuantConnect 止於警告）；學術級防過擬合在開源生態近乎空白（MLFinLab 已閉源）。**前提：審判庭自己必須先可信**（ADR-030 修復三缺陷是 P0 中的 P0）。
 
 ---
 
-## 2. 商業目標
+## 2. 商業目標與 Persona
+
+### 2.1 商業目標
 
 | 項目 | 內容 |
 | :--- | :--- |
-| **背景與痛點** | 四層共振戰法在 ChatGPT 對話中設計（3,427 行），缺乏可重現的量化驗證；XQ XScript 只能繪圖，無法回測 portfolio 級別績效 |
-| **策略契合度** | 提供策略本人對「策略真的有 Edge / 還是運氣」的科學判斷依據 |
-| **成功指標** | 主要：IS Sharpe > 1.0、OOS Sharpe > 0.6 × IS；次要：PBO < 30%、滑點 0.3% 下 Sharpe > 1.0 |
+| **背景與痛點** | 開發者本人手上有多個直覺策略假設，缺乏可重現、可稽核、防過擬合的量化審判機制。跳過驗證直接實盤 = 拿錢學習；停在直覺階段 = 永遠不知策略是真 edge 還是運氣 |
+| **價值主張** | 提供「這策略真的有 Edge、還是過擬合/生存者偏誤/運氣」的科學判決，並把極少數過關者送上不可逆晉升管線 |
+| **成功定義** | 不是「找到會賺錢的策略」（那是運氣函數），而是「**每個假設都得到誠實、可重現、成本可控的判決**」。平台成功與否，用平台 KPI 衡量（§3），不綁單一策略成敗 |
 
-### 為什麼是現在做
+### 2.2 Persona：單人雙帽
 
-- v1 ChatGPT 對話已完成（M0 規格）
-- 不做回測 → 永遠停在「直覺策略」階段，無法判斷是否上實盤
-- 跳過回測直接實盤 = 拿錢學習
+唯一使用者是開發者本人，依時段戴不同帽子：
+
+| 帽子 | 時段 | 主要工具 | 典型動作 |
+| :--- | :--- | :--- | :--- |
+| **策略研究者** | 研究時段 | **CLI-first**（GUI 檢視為輔）| 跑 DOE / truth-gate / sweep（`research doe/go-gates/truth-gate/paper-replay`），GUI 檢視 runs / 報告 / 比較 |
+| **艦隊運維者** | 營運時段 | **GUI + Discord**（gated 於 ≥1 paper-ready 策略）| 看 Fleet 監控、收 Discord 退化告警、處置晉升/退場 |
+
+### 2.3 部署假設（正式化，據此裁決長期懸置矛盾）
+
+| 假設 | 內容 | 影響的決策 |
+| :--- | :--- | :--- |
+| **單機自託管** | 全系統跑在開發者個人 PC / 單機，無多實例、無叢集 | 路徑、備份、排程器（cron/systemd timer 級，非企業 scheduler）|
+| **內網 localhost** | API 綁 `127.0.0.1`，前端走 vite proxy 同機存取，無公網暴露 | **auth 裁決（[ADR-031](./adrs/ADR-031-standalone-auth-decision.md)：localhost-only 綁定即邊界，移除 Bearer 承諾）**、CORS |
+| **無多人協作** | 無多角色 RBAC、無跨人 leaderboard、無簽核流程 | 認證從簡、無 model registry 族譜 |
+| **無合規審批** | 個人資金、無外部合規要求 | 免 audit 簽核鏈（僅保留晉升 audit log 供自我追溯）|
+
+> **秘密仍嚴管（不因 standalone 放鬆）**：`FINLAB_API_TOKEN`、`DISCORD_*`、`INFLUX_*` 僅後端持有，絕不出現在任何回應或前端 bundle（`rules/security.md`）。
 
 ---
 
-## 3. 使用者故事與允收標準
+## 3. 成功指標（兩層分列）
 
-### Epic 1：策略研究者跑歷史回測
+> **關鍵區分**：平台 KPI 衡量「審判機器好不好用、可不可信」；策略 KPI 衡量「某個具體策略該不該部署」。兩者解耦——策略連續 NO-GO 時平台 KPI 仍可為優。
 
-| ID | 描述 (As a / I want to / So that) | 允收標準 | BDD |
-| :--- | :--- | :--- | :--- |
-| US-001 | As a 策略研究者, I want to 用單一指令對某檔股票跑 v2.md 全套四層計分+訊號, so that 我可以快速驗證程式邏輯是否與 XQ 一致 | 1. CLI `python -m backtest_platform.pipeline run --stock-id 2330 --start ... --end ...` 跑通<br>2. 輸出 calendar CSV + summary stats<br>3. 訊號與 XQ 標記差異 < 0.5% | `pipeline.feature` |
-| US-002 | As a 策略研究者, I want to 拉某段期間的 FinMind 資料並 cache 為 parquet, so that 重跑回測時不需重 call API | 1. CLI 支援 `--output data/parquet`<br>2. 三表（daily / institutional / broker_chips）獨立檔案<br>3. 重跑時優先讀 parquet | `etl.feature` |
+### 3.1 平台 KPI（審判機器本身）
 
-### Epic 2：策略研究者驗證策略 Edge
+| 指標 | 定義 | 現況 / 目標 |
+| :--- | :--- | :--- |
+| **判決可重現性** | `inst_flow` 的「TRUTH GATE REAL」判決能否在標準化工作流（ADR-029）下重現 | ⚠️ 目前 REAL 判決來自已刪除的 scripts，現行程式路徑待 ADR-030 修好審判庭後重現（P0）|
+| **新策略 lead time** | 假設 → 真偽判決所需成本 | ADR-027 已降至「複製 4 檔 + 1 行」；**應量測**實際 wall-clock |
+| **每次驗證成本** | 單次 truth-gate 的算力/時間/資料 quota | 單機可負擔為底線 |
 
-| ID | 描述 | 允收標準 | BDD |
-| :--- | :--- | :--- | :--- |
-| US-003 | As a 策略研究者, I want to 跑 IS 期間（2015–2020）的 portfolio 回測, so that 我能判斷策略是否達標 v2.md 4.3.1 綠燈 | 1. zipline-reloaded 整合（Backtest 模式，ADR-013）<br>2. 輸出 quantstats 報表<br>3. 對照綠/黃/紅燈表自動標記 | `backtest_is.feature` (M2) |
-| US-004 | As a 策略研究者, I want to 跑 OOS（2023–2024）一次性驗證, so that 我能判斷策略是否過擬合 | 1. OOS 結果不可回頭調參<br>2. 自動計算 PBO / DSR<br>3. 失敗即標記策略淘汰 | `backtest_oos.feature` (M3) |
+### 3.2 策略 KPI（ADR-025 兩段閘）
 
-### Epic 3：風控與運維（M4+）
+| 閘 | 判準 | 性質 |
+| :--- | :--- | :--- |
+| **真偽閘（hard-fail）** | PBO / DSR（deflated，含試驗計數）/ WFA OOS 廣度 / survivorship-clean | 過不了 = REJECTED，不進 paper |
+| **配置閘（連續 sizing）** | Sharpe / 對艦隊相關性 / 容量 → 倉位大小 | 過真偽閘後決定 size，非 yes/no |
+| **paper 前移** | 過真偽閘 + OOS>0 即可最小倉位 paper 收 live OOS | 不再排在絕對 CAGR 門檻後 |
+| **實盤解鎖** | paper 期 live OOS + 配置閘 sign-off（不可逆晉升） | 唯一硬 gated 於此 |
 
-| ID | 描述 | 允收標準 | BDD |
-| :--- | :--- | :--- | :--- |
-| US-005 | As a 策略研究者, I want to 跑 paper trading 3 個月模擬, so that 驗證實盤滑點與回測假設一致 | 1. 每日訊號生成<br>2. 對比實際開盤價 vs 假設進場價<br>3. 滑點 < 預估 1.5x 才晉升 | `paper_trade.feature` (M4) |
-| US-006 | As a 策略研究者, I want to 看 Streamlit + Grafana 雙儀表板即時監控策略健康度, so that 退化時能及早發現 | 1. 30D 滾動 Sharpe、PF<br>2. 退化告警經 Discord 發送（ADR-010）<br>3. 熔斷規則自動執行 | `monitoring.feature` (M4+) |
+> **絕對門檻（legacy 參考）**：ADR-016 的 CAGR>18% / Sharpe>1.0 曾為 binary 部署門檻，已由 ADR-025 降為配置閘的 sizing 參考（見決策沿革）。
+
+### 3.3 價值關鍵路徑（下一個里程碑）
+
+修好審判庭（ADR-030）→ 用可信的閘重驗 inst_flow → after-close 排程器開始收 live OOS → 3 個月 paper → M5 小倉位實盤（2027-05）。
 
 ---
 
-## 4. 範圍與限制
+## 4. 使用者故事與允收標準
+
+> **v4.0 說明**：Epic 1/2 原以「v2.md 四層計分 + XQ 對照」為核心，四層共振已 ADR-023 廢止，故標 **legacy**（保留為歷史脈絡，不再是活躍需求）。現今活躍主線是 Epic 3（研究工作流）與 Epic 4/5（審判與晉升）。
+
+### Epic 1（legacy）：四層策略歷史回測
+
+> ⚠️ **legacy**：四層共振負 edge 廢止（ADR-023），以下 US 保留為 M1 歷史紀錄。US-001 的 v2.md/XQ 對照已成歷史。
+
+| ID | 描述 | 允收標準（歷史）| BDD |
+| :--- | :--- | :--- | :--- |
+| US-001 (legacy) | As a 策略研究者, I want to 用單一指令對某檔股票跑 v2.md 全套四層計分+訊號, so that 驗證程式邏輯與 XQ 一致 | CLI 跑通 + calendar CSV + 訊號與 XQ 差異 < 0.5% | `pipeline.feature` |
+| US-002 | As a 策略研究者, I want to 拉某段期間資料並 cache 為 parquet, so that 重跑回測不需重 call API | `--output data/parquet`、三表獨立檔案、重跑優先讀 parquet（**仍活躍**：資料層通用能力）| `etl.feature` |
+
+### Epic 2（legacy）：四層策略 Edge 驗證
+
+> ⚠️ **legacy**：以下 US 的「v2.md 綠燈」判準已被 ADR-025 兩段閘取代；四層本身已廢止。統計驗證能力（PBO/DSR/WFA）本身仍活躍，見 Epic 4。
+
+| ID | 描述 | 允收標準（歷史）| BDD |
+| :--- | :--- | :--- | :--- |
+| US-003 (legacy) | As a 策略研究者, I want to 跑 IS 期間 portfolio 回測, so that 判斷是否達標 v2.md 4.3.1 綠燈 | zipline-reloaded 整合 + quantstats 報表 + 綠/黃/紅燈 | `backtest_is.feature` |
+| US-004 (legacy) | As a 策略研究者, I want to 跑 OOS 一次性驗證, so that 判斷是否過擬合 | OOS 不可回頭調參 + PBO/DSR + 失敗即淘汰 | `backtest_oos.feature` |
+
+### Epic 3：策略研究者跑標準化研究工作流（ADR-029，現今主線）
+
+| ID | 描述 (As a / I want to / So that) | 允收標準 | 對應端點 / CLI |
+| :--- | :--- | :--- | :--- |
+| US-007 | As a 策略研究者, I want to 對任一已註冊策略跑 DOE（design of experiments）, so that 我能系統化掃描參數空間而非手敲 | 1. `research doe --strategy <name>`（`--dry-run` / `--is-start/--is-end/--out-csv`）跑通<br>2. 各策略以 `strategies/<name>/research_config.py` 宣告 `DOE`，作者只填參數不寫工作流邏輯<br>3. name→package 由 registry 解析（不假設 name==目錄名）| `research.cli doe` |
+| US-008 | As a 策略研究者, I want to 對策略跑真偽閘（truth-gate）, so that 我能得到 REAL/REJECTED 的可重現判決 | 1. `research truth-gate --strategy <name>` 走 `get_strategy(name).run(...)`，**絕不直接 import 策略的 backtest 函式**（AST 測試守門）<br>2. 輸出兩段閘結果（真偽閘 hard-fail + 配置閘 sizing）<br>3. 判決可在標準化工作流下重現（平台 KPI）| `research truth-gate` |
+| US-009 | As a 策略研究者, I want to 透過 GUI/HTTP 觸發研究工作流並非同步取結果, so that 研究迴圈永不阻塞 | 1. `POST /research/workflows/{workflow}`（`{strategy, overrides}`）→ 202 `{job_id, status}`<br>2. `GET /research/workflows/{strategy}` 列該策略宣告的工作流<br>3. 未知 workflow → 404、未知 strategy → 400 | `/research/workflows/*` |
+| US-010 | As a 策略研究者, I want to 對過真偽閘的候選跑 paper-replay, so that 我能在接真實 daemon 前先驗證晉升鏈 | 1. `research paper-replay --strategy <name>` 逐日跑 chain（ETL→signals→risk→orders→log）<br>2. 跨日 resilient、寫真實 telemetry | `research paper-replay` |
+
+### Epic 4：策略審判與晉升（ADR-025，現今主線）
+
+| ID | 描述 | 允收標準 | 對應端點 |
+| :--- | :--- | :--- | :--- |
+| US-011 | As a 策略研究者, I want to 對 run 跑 IS→WFA→OOS 不可逆 gate, so that OOS 不會被 post-hoc 污染 | 1. IS PASS 才解鎖 WFA、WFA PASS 才解鎖 OOS<br>2. OOS sealed vault：前置 gate 未過前對 CLI 不可讀、存取計次留痕<br>3. 狀態不可回退 | `/research/validate/*` |
+| US-012 | As a 策略研究者, I want to 把過關策略經晉升狀態機 advance, so that 每階段強制 gate 且留 audit | 1. `advance` 未滿足 gate → 409（前後端雙防線）<br>2. immutable 晉升 audit log<br>3. paper 觀察期強制 | `/research/promote/*` |
+
+### Epic 5：艦隊運維（ADR-022，gated 於 ≥1 paper-ready 策略）
+
+| ID | 描述 | 允收標準 | 對應端點 |
+| :--- | :--- | :--- | :--- |
+| US-005 | As a 艦隊運維者, I want to 跑 paper trading 收 live OOS, so that 驗證實盤摩擦與回測假設一致 | 1. after-close 排程器（systemd timer/cron + Discord 成敗通知）<br>2. 每日訊號生成 + 對比實際成交<br>3. 觀察期倒數 + 退化偵測 | `/monitor/*` |
+| US-006 | As a 艦隊運維者, I want to 看 Fleet 監控 + 收 Discord 告警, so that 退化時能及早處置 | 1. Fleet 板（live 淨值 / 健康 / 退化 / 相關性）<br>2. 退化告警經 Discord（ADR-010）<br>3. 熔斷規則自動執行（ADR-024 風控）| `/monitor/fleet` |
+
+---
+
+## 5. 範圍與限制
 
 ### 功能範圍
 
 | 層 | M1 ✅ | M2 | M3 | M4 | M5 |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| 資料層（Bundle + DB） | ✅ | FinMind/FinLab bundle | — | 即時資料 feed | — |
-| 策略層（計分 + 訊號） | ✅ | plug 為 Algorithm | — | — | — |
+| 資料層（FinLab 主 + FinMind fallback + Bundle） | ✅ | FinLab/FinMind bundle | survivorship-clean universe | 即時 feed | — |
+| 策略層（契約 + registry） | ✅ | plug 為 Runner | 多策略 registry | — | — |
 | 回測引擎 | — | zipline-reloaded (event) | vectorbt + WFA | — | — |
-| 統計驗證 | — | — | PBO/DSR/MC | — | — |
-| 紙上交易 | — | — | — | PaperBroker | — |
+| 統計驗證（審判庭） | — | — | PBO/DSR/WFA/兩段閘 | — | — |
+| 研究工作流（ADR-029） | — | — | doe/truth-gate/paper-replay | — | — |
+| 紙上交易 | — | — | — | PaperBroker + 排程器 | — |
 | 實盤下單 | — | — | — | — | ShioajiBroker |
-| 監控告警 | — | — | Streamlit | Grafana + Discord | — |
-| 前端 UI | — | — | Streamlit 面板 A–C | — | 面板 D–E |
+| 監控告警 | — | — | React Monitor zone | Discord + Grafana | — |
+| 前端 UI | — | — | **React 研究前端**（ADR-021/015）| Monitor 接真 | Panel D/E + 晉升 stepper |
 
 ### 非功能需求
 
@@ -102,73 +203,103 @@
 | 可靠性 | ETL idempotent | 重跑結果一致 |
 | 可觀測性 | Trade audit trail | 100% trade 記錄含 scores/prices/position |
 | 可重現性 | 訊號邏輯 | zipline & vectorbt 結果差異 < 0.1% |
+| **可稽核性** | run 血統 | 每個 run 記 bundle hash / git_sha（審判可稽核）|
+| **判決可信度** | 審判庭自身 | truth gate 三缺陷修復（ADR-030）為所有策略 KPI 前提 |
 
-### 不做什麼
+### 不做什麼（Won't — 與「做」同等正式）
 
+> **standalone lite 原則**：明確不做的清單和要做的清單同等重要——它是「保持個人剛需、不過度工程」的護欄（呼應 ADR-018「補齊研究迴圈前不擴張監控」自訂鐵律）。
+
+**即時/實盤（依 edge 進程往後疊）**
 - ❌ 即時行情接收（M5 才考慮）
 - ❌ 自動實盤下單（M5 才考慮）
-- 🟡 多策略管理：**研究層維持單策略**深究；**營運層擴張為多策略艦隊 lite**（同時監控/操作數隻已晉升策略 + 退化換掉，[ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md)，M4–M5、gated 於 ≥1 可部署策略）。仍不做跨人 leaderboard / staking / 完整 model registry / 多人簽核。
+
+**多策略：研究單策略、營運多策略（ADR-022 已界定邊界）**
+- 🟡 研究層維持**單策略深究**；營運層擴張為**多策略艦隊 lite**（同時監控/操作數隻已晉升策略 + 退化換掉，gated 於 ≥1 完成 3 個月 paper 的策略，現 0）
+- ❌ 仍不做：跨人 leaderboard / staking / 完整 champion-challenger model registry 族譜 / 多人簽核
+
+**市場與商品**
 - ❌ 多市場（台股為主，不做美股 / 港股）
 - ❌ 期權 / 期貨（純股票策略）
 - ❌ 多帳戶管理
 
+**基礎建設（standalone 剛需之外）**
+- ❌ 分散式掃描叢集、自建計算圖引擎、hosted notebook、K8s、企業級 scheduler
+- ❌ 多人協作 / RBAC / 合規審批鏈（見 §2.3 部署假設）
+
+### standalone 安全假設（明文）
+
+- **邊界 = loopback bind**：API 綁 `127.0.0.1`，同機存取，無公網暴露（[ADR-031](./adrs/ADR-031-standalone-auth-decision.md)）。
+- **不承諾未實作的 auth**：doc 25 原「M3.0 起全端點 static Bearer」承諾（後端零實作、前端硬編碼 dev-token）已由 ADR-031 裁決**移除**——localhost-only 綁定即邊界，Bearer 降為 M5 遠端存取時重議。「承諾了沒做」比「決定不做」更傷文件可信度。
+- **秘密後端獨佔**：見 §2.3。
+- **未來遠端存取（M5+）**：若需跨機存取，於 M5 重開 auth 決策（reverse-proxy guard 或 static Bearer dependency）。
+
 ### 假設與依賴
 
 **假設**：
-- 付費 FinLab 為主資料源、FinMind 免費版作 fallback（ADR-006）
-- 券商分點資料可透過 TWSE 公開資訊補爬
+- 付費 FinLab 為主資料源（全史 2007→今、原生 survivorship-clean 2753 檔含 369 下市股）、FinMind 免費版 fallback（ADR-006 realized）
 - 個人 PC 算力足夠跑 100 檔 × 10 年回測
+- 單機自託管、內網 localhost、無多人協作（§2.3）
 
 **依賴**：
 - FinLab API（主資料源，付費）+ FinMind API（fallback）— ADR-006
-- TimescaleDB（儲存 / bundle cache）
-- zipline-reloaded（回測引擎主骨架）— ADR-013
-- vectorbt 1.0+（回測引擎副，參數網格；ADR-014 升級後恢復可用）— ADR-007
-- Streamlit + Grafana + Discord（監控告警三層）— ADR-009 / ADR-010
+- TimescaleDB（telemetry / bundle cache）
+- zipline-reloaded（回測引擎主骨架）— ADR-013 / ADR-014
+- vectorbt 1.0+（回測引擎副，參數網格）— ADR-007 / ADR-014
+- FastAPI + React（後端 API + 前端）— ADR-021 / ADR-015
+- Discord（告警主通道）+ Grafana（系統面板輔）— ADR-009 / ADR-010
 - uv（套件管理）— ADR-012
 - Shioaji（永豐金證券下單 API，M5）
 
 ---
 
-## 5. 待辦問題與決策
+## 6. 待辦問題與決策
 
 | ID | 描述 | 狀態 | 備註 |
 | :--- | :--- | :--- | :--- |
-| Q-001 | 下市股資料源如何取得 | 待決定 | 詳見 `strategy/research/v2.2_ic_test_plan.md` 評估表 |
-| Q-002 | 券商分點補爬策略 | 待決定 | M2 開始時決定 |
-| Q-003 | 是否升級 FinMind sponsor | 已關閉 | 改採付費 FinLab 為主源（ADR-006），FinMind 降為 fallback |
-| Q-004 | rqalpha 自訂 mod 是否值得寫 | 已關閉 | 廢止 rqalpha，主骨架改 zipline-reloaded（ADR-013，原 ADR-005 TQuant-Lab 已 superseded）|
-| D-001 | 採用 v2.md 為單一策略契約 | 已決定 | 偏離須在 6.3 留記錄 |
+| Q-001 | 下市股資料源如何取得 | 已關閉 | FinLab 全史原生含 369 下市股（ADR-006 realized），survivorship-clean 已解 |
+| Q-002 | 券商分點補爬策略 | 已關閉 | FinMind 三大法人量化 chip 層 + FinLab 進階分點（已於 R9 掃描使用）|
+| Q-003 | 是否升級 FinMind sponsor | 已關閉 | 改採付費 FinLab 為主源（ADR-006），FinMind 降 fallback |
+| Q-004 | rqalpha 自訂 mod 是否值得寫 | 已關閉 | 廢止 rqalpha，主骨架改 zipline-reloaded（ADR-013）|
+| Q-005 | 審判庭三缺陷（DSR 單位 / OOS holdout / survivorship 寫死）修復 | **進行中** | ADR-030（truth gate 修正，PR #137，另分支）— 平台 KPI「判決可重現性」前提 |
+| Q-006 | standalone auth 三方矛盾裁決 | **已決定** | ADR-031：localhost-only 綁定 + 移除 Bearer 承諾 |
+| D-001 | ~~採用 v2.md 為單一策略契約~~ | **已取代** | 四層 v2.md 廢止（ADR-023）；策略契約改 `StrategyRunner`（ADR-027/028）|
 | D-002 | 採用 MVP 工作流模式 | 已決定 | 見 01_workflow_manual.md |
 | D-003 | 使用 Public GitHub repo（Zenobia000） | 已決定 | 2026-05-26 上線 |
-| D-004 | risk_pct 從 1% → 0.5% 對齊 Heat 6% | 已決定（v2.1） | v2.md changelog |
-| D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）— Sprint 0 S1 揭露 zipline-tej import 強綁 TEJ key |
-| D-006 | 主資料源採付費 FinLab + FinMind fallback | 已決定 | ADR-006 |
-| D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊隨 ADR-014 升級恢復）|
+| D-005 | 主骨架採 zipline-reloaded | 已決定 | ADR-013（supersedes ADR-005 / ADR-001）|
+| D-006 | 主資料源採付費 FinLab + FinMind fallback | 已決定 | ADR-006 realized |
+| D-007 | 雙引擎（Zipline event + vectorbt vector） | 已決定 | ADR-007（vector 半邊隨 ADR-014 恢復）|
 | D-008 | 系統定位升級為三模式（backtest/paper/live） | 已決定 | ADR-008 |
-| D-009 | 監控三層 Streamlit + Grafana + Discord | 已決定 | ADR-009 / ADR-010（Discord 取代 Telegram）|
+| D-009 | 監控/告警 React + Discord 主線 | 已決定 | ADR-009 / ADR-010 / ADR-015 / ADR-021（Streamlit → React）|
 | D-010 | 套件管理採 uv | 已決定 | ADR-012 |
-| D-014 | zipline-reloaded 3.0.4 → 3.1.1 升級，解除 pandas<2 / numpy<2 / vectorbt 暫停 | 已決定（2026-06-01） | ADR-014（amends ADR-013 § 4）— upstream 3.1.1 release 解鎖三項約束 |
-| D-015 | M2 IS gate FAIL（雙窗口無 edge、進場過嚴）→ 觸發退場條件，回 M0 重設**進場**假設 | 已決定（2026-06-02） | ADR-017 — 記錄 ADR-016 gate 執行結果；參數探針定位約束在進場非出場 |
-| D-016 | **監控優先 → 研究迴圈優先**：Run 物件化（runs 主表）+ 研究工作區 IA（A–E 降 live 子視圖）+ IS→WFA→OOS gate 工作流 + OOS sealed vault + 試驗次數 deflate + 晉升狀態機；後端契約先行 | 已決定（2026-06-02） | ADR-018 — 大廠 UI/UX deep-research 對標（10 平台）；重定位 ADR-009/015 產物、UX 化 ADR-017；證據包 `web_design/03_uiux_benchmark_and_reinforcement_plan.md` |
-| D-017 | **v3 進場重設**：四層共振進場參數化分級放寬（必含層+可選層，非純 N-of-4）+ flameout 最小 exit 搭配；6 參數 v2 預設重現 baseline | 已決定（2026-06-02） | ADR-019 — 四交易視角壓測收斂；L2⊂L3（chip 含 foreign+trust）→ dir/chip=機構共識；反過擬合硬約束（v0.1 不 sweep、進場數非 edge、雙窗 IS 非 OOS） |
-| D-018 | **多策略艦隊營運（lite）**：營運層擴張為同時監控/操作數隻已晉升策略 + 退化換掉（研究層仍單策略）；處置複用 ADR-018 晉升 audit；仍排除跨人 leaderboard / staking / 完整 registry / 多人簽核 | 已決定（2026-06-04） | ADR-022 — 使用者實需「管理多隻策略、退化換掉」；切分研究單策略 vs 營運多策略艦隊；gated 於 M4 live daemon + ≥1 可部署策略（現 0） |
+| D-011 | 前後端 REST 契約合一（doc 25 + OpenAPI） | 已決定 | ADR-021 |
+| D-016 | 監控優先 → 研究迴圈優先 | 已決定 | ADR-018 |
+| D-018 | 多策略艦隊營運（lite） | 已決定 | ADR-022（gated 於 ≥1 paper-ready 策略）|
+| D-019 | 四層共振廢止 + 動能 NO-GO（守 ADR-016 不放寬） | 已決定 | ADR-023 |
+| D-020 | 驗證閘兩段化 + paper 前移 | 已決定 | ADR-025（amends ADR-016 binary）|
+| D-021 | 策略契約 + registry + dispatch + preset 移除 | 已決定 | ADR-027 / ADR-028 |
+| D-022 | 研究工作流標準化 | 已決定 | ADR-029 |
+| D-023 | standalone auth = localhost-only 綁定 | 已決定 | ADR-031 |
 
 ---
 
-## 6. 成功與失敗的判斷
+## 7. 成功與失敗的判斷
 
-### 成功
-- 策略通過 M3 統計驗證 → 進入 paper trading
-- Paper trading 滑點與回測一致 → 進入小倉位實盤
-- 小倉位 3 個月不退化 → 進入全倉
+### 平台層（審判機器）
 
-### 失敗（接受）
-- M2 IS 回測達不到綠燈 → 砍策略或重新設計
-- M3 PBO > 50% → 策略過擬合，淘汰
-- M4 paper trading 滑點 > 預估 2x → 重新校準成本模型
+- **成功**：每個策略假設都得到誠實、可重現、成本可控的判決（見 §3.1 平台 KPI）。
+- **成功**：審判庭量出並擋下「看似高、實際過擬合」的策略（連續 NO-GO = 平台正常運作證據）。
+- **失敗（必須處理）**：審判庭自身不可信（DSR 單位錯誤 / OOS holdout 未評估 / survivorship 寫死）→ ADR-030 P0 修復。
+- **失敗（必須處理）**：判決無法重現（來自已刪除 scripts）→ 標準化工作流（ADR-029）重跑。
 
-### 失敗（必須處理）
-- 訊號邏輯與 XQ 差異 > 1% → bug 修復
-- ETL 資料遺失 → 重灌資料源
-- 任何階段違反預註冊紀律 → 強制重跑該階段
+### 策略層（單一策略）
+
+- **成功**：策略過兩段閘真偽閘 + OOS>0 → 進入 paper 收 live OOS。
+- **成功**：paper 期 live OOS + 配置閘 sign-off → 進入小倉位實盤。
+- **失敗（接受，且是常態）**：策略死於真偽閘（PBO 過高 / OOS 崩 / survivorship FAIL）→ 砍策略、換 edge family。四層/動能/多因子/long-short/資金流 binary 皆已如此死過——**這是產品在工作，不是專案失敗**。
+
+### 紀律（任何階段）
+
+- 任何階段違反預註冊（hypothesis 預登記）紀律 → 強制重跑該階段。
+- ETL 資料遺失 → 重灌資料源。
+- 守 gate 門檻不因單一策略瓶頸放寬（ADR-023 裁定：紀律 > 救策略）。
