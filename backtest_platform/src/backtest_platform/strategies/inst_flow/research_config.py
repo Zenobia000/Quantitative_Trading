@@ -15,7 +15,9 @@ from backtest_platform.research.workflows.config import (
 )
 from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
 
-# Wide, survivorship-aware universe used by the GO/truth gates (from scripts/).
+# Survivor-only 40-stock universe (ADR-024's false-positive set). The corrected
+# truth gate (ADR-030) hard-fails it on survivorship until sub-project 2 rebuilds
+# the FinLab survivorship-clean universe as a platform workflow.
 _WIDE = [
     "2330", "2317", "2454", "2308", "2382", "2412", "2303", "2881", "2882", "2891",
     "2886", "2884", "1303", "1301", "1326", "2002", "2207", "3008", "3711", "2357",
