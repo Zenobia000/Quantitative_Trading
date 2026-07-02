@@ -1,0 +1,86 @@
+name: CI
+
+# Quality gates that used to rely on local discipline (three contract-drift
+# incidents came from having none). Runs on every push to main and every PR.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# One in-flight run per ref; a new push cancels the previous run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend: full pytest suite. The 80% coverage gate lives in pyproject.toml
+  # (`--cov-fail-under=80` in [tool.pytest.ini_options].addopts), so a plain
+  # `uv run pytest` enforces it. `--all-extras` (not a bare `uv sync`) is
+  # required: pytest/fastapi live in the `dev`/`api` extras and the
+  # zipline_adapter + validation tests import zipline/vectorbt from
+  # `mainframe`/`engines`/`validation`. POSTGRES_INTEGRATION is left unset, so
+  # the DB integration tests self-skip (no service container needed).
+  # ---------------------------------------------------------------------------
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backtest_platform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies (all extras for the full test matrix)
+        run: uv sync --all-extras
+      - name: Run pytest (coverage gate 80% enforced by pyproject)
+        run: uv run pytest
+
+  # ---------------------------------------------------------------------------
+  # Frontend: typecheck + unit tests with coverage. `@vitest/coverage-v8` was
+  # added as a devDependency so `--coverage` works; if it is ever removed, drop
+  # `--coverage` to keep the job green.
+  # ---------------------------------------------------------------------------
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Unit tests + coverage
+        run: npx vitest run --coverage
+
+  # ---------------------------------------------------------------------------
+  # Contract drift: live OpenAPI spec vs frontend/openapi.json, plus runs DDL
+  # vs db_writer._RUNS_COLS. `--extra api` is enough — the script only imports
+  # the FastAPI app to dump the spec; the DDL check is pure text/ast parsing.
+  #
+  # TODO(drift): remove `continue-on-error` once the two KNOWN drifts are fixed
+  # by the parallel work packages (stale frontend/openapi.json still exposes
+  # /presets instead of /strategies; runs DDL `preset` vs db_writer `strategy`).
+  # Until then this job reports drift without failing the whole workflow.
+  # ---------------------------------------------------------------------------
+  contract-drift:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install API deps (script imports the FastAPI app)
+        working-directory: backtest_platform
+        run: uv sync --extra api
+      - name: Check OpenAPI + runs DDL contract drift
+        run: python3 scripts/check_openapi_drift.py
