@@ -49,6 +49,41 @@ def test_rebalance_dates_quarterly_fewer_than_monthly():
     assert len(rebalance_dates(idx, "quarterly")) < len(rebalance_dates(idx, "monthly"))
 
 
+def test_rebalance_dates_weekly_picks_first_trading_day_of_each_iso_week():
+    # Jan 2020 business days span 5 ISO weeks; the first trading day of each is
+    # the rebalance day (Wed 1st for the stub week, then each following Monday).
+    idx = pd.bdate_range("2020-01-01", "2020-01-31")
+    dates = rebalance_dates(idx, "weekly")
+    assert dates == [
+        pd.Timestamp("2020-01-01"),  # Wed — first trading day of ISO week 1
+        pd.Timestamp("2020-01-06"),  # Mon week 2
+        pd.Timestamp("2020-01-13"),  # Mon week 3
+        pd.Timestamp("2020-01-20"),  # Mon week 4
+        pd.Timestamp("2020-01-27"),  # Mon week 5
+    ]
+
+
+def test_rebalance_dates_weekly_more_frequent_than_monthly():
+    idx = pd.bdate_range("2020-01-01", "2020-12-31")
+    weekly = rebalance_dates(idx, "weekly")
+    assert len(weekly) > len(rebalance_dates(idx, "monthly"))
+    assert 50 <= len(weekly) <= 53  # ~52 ISO weeks in a year
+
+
+def test_rebalance_dates_weekly_handles_iso_year_boundary():
+    # 2021-01-01 is a Friday → ISO week 53 of 2020, so it must NOT open a new
+    # rebalance week separate from the late-Dec-2020 days (ISO year avoids the split).
+    idx = pd.bdate_range("2020-12-21", "2021-01-08")
+    dates = rebalance_dates(idx, "weekly")
+    # 2020-W52 (starts 2020-12-21), 2020-W53 (starts 2020-12-28, includes 2021-01-01),
+    # 2021-W01 (starts 2021-01-04) → exactly 3 rebalances, none isolated on Jan 1.
+    assert dates == [
+        pd.Timestamp("2020-12-21"),
+        pd.Timestamp("2020-12-28"),
+        pd.Timestamp("2021-01-04"),
+    ]
+
+
 # --- clean_returns -------------------------------------------------------
 
 def test_clean_returns_winsorizes_data_error_spike():

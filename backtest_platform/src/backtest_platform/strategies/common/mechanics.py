@@ -24,13 +24,20 @@ def clean_returns(prices: pd.DataFrame, max_daily: float) -> pd.DataFrame:
 
 
 def rebalance_dates(index: pd.DatetimeIndex, freq: str = "monthly") -> list[pd.Timestamp]:
-    """First trading day of each period (month / quarter / half-year) in ``index``.
+    """First trading day of each period (week / month / quarter / half-year) in ``index``.
 
     Lower frequency = fewer rebalances = less turnover = less transaction-cost drag
-    (the lever when cost is the binding constraint).
+    (the lever when cost is the binding constraint). ``weekly`` is the opposite end
+    — high turnover — and exists for short-horizon strategies (e.g. short-term
+    reversal, Lehmann 1990) whose edge decays within days.
     """
     s = pd.Series(index, index=index)
-    if freq == "quarterly":
+    if freq == "weekly":
+        # ISO year+week so the Dec/Jan boundary never splits one ISO week into two
+        # rebalances (2021-01-01 is a Friday = ISO week 53 of 2020, not week 1 of 2021).
+        iso = index.isocalendar()
+        key = [iso["year"].to_numpy(), iso["week"].to_numpy()]
+    elif freq == "quarterly":
         key = [index.year, index.quarter]
     elif freq == "semiannual":
         key = [index.year, (index.month - 1) // 6]

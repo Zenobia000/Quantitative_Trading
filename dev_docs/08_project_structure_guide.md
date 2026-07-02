@@ -73,7 +73,8 @@ src/backtest_platform/
 │   ├── _template/                # 新策略複製骨架（config + 純邏輯 + runner 自包含）
 │   ├── four_layer_resonance/     # legacy 契約實作之一（ADR-023 判負 edge；registry 對照標本）
 │   ├── momentum/                 # 12-1 動能（NO-GO，ADR-023）
-│   └── inst_flow/                # 三大法人資金流（REJECTED @ 真實成本，見 inst_flow_truth_gate_verdicts）
+│   ├── inst_flow/                # 三大法人資金流（REJECTED @ 真實成本，見 inst_flow_truth_gate_verdicts）
+│   └── reversal/                 # 短期反轉（做多近期輸家；預註冊 weekly/5/skip1/decile，驗證待跑）
 │
 ├── research/                     # 研究迴圈
 │   ├── workflows/                # ★ 平台工作流（ADR-029/032）：doe / go_gates / truth_gate / paper_replay / universe

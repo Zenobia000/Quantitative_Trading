@@ -21,10 +21,12 @@ from backtest_platform.strategies._template.runner import TemplateRunner
 from backtest_platform.strategies.four_layer_resonance.runner import FourLayerRunner
 from backtest_platform.strategies.inst_flow.runner import InstFlowRunner
 from backtest_platform.strategies.momentum.runner import MomentumRunner
+from backtest_platform.strategies.reversal.runner import ReversalRunner
 
 __all__ = [
     "FourLayerRunner",
     "InstFlowRunner",
     "MomentumRunner",
+    "ReversalRunner",
     "TemplateRunner",
 ]
