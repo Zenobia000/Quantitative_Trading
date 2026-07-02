@@ -5,7 +5,10 @@
  * fills/kpi) return real telemetry; aggregate ones (fleet/strategies/risk) are
  * typed-empty `pending` until their producers land — pages light up automatically.
  */
+import { useQuery } from '@tanstack/react-query'
 import { useEndpoint } from '@/hooks/useEndpoint'
+import { http } from '@/services/http'
+import type { ApiResult } from '@/types/domain'
 
 export interface EquityPoint {
   t: string
@@ -69,3 +72,26 @@ export const useFleet = () => useEndpoint<FleetRow[]>('/monitor/fleet', 60)
 export const usePortfolioSummary = () => useEndpoint<PortfolioSummary>('/monitor/portfolio-summary', 60)
 export const useStrategies = () => useEndpoint<{ strategy_id: string }[]>('/monitor/strategies', 300)
 export const useRiskMetrics = () => useEndpoint<Record<string, unknown>>('/monitor/risk/metrics', 30)
+
+// ---- run board (A2) -------------------------------------------------------
+export interface BoardRow {
+  run_id: string
+  strategy: string
+  engine: string
+  stocks: string[]
+  is_start: string | null
+  is_end: string | null
+  status: string // running | done | failed（run_persist / run-batch 鏡射）
+  gate_status: string | null // 審判庭 verdict；in-flight 為 null
+  gate_summary: string | null
+  metrics: Record<string, number> | null
+  created_at: string | null
+}
+// 看板要「活」：10s 輪詢（useEndpoint 無 refetchInterval，故直接組 useQuery）
+export const useRunsBoard = () =>
+  useQuery<ApiResult<BoardRow[]>>({
+    queryKey: ['endpoint', '/monitor/board'],
+    queryFn: () => http<BoardRow[]>('/monitor/board'),
+    staleTime: 5_000,
+    refetchInterval: 10_000,
+  })

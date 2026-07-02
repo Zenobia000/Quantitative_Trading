@@ -174,3 +174,58 @@ def test_load_broker_state_real_db() -> None:
     state = load_broker_state(strat)
     assert state is not None
     assert state.cash == pytest.approx(1_000_000.0)
+
+
+# ---------------------------------------------------------------------------
+# A2 — runs_board: latest runs (lifecycle + 審判庭 verdict) for the run board
+# ---------------------------------------------------------------------------
+def test_runs_board_maps_rows() -> None:
+    from datetime import date, datetime, timezone
+
+    from backtest_platform.data.db_reader import TelemetryReader
+
+    created = datetime(2026, 7, 2, 12, 0, tzinfo=timezone.utc)
+    cur = MagicMock()
+    cur.fetchall.return_value = [
+        (
+            "a1b2c3d4e5f6", "inst_flow", "sim", ["2330", "2317"],
+            date(2026, 1, 5), date(2026, 4, 10), "done",
+            "PASS", "IS gate: 4/4", {"sharpe": 1.1}, created,
+        ),
+        (
+            "ffffffffffff", "inst_flow", "sim", ["2454"],
+            date(2026, 1, 5), date(2026, 4, 10), "running",
+            None, None, None, created,
+        ),
+    ]
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+
+    with patch("backtest_platform.data.db_reader._connection") as ctx:
+        ctx.return_value.__enter__.return_value = conn
+        rows = TelemetryReader(cfg=MagicMock()).runs_board(limit=10)
+
+    sql = cur.execute.call_args.args[0]
+    assert "FROM runs" in sql and "ORDER BY created_at DESC" in sql
+    assert cur.execute.call_args.args[1] == [10]
+    assert rows[0] == {
+        "run_id": "a1b2c3d4e5f6", "strategy": "inst_flow", "engine": "sim",
+        "stocks": ["2330", "2317"], "is_start": "2026-01-05", "is_end": "2026-04-10",
+        "status": "done", "gate_status": "PASS", "gate_summary": "IS gate: 4/4",
+        "metrics": {"sharpe": 1.1}, "created_at": created.isoformat(),
+    }
+    # in-flight run: nullable verdict/metrics stay None (frontend renders —)
+    assert rows[1]["status"] == "running"
+    assert rows[1]["gate_status"] is None and rows[1]["metrics"] is None
+
+
+def test_runs_board_empty_returns_empty_list() -> None:
+    from backtest_platform.data.db_reader import TelemetryReader
+
+    cur = MagicMock()
+    cur.fetchall.return_value = []
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+    with patch("backtest_platform.data.db_reader._connection") as ctx:
+        ctx.return_value.__enter__.return_value = conn
+        assert TelemetryReader(cfg=MagicMock()).runs_board() == []

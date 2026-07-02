@@ -68,7 +68,7 @@
 | :--- | :--- | :--- |
 | `/runs`、`/gate`、`/metrics`、`/strategies` | Research（已實作） | run 帳本、IS gate、指標計算機、策略 catalog（`/strategies` **取代 v0.6 的 `/presets`**，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；run 子資源含 equity/trades/log/traded-symbols/candles/attribution/day-context（Trade review）|
 | `/research/*` | Research（新增） | strategies、saved-views、trials、sweep、validate、promote |
-| `/monitor/*` | Monitor | performance、positions、signals、risk（**全 stub 至 M4**，§5.4）；`/monitor/fleet*` 艦隊板 |
+| `/monitor/*` | Monitor | performance、positions、signals、risk（**全 stub 至 M4**，§5.4）；`/monitor/fleet*` 艦隊板；`/monitor/board` 運行看板（**已 LIVE**：runs 表生命週期 + 審判庭 verdict，A2）|
 | `/system/*` | System | bundles、ingest、alerts、risk-spec |
 | `/home/*` | Home（cockpit） | landing 聚合：fleet / research-status / system-health / recent（BFF 風格，§6.4）|
 | `/health`、`/ws/*` | 全域 | liveness、WebSocket（唯一 WS，§5.3）|
@@ -153,6 +153,7 @@
 | 訊號（今日）| 30 | `/monitor/signals`、`/monitor/signals/funnel` | monitor_c |
 | 訊號（歷史）| 300 | `/monitor/signals/timeline`、`/monitor/fills` | monitor_c |
 | 風控遙測 | 30/60 | `/monitor/risk/metrics`(30)、`/monitor/risk/mdd-trend`(60) | monitor_d |
+| 運行看板 | 10 | `/monitor/board`（runs 表，10s 輪詢）| monitor_board |
 | 績效面板（Monitor A）| 300 | `/monitor/performance/*` | monitor_a |
 | 艦隊板（live + 健康 + 退化）| 60 | `/monitor/fleet`、`/monitor/portfolio-summary` | monitor_fleet |
 | 艦隊相關性（低頻）| 300 | `/monitor/correlation` | monitor_fleet |

@@ -11,7 +11,7 @@
           "health"
         ],
         "summary": "Health",
-        "description": "Liveness probe — returns the API version.",
+        "description": "Liveness probe \u2014 returns the API version.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -134,7 +134,7 @@
           "runs"
         ],
         "summary": "Compare",
-        "description": "Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.\n\n``run_ids`` restricts the comparison to a chosen subset (the frontend's\nmulti-select → ``?run_ids=a,b,c``); absent, the whole ledger is compared. The\nsubset is deduped to one current row per run_id and kept in requested order.",
+        "description": "Cross-run comparison: per-metric delta vs baseline, ranks, sign consistency.\n\n``run_ids`` restricts the comparison to a chosen subset (the frontend's\nmulti-select \u2192 ``?run_ids=a,b,c``); absent, the whole ledger is compared. The\nsubset is deduped to one current row per run_id and kept in requested order.",
         "operationId": "compare_runs_compare_get",
         "parameters": [
           {
@@ -168,10 +168,10 @@
                   "type": "null"
                 }
               ],
-              "description": "comma list — compare only this subset (else the whole ledger)",
+              "description": "comma list \u2014 compare only this subset (else the whole ledger)",
               "title": "Run Ids"
             },
-            "description": "comma list — compare only this subset (else the whole ledger)"
+            "description": "comma list \u2014 compare only this subset (else the whole ledger)"
           }
         ],
         "responses": {
@@ -204,7 +204,7 @@
           "runs"
         ],
         "summary": "Estimate",
-        "description": "Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.\n\nGrid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``\n→ 3×2 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same\ngrid; we compute the cardinality directly (product of axis lengths) so no base\nconfig is required just to count. ``strategy`` is ignored as an axis.",
+        "description": "Pre-submit sweep estimate: ``n_configs`` (grid cardinality) + ``est_minutes``.\n\nGrid axes are passed as comma lists, e.g. ``?box_period=40,60,80&confirm_days=1,2``\n\u2192 3\u00d72 = 6 configs. ``n_configs`` equals ``len(sweep.expand_grid(...))`` for the same\ngrid; we compute the cardinality directly (product of axis lengths) so no base\nconfig is required just to count. ``strategy`` is ignored as an axis.",
         "operationId": "estimate_runs_estimate_get",
         "responses": {
           "200": {
@@ -440,7 +440,7 @@
           "runs"
         ],
         "summary": "Run Candles Endpoint",
-        "description": "Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.\n\n``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nsymbols, or a symbol absent from the parquet cache, returns a typed-empty\n``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).",
+        "description": "Daily OHLC candles + entry \u25b2 / exit \u25bc markers for one symbol of a run.\n\n``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nsymbols, or a symbol absent from the parquet cache, returns a typed-empty\n``pending`` envelope \u2014 never a 500 or fabricated data (frontend/GOAL.md #8).",
         "operationId": "run_candles_endpoint_runs__run_id__candles_get",
         "parameters": [
           {
@@ -542,7 +542,7 @@
           "gate"
         ],
         "summary": "Gate Spec",
-        "description": "Return a gate's criteria (key / op / threshold / kind / label).\n\n``strategy`` → that strategy's declared gate; omitted → four-layer DEFAULT_GATE.",
+        "description": "Return a gate's criteria (key / op / threshold / kind / label).\n\n``strategy`` \u2192 that strategy's declared gate; omitted \u2192 four-layer DEFAULT_GATE.",
         "operationId": "gate_spec_gate_spec_get",
         "parameters": [
           {
@@ -592,7 +592,7 @@
           "gate"
         ],
         "summary": "Gate Evaluate",
-        "description": "Judge a metrics dict against a gate.\n\n``req.strategy`` → that strategy's declared gate; omitted → four-layer default.",
+        "description": "Judge a metrics dict against a gate.\n\n``req.strategy`` \u2192 that strategy's declared gate; omitted \u2192 four-layer default.",
         "operationId": "gate_evaluate_gate_evaluate_post",
         "requestBody": {
           "content": {
@@ -798,7 +798,7 @@
           "research"
         ],
         "summary": "Strategy Versions",
-        "description": "Version timeline for a strategy — runs of this strategy, newest first (real projection).",
+        "description": "Version timeline for a strategy \u2014 runs of this strategy, newest first (real projection).",
         "operationId": "strategy_versions_research_strategies__strategy_id__versions_get",
         "parameters": [
           {
@@ -841,7 +841,7 @@
           "research"
         ],
         "summary": "Universe Filters",
-        "description": "Supported universe filters from ``UniverseConfig.default()`` (real config).\n\nMarkets / capital / liquidity / price thresholds + exclusion reasons are\nconfig-driven and returned as-is. ``industries`` is data-derived (needs the\nloaded universe metadata) — empty until the bundle is ingested.",
+        "description": "Supported universe filters from ``UniverseConfig.default()`` (real config).\n\nMarkets / capital / liquidity / price thresholds + exclusion reasons are\nconfig-driven and returned as-is. ``industries`` is data-derived (needs the\nloaded universe metadata) \u2014 empty until the bundle is ingested.",
         "operationId": "universe_filters_research_universe_filters_get",
         "responses": {
           "200": {
@@ -906,7 +906,7 @@
           "research"
         ],
         "summary": "Validate Health",
-        "description": "13-indicator green/yellow/red health table (v2.md §4.3.1) for a run.\n\nProjects the run's stored metrics onto the §4.3.1 bands. A run absent from the\nledger (or carrying no metrics) yields a health report of all ``na``.",
+        "description": "13-indicator green/yellow/red health table (v2.md \u00a74.3.1) for a run.\n\nProjects the run's stored metrics onto the \u00a74.3.1 bands. A run absent from the\nledger (or carrying no metrics) yields a health report of all ``na``.",
         "operationId": "validate_health_research_validate__run_id__health_get",
         "parameters": [
           {
@@ -949,7 +949,7 @@
           "research"
         ],
         "summary": "Validate Wfa",
-        "description": "Walk-forward folds for a run (v2.md §4.4.1: IS 252d + OOS 63d, rolling 63d).\n\nFold date-windows are computed data-free from the run's span via\n``walk_forward_splits``. The IS-vs-OOS performance ``scatter`` needs a backtest\nper fold (parquet) and stays empty until that runs — so a real ``folds`` list\nships now while ``scatter`` is honestly marked pending.",
+        "description": "Walk-forward folds for a run (v2.md \u00a74.4.1: IS 252d + OOS 63d, rolling 63d).\n\nFold date-windows are computed data-free from the run's span via\n``walk_forward_splits``. The IS-vs-OOS performance ``scatter`` needs a backtest\nper fold (parquet) and stays empty until that runs \u2014 so a real ``folds`` list\nships now while ``scatter`` is honestly marked pending.",
         "operationId": "validate_wfa_research_validate__run_id__wfa_get",
         "parameters": [
           {
@@ -1475,7 +1475,7 @@
           "monitor"
         ],
         "summary": "Fleet",
-        "description": "Live fleet board — latest equity per strategy from telemetry (8.H.8);\npending fallback when no DB/telemetry.",
+        "description": "Live fleet board \u2014 latest equity per strategy from telemetry (8.H.8);\npending fallback when no DB/telemetry.",
         "operationId": "fleet_monitor_fleet_get",
         "responses": {
           "200": {
@@ -1497,7 +1497,7 @@
           "monitor"
         ],
         "summary": "Portfolio Summary",
-        "description": "Fleet roll-up — total equity / strategy count / open positions (8.H.8).",
+        "description": "Fleet roll-up \u2014 total equity / strategy count / open positions (8.H.8).",
         "operationId": "portfolio_summary_monitor_portfolio_summary_get",
         "responses": {
           "200": {
@@ -1506,6 +1506,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/monitor/board": {
+      "get": {
+        "tags": [
+          "monitor"
+        ],
+        "summary": "Board",
+        "description": "Run board (A2) \u2014 latest research runs from the runs table: lifecycle\nstatus (running|done|failed, mirrored by run_persist / run-batch) + \u5be9\u5224\u5ead\nverdict + metrics. Typed-empty pending fallback when no DB.",
+        "operationId": "board_monitor_board_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -2059,7 +2105,7 @@
           "monitor-watch"
         ],
         "summary": "Watch Overview",
-        "description": "觀察艙 overview: every berth (any state) + timer health + recent sessions.\n\nEach row carries the folded berth (status / 觀察日 N/~60 / expiry / DSR) enriched\nwith the after-close **timer health** (``ok`` / ``stale`` / ``never_ran``) so the\noperator can see at a glance whether the systemd timer is still firing — a silent\ndead timer would otherwise stall OOS collection with no alert.",
+        "description": "\u89c0\u5bdf\u8259 overview: every berth (any state) + timer health + recent sessions.\n\nEach row carries the folded berth (status / \u89c0\u5bdf\u65e5 N/~60 / expiry / DSR) enriched\nwith the after-close **timer health** (``ok`` / ``stale`` / ``never_ran``) so the\noperator can see at a glance whether the systemd timer is still firing \u2014 a silent\ndead timer would otherwise stall OOS collection with no alert.",
         "operationId": "watch_overview_monitor_watch_get",
         "responses": {
           "200": {
@@ -2167,7 +2213,7 @@
           "system"
         ],
         "summary": "Risk Spec",
-        "description": "The 12 ex-ante risk rules + active thresholds. Real config projection — this\nis rule *definitions* (not live telemetry), so it ships now, not at the M4 daemon.",
+        "description": "The 12 ex-ante risk rules + active thresholds. Real config projection \u2014 this\nis rule *definitions* (not live telemetry), so it ships now, not at the M4 daemon.",
         "operationId": "risk_spec_system_risk_spec_get",
         "responses": {
           "200": {
@@ -2210,7 +2256,7 @@
           "system"
         ],
         "summary": "Alert Rules",
-        "description": "The built-in §4.2 alert rules (real config projection). Rule definitions\nship now; create/update (POST/PUT) and history stay pending on a rule store /\nthe M4 producer.",
+        "description": "The built-in \u00a74.2 alert rules (real config projection). Rule definitions\nship now; create/update (POST/PUT) and history stay pending on a rule store /\nthe M4 producer.",
         "operationId": "alert_rules_system_alerts_rules_get",
         "responses": {
           "200": {
@@ -2429,7 +2475,7 @@
           "system"
         ],
         "summary": "Bundles",
-        "description": "Real bundle manifest scan (ADR-021 §5.4 → live). Discovers the default parquet\ncache + any ``data/parquet_*`` universe caches by their lineage manifests. Missing\ndata root / corrupt manifests degrade to typed-empty (``data_source`` explains),\nnever 500.",
+        "description": "Real bundle manifest scan (ADR-021 \u00a75.4 \u2192 live). Discovers the default parquet\ncache + any ``data/parquet_*`` universe caches by their lineage manifests. Missing\ndata root / corrupt manifests degrade to typed-empty (``data_source`` explains),\nnever 500.",
         "operationId": "bundles_system_bundles_get",
         "parameters": [
           {
@@ -2486,7 +2532,7 @@
           "system"
         ],
         "summary": "Bundle Quality",
-        "description": "Cheap manifest-derived quality for one bundle (row stats / alive-delisted /\ningest tallies). Unknown id → typed-empty (``data_source=\"not_found\"``). The\nheavier per-column freshness/gap audit is left to a future producer.",
+        "description": "Cheap manifest-derived quality for one bundle (row stats / alive-delisted /\ningest tallies). Unknown id \u2192 typed-empty (``data_source=\"not_found\"``). The\nheavier per-column freshness/gap audit is left to a future producer.",
         "operationId": "bundle_quality_system_bundles__bundle_id__quality_get",
         "parameters": [
           {
@@ -2614,7 +2660,7 @@
           "system"
         ],
         "summary": "Universe Build",
-        "description": "Enqueue a survivorship-clean universe build as an async job (ADR-032); returns\n``{job_id, status}`` (202). Mirrors :func:`ingest` exactly — the job runs the real\n``run_build_universe`` workflow (FinLab wide frames → point-in-time union → parquet\ncache + ``universe_manifest.json``) off-thread; poll :func:`universe_build_status`.\n\nThe workflow is imported + called via its module at run time so a test can\nmonkeypatch ``research.workflows.universe.run_build_universe`` and never touch\nFinLab / the network.",
+        "description": "Enqueue a survivorship-clean universe build as an async job (ADR-032); returns\n``{job_id, status}`` (202). Mirrors :func:`ingest` exactly \u2014 the job runs the real\n``run_build_universe`` workflow (FinLab wide frames \u2192 point-in-time union \u2192 parquet\ncache + ``universe_manifest.json``) off-thread; poll :func:`universe_build_status`.\n\nThe workflow is imported + called via its module at run time so a test can\nmonkeypatch ``research.workflows.universe.run_build_universe`` and never touch\nFinLab / the network.",
         "operationId": "universe_build_system_universe_build_post",
         "requestBody": {
           "content": {
@@ -3116,7 +3162,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "CompareReportData",
-        "description": "``GET /runs/compare`` — per-metric delta vs baseline + ranks + sign."
+        "description": "``GET /runs/compare`` \u2014 per-metric delta vs baseline + ranks + sign."
       },
       "Envelope": {
         "properties": {
@@ -3161,7 +3207,7 @@
           "success"
         ],
         "title": "Envelope",
-        "description": "The single response shape shared by every endpoint.\n\nGeneric over the ``data`` payload: ``response_model=Envelope[RunRow]`` types\nthe OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.\nUnparametrised ``Envelope`` ≡ ``Envelope[Any]`` — the ``ok``/``fail``/``pending``\nhelpers and any endpoint without a specific shape keep working untyped, with\nno field loss."
+        "description": "The single response shape shared by every endpoint.\n\nGeneric over the ``data`` payload: ``response_model=Envelope[RunRow]`` types\nthe OpenAPI ``data`` schema (and the frontend's generated types) per endpoint.\nUnparametrised ``Envelope`` \u2261 ``Envelope[Any]`` \u2014 the ``ok``/``fail``/``pending``\nhelpers and any endpoint without a specific shape keep working untyped, with\nno field loss."
       },
       "Envelope_BundleQuality_": {
         "properties": {
@@ -4083,7 +4129,7 @@
               }
             ],
             "title": "Strategy",
-            "description": "registered strategy name → judge by ITS declared gate; omit for the four-layer DEFAULT_GATE (審查缺陷 #8)"
+            "description": "registered strategy name \u2192 judge by ITS declared gate; omit for the four-layer DEFAULT_GATE (\u5be9\u67e5\u7f3a\u9677 #8)"
           }
         },
         "additionalProperties": false,
@@ -4092,7 +4138,7 @@
           "metrics"
         ],
         "title": "GateEvaluateRequest",
-        "description": "Judge an arbitrary metrics dict against the審判庭 (ADR-016 + ADR-019)."
+        "description": "Judge an arbitrary metrics dict against the\u5be9\u5224\u5ead (ADR-016 + ADR-019)."
       },
       "GateSpecData": {
         "properties": {
@@ -4161,7 +4207,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "MetricsData",
-        "description": "``POST /metrics/{summary,trades}`` — metric keys vary by request; the named\nobject is enough for typing, extra='allow' carries the computed values."
+        "description": "``POST /metrics/{summary,trades}`` \u2014 metric keys vary by request; the named\nobject is enough for typing, extra='allow' carries the computed values."
       },
       "MetricsSummaryRequest": {
         "properties": {
@@ -4397,7 +4443,7 @@
             "type": "string",
             "minLength": 1,
             "title": "Hypothesis",
-            "description": "預先註冊：這個 run 在驗什麼"
+            "description": "\u9810\u5148\u8a3b\u518a\uff1a\u9019\u500b run \u5728\u9a57\u4ec0\u9ebc"
           },
           "strategy": {
             "type": "string",
@@ -4408,7 +4454,7 @@
             "additionalProperties": true,
             "type": "object",
             "title": "Params",
-            "description": "Strategy params — validated at dispatch"
+            "description": "Strategy params \u2014 validated at dispatch"
           },
           "stocks": {
             "items": {
@@ -4446,7 +4492,7 @@
           "is_end"
         ],
         "title": "RunCreateRequest",
-        "description": "Trigger one IS run — the HTTP form of a ``RunConfig`` (validated downstream)."
+        "description": "Trigger one IS run \u2014 the HTTP form of a ``RunConfig`` (validated downstream)."
       },
       "RunRecord": {
         "properties": {
@@ -4722,7 +4768,7 @@
           "est_minutes"
         ],
         "title": "SweepEstimate",
-        "description": "``GET /runs/estimate`` — grid cardinality + time estimate."
+        "description": "``GET /runs/estimate`` \u2014 grid cardinality + time estimate."
       },
       "SweepRequest": {
         "properties": {
@@ -4733,7 +4779,7 @@
             },
             "type": "object",
             "title": "Grid",
-            "description": "axis name → candidate values"
+            "description": "axis name \u2192 candidate values"
           }
         },
         "additionalProperties": false,
@@ -4847,7 +4893,7 @@
           "cache_dir"
         ],
         "title": "UniverseBuildRequest",
-        "description": "Trigger a survivorship-clean universe build as an async job (ADR-032).\n\nMirrors ``research.workflows.config.UniverseConfig`` — the params the\n``build_universe`` workflow needs — and re-runs the same span-ordering gate at\nthe API boundary so a bad window fails 422 here, not deep in the job thread."
+        "description": "Trigger a survivorship-clean universe build as an async job (ADR-032).\n\nMirrors ``research.workflows.config.UniverseConfig`` \u2014 the params the\n``build_universe`` workflow needs \u2014 and re-runs the same span-ordering gate at\nthe API boundary so a bad window fails 422 here, not deep in the job thread."
       },
       "UniverseFiltersData": {
         "properties": {

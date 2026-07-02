@@ -70,6 +70,36 @@ class TelemetryReader:
             for r in rows
         ]
 
+    def runs_board(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Latest research runs for the run board (A2): lifecycle status
+        (running|done|failed, mirrored by run_persist / batch) + 審判庭 verdict.
+        Nullable verdict/metrics stay None for in-flight runs — the frontend
+        renders them as —, never fabricated."""
+        sql = (
+            "SELECT run_id, strategy, engine, stocks, is_start, is_end, status, "
+            "gate_status, gate_summary, metrics, created_at FROM runs "
+            "ORDER BY created_at DESC LIMIT %s"
+        )
+        with _connection(self._cfg) as conn, conn.cursor() as cur:
+            cur.execute(sql, [limit])
+            rows = cur.fetchall()
+        return [
+            {
+                "run_id": r[0],
+                "strategy": r[1],
+                "engine": r[2],
+                "stocks": r[3],
+                "is_start": r[4].isoformat() if r[4] is not None else None,
+                "is_end": r[5].isoformat() if r[5] is not None else None,
+                "status": r[6],
+                "gate_status": r[7],
+                "gate_summary": r[8],
+                "metrics": r[9],
+                "created_at": r[10].isoformat() if r[10] is not None else None,
+            }
+            for r in rows
+        ]
+
     def open_positions(self, *, strategy_id: str | None = None) -> list[dict[str, Any]]:
         """Currently-open positions (``closed_at IS NULL``)."""
         sql = [

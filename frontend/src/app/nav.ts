@@ -34,6 +34,7 @@ export const NAV: NavZone[] = [
     label: 'MONITOR',
     items: [
       { label: '艦隊總控', to: '/monitor', spec: 'monitor_fleet' },
+      { label: '運行看板', to: '/monitor/board', spec: 'monitor_board' },
       { label: '觀察艙', to: '/monitor/watch', spec: 'monitor_watch' },
       { label: '績效總覽', to: '/monitor/performance', spec: 'monitor_a_performance' },
       { label: '部位狀態', to: '/monitor/positions', spec: 'monitor_b_positions' },
