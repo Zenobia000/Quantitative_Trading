@@ -323,3 +323,61 @@ def test_doe_inverted_window_override_rejected():
     # model_copy used to let this pass with exit 0; re-validation must reject it.
     assert result.exit_code != 0
     assert "invalid" in result.output.lower()
+
+
+# --- run-batch (A1) --------------------------------------------------------
+
+_BATCH_ARGS = [
+    "run-batch", "--strategy", "inst_flow", "--hypothesis", "h",
+    "--start", "2026-01-05", "--end", "2026-04-10",
+]
+
+
+def test_run_batch_fans_out_and_reports(tmp_path, monkeypatch):
+    """One group per semicolon segment; results echo run_id + gate + sharpe."""
+    from backtest_platform.research import batch as batch_mod
+
+    captured = {}
+
+    def fake_run_batch(configs, *, runs_path, max_workers, **kw):
+        captured["stocks"] = [c.stocks for c in configs]
+        captured["max_workers"] = max_workers
+        return [
+            {"run_id": c.run_id, "batch_status": "done", "gate_status": "PASS",
+             "stocks": list(c.stocks), "metrics": {"sharpe": 1.2}}
+            for c in configs
+        ]
+
+    monkeypatch.setattr(batch_mod, "run_batch", fake_run_batch)
+    res = CliRunner().invoke(cli, [
+        *_BATCH_ARGS, "--stock-groups", "2330,2317;2454",
+        "--max-workers", "2", "--runs-path", str(tmp_path / "runs.jsonl"),
+    ])
+    assert res.exit_code == 0, res.output
+    assert captured["stocks"] == [("2330", "2317"), ("2454",)]
+    assert captured["max_workers"] == 2
+    assert "[PASS" in res.output and "2 done / 0 failed" in res.output
+
+
+def test_run_batch_failure_exits_nonzero(tmp_path, monkeypatch):
+    from backtest_platform.research import batch as batch_mod
+
+    def fake_run_batch(configs, **kw):
+        return [{"run_id": configs[0].run_id, "batch_status": "failed",
+                 "error": "sim exploded"}]
+
+    monkeypatch.setattr(batch_mod, "run_batch", fake_run_batch)
+    res = CliRunner().invoke(cli, [
+        *_BATCH_ARGS, "--stock-groups", "2330",
+        "--runs-path", str(tmp_path / "runs.jsonl"),
+    ])
+    assert res.exit_code == 1
+    assert "sim exploded" in res.output
+
+
+def test_run_batch_empty_groups_is_usage_error(tmp_path):
+    res = CliRunner().invoke(cli, [
+        *_BATCH_ARGS, "--stock-groups", ";;",
+        "--runs-path", str(tmp_path / "runs.jsonl"),
+    ])
+    assert res.exit_code == 2  # click UsageError

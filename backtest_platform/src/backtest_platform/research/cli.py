@@ -101,6 +101,65 @@ def run_is_cmd(strategy, params, hypothesis, stocks, start, end, runs_path, tear
             click.echo("  → tear sheet skipped（quantstats 不可用 / 資料 < 2 bars）")
 
 
+@cli.command("run-batch")
+@click.option("--strategy", required=True, help="Registered strategy name")
+@click.option("--params", default="{}", help="JSON dict of strategy params（全組共用）")
+@click.option("--hypothesis", required=True, help="預先註冊：這批 run 在驗什麼（強制，全組共用）")
+@click.option("--stock-groups", required=True,
+              help="分號分隔的股票組，組內逗號分隔：'2330,2317;2454;2308,2303' → 3 個平行 run")
+@click.option("--start", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option("--end", required=True, type=click.DateTime(formats=["%Y-%m-%d"]))
+@click.option("--max-workers", default=4, show_default=True, help="平行上限（threads）")
+@click.option("--runs-path", default=str(DEFAULT_RUNS_PATH), show_default=True)
+def run_batch_cmd(strategy, params, hypothesis, stock_groups, start, end, max_workers, runs_path) -> None:
+    """Fan out one spec × N stock groups as parallel IS runs (A1).
+
+    每組一個 run（決定性 run_id，重複組自動去重），runs 表鏡射
+    running→done|failed 生命週期供 run board 讀取；失敗互相隔離。
+    """
+    from pydantic import ValidationError
+
+    from backtest_platform.research import runners as _runners  # noqa: F401 — register
+    from backtest_platform.research.batch import expand_stock_groups, run_batch
+
+    groups = [
+        [s.strip() for s in grp.split(",") if s.strip()]
+        for grp in stock_groups.split(";") if grp.strip()
+    ]
+    if not groups:
+        raise click.UsageError("--stock-groups produced no groups")
+    base = {
+        "hypothesis": hypothesis,
+        "strategy": strategy,
+        "params": json.loads(params),
+        "is_start": start.date(),
+        "is_end": end.date(),
+    }
+    try:
+        configs = expand_stock_groups(base, groups)
+    except (ValueError, ValidationError) as exc:
+        raise click.ClickException(str(exc)) from None
+
+    click.echo(f"batch: {len(configs)} runs（max_workers={max_workers}）…")
+    results = run_batch(configs, runs_path=runs_path, max_workers=max_workers)
+
+    failed = 0
+    for r in results:
+        if r["batch_status"] == "failed":
+            failed += 1
+            click.echo(f"  {r['run_id']}  [FAILED]  {r['error']}", err=True)
+        else:
+            m = r.get("metrics") or {}
+            click.echo(
+                f"  {r['run_id']}  [{r.get('gate_status'):10}]  "
+                f"stocks={','.join(r.get('stocks', []))}  "
+                f"sharpe={m.get('sharpe', float('nan')):.3f}"
+            )
+    click.echo(f"→ {len(results) - failed} done / {failed} failed，appended to {runs_path}")
+    if failed:
+        raise SystemExit(1)
+
+
 @cli.command("validate-strategy")
 @click.argument("name", required=False)
 @click.option("--list", "list_all", is_flag=True, default=False, help="List all registered strategies")

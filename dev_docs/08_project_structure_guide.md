@@ -84,6 +84,7 @@ src/backtest_platform/
 │   ├── run_config.py             # RunConfig（strategy + params，ADR-028）
 │   ├── runs_store.py / run_series_store.py / run_tags_store.py  # runs ledger（JSONL）
 │   ├── run_persist.py            # persist_run：ledger append + best-effort runs 表鏡射（A0）
+│   ├── batch.py                  # run_batch：spec × 股票組 fan-out，有界 ThreadPool + 生命週期鏡射（A1）
 │   ├── promotion_service.py / promotion_store.py  # 晉升狀態機服務
 │   ├── trials_counter_store.py   # 試驗計數（DSR deflation 審計）
 │   ├── sweep.py / compare.py / validation_store.py / saved_views_store.py
