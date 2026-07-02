@@ -440,7 +440,7 @@
           "runs"
         ],
         "summary": "Run Candles Endpoint",
-        "description": "Daily OHLC candles + entry ▲ / exit ▼ markers for one stock of a run.\n\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nstocks, or a symbol absent from the parquet cache, returns a typed-empty\n``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).",
+        "description": "Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.\n\n``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nsymbols, or a symbol absent from the parquet cache, returns a typed-empty\n``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).",
         "operationId": "run_candles_endpoint_runs__run_id__candles_get",
         "parameters": [
           {
@@ -453,7 +453,7 @@
             }
           },
           {
-            "name": "stock",
+            "name": "symbol",
             "in": "query",
             "required": false,
             "schema": {
@@ -465,10 +465,10 @@
                   "type": "null"
                 }
               ],
-              "description": "symbol to chart; default = the run's first stock",
-              "title": "Stock"
+              "description": "symbol to chart; default = the run's first traded symbol",
+              "title": "Symbol"
             },
-            "description": "symbol to chart; default = the run's first stock"
+            "description": "symbol to chart; default = the run's first traded symbol"
           }
         ],
         "responses": {

@@ -214,12 +214,13 @@ export interface paths {
         };
         /**
          * Run Candles Endpoint
-         * @description Daily OHLC candles + entry ▲ / exit ▼ markers for one stock of a run.
+         * @description Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.
          *
+         *     ``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).
          *     Reads the run's ``stocks`` + IS window from the ledger (404 if the run is
          *     unknown), then loads OHLC from the parquet cache and overlays markers derived
          *     from the run's own signal pipeline (``research.run_candles``). A run with no
-         *     stocks, or a symbol absent from the parquet cache, returns a typed-empty
+         *     symbols, or a symbol absent from the parquet cache, returns a typed-empty
          *     ``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).
          */
         get: operations["run_candles_endpoint_runs__run_id__candles_get"];
@@ -2343,8 +2344,8 @@ export interface operations {
     run_candles_endpoint_runs__run_id__candles_get: {
         parameters: {
             query?: {
-                /** @description symbol to chart; default = the run's first stock */
-                stock?: string | null;
+                /** @description symbol to chart; default = the run's first traded symbol */
+                symbol?: string | null;
             };
             header?: never;
             path: {

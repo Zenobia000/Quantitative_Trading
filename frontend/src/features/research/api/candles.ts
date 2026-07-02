@@ -28,14 +28,14 @@ export interface RunMarker {
 export interface RunCandles {
   run_id: string
   /** 目前作圖的個股（無交易個股時為 null）。 */
-  stock: string | null
+  symbol: string | null
   /** 該 run 有交易的個股清單（驅動 SymbolSelector）。 */
-  stocks: string[]
+  symbols: string[]
   candles: RunCandle[]
   markers: RunMarker[]
 }
 
-/** GET /runs/{id}/candles — 個股 K 線 + 進出場 marker（可選 ?stock= 指定個股）。 */
-export function getRunCandles(runId: string, stock?: string): Promise<ApiResult<RunCandles>> {
-  return http<RunCandles>(`/runs/${encodeURIComponent(runId)}/candles`, { query: { stock } })
+/** GET /runs/{id}/candles — 個股 K 線 + 進出場 marker（可選 ?symbol= 指定個股，對齊 /trades?symbol=）。 */
+export function getRunCandles(runId: string, symbol?: string): Promise<ApiResult<RunCandles>> {
+  return http<RunCandles>(`/runs/${encodeURIComponent(runId)}/candles`, { query: { symbol } })
 }

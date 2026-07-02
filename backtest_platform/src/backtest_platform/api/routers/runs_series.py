@@ -65,33 +65,34 @@ def _find_run(run_id: str, runs_path: Path) -> dict[str, Any] | None:
 @router.get("/{run_id}/candles", response_model=Envelope)
 def run_candles_endpoint(
     run_id: str,
-    stock: str | None = Query(
-        None, description="symbol to chart; default = the run's first stock"
+    symbol: str | None = Query(
+        None, description="symbol to chart; default = the run's first traded symbol"
     ),
     runs_path: Path = Depends(get_runs_path),
 ) -> Envelope:
-    """Daily OHLC candles + entry ▲ / exit ▼ markers for one stock of a run.
+    """Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.
 
+    ``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).
     Reads the run's ``stocks`` + IS window from the ledger (404 if the run is
     unknown), then loads OHLC from the parquet cache and overlays markers derived
     from the run's own signal pipeline (``research.run_candles``). A run with no
-    stocks, or a symbol absent from the parquet cache, returns a typed-empty
+    symbols, or a symbol absent from the parquet cache, returns a typed-empty
     ``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).
     """
     record = _find_run(run_id, runs_path)
     if record is None:
         raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
 
-    stocks = [str(s) for s in (record.get("stocks") or [])]
-    if not stocks:
+    symbols = [str(s) for s in (record.get("stocks") or [])]
+    if not symbols:
         return pending(
-            {"run_id": run_id, "stock": None, "stocks": [], "candles": [], "markers": []}
+            {"run_id": run_id, "symbol": None, "symbols": [], "candles": [], "markers": []}
         )
 
-    # Honor an explicit, in-run symbol; otherwise fall back to the first stock
+    # Honor an explicit, in-run symbol; otherwise fall back to the first symbol
     # (never serve OHLC for a symbol the run never traded).
-    selected = stock if stock in stocks else stocks[0]
-    base = {"run_id": run_id, "stock": selected, "stocks": stocks}
+    selected = symbol if symbol in symbols else symbols[0]
+    base = {"run_id": run_id, "symbol": selected, "symbols": symbols}
 
     payload = run_candles.build_candles(record, selected)
     if payload is None:

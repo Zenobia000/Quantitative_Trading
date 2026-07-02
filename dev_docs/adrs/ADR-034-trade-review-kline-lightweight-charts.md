@@ -46,6 +46,7 @@
 
 ### 3.2 後端契約（`GET /runs/{id}/candles`）
 - 讀 run record 取 `stocks` + IS window → 讀 parquet OHLC 快取（`daily_bars__<sid>.parquet`）→ 疊 marker。
+- **查詢參數 `?symbol=`**（選填，缺省=run 首檔）：對齊 sibling `/runs/{id}/trades?symbol=` 的既有慣例（#166 review finding，2026-07-02 —— 初版用 `?stock=`，與 sibling 不一致，改 `?symbol=`）。回應欄位同步為 `{symbol, symbols[]}`（HTTP 層一律 `symbol`；`run_candles.py` 內部與 data 層仍用 `stock`，對映 `stock_id` / `daily_bars__<stock_id>` / ledger `stocks` 欄位）。
 - **marker 來源**：per-run trades sidecar 只存 `{ret, hold, entry_structure}`（無日期/價/個股），無法定位 marker；故**由 run 的訊號管線就該股重推** entry/exit（`four_layer.sim.signaled_window` 的 `buy`→`stoploss`/`exit` 成對）。只有 per-stock event-driven 的 four_layer 有 per-bar 進出場；cross-sectional panel 策略（momentum/inst_flow）誠實回空 marker（非假造）。
 - **typed-empty**：該股無 parquet → `meta.data_source="pending"` 空殼（非 500、非假數字，對齊 `frontend/GOAL.md` #8 與 system.py 慣例）；未知 run → 404 envelope-error。
 

@@ -23,17 +23,17 @@ function pct(x: number): string {
 export function TradeReviewPage() {
   const { id } = useParams<{ id: string }>()
   const runId = id ?? ''
-  const [selectedStock, setSelectedStock] = useState<string | undefined>(undefined)
+  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>(undefined)
 
-  const candlesQ = useRunCandles(runId, selectedStock)
+  const candlesQ = useRunCandles(runId, selectedSymbol)
   const tradesQ = useRunTrades(runId)
   const equityQ = useRunEquity(runId)
 
   const candlesRes = candlesQ.data
   const candles = candlesRes?.data?.candles ?? []
   const markers = candlesRes?.data?.markers ?? []
-  const stocks = candlesRes?.data?.stocks ?? []
-  const activeStock = candlesRes?.data?.stock ?? null
+  const symbols = candlesRes?.data?.symbols ?? []
+  const activeSymbol = candlesRes?.data?.symbol ?? null
   const candlesPending = isPending(candlesRes?.meta) || candles.length === 0
 
   const trades = tradesQ.data?.data?.trades ?? []
@@ -55,15 +55,15 @@ export function TradeReviewPage() {
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="text-[18px] font-semibold">個股 K 線</h2>
-          {stocks.length >= 2 && (
+          {symbols.length >= 2 && (
             <label className="flex items-center gap-1.5 text-xs text-text-muted">
               標的
               <select
                 className="rounded-md border border-border bg-code px-2 py-1 font-mono text-text focus:outline-none focus:ring-2 focus:ring-white/80"
-                value={activeStock ?? ''}
-                onChange={(e) => setSelectedStock(e.target.value)}
+                value={activeSymbol ?? ''}
+                onChange={(e) => setSelectedSymbol(e.target.value)}
               >
-                {stocks.map((s) => (
+                {symbols.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>

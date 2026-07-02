@@ -5,12 +5,12 @@ import { ttlToMs } from '@/services/queryClient'
 
 /**
  * @param runId run id（缺省時 disabled）
- * @param stock 指定個股；缺省 → 後端選貢獻/清單第一檔（回應含 stocks 供 selector）
+ * @param symbol 指定個股；缺省 → 後端選貢獻/清單第一檔（回應含 symbols 供 selector）
  */
-export function useRunCandles(runId: string | undefined, stock?: string) {
+export function useRunCandles(runId: string | undefined, symbol?: string) {
   return useQuery({
-    queryKey: ['run-candles', runId, stock ?? null],
-    queryFn: () => getRunCandles(runId as string, stock),
+    queryKey: ['run-candles', runId, symbol ?? null],
+    queryFn: () => getRunCandles(runId as string, symbol),
     enabled: !!runId,
     staleTime: ttlToMs(300, 300),
   })

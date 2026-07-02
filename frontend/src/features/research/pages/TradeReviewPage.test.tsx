@@ -17,11 +17,11 @@ afterEach(() => vi.unstubAllGlobals())
 interface StubOpts {
   emptySeries?: boolean
   candlesPending?: boolean
-  stocks?: string[]
+  symbols?: string[]
 }
 
 function stubFetch(opts: StubOpts = {}) {
-  const stocks = opts.stocks ?? ['2330']
+  const symbols = opts.symbols ?? ['2330']
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
@@ -29,13 +29,13 @@ function stubFetch(opts: StubOpts = {}) {
       let body: unknown
       if (u.includes('/candles')) {
         body = opts.candlesPending
-          ? { success: true, data: { run_id: 'r1', stock: stocks[0], stocks, candles: [], markers: [] }, error: null, meta: { data_source: 'pending' } }
+          ? { success: true, data: { run_id: 'r1', symbol: symbols[0], symbols, candles: [], markers: [] }, error: null, meta: { data_source: 'pending' } }
           : {
               success: true,
               data: {
                 run_id: 'r1',
-                stock: stocks[0],
-                stocks,
+                symbol: symbols[0],
+                symbols,
                 candles: [{ time: '2020-01-01', open: 10, high: 12, low: 9, close: 11, volume: 100 }],
                 markers: [{ time: '2020-01-01', kind: 'entry', price: 10 }],
               },
@@ -87,8 +87,8 @@ describe('TradeReviewPage', () => {
     )
   })
 
-  it('shows a stock selector when the run has 2+ stocks', async () => {
-    stubFetch({ stocks: ['2330', '2317'] })
+  it('shows a symbol selector when the run has 2+ symbols', async () => {
+    stubFetch({ symbols: ['2330', '2317'] })
     renderAt()
     await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument())
     expect(screen.getByRole('option', { name: '2317' })).toBeInTheDocument()
