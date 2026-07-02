@@ -30,7 +30,7 @@
 | Zone | 定位 | 頁面 | 資料來源（契約）|
 | :--- | :--- | :--- | :--- |
 | **Research**（主軸）| 策略研究者研究迴圈 | 策略庫 / New Run / Runs / Run Report / 逐筆覆盤 / Compare / Sweep / Validate / Promote | `/runs*`、`/research/*`、`/gate/*`、`/metrics/*` |
-| **Monitor**（telemetry-driven）| 艦隊運維者 live 子視圖 | 艦隊總控 / 績效 / 部位 / 訊號 / 風控 | `/monitor/*`（M4 前 typed-empty stub）|
+| **Monitor**（telemetry-driven）| 艦隊運維者 live 子視圖 | 艦隊總控 / 觀察艙 / 績效 / 部位 / 訊號 / 風控 | `/monitor/*`（M4 前 typed-empty stub；觀察艙 `/monitor/watch` 已 LIVE，ADR-033）|
 | **System** | 資料 / 告警管理 | 資料管理 / 告警設定 | `/system/*` |
 | **Home**（root `/`）| 每日進場 cockpit | 跨三區聚合 | `/home/*`（BFF 聚合）|
 
@@ -115,6 +115,20 @@ Monitor 面板無 live 資料源前（無 daemon 託管 PaperBroker / CircuitBre
 | Status badge + 水位（DD / VaR / Heat）| `risk_metrics`(latest) | status 由 `event_type` 推導 |
 | MDD 趨勢 + 熔斷線 | `risk_metrics` | L1/L2/L3 hline（24 §4）|
 | 風控事件 | `risk_metrics` where `event_type IS NOT NULL` | drill-down `event_context` |
+
+### 3.6 Paper-Watch 觀察艙 `/monitor/watch`（monitor_watch，[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）
+
+> **例外：此頁已 LIVE**（非 M4 stub）。資料源是 event-sourced JSONL（`watch_registry.jsonl` + `after_close_markers.jsonl`），非 daemon telemetry——排程本體留 systemd（OS 保證準時），GUI 負責「看見與管理」。補審查缺陷 #17（paper 階段介面覆蓋率趨近零）。
+
+| 元件 | 表 / 來源 | 計算 |
+| :--- | :--- | :--- |
+| 觀察艙清單卡（狀態 badge / 觀察日 N/~60 進度 / 到期倒數 / DSR）| `watch_registry.jsonl`（fold `all_watches`）| 觀察日 = 進艙後交易日計數；到期 = 進艙 +90 日 |
+| Timer 健康度（ok / stale / never_ran）| `after_close_markers.jsonl` vs 交易日曆 | stale = 最後成功 marker < 上一交易日（`previous_trading_day` 回推，假日不誤判）|
+| 最近 10 筆 session 時間線（date + OK/FAILED/NO_DATA/SKIP）| `after_close_markers.jsonl` | newest-first，capped 10 |
+| 暫停 / 恢復鈕（app 層 pause）| `POST /monitor/watch/{s}/pause\|resume` | after-close 尊重 pause → 略過（exit 0，不發 Discord）|
+
+- **timer stale / never_ran**：卡片顯示可複製的 `systemctl --user enable --now after-close.timer` 指令塊 + deploy/README 指引（14 §運維）。
+- **四態完備**：loading / error / pending / data 比照其餘 monitor 頁（`QueryState`）。
 
 > 風控門檻與熔斷邏輯真相源 = [24_risk_management_spec.md](./24_risk_management_spec.md)；`/system/risk/spec` 鏡射 gate 規則供 GUI 顯示。
 
