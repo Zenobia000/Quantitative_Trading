@@ -81,10 +81,14 @@ class GOGatesConfig(BaseModel):
 class TruthGateConfig(BaseModel):
     """ADR-025 two-stage truth gate configuration.
 
-    ``fixed_config``   : pre-registered config (never re-selected after OOS commit).
-    ``n_trials``       : landscape size used for DSR deflation.
-    ``oos_start``      : OOS boundary; IS = [is_start, oos_start), OOS = [oos_start, is_end].
-    ``pre_registered`` : if True, uses OOS-breadth + DSR (not landscape PBO) as overfit control.
+    ``fixed_config``       : pre-registered config (never re-selected after OOS commit).
+    ``n_trials``           : landscape size used for DSR deflation.
+    ``oos_start``          : OOS boundary; IS = [is_start, oos_start), OOS = [oos_start, is_end].
+    ``pre_registered``     : if True, uses OOS-breadth + DSR (not landscape PBO) as overfit control.
+    ``survivorship_clean`` : must be declared True by the strategy's ``research_config``
+        (or its universe builder) BEFORE the truth gate can pass. Defaults to False —
+        the ADR-025 hard precondition is a claim to be proven, never a hardwired green
+        light (ADR-030). Leaving it unset keeps the survivorship hard-fail armed.
     """
 
     model_config = {"frozen": True, "extra": "forbid", "arbitrary_types_allowed": True}
@@ -97,6 +101,7 @@ class TruthGateConfig(BaseModel):
     is_end: date
     n_trials: int = Field(..., ge=1, description="landscape config count for DSR")
     pre_registered: bool = True
+    survivorship_clean: bool = False
     slippage_stress: float = Field(0.003, ge=0, le=0.05)
     n_wfa_folds: int = Field(5, ge=2)
 
