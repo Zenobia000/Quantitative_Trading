@@ -33,8 +33,15 @@ from backtest_platform.validation.metrics import sharpe
 
 
 def _ensure_bundle_registered():
-    """Trigger zipline.data.bundles.register() side-effect for finmind bundle."""
-    from backtest_platform.engines.zipline_adapter.bundles import finmind_bundle  # noqa
+    """Register the finmind bundle with zipline (explicit call, dependency-untangle).
+
+    Registration is no longer an import-time side-effect; this wraps the explicit
+    ``finmind_bundle.ensure_registered()`` so every zipline entry point in this CLI
+    (``backtest-run`` before ``run_algorithm``, ``list-bundles``) opts in the same way.
+    """
+    from backtest_platform.engines.zipline_adapter.bundles import finmind_bundle
+
+    finmind_bundle.ensure_registered()
 
 
 def _resolve_zipline_root(explicit: Path | None) -> Path:

@@ -1,16 +1,24 @@
-"""Strategy runner aggregator (ADR-027).
+"""Strategy runner re-export (back-compat shim — dependency-untangle refactor).
 
-Each strategy's runner now lives WITH its strategy in
-``strategies/<name>/runner.py`` — a self-contained authoring unit (config + pure
-logic + runner). Importing this module imports every built-in runner, which
-triggers their ``@register_strategy`` registration, so the platform
-(research / engine / CLI) can resolve any strategy via ``get_strategy(name)``.
+Strategy registration now lives in ``strategies/__init__.py`` (the seam belongs
+with the strategies, not up here in research). This module used to BE the
+aggregator; it is now a thin re-export so existing import paths keep working:
 
-To register a new strategy, add one import line below (see
-``strategies/_template/README.md``). This file also re-exports the panel helpers
-that used to live here, so existing importers keep working.
+- ``from backtest_platform.research.runners import MomentumRunner, _column_panel``
+- ``import backtest_platform.research.runners  # noqa: F401  # registers built-ins``
+
+Importing this module imports the ``strategies`` package, which triggers every
+built-in runner's ``@register_strategy`` side-effect — so the historical
+"import runners to register" contract is preserved.
 """
-from backtest_platform.strategies._template.runner import TemplateRunner
+# Re-export the runner classes (in ``__all__`` below) — importing this also imports
+# the ``strategies`` package, which registers every built-in via side-effect.
+from backtest_platform.strategies import (
+    FourLayerRunner,
+    InstFlowRunner,
+    MomentumRunner,
+    TemplateRunner,
+)
 from backtest_platform.strategies.common.panel import (
     column_panel as _column_panel,
 )
@@ -20,9 +28,6 @@ from backtest_platform.strategies.common.panel import (
 from backtest_platform.strategies.common.panel import (
     panel_metrics as _panel_metrics,
 )
-from backtest_platform.strategies.four_layer_resonance.runner import FourLayerRunner
-from backtest_platform.strategies.inst_flow.runner import InstFlowRunner
-from backtest_platform.strategies.momentum.runner import MomentumRunner
 
 __all__ = [
     "FourLayerRunner",

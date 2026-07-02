@@ -32,13 +32,22 @@ from pathlib import Path
 
 import pandas as pd
 from loguru import logger
-from zipline.data.bundles import register
 
+from backtest_platform.config.universe import DEFAULT_UNIVERSE  # re-export (back-compat)
 from backtest_platform.data.schemas import ETLBundle
 from backtest_platform.engines.zipline_adapter.bundles.parquet_cache import (
     ParquetCache,
     cached_or_fetch,
 )
+
+__all__ = [
+    "DEFAULT_CACHE_DIR",
+    "DEFAULT_UNIVERSE",
+    "UniverseIngestResult",
+    "ensure_registered",
+    "finmind_to_bundle",
+    "ingest_universe",
+]
 
 
 @dataclass(slots=True, frozen=True)
@@ -53,20 +62,9 @@ class UniverseIngestResult:
     bundles: dict[str, ETLBundle] = field(default_factory=dict)
     failed_symbols: list[str] = field(default_factory=list)
 
-# Default M2 development universe — small enough to backfill in minutes,
-# representative of TSE large/mid caps. Override with UNIVERSE_FINMIND env.
-DEFAULT_UNIVERSE: tuple[str, ...] = (
-    "2330",  # 台積電
-    "2317",  # 鴻海
-    "2454",  # 聯發科
-    "1101",  # 台泥
-    "3008",  # 大立光
-    "2882",  # 國泰金
-    "1303",  # 南亞
-    "2412",  # 中華電
-    "2308",  # 台達電
-    "2891",  # 中信金
-)
+
+# ``DEFAULT_UNIVERSE`` now lives in ``config.universe`` (a zero-dep leaf module) and
+# is imported above; it is re-exported here so existing importers keep working.
 
 # Default parquet cache directory (relative to repo root).
 DEFAULT_CACHE_DIR = Path("data/parquet")
@@ -309,6 +307,23 @@ def finmind_to_bundle(
     logger.info("wrote adjustments (empty — pre-adjusted in M1 ETL)")
 
 
-# Register with zipline at import time. The calendar_name must match an
-# `exchange_calendars` calendar; XTAI is Taiwan Stock Exchange.
-register("finmind", finmind_to_bundle, calendar_name="XTAI")
+def ensure_registered() -> None:
+    """Register the ``finmind`` bundle with zipline's process-global registry.
+
+    Registration is an EXPLICIT call rather than an import-time side-effect
+    (dependency-untangle refactor). This keeps the module importable for its pure
+    helpers — ``DEFAULT_UNIVERSE`` / ``ingest_universe`` / the frame-normalization
+    functions — WITHOUT mutating zipline's global registry and without requiring
+    zipline to be importable at all (zipline is imported lazily, only here).
+
+    Idempotent: re-registering the same name is a no-op, so callers may invoke it
+    freely. Call it at every zipline entry point (``cli.py`` before
+    ``run_algorithm``, ``list-bundles``). The ``calendar_name`` must match an
+    ``exchange_calendars`` calendar; XTAI is the Taiwan Stock Exchange.
+    """
+    from zipline.data.bundles import bundles as _registry
+    from zipline.data.bundles import register
+
+    if "finmind" in _registry:
+        return
+    register("finmind", finmind_to_bundle, calendar_name="XTAI")

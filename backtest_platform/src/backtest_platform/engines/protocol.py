@@ -1,6 +1,15 @@
 """Engine Protocol (5.C.1) — a unified backtest interface so upper layers don't
 bind to a specific engine (sim / zipline / vectorbt).
 
+.. deprecated:: dependency-untangle
+    This module is superseded by the ADR-027 **strategy contract**
+    (``strategies.protocol.StrategyRunner`` + the name→runner registry). Upper
+    layers now dispatch via ``get_strategy(name).run(...)``; the ``zipline`` /
+    ``vectorbt`` members here are phantom ``_StubEngine`` placeholders that only
+    raise ``NotImplementedError``. Kept temporarily so existing importers
+    (``engines.__init__``, tests) keep resolving; full removal is a follow-up ADR.
+    Do NOT build new call sites on this Protocol.
+
 ``Engine`` is a ``typing.Protocol``: any object exposing
 ``run(stocks, start, end, config) -> dict`` is structurally an engine. This keeps
 the research/orchestration code engine-agnostic — it asks ``get_engine(name)`` for
@@ -25,15 +34,15 @@ from typing import Literal, Protocol, runtime_checkable
 
 import pandas as pd
 
+from backtest_platform.research.is_harness import load_merged_parquet
+from backtest_platform.strategies.four_layer_resonance import sim
 from backtest_platform.strategies.four_layer_resonance.config import StrategyConfig
-from backtest_platform.research.is_harness import (
-    _SLIP_STRESS,
-    _daily_returns,
-    _metrics,
-    _signaled_window,
-    _trades,
-    load_merged_parquet,
-)
+
+# The four-layer close-to-close sim helpers come from their REAL source (the
+# strategy layer's ``sim`` module), referenced as ``sim.signaled_window`` etc. — an
+# engine must not reach into ``research.is_harness``'s underscored back-compat
+# aliases (dependency-untangle). This mirrors how ``four_layer_resonance.runner``
+# consumes the same helpers.
 
 EngineName = Literal["sim", "zipline", "vectorbt"]
 
@@ -84,19 +93,19 @@ class SimEngine:
         config: StrategyConfig,
     ) -> dict:
         """Simulate ``config`` over ``stocks`` in [start, end] → metrics dict."""
-        slip_cfg = config.model_copy(update={"slip_rate": _SLIP_STRESS})
+        slip_cfg = config.model_copy(update={"slip_rate": sim._SLIP_STRESS})
         norm_returns: list[pd.Series] = []
         slip_returns: list[pd.Series] = []
         all_trades: list[dict] = []
         n_buys = 0
 
         for sid in stocks:
-            sig = _signaled_window(self.loader(sid), config, start, end)
+            sig = sim.signaled_window(self.loader(sid), config, start, end)
             if len(sig) < _MIN_BARS:
                 continue
-            norm_returns.append(_daily_returns(sig, config))
-            slip_returns.append(_daily_returns(sig, slip_cfg))
-            all_trades.extend(_trades(sig, config))
+            norm_returns.append(sim.daily_returns(sig, config))
+            slip_returns.append(sim.daily_returns(sig, slip_cfg))
+            all_trades.extend(sim.trades(sig, config))
             n_buys += int((sig["action"] == "buy").sum())
 
         if not norm_returns:
@@ -104,7 +113,7 @@ class SimEngine:
 
         port = pd.concat(norm_returns, axis=1).mean(axis=1)
         port_slip = pd.concat(slip_returns, axis=1).mean(axis=1)
-        out = _metrics(port, port_slip, all_trades, n_buys)
+        out = sim.metrics(port, port_slip, all_trades, n_buys)
         out["bars"] = len(port)
         return out
 
