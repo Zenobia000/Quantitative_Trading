@@ -32,6 +32,7 @@ import pandas as pd
 
 from backtest_platform.data import finlab_source as fl
 from backtest_platform.orchestration.collaborators import build_paper_collaborators
+from backtest_platform.runtime.market_data_errors import NoMarketDataError
 from backtest_platform.strategies.inst_flow.signal_fn import (
     DEFAULT_MAX_NAMES,
     DEFAULT_PER_NAME_CAP,
@@ -70,6 +71,27 @@ def read_live_panel(
     volume = slab(getter(fl._VOLUME))
     flow = slab(fl._sum_wide(getter, fl._FOREIGN))
     return close, flow, volume
+
+
+def check_panel_freshness(close: pd.DataFrame, as_of: date, *, strategy: str) -> None:
+    """Raise :class:`NoMarketDataError` if the live panel has no row dated ``as_of``.
+
+    This is the explicit no-data seam the after-close scheduler degrades on. On a
+    weekday Taiwan public holiday the approximate Mon–Fri calendar mis-fires: FinLab
+    returns only rows *before* ``as_of`` (its latest is the prior session). Feeding
+    that to the chain would silently run on stale data — ``compute_inst_flow_signals``
+    falls back to the last available row — so instead we surface the condition. The
+    scheduler turns it into a benign skip; a genuine failure raises a different error
+    and still alerts.
+    """
+    if close is None or close.empty:
+        raise NoMarketDataError(strategy, as_of, "empty panel")
+    last = close.index.max()
+    last_date = last.date() if hasattr(last, "date") else last
+    if last_date < as_of:
+        raise NoMarketDataError(
+            strategy, as_of, f"latest panel row {last_date} < as_of {as_of}"
+        )
 
 
 def live_config_for_date(

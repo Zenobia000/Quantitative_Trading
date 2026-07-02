@@ -38,3 +38,31 @@ def test_injected_calendar_is_authoritative_over_weekday_fallback():
     cal = _FakeCalendar(sessions={date(2026, 7, 1)})  # only Wed 7/1 is a session
     assert is_taiwan_trading_day(date(2026, 7, 1), calendar=cal) is True
     assert is_taiwan_trading_day(date(2026, 7, 2), calendar=cal) is False  # Thu, not listed
+
+
+def test_fallback_mode_logs_approximate_warning_once(monkeypatch):
+    # The approximate (weekday) path must WARN once that weekday holidays over-fire —
+    # a visible data-quality signal, latched so every gate call doesn't spam it.
+    import backtest_platform.runtime.trading_calendar as tc
+
+    monkeypatch.setattr(tc, "_calendar_mode_logged", False)
+    warns: list[tuple] = []
+    monkeypatch.setattr(tc.logger, "warning", lambda *a, **k: warns.append(a))
+    monkeypatch.setattr(tc.logger, "info", lambda *a, **k: None)
+    tc._log_calendar_mode_once(xtai_available=False)
+    tc._log_calendar_mode_once(xtai_available=False)  # latched → no second line
+    assert len(warns) == 1
+    assert "近似日曆" in warns[0][0]
+
+
+def test_exact_mode_logs_precise_info_once(monkeypatch):
+    import backtest_platform.runtime.trading_calendar as tc
+
+    monkeypatch.setattr(tc, "_calendar_mode_logged", False)
+    infos: list[tuple] = []
+    monkeypatch.setattr(tc.logger, "info", lambda *a, **k: infos.append(a))
+    monkeypatch.setattr(tc.logger, "warning", lambda *a, **k: None)
+    tc._log_calendar_mode_once(xtai_available=True)
+    tc._log_calendar_mode_once(xtai_available=True)
+    assert len(infos) == 1
+    assert "精確 XTAI" in infos[0][0]

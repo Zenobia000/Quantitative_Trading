@@ -398,6 +398,8 @@ ADR-025 把單一 binary 通關拆成兩段，避免「部署閘與研究迭代�
 | **INCOMPLETE** | 必要指標缺失 | 0.0 | 無法完整評估，不得進艙（優先於 PAPER_WATCH）|
 
 > **零資本 ≠ 放寬部署門檻**：DSR ≥ 0.95 仍 gate 每一分資本；PAPER_WATCH 是資訊收集通道（收 live OOS 補強證據），非門檻購物。band 下限 0.90 的獨立理由＝「90% 機率真 Sharpe 超越 max-of-N-trials 噪音基準」仍屬高證據水位。
+>
+> **觀察艙條款已 code enforcement（非自律）**：ADR-033 §3.3 的「上限 2 艙位 / 3 個月（90 日曆天）到期 / 一次性（無新證據不得再入）」由 `research/watch_registry.py`（append-only event-sourced JSONL，比照 `runs_store`/`promotion_store`）機器落地——進艙 `enroll` 驗 DSR band + 艙位上限 + 一次性 bar，`expire_due` 冪等到期，`active_watches`/`status` 為純讀取。after-close 排程整合（`orchestration/after_close.py`）把「誰可以跑 paper」變成守門：real session 執行前查艙位狀態，**未進艙 / 已到期 → 拒跑**（exit 1），成功後掃到期並推「觀察期滿，含 live 證據重評」Discord。CLI：`orchestration.cli watch enroll/status`（見 [14 §3.2](./14_deployment_and_operations_guide.md)）。
 
 #### 第二段：配置閘（Sizing Gate）— 連續，決定目標倉位
 
