@@ -43,7 +43,7 @@
 - [x] secrets 一律從 env 載入（`config/settings.py` + `pydantic-settings`），不寫入原始碼、不入 git（`.env` gitignored）
 - [x] log 不印 token（`grep -rE "TOKEN|SECRET"` 確認無明文輸出）
 - [x] `/system/alerts/channels` 回應遮罩（`bot_token → "***"`，25 §4）
-- [ ] **`POSTGRES_PASSWORD` 預設仍為 `change_me_in_production`**（`settings.py:44`）且**無啟動期驗證**——部署時必改；建議加 startup 檢查拒絕預設值（審查缺陷 #19，hardening 待辦）
+- [x] **`POSTGRES_PASSWORD` 預設 `change_me_in_production` 有連線期防呆**（`config/settings.py` `require_postgres()`，於 `data/db_writer._connection` 單一連線 choke point 呼叫）——密碼仍為預設時開連線前即 `RuntimeError`；只在真正連 DB 時驗，import / 無 DB 的 CI 不受影響（審查缺陷 #19，已修）
 - [ ] 疑似外洩（貼到 chat / log / PR）即到對應後台輪換
 
 ---
@@ -56,7 +56,7 @@
 - [x] 資料源回應經 Pydantic schema 驗證（`data/schemas.py` `ETLBundle` 等）
 - [x] 策略 config 為 Pydantic **frozen** model（ADR-004），Field 驗證參數範圍
 - [x] API body `extra='forbid'`，未知欄位 → 422 逐欄（25 §2 `VALIDATION_ERROR`）
-- [ ] **HTTP / CLI overrides 路徑仍用 `model_copy(update=)`**（`api/routers/research_workflows.py:75`）繞過 validator——應改 `model_validate` 重新校驗（審查缺陷 #11，hardening 待辦）
+- [x] **HTTP / CLI overrides 路徑於系統邊界重驗**（`research/workflows/config.revalidate_with_overrides`：`model_validate({**dict(cfg), **overrides})`）——錯型別 / 未知欄位（`extra=forbid`）/ 非法窗序（`_window_ordered`）全在邊界擋下（HTTP → 422、CLI → 明確 ClickException），不再用 `model_copy(update=)` 繞過 validator（審查缺陷 #11，已修）
 
 ### 注入與輸出
 

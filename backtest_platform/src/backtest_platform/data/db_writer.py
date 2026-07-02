@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 from loguru import logger
 
-from backtest_platform.config.settings import get_settings
+from backtest_platform.config.settings import get_settings, require_postgres
 from backtest_platform.data.schemas import ETLBundle
 
 
@@ -60,7 +60,13 @@ class DBConfig:
 
 @contextmanager
 def _connection(cfg: DBConfig) -> Iterator[Any]:
-    """Lazy psycopg2 import keeps the module loadable in test envs without the driver."""
+    """Lazy psycopg2 import keeps the module loadable in test envs without the driver.
+
+    The single DB choke point for both writer and reader: guard the placeholder
+    password here (審查缺陷 #19) so it fires at connection time only — never at import,
+    keeping DB-less CI green — before any socket is opened.
+    """
+    require_postgres(cfg.password)
     import psycopg2  # type: ignore[import-not-found]
 
     conn = psycopg2.connect(cfg.dsn())

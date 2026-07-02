@@ -1,12 +1,7 @@
 # 專案簡報與 PRD — backtest_platform
 
-> **版本：** v4.0 | **更新：** 2026-07-02
+> **版本 v4.0**（2026-07-02，正名 edge 驗證工廠）；沿革見 git log 與 [adrs/](./adrs/)
 > **進度狀態：** 詳見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源，見 [`15 §10`](./15_documentation_and_maintenance_guide.md) 規則）
->
-> **v1.0** (2026-05-26)：M1 完成時的 PRD 基線版本（原 rqalpha + FinMind 路線）
-> **v2.0** (2026-05-31)：M2+ 重大路線變更，以 Pivot Banner 標示過時段落
-> **v3.0** (2026-06-01)：§1-§7 全面對齊 ADR-013（zipline-reloaded 主骨架），移除過時標示；完整規劃見 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md)
-> **v4.0** (2026-07-02)：**產品正名重寫**。承 [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) §1/§3 缺陷 #15：v3.0 仍以已判死刑的四層共振為產品主軸（[ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) 判其負 edge 廢止），ADR-023~031 定義現今產品的決策全部缺席於決策沿革——依 v3.0 判準專案已「失敗」，敘事真空是最大產品風險。v4.0 把產品從「四層共振回測平台」正名為「**個人量化 edge 驗證工廠 + 晉升管線**」：策略是消耗品、審判庭是資產、連續 NO-GO 是產品正常運作的證據。Persona 正式化、部署假設明文、平台/策略 KPI 分列、❌ 清單收斂。**§1-§4 描述現況主軸；四層共振相關敘述一律標 legacy**。
 
 ---
 

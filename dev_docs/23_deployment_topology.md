@@ -128,7 +128,6 @@ flowchart TB
 | `timescaledb` | `timescale/timescaledb:2.14.2-pg16` | 5432 | **必要**：telemetry + runs + bundle cache；init.sql 首啟自動建 13 表 |
 | `influxdb` | `influxdb:2.7` | 8086 | 選配（M4）：系統 metrics（`monitoring/influx_writer.py` push）|
 | `grafana` | `grafana/grafana:10.4.2` | 3000 | 選配（M4）：4 個系統面板（provisioning 自動載入）|
-| `prefect-server` | `prefecthq/prefect:2.19` | 4200 | **未使用殘留**：排程方向已改 cron/systemd（PRD v4.0），可不啟動 / 待移除 |
 
 > 資料持久化於 named volume（`timescaledb_data` / `influxdb_data` / `grafana_data`）；`docker compose down` 保留，`down -v` 才清空。
 

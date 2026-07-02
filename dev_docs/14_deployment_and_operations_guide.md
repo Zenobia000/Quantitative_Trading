@@ -32,7 +32,7 @@
 | 告警 | 退化 / 風控推播 | Discord（`monitoring/`，httpx REST，ADR-010）|
 | 排程 | after-close 收 live OOS | cron / systemd timer（**下一步**，見 §3）|
 
-> **排程器方向（PRD v4.0）**：個人 standalone 不需企業 scheduler；一條 cron / systemd timer + Discord 成敗通知即足。`docker-compose.yml` 目前仍宣告一個未使用的 `prefect-server` 服務（殘留），排程方向已定為 cron/systemd，該服務可不啟動。
+> **排程器方向（PRD v4.0）**：個人 standalone 不需企業 scheduler；一條 cron / systemd timer + Discord 成敗通知即足。`docker-compose.yml` 已移除先前未使用的 `prefect-server` 殘留服務，排程方向確定為 cron/systemd。
 
 ---
 

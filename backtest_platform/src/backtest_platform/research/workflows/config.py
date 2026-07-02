@@ -21,6 +21,28 @@ def _grid_size(grid: dict[str, list[Any]] | None) -> int:
     return max(1, math.prod(len(v) for v in grid.values()))
 
 
+def revalidate_with_overrides(cfg: BaseModel, overrides: dict[str, Any]) -> BaseModel:
+    """Apply ``overrides`` to a frozen workflow config by RE-VALIDATING at the boundary.
+
+    ``cfg.model_copy(update=overrides)`` mutates fields without running any of the
+    validation gate — wrong types, unknown fields (``extra="forbid"``) and illegal
+    windows (the ``_window_ordered`` model validators) all slip past and only blow up
+    deep inside the workflow thread (審查缺陷 #11). Round-tripping through
+    ``model_validate`` re-runs the full gate, so a bad override fails HERE, at the
+    system edge, with a clear ``ValidationError`` the caller maps to a 422 / clean
+    CLI error.
+
+    Uses a SHALLOW field dict (``dict(cfg)``) rather than ``cfg.model_dump()``:
+    ``model_dump`` recursively serializes nested ``fixed_config: BaseModel`` (an
+    arbitrary type) to a plain dict, and re-validation then degrades it to a bare
+    ``BaseModel`` — silently losing every strategy field. The shallow dict keeps the
+    real strategy-config instance while still re-validating the overridden fields.
+    """
+    if not overrides:
+        return cfg
+    return type(cfg).model_validate({**dict(cfg), **overrides})
+
+
 class UniverseConfig(BaseModel):
     """Survivorship-clean universe build declaration (sub-project ②, ADR-032).
 

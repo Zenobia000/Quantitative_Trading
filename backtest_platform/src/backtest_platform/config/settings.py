@@ -26,6 +26,10 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+#: The placeholder password shipped in ``.env.example`` / docker-compose defaults.
+#: Never valid for a real connection — ``require_postgres`` refuses it (審查缺陷 #19).
+INSECURE_POSTGRES_PASSWORD = "change_me_in_production"
+
 
 class Settings(BaseSettings):
     """Env-driven runtime settings (read from real environment variables)."""
@@ -41,7 +45,7 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: str = "quant_trading"
     postgres_user: str = "quant"
-    postgres_password: str = "change_me_in_production"
+    postgres_password: str = INSECURE_POSTGRES_PASSWORD
 
     # --- paths ---
     # None → the caller's own default (e.g. research.runs_store.DEFAULT_RUNS_PATH).
@@ -51,3 +55,24 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Fresh ``Settings`` read from the current environment (+ ``.env``)."""
     return Settings()
+
+
+def require_postgres(password: str | None = None) -> None:
+    """Refuse to connect to Postgres with the shipped placeholder password (審查缺陷 #19).
+
+    ``password`` defaults to the env-configured ``postgres_password``; the DB
+    connection choke point passes the actual DSN password. Raises ``RuntimeError``
+    with a fix hint when it is still ``change_me_in_production``.
+
+    Called at point-of-use (the ``data.db_writer._connection`` choke point), NEVER at
+    import — so CI / offline runs that never open a DB connection stay green while any
+    real connection attempt with an un-rotated password fails loudly.
+    """
+    if password is None:
+        password = get_settings().postgres_password
+    if password == INSECURE_POSTGRES_PASSWORD:
+        raise RuntimeError(
+            "refusing to connect: POSTGRES_PASSWORD is still the shipped default "
+            f"{INSECURE_POSTGRES_PASSWORD!r}. Set a real POSTGRES_PASSWORD "
+            "(env / .env / secret manager) before opening a telemetry DB connection."
+        )
