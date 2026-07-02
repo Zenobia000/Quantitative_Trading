@@ -10,25 +10,30 @@ import { PendingNote } from '@/components/PendingNote'
 import { Skeleton } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
 
+// 後端 sim.metrics 真實鍵（four_layer）；百分比欄位以小數傳、前端 ×100（doc 25 §1.3）。
 const KPIS: { key: string; label: string; pct?: boolean; signed?: boolean }[] = [
-  { key: 'total_return', label: '總報酬', pct: true, signed: true },
   { key: 'cagr', label: 'CAGR', pct: true, signed: true },
   { key: 'sharpe', label: 'Sharpe' },
-  { key: 'mdd', label: 'MDD', pct: true },
-  { key: 'win_rate', label: '勝率', pct: true },
+  { key: 'maxdd', label: 'MaxDD', pct: true },
+  { key: 'win', label: '勝率', pct: true },
   { key: 'trades', label: '交易數' },
+  { key: 'slippage_sharpe', label: '滑點 Sharpe' },
 ]
 
-function KpiCard({ label, value, signed }: { label: string; value: unknown; signed?: boolean }) {
+function KpiCard({ label, value, pct, signed }: { label: string; value: unknown; pct?: boolean; signed?: boolean }) {
   const num = typeof value === 'number' ? value : null
   const tone = signed && num != null ? (num >= 0 ? 'text-gain' : 'text-loss') : 'text-text'
   const arrow = signed && num != null ? (num >= 0 ? '↑ ' : '↓ ') : ''
+  const shown =
+    num == null
+      ? '—'
+      : pct
+        ? `${arrow}${(num * 100).toFixed(2)}%`
+        : `${arrow}${Number.isInteger(num) ? num : num.toFixed(2)}`
   return (
     <div className="rounded-lg border border-border bg-surface p-3">
       <div className="text-xs text-text-muted">{label}</div>
-      <div className={`mt-1 font-mono text-xl tabular ${tone}`}>
-        {num == null ? '—' : `${arrow}${Number.isInteger(num) ? num : num.toFixed(2)}`}
-      </div>
+      <div className={`mt-1 font-mono text-xl tabular ${tone}`}>{shown}</div>
     </div>
   )
 }
@@ -63,32 +68,34 @@ export function RunReportPage() {
       </div>
     )
 
-  const status = (run.status as string) ?? '—'
+  // RunRecord：run_id 保證，其餘 ledger 欄位 pass-through（index-signature → unknown，需窄化）
+  const metrics = (run.metrics ?? {}) as Record<string, unknown>
+  const gate = typeof run.gate_status === 'string' ? run.gate_status : '—'
+  const strategy = typeof run.strategy === 'string' ? run.strategy : undefined
+  const runWindow = Array.isArray(run.window) ? (run.window as unknown[]).join(' ~ ') : undefined
   const reproduce: [string, unknown][] = [
     ['run_id', run.run_id],
-    ['strategy_id', run.strategy_id],
+    ['strategy', strategy],
     ['engine', run['engine']],
-    ['bundle', run['bundle']],
-    ['git_sha', run['git_sha']],
+    ['window', runWindow],
+    ['created_at', run['created_at']],
   ]
 
   return (
     <div>
-      <PageHeader title="Run Report" route={`/research/runs/${run.run_id}`} subtitle={run.strategy_id} />
+      <PageHeader title="Run Report" route={`/research/runs/${run.run_id}`} subtitle={strategy} />
 
-      {/* run_status_banner */}
+      {/* run_status_banner — IS gate 判定（PASS/FAIL/INCOMPLETE） */}
       <div className="mb-3">
-        <StatusBadge
-          tone={status === 'done' ? 'gain' : status === 'error' ? 'error' : 'warning'}
-        >
-          status: {status}
+        <StatusBadge tone={gate === 'PASS' ? 'gain' : gate === 'FAIL' ? 'error' : 'warning'}>
+          gate: {gate}
         </StatusBadge>
       </div>
 
       {/* kpi_reproduce */}
       <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {KPIS.map((k) => (
-          <KpiCard key={k.key} label={k.label} value={run[k.key]} signed={k.signed} />
+          <KpiCard key={k.key} label={k.label} value={metrics[k.key]} pct={k.pct} signed={k.signed} />
         ))}
       </div>
       <div className="mb-3 rounded-lg border border-border bg-surface p-3">
@@ -128,9 +135,10 @@ export function RunReportPage() {
           逐筆覆盤
         </button>
         <button
-          onClick={() => navigate('/research/validate')}
-          className="ml-auto rounded-pill bg-text px-4 py-1 font-medium text-base hover:opacity-90"
-          disabled={status !== 'done'}
+          onClick={() => navigate(`/research/validate?run_id=${encodeURIComponent(run.run_id)}`)}
+          className="ml-auto rounded-pill bg-text px-4 py-1 font-medium text-base hover:opacity-90 disabled:opacity-50"
+          disabled={gate !== 'PASS'}
+          title={gate !== 'PASS' ? '需 IS gate PASS 方可送驗證' : undefined}
         >
           送驗證
         </button>

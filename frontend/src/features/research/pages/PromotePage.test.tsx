@@ -6,31 +6,35 @@ import { PromotePage } from './PromotePage'
 
 afterEach(() => vi.unstubAllGlobals())
 
-function stubFetch() {
+/**
+ * 依 pathname 路由三個真實端點的形狀：
+ * - GET /research/promote/s1          → PromotionStateData {strategy_id, stage, gates[], history[]}
+ * - GET /research/promote/s1/audit    → PromotionEvent[] {strategy_id, stage, note, actor, at}
+ * - GET /research/strategies          → StrategyRow[]（gate 前置證據：validation_status）
+ */
+function stubFetch(validationStatus = 'is_pass') {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
-      const isAudit = String(url).endsWith('/audit')
-      return {
-        status: 200,
-        json: async () => ({
-          success: true,
-          data: isAudit
-            ? [{ strategy_id: 's1', stage: 'paper', note: 'looks good', actor: 'zeno', at: '2026-06-07T10:00:00' }]
-            : {
-                strategy_id: 's1',
-                stage: 'paper',
-                gates: [
-                  { stage: 'draft', reached: true },
-                  { stage: 'paper', reached: true },
-                  { stage: 'live', reached: false },
-                ],
-                history: [],
-              },
-          error: null,
-          meta: {},
-        }),
+      const path = new URL(String(url), 'http://x').pathname
+      let data: unknown
+      if (path.endsWith('/research/strategies')) {
+        data = [{ strategy_id: 's1', version: 's1', best_kpi: {}, validation_status: validationStatus, stage: 'draft', runs_count: 3 }]
+      } else if (path.endsWith('/audit')) {
+        data = [{ strategy_id: 's1', stage: 'paper', note: 'looks good', actor: 'zeno', at: '2026-06-07T10:00:00' }]
+      } else {
+        data = {
+          strategy_id: 's1',
+          stage: 'paper',
+          gates: [
+            { stage: 'draft', reached: true },
+            { stage: 'paper', reached: true },
+            { stage: 'live', reached: false },
+          ],
+          history: [],
+        }
       }
+      return { status: 200, json: async () => ({ success: true, data, error: null, meta: {} }) }
     }) as unknown as typeof fetch,
   )
 }
@@ -50,7 +54,7 @@ function renderAt(path = '/research/promote/s1') {
 
 describe('PromotePage', () => {
   it('renders current stage + stepper gates + next-stage advance control', async () => {
-    stubFetch()
+    stubFetch('is_pass')
     renderAt()
     // current stage badge + the "advance to live" affordance (paper → live)
     await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
@@ -58,8 +62,23 @@ describe('PromotePage', () => {
   })
 
   it('shows the immutable audit trail', async () => {
-    stubFetch()
+    stubFetch('is_pass')
     renderAt()
     await waitFor(() => expect(screen.getByText('looks good')).toBeInTheDocument())
+  })
+
+  it('gate PASS 證據存在 → advance 鈕可用', async () => {
+    stubFetch('is_pass')
+    renderAt()
+    await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
+    expect(screen.getByText(/晉升至 live/).closest('button')).not.toBeDisabled()
+  })
+
+  it('無 gate PASS 證據 → advance 鈕 disabled + 說明文字（前端防線）', async () => {
+    stubFetch('is_fail')
+    renderAt()
+    await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
+    expect(screen.getByText(/晉升至 live/).closest('button')).toBeDisabled()
+    expect(screen.getByText(/尚無 IS gate PASS/)).toBeInTheDocument()
   })
 })

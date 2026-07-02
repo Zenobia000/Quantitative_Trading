@@ -27,14 +27,18 @@ function renderPage() {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('AlertsPage', () => {
-  it('renders built-in alert rules + risk-spec count', async () => {
+  it('renders built-in alert rules + risk-spec count + masked channel', async () => {
     mockByPath({
       '/system/alerts/rules': [{ rule_id: 'EX-001', level: 'CRITICAL', title: '單筆上限' }],
       '/system/risk/spec': { rules: new Array(12).fill({}) },
+      // shipped：channels GET 回傳遮罩後的 discord 設定（bot_token 一律 ***）
+      '/system/alerts/channels': { discord: { enabled: false, bot_token: '***' } },
     })
     renderPage()
     await waitFor(() => expect(screen.getByText('EX-001')).toBeInTheDocument())
     expect(screen.getByText('CRITICAL')).toBeInTheDocument()
     expect(screen.getByText('風控規格 12 條')).toBeInTheDocument()
+    expect(screen.getByText(/Discord 未啟用/)).toBeInTheDocument()
+    expect(screen.getByText(/bot_token: \*\*\*/)).toBeInTheDocument()
   })
 })

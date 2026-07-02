@@ -29,10 +29,14 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('RunsTablePage', () => {
   it('populated → 顯示 run 列 + guardrail pending', async () => {
-    mockRuns([{ run_id: 'run_abc', strategy_id: 's1', status: 'done', sharpe: 1.23 }])
+    // 真實 RunSummary 投影：strategy / gate_status / 巢狀 metrics（doc 25 §6.1）
+    mockRuns([
+      { run_id: 'run_abc', strategy: 's1', gate_status: 'PASS', hypothesis: 'h', metrics: { sharpe: 1.23 } },
+    ])
     renderPage()
     await waitFor(() => expect(screen.getByText('run_abc')).toBeInTheDocument())
     expect(screen.getByText('1.23')).toBeInTheDocument()
+    expect(screen.getByText('PASS')).toBeInTheDocument()
     // guardrail 端點未接線 → pending（不假造數字）
     expect(screen.getByText('待後端')).toBeInTheDocument()
   })
@@ -46,10 +50,10 @@ describe('RunsTablePage', () => {
   it('append-only ledger 重複 run_id → 表格去重為一 run 一列（F5）', async () => {
     // ledger may append the same run_id multiple times (DOE re-run) → dedupe by run_id
     mockRuns([
-      { run_id: 'dup_run', strategy_id: 's1', status: 'done', sharpe: 1.1 },
-      { run_id: 'dup_run', strategy_id: 's1', status: 'done', sharpe: 1.1 },
-      { run_id: 'dup_run', strategy_id: 's1', status: 'done', sharpe: 1.1 },
-      { run_id: 'uniq_run', strategy_id: 's2', status: 'done', sharpe: 0.9 },
+      { run_id: 'dup_run', strategy: 's1', gate_status: 'PASS', metrics: { sharpe: 1.1 } },
+      { run_id: 'dup_run', strategy: 's1', gate_status: 'PASS', metrics: { sharpe: 1.1 } },
+      { run_id: 'dup_run', strategy: 's1', gate_status: 'PASS', metrics: { sharpe: 1.1 } },
+      { run_id: 'uniq_run', strategy: 's2', gate_status: 'FAIL', metrics: { sharpe: 0.9 } },
     ])
     renderPage()
     await waitFor(() => expect(screen.getByText('dup_run')).toBeInTheDocument())

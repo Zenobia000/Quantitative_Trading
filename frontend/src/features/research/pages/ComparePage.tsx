@@ -1,7 +1,8 @@
 /*
  * Compare（/research/compare?run_ids=a,b,c）。三源對齊 assembly + design.pen frame + page spec。
  * design.pen sections: header / compare_toolbar / guardrail_bar / equity_overlay / metric_diff_table / parallel_coordinates。
- * 資料：useCompare → GET /runs/compare?baseline=（shipped；以 baseline 為基準）。
+ * 資料：useCompare → GET /runs/compare?baseline=&run_ids=（shipped；回應為「物件」
+ * {baseline_id, metric_keys, comparisons[...]}，每列含 metrics/delta/rank/gate_status）。
  * equity_overlay / parcoords / guardrail 端點未接線 → pending（不假造數字）。
  */
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -9,10 +10,23 @@ import { useCompare } from '../hooks/useCompare'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
+import { StatusBadge } from '@/components/StatusBadge'
 
 function fmt(v: unknown): string {
   if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
   return v == null ? '—' : String(v)
+}
+
+function fmtDelta(v: number): string {
+  const s = Number.isInteger(v) ? String(v) : v.toFixed(2)
+  return v > 0 ? `+${s}` : s
+}
+
+function gateTone(s?: string | null): 'gain' | 'error' | 'warning' | 'muted' {
+  if (s === 'PASS') return 'gain'
+  if (s === 'FAIL') return 'error'
+  if (s === 'INCOMPLETE') return 'warning'
+  return 'muted'
 }
 
 export function ComparePage() {
@@ -20,7 +34,7 @@ export function ComparePage() {
   const [sp] = useSearchParams()
   const runIds = (sp.get('run_ids') ?? '').split(',').map((s) => s.trim()).filter(Boolean)
   const baseline = runIds[0]
-  const { data, isLoading, isError, error, refetch } = useCompare(baseline, runIds.length > 0)
+  const { data, isLoading, isError, error, refetch } = useCompare(baseline, runIds, runIds.length > 0)
 
   if (runIds.length < 2)
     return (
@@ -38,9 +52,10 @@ export function ComparePage() {
       </div>
     )
 
-  const payload = data?.data
-  const rows = Array.isArray(payload) ? payload : null
-  const cols = rows ? Array.from(new Set(rows.flatMap((r) => Object.keys(r as object)))) : []
+  const report = data?.data
+  const baselineId = report?.baseline_id ?? baseline
+  const metricKeys = report?.metric_keys ?? []
+  const comparisons = report?.comparisons ?? []
 
   return (
     <div>
@@ -52,10 +67,10 @@ export function ComparePage() {
           <span
             key={id}
             className={`rounded-md border px-2 py-1 font-mono tabular ${
-              id === baseline ? 'border-text text-text' : 'border-border text-text-secondary'
+              id === baselineId ? 'border-text text-text' : 'border-border text-text-secondary'
             }`}
           >
-            {id === baseline ? '★ ' : ''}
+            {id === baselineId ? '★ ' : ''}
             {id}
           </span>
         ))}
@@ -77,7 +92,7 @@ export function ComparePage() {
         <PendingNote label="Equity 疊圖（多 run，單色明度階）" />
       </div>
 
-      {/* metric_diff_table */}
+      {/* metric_diff_table — 每列一個 run，欄為 metric_keys（非 baseline 顯示 delta） */}
       <section className="mb-3 rounded-lg border border-border bg-surface">
         {isLoading ? (
           <div className="p-4">
@@ -90,31 +105,50 @@ export function ComparePage() {
               重試
             </button>
           </div>
-        ) : rows && rows.length > 0 ? (
+        ) : comparisons.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs text-text-muted">
-                  {cols.map((c) => (
-                    <th key={c} className="p-2 font-medium">{c}</th>
+                  <th className="p-2 font-medium">run</th>
+                  <th className="p-2 font-medium">Gate</th>
+                  {metricKeys.map((k) => (
+                    <th key={k} className="p-2 text-right font-medium">{k}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
-                  <tr key={i} className="border-b border-border/60">
-                    {cols.map((c) => (
-                      <td key={c} className="p-2 font-mono text-xs tabular">{fmt((r as Record<string, unknown>)[c])}</td>
-                    ))}
-                  </tr>
-                ))}
+                {comparisons.map((c) => {
+                  const metrics = (c.metrics ?? {}) as Record<string, unknown>
+                  const delta = (c.delta ?? {}) as Record<string, unknown>
+                  return (
+                    <tr key={c.run_id} className="border-b border-border/60">
+                      <td className="p-2 font-mono text-xs tabular">
+                        {c.is_baseline ? '★ ' : ''}
+                        {c.run_id}
+                      </td>
+                      <td className="p-2">
+                        <StatusBadge tone={gateTone(c.gate_status)}>{c.gate_status ?? '—'}</StatusBadge>
+                      </td>
+                      {metricKeys.map((k) => {
+                        const d = delta[k]
+                        return (
+                          <td key={k} className="p-2 text-right font-mono text-xs tabular">
+                            {fmt(metrics[k])}
+                            {!c.is_baseline && typeof d === 'number' && (
+                              <span className={d >= 0 ? 'ml-1 text-gain' : 'ml-1 text-loss'}>({fmtDelta(d)})</span>
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
         ) : (
-          <div className="p-6 text-sm text-text-muted">
-            比較資料形狀待後端依 doc 25 定義 typed response（目前 data 為 generic）。
-          </div>
+          <div className="p-6 text-sm text-text-muted">無可比較的 run（ledger 為空或 run_ids 未命中）。</div>
         )}
       </section>
 
