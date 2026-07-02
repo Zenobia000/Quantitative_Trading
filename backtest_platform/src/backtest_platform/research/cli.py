@@ -401,16 +401,44 @@ def truth_gate_cmd(strategy, dry_run) -> None:
         click.echo(f"[dry-run] TruthGateConfig for {strategy!r}:")
         click.echo(f"  n_trials={cfg.n_trials}  pre_registered={cfg.pre_registered}")
         click.echo(f"  {cfg.is_start}..{cfg.oos_start}(OOS)..{cfg.is_end}")
+        if cfg.parquet_dir:
+            click.echo(f"  parquet_dir={cfg.parquet_dir}  survivorship_clean={cfg.survivorship_clean}")
         return
-    from backtest_platform.research.is_harness import load_merged_parquet
     from backtest_platform.research.workflows.truth_gate import run_truth_gate
     click.echo(f"Running truth gate for {strategy!r}…")
-    result = run_truth_gate(cfg, loader=load_merged_parquet)
+    # No explicit loader → cfg.parquet_dir (ADR-032) selects the data cache.
+    result = run_truth_gate(cfg)
     click.echo(f"  verdict={result.verdict}  DSR={result.dsr:.4f}  "
                f"slip_sharpe={result.slippage_sharpe:.3f}  "
                f"WFA OOS+={result.wfa_oos_positive_frac:.2%}")
     for r in result.reasons:
         click.echo(f"  ✗ {r}")
+
+
+@cli.command("build-universe")
+@click.option("--strategy", required=True, help="Registered strategy name")
+@click.option("--dry-run", is_flag=True, default=False, help="Print config and exit")
+def build_universe_cmd(strategy, dry_run) -> None:
+    """Build a survivorship-clean FinLab universe — reads research_config.UNIVERSE (ADR-032)."""
+    from backtest_platform.research.workflows.loader import get_universe_config
+    try:
+        cfg = get_universe_config(strategy)
+    except (ValueError, AttributeError, TypeError) as exc:
+        raise click.ClickException(str(exc)) from None
+    if dry_run:
+        click.echo(f"[dry-run] UniverseConfig for {strategy!r}:")
+        click.echo(f"  span={cfg.span_start}..{cfg.span_end}  top_n={cfg.top_n}  "
+                   f"min_turnover={cfg.min_turnover:,.0f}  (quarterly rebalance)")
+        click.echo(f"  cache_dir={cfg.cache_dir}")
+        return
+    from backtest_platform.research.workflows.universe import run_build_universe
+    click.echo(f"Building survivorship-clean universe for {strategy!r} "
+               f"({cfg.span_start}..{cfg.span_end})…")
+    result = run_build_universe(cfg)
+    click.echo(f"  universe={len(result.universe)} names  "
+               f"alive={result.n_alive} delisted={result.n_delisted}")
+    click.echo(f"  ingest ok={result.n_ingested_ok} failed={result.n_ingested_failed}")
+    click.echo(f"  → manifest {result.manifest_path}")
 
 
 @cli.command("paper-replay")

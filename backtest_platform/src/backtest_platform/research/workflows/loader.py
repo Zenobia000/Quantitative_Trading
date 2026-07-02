@@ -19,6 +19,7 @@ from backtest_platform.research.workflows.config import (
     GOGatesConfig,
     PaperReplayConfig,
     TruthGateConfig,
+    UniverseConfig,
 )
 from backtest_platform.strategies.protocol import get_strategy
 
@@ -62,6 +63,28 @@ def get_truth_gate_config(strategy_name: str) -> TruthGateConfig:
 
 def get_paper_replay_config(strategy_name: str) -> PaperReplayConfig:
     return _get_attr(strategy_name, "paper_replay")
+
+
+def get_universe_config(strategy_name: str) -> UniverseConfig:
+    """The strategy's ``UNIVERSE`` build declaration (ADR-032).
+
+    Kept out of ``_WORKFLOW_ATTRS`` (and thus ``list_workflow_configs``) on purpose:
+    ``build_universe`` is a data-prep workflow, not one of the strategy-research
+    workflows that drive ``get_strategy(name).run()``.
+    """
+    mod = load_research_config(strategy_name)
+    if not hasattr(mod, "UNIVERSE"):
+        raise AttributeError(
+            f"strategy {strategy_name!r} research_config.py has no 'UNIVERSE' — "
+            f"declare a UniverseConfig to use the build-universe workflow"
+        )
+    obj = mod.UNIVERSE
+    if not isinstance(obj, UniverseConfig):
+        raise TypeError(
+            f"{strategy_name}/research_config.UNIVERSE must be UniverseConfig, "
+            f"got {type(obj).__name__}"
+        )
+    return obj
 
 
 def list_workflow_configs(strategy_name: str) -> list[str]:

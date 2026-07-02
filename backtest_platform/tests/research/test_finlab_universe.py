@@ -8,7 +8,10 @@ from datetime import date
 
 import pandas as pd
 
-from backtest_platform.research.finlab_universe import select_survivorship_universe
+from backtest_platform.research.finlab_universe import (
+    cached_universe_symbols,
+    select_survivorship_universe,
+)
 
 
 def _frames():
@@ -58,3 +61,20 @@ def test_no_lookahead_excludes_delisted_after_death():
         top_n=10, min_turnover=2e7,
     )
     assert "DEAD" not in uni  # not alive at this rebalance → excluded (no look-ahead)
+
+
+# --- cached_universe_symbols (sub-project ②) ------------------------------- #
+def test_cached_universe_symbols_empty_when_dir_absent(tmp_path):
+    assert cached_universe_symbols(str(tmp_path / "does_not_exist")) == []
+
+
+def test_cached_universe_symbols_empty_when_no_bars(tmp_path):
+    (tmp_path / "institutional__2330.parquet").write_bytes(b"")  # not a daily_bars file
+    assert cached_universe_symbols(str(tmp_path)) == []
+
+
+def test_cached_universe_symbols_reads_daily_bars_filenames(tmp_path):
+    for sid in ("2330", "1101", "2454"):
+        (tmp_path / f"daily_bars__{sid}.parquet").write_bytes(b"")
+    (tmp_path / "institutional__2330.parquet").write_bytes(b"")  # ignored
+    assert cached_universe_symbols(str(tmp_path)) == ["1101", "2330", "2454"]

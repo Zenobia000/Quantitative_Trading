@@ -21,6 +21,33 @@ def _grid_size(grid: dict[str, list[Any]] | None) -> int:
     return max(1, math.prod(len(v) for v in grid.values()))
 
 
+class UniverseConfig(BaseModel):
+    """Survivorship-clean universe build declaration (sub-project ②, ADR-032).
+
+    Declares HOW a strategy's factor universe is (re)built from the FinLab wide
+    frames: the point-in-time span, the per-quarter liquidity/size cut, and the
+    parquet cache the ingested bars land in. Rebalance cadence is fixed quarterly
+    (the ADR-024/025 methodology), so it is not a knob. The ``build_universe``
+    workflow reads this and drives ``select_survivorship_universe`` +
+    ``ingest_universe_finlab`` — never a strategy's backtest function.
+    """
+
+    model_config = {"frozen": True, "extra": "forbid"}
+
+    strategy: str
+    span_start: date
+    span_end: date
+    top_n: int = Field(..., ge=1, description="per-quarter top-N by market cap")
+    min_turnover: float = Field(..., ge=0, description="trailing-20d avg turnover floor (TWD)")
+    cache_dir: str
+
+    @model_validator(mode="after")
+    def _span_ordered(self) -> UniverseConfig:
+        if self.span_start >= self.span_end:
+            raise ValueError("span_start must be before span_end")
+        return self
+
+
 class DOEConfig(BaseModel):
     """DOE (Design of Experiments) first-read configuration.
 
@@ -89,6 +116,10 @@ class TruthGateConfig(BaseModel):
         (or its universe builder) BEFORE the truth gate can pass. Defaults to False —
         the ADR-025 hard precondition is a claim to be proven, never a hardwired green
         light (ADR-030). Leaving it unset keeps the survivorship hard-fail armed.
+    ``parquet_dir``        : optional data-cache override (ADR-032). None → the default
+        ``data/parquet``; set it to a dedicated cache (e.g. the survivorship-clean
+        FinLab universe built by the ``build_universe`` workflow) and ``run_truth_gate``
+        routes reads there without callers passing a loader.
     """
 
     model_config = {"frozen": True, "extra": "forbid", "arbitrary_types_allowed": True}
@@ -102,6 +133,7 @@ class TruthGateConfig(BaseModel):
     n_trials: int = Field(..., ge=1, description="landscape config count for DSR")
     pre_registered: bool = True
     survivorship_clean: bool = False
+    parquet_dir: str | None = None
     slippage_stress: float = Field(0.003, ge=0, le=0.05)
     n_wfa_folds: int = Field(5, ge=2)
 

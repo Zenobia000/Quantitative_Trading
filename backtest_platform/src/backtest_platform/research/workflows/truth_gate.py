@@ -16,6 +16,7 @@ A REAL verdict flows into the ADR-025 SizingGate → a continuous position weigh
 """
 from __future__ import annotations
 
+import functools
 from dataclasses import dataclass
 from typing import Any
 
@@ -52,8 +53,27 @@ class TruthGateResult:
     details: dict[str, Any]
 
 
-def run_truth_gate(cfg: TruthGateConfig, loader: Loader = load_merged_parquet) -> TruthGateResult:
-    """Evaluate the pre-registered ``fixed_config`` through the ADR-025 two-stage gate."""
+def _resolve_loader(cfg: TruthGateConfig, loader: Loader | None) -> Loader:
+    """Pick the data loader: explicit arg wins; else honour ``cfg.parquet_dir``.
+
+    An explicit ``loader`` (as tests inject) is used verbatim. Otherwise a declared
+    ``cfg.parquet_dir`` (e.g. the survivorship-clean FinLab cache, ADR-032) binds
+    ``load_merged_parquet`` to that directory; None falls back to ``data/parquet``.
+    """
+    if loader is not None:
+        return loader
+    if cfg.parquet_dir is not None:
+        return functools.partial(load_merged_parquet, parquet_dir=cfg.parquet_dir)
+    return load_merged_parquet
+
+
+def run_truth_gate(cfg: TruthGateConfig, loader: Loader | None = None) -> TruthGateResult:
+    """Evaluate the pre-registered ``fixed_config`` through the ADR-025 two-stage gate.
+
+    ``loader`` defaults to None so the config's ``parquet_dir`` can take effect (ADR-032);
+    callers that inject a loader keep full control.
+    """
+    loader = _resolve_loader(cfg, loader)
     runner = get_strategy(cfg.strategy)
     sconf = runner.config_model(**cfg.fixed_config.model_dump())
 

@@ -11,8 +11,29 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
+
+_DAILY_BARS_PREFIX = "daily_bars__"
+_PARQUET_SUFFIX = ".parquet"
+
+
+def cached_universe_symbols(cache_dir: str | Path) -> list[str]:
+    """Sorted stock ids already ingested into ``cache_dir`` (empty if dir absent).
+
+    Reads the ``daily_bars__<sid>.parquet`` filenames only — the cache's existence
+    *is* the survivorship-clean evidence a strategy's ``research_config`` keys its
+    TRUTH_GATE declaration off (ADR-032). Never raises on a missing directory: an
+    absent cache is a legitimate "not built yet" state, not an error.
+    """
+    root = Path(cache_dir)
+    if not root.is_dir():
+        return []
+    return sorted(
+        p.name[len(_DAILY_BARS_PREFIX):-len(_PARQUET_SUFFIX)]
+        for p in root.glob(f"{_DAILY_BARS_PREFIX}*{_PARQUET_SUFFIX}")
+    )
 
 
 def _asof(wide: pd.DataFrame, ts: pd.Timestamp) -> pd.Series:
