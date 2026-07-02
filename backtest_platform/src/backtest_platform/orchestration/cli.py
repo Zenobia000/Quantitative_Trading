@@ -115,5 +115,73 @@ def after_close_cmd(
     raise SystemExit(result.exit_code)
 
 
+# --------------------------------------------------------------------------- #
+# 觀察艙 (Paper-Watch) registry — ADR-033 enforcement surface                  #
+# --------------------------------------------------------------------------- #
+@cli.group("watch")
+def watch_group() -> None:
+    """Paper-Watch 觀察艙 registry: enroll / status (ADR-033 enforcement)."""
+
+
+@watch_group.command("enroll")
+@click.option("--strategy", required=True, help="strategy to admit to the觀察艙")
+@click.option("--dsr", "verdict_dsr", type=float, required=True,
+              help="the truth-gate DSR — must land in the PAPER_WATCH band [0.90, 0.95)")
+@click.option("--enrolled-on", "enrolled_on", default=None,
+              help="enrollment date (YYYY-MM-DD); default = today Asia/Taipei")
+@click.option("--evidence", "re_enroll_evidence", default=None,
+              help="fresh-evidence note required to re-enter after an earlier expiry/exit")
+def watch_enroll_cmd(
+    strategy: str, verdict_dsr: float, enrolled_on: str | None, re_enroll_evidence: str | None
+) -> None:
+    """Admit a PAPER_WATCH-band strategy to a zero-capital observation berth.
+
+    Enforces the ADR-033 admission clauses (band / ≤ 2 berths / one-shot re-entry);
+    a refused enrollment exits non-zero with the reason. This is the machine gate
+    that decides *which* strategy may run paper — the after-close scheduler refuses
+    any strategy without an active berth."""
+    from backtest_platform.research.watch_registry import WatchRegistryError, enroll
+
+    on = date.fromisoformat(enrolled_on) if enrolled_on else _today_taipei()
+    try:
+        st = enroll(strategy, verdict_dsr, on, re_enroll_evidence=re_enroll_evidence)
+    except WatchRegistryError as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(
+        f"🟡 {st.strategy} enrolled — state={st.state} DSR={st.verdict_dsr:.4g} "
+        f"進艙 {st.enrolled_on} → 到期 {st.expiry_date}（剩 {st.days_remaining} 天）"
+    )
+
+
+@watch_group.command("status")
+@click.option("--strategy", default=None, help="one strategy; omit for all berths")
+def watch_status_cmd(strategy: str | None) -> None:
+    """Show觀察艙 berths: 進艙日 / 已觀察交易日 / 到期日 / 剩餘天數 / 狀態."""
+    from backtest_platform.research.watch_registry import (
+        NOMINAL_TRADING_DAYS,
+        active_watches,
+        status,
+    )
+
+    if strategy is not None:
+        st = status(strategy)
+        if st is None:
+            click.echo(f"{strategy}: 無觀察艙紀錄（未進艙）")
+            return
+        rows = [st]
+    else:
+        rows = active_watches()
+        if not rows:
+            click.echo("觀察艙目前無 active 艙位。")
+            return
+
+    for st in rows:
+        click.echo(
+            f"[{st.state}] {st.strategy}  進艙 {st.enrolled_on}  "
+            f"觀察日 {st.observed_trading_days}/~{NOMINAL_TRADING_DAYS}  "
+            f"到期 {st.expiry_date}  剩 {st.days_remaining} 天  DSR={st.verdict_dsr:.4g}"
+        )
+
+
 if __name__ == "__main__":
     cli()
