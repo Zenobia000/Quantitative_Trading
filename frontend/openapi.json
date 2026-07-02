@@ -481,8 +481,26 @@
           "gate"
         ],
         "summary": "Gate Spec",
-        "description": "Return the default gate's criteria (key / op / threshold / kind / label).",
+        "description": "Return a gate's criteria (key / op / threshold / kind / label).\n\n``strategy`` → that strategy's declared gate; omitted → four-layer DEFAULT_GATE.",
         "operationId": "gate_spec_gate_spec_get",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strategy"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -490,6 +508,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope_GateSpecData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -503,7 +531,7 @@
           "gate"
         ],
         "summary": "Gate Evaluate",
-        "description": "Judge a metrics dict against the default gate.",
+        "description": "Judge a metrics dict against a gate.\n\n``req.strategy`` → that strategy's declared gate; omitted → four-layer default.",
         "operationId": "gate_evaluate_gate_evaluate_post",
         "requestBody": {
           "content": {
@@ -3465,6 +3493,18 @@
             "type": "object",
             "title": "Metrics",
             "description": "run metrics, e.g. {cagr, sharpe, struct1_pct, ...}"
+          },
+          "strategy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Strategy",
+            "description": "registered strategy name → judge by ITS declared gate; omit for the four-layer DEFAULT_GATE (審查缺陷 #8)"
           }
         },
         "additionalProperties": false,

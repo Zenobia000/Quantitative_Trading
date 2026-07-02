@@ -65,15 +65,11 @@ jobs:
   # Contract drift: live OpenAPI spec vs frontend/openapi.json, plus runs DDL
   # vs db_writer._RUNS_COLS. `--extra api` is enough — the script only imports
   # the FastAPI app to dump the spec; the DDL check is pure text/ast parsing.
-  #
-  # TODO(drift): remove `continue-on-error` once the two KNOWN drifts are fixed
-  # by the parallel work packages (stale frontend/openapi.json still exposes
-  # /presets instead of /strategies; runs DDL `preset` vs db_writer `strategy`).
-  # Until then this job reports drift without failing the whole workflow.
+  # Hard gate: any schema change must land together with a regenerated
+  # frontend/openapi.json + api.gen.ts (`npm run gen:api`) in the same PR.
   # ---------------------------------------------------------------------------
   contract-drift:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
