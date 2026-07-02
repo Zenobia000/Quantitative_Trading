@@ -83,6 +83,7 @@ src/backtest_platform/
 │   ├── is_harness.py             # run_and_judge（gate 隨策略 dispatch）+ load_merged_parquet
 │   ├── run_config.py             # RunConfig（strategy + params，ADR-028）
 │   ├── runs_store.py / run_series_store.py / run_tags_store.py  # runs ledger（JSONL）
+│   ├── run_persist.py            # persist_run：ledger append + best-effort runs 表鏡射（A0）
 │   ├── promotion_service.py / promotion_store.py  # 晉升狀態機服務
 │   ├── trials_counter_store.py   # 試驗計數（DSR deflation 審計）
 │   ├── sweep.py / compare.py / validation_store.py / saved_views_store.py

@@ -183,6 +183,8 @@ def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
             "cost_assumptions": {"fee": 0.001425, "tax": 0.003},
             "params": {"min_structure": 2},
             "metrics": {"cagr": -0.018, "sharpe": -0.2},
+            "gate_status": "FAIL",
+            "gate_summary": "IS gate: 1/4 checks passed",
             "status": "done",
             "trials_count": 1,
         }
@@ -219,6 +221,9 @@ def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
     assert by_col["stocks"] == '["2330", "2317"]'
     assert by_col["metrics"] == '{"cagr": -0.018, "sharpe": -0.2}'
     assert by_col["hypothesis"] == "v3 entry beats v2 on 2330 IS window"
+    # A0: the 審判庭 verdict rides along so the run board can badge without the ledger
+    assert by_col["gate_status"] == "FAIL"
+    assert by_col["gate_summary"] == "IS gate: 1/4 checks passed"
 
 
 def test_upsert_runs_empty_returns_zero() -> None:
@@ -455,16 +460,84 @@ def test_upsert_equity_snapshots_upserts_on_pk() -> None:
     assert "snapshot_time = EXCLUDED" not in sql  # PK not in SET
 
 
-def test_upsert_fills_maps_to_filled_orders() -> None:
+def _capture_all_sql(fn, rows):
+    """Like _capture_sql but returns every execute_values call: [(sql, tuples), ...]."""
+    cur = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+        "psycopg2.extras.execute_values"
+    ) as mock_exec:
+        mock_ctx.return_value.__enter__.return_value = conn
+        n = fn(rows)
+    calls = [(c.args[1], c.args[2]) for c in mock_exec.call_args_list]
+    return n, calls
+
+
+def test_upsert_fills_dual_writes_orders_and_fills() -> None:
+    """A0: a fill persists as (1) a filled `orders` row (Monitor /fills reader
+    compatibility) AND (2) a `fills` row carrying execution economics, linked by
+    a client-generated order_id (fills.order_id is NOT NULL, so the id must be
+    minted before the orders INSERT — DB-side gen_random_uuid can't be shared)."""
     from backtest_platform.data.db_writer import upsert_fills
 
-    n, sql, tuples = _capture_sql(
+    n, calls = _capture_all_sql(
         upsert_fills,
         [{"stock_id": "2330", "side": "Buy", "qty": 1000, "price": 542.0,
-          "filled_at": "2026-06-11T09:01:00+08:00"}],
+          "filled_at": "2026-06-11T09:01:00+08:00",
+          "commission": 77.2, "tax": 162.6, "slippage_bps": 4.5}],
     )
     assert n == 1
-    assert sql.startswith("INSERT INTO orders")  # no fills table; a fill is a filled order
-    row = tuples[0]
-    assert "filled" in row  # status
-    assert 542.0 in row  # limit_price = fill price
+    assert len(calls) == 2, "must write both orders and fills"
+    (orders_sql, orders_rows), (fills_sql, fills_rows) = calls
+
+    assert orders_sql.startswith("INSERT INTO orders")
+    assert "order_id" in orders_sql  # explicit id, not DB-generated
+    assert "filled" in orders_rows[0]  # status
+    assert 542.0 in orders_rows[0]  # limit_price = fill price
+
+    assert fills_sql.startswith("INSERT INTO fills")
+    assert "ON CONFLICT" not in fills_sql  # append-only execution log
+    fill_row = fills_rows[0]
+    assert 542.0 in fill_row  # fill_price
+    assert 1000 in fill_row  # fill_quantity
+    assert 77.2 in fill_row and 162.6 in fill_row and 4.5 in fill_row
+
+    # the SAME order_id links both rows
+    o_cols = orders_sql[orders_sql.index("(") + 1 : orders_sql.index(")")].split(", ")
+    f_cols = fills_sql[fills_sql.index("(") + 1 : fills_sql.index(")")].split(", ")
+    oid = dict(zip(o_cols, orders_rows[0]))["order_id"]
+    assert oid is not None
+    assert dict(zip(f_cols, fill_row))["order_id"] == oid
+
+
+def test_upsert_fills_single_connection_for_both_tables() -> None:
+    """Both INSERTs share one connection/commit — a fill is one logical event."""
+    from backtest_platform.data.db_writer import upsert_fills
+
+    cur = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+        "psycopg2.extras.execute_values"
+    ):
+        mock_ctx.return_value.__enter__.return_value = conn
+        upsert_fills([{"stock_id": "2330", "side": "Buy", "qty": 1, "price": 1.0,
+                       "filled_at": "2026-06-11T09:01:00+08:00"}])
+    assert mock_ctx.call_count == 1
+
+
+def test_upsert_fills_defaults_broker_paper_and_optional_costs_null() -> None:
+    from backtest_platform.data.db_writer import upsert_fills
+
+    n, calls = _capture_all_sql(
+        upsert_fills,
+        [{"stock_id": "2330", "side": "Sell", "qty": 500, "price": 600.0,
+          "filled_at": "2026-06-11T13:30:00+08:00"}],
+    )
+    assert n == 1
+    fills_sql, fills_rows = calls[1]
+    f_cols = fills_sql[fills_sql.index("(") + 1 : fills_sql.index(")")].split(", ")
+    by_col = dict(zip(f_cols, fills_rows[0]))
+    assert by_col["broker"] == "paper"
+    assert by_col["commission"] is None and by_col["tax"] is None

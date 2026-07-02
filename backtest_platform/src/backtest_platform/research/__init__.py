@@ -7,11 +7,12 @@ hypothesis-pre-registered, lineage-bearing command instead of one-off scripts.
 from backtest_platform.research.compare import CompareReport, RunComparison, compare_runs, rank_by
 from backtest_platform.research.is_harness import run_and_judge, run_is
 from backtest_platform.research.run_config import RunConfig
+from backtest_platform.research.run_persist import persist_run
 from backtest_platform.research.runs_store import append_run, read_runs
 from backtest_platform.research.sweep import expand_grid, run_sweep, to_heatmap
 
 __all__ = [
-    "RunConfig", "run_is", "run_and_judge", "append_run", "read_runs",
+    "RunConfig", "run_is", "run_and_judge", "append_run", "persist_run", "read_runs",
     "expand_grid", "run_sweep", "to_heatmap",
     "compare_runs", "rank_by", "CompareReport", "RunComparison",
 ]

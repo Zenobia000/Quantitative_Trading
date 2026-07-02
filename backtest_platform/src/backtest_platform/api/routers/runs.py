@@ -30,7 +30,8 @@ from backtest_platform.api.schemas import RunCreateRequest
 from backtest_platform.jobs import job_store, submit
 from backtest_platform.research.compare import CompareReport, compare_runs
 from backtest_platform.research.run_config import RunConfig
-from backtest_platform.research.runs_store import append_run, read_runs
+from backtest_platform.research.run_persist import persist_run
+from backtest_platform.research.runs_store import read_runs
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -196,7 +197,7 @@ def create_run(
         record = executor(cfg)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
-    append_run(record, runs_path)
+    persist_run(record, runs_path)  # ledger + best-effort runs-table mirror (A0)
     return ok(record)
 
 
@@ -226,7 +227,7 @@ def create_run_async(
 
     def _judge_and_append() -> dict[str, Any]:
         record = executor(cfg)
-        append_run(record, runs_path)
+        persist_run(record, runs_path)  # ledger + best-effort runs-table mirror (A0)
         return record
 
     key = f"{req.strategy}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
