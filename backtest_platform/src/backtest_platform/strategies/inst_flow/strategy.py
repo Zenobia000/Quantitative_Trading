@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from backtest_platform.strategies.common import (
     clean_returns,
     rebalance_dates,
+    trim_overlap,
     vol_target,
 )
 
@@ -126,7 +127,7 @@ def backtest_inst_flow(
         if cfg.long_only_positive:
             held = [name for name in held if ranked[name] > 0]  # only real net buying
         if held:
-            seg = rets.loc[rb:nxt, held].mean(axis=1).copy()
+            seg = trim_overlap(rets.loc[rb:nxt, held].mean(axis=1).copy(), segs)
             turnover = len(set(held) ^ prev) / max(len(held), 1)
             if len(seg):
                 total_cost = cfg.cost_round_rate * turnover
@@ -135,7 +136,7 @@ def backtest_inst_flow(
                 else:
                     seg.iloc[0] = seg.iloc[0] - total_cost
         else:
-            seg = pd.Series(0.0, index=rets.loc[rb:nxt].index)
+            seg = trim_overlap(pd.Series(0.0, index=rets.loc[rb:nxt].index), segs)
             turnover = 1.0 if prev else 0.0
         segs.append(seg)
         holdings.append(len(held))
@@ -144,7 +145,7 @@ def backtest_inst_flow(
 
     if not segs:
         return InstFlowResult(pd.Series(dtype=float), 0, 0.0, 0.0)
-    daily = pd.concat(segs).groupby(level=0).first()
+    daily = pd.concat(segs).sort_index()
     if cfg.vol_target_annual is not None:
         daily = vol_target(daily, cfg.vol_target_annual, cfg.vol_lookback, cfg.max_leverage)
     return InstFlowResult(
