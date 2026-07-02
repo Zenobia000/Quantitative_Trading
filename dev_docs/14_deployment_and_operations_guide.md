@@ -168,35 +168,38 @@ Timer：`OnCalendar=Mon..Fri 14:35 Asia/Taipei` + `Persistent=true`（補跑睡�
 
 ## 4. 備份與災難恢復
 
-### 4.1 備份（單人不可再生資產，審查缺陷 #10）
+### 4.1 備份（單人不可再生資產，審查缺陷 #10）— **已自動化**
 
 三類不可再生資產：FinLab 付費 parquet cache、研究血統 `reports/*.jsonl`、TimescaleDB telemetry。
 
-```bash
-# 每日 TimescaleDB dump（cron 建議 02:00）
-docker exec quant-timescaledb pg_dump -U quant -Fc quant_trading \
-    > backups/quant_trading_$(date +%F).dump
+> **已自動化（不再手動）**：`deploy/backup.sh` + systemd timer / cron 每日 15:30 Asia/Taipei（after-close 之後）備份三類資產，成敗都發 Discord。安裝、還原步驟、保留策略見 **[`backtest_platform/deploy/README.md` § backup](../backtest_platform/deploy/README.md)**（單一真相源）。以下留最小指令供理解；勿手抄成排程，直接裝 timer。
 
-# 付費資料 + 研究血統（rsync 到備份目錄 / 外接碟）
-rsync -a data/parquet/ data/parquet_finlab_universe/ backups/parquet/
-rsync -a reports/ backups/reports/
+```bash
+# 一次性手動備份（BACKUP_DEST = 外接碟 / NAS 掛載點，未設 → exit 1）
+BACKUP_DEST=/mnt/nas/qt-backup bash deploy/backup.sh
+#   → $BACKUP_DEST/pg/<date>.sql.gz（gzip 後 plain pg_dump，保留最近 14 份）
+#   → rsync -a --delete  reports/  data/parquet*  →  $BACKUP_DEST/
 ```
 
+- **排程**：`deploy/backup.timer`（15:30 Asia/Taipei、`Persistent=true`）或 `deploy/backup.cron.example`。
 - **RPO**：24 小時（每日一次 dump）。**RTO**：< 1 小時（單機 restore）。
+- **保留**：pg dump 留最近 14 份，舊的自動刪（`PG_KEEP` 可覆寫）。
 - parquet cache 已具原子寫回 + 缺口 merge（`parquet_cache.py`），舊歷史不被新 ingest 覆蓋。
+- 任一 `pg_dump` / `rsync` 失敗 → 整體 FAIL + Discord error（絕不靜默吞錯）。
 
 ### 4.2 恢復
 
 ```bash
-# 資料庫恢復
-docker exec -i quant-timescaledb pg_restore -U quant -d quant_trading --clean \
-    < backups/quant_trading_YYYY-MM-DD.dump
+# 資料庫恢復：解壓 → 灌回容器內 psql（plain SQL dump）
+gunzip -c "$BACKUP_DEST/pg/YYYY-MM-DD.sql.gz" \
+    | docker compose exec -T timescaledb psql -U quant -d quant_trading
 
 # parquet / reports 恢復：反向 rsync
-rsync -a backups/parquet/ data/parquet/
+rsync -a "$BACKUP_DEST/reports/" reports/
+rsync -a "$BACKUP_DEST/data/parquet/" data/parquet/
 ```
 
-恢復演練（建議每季）：刪 1 日資料 → restore → 跑一次 `research truth-gate --strategy <s> --dry-run` smoke。
+恢復演練（建議每季）：刪 1 日資料 → restore → 跑一次 `research truth-gate --strategy <s> --dry-run` smoke。完整步驟見 deploy/README § Restore。
 
 ### 4.3 資料源中斷降級
 

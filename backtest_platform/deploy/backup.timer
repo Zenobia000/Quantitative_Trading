@@ -1,0 +1,17 @@
+[Unit]
+Description=Trigger the daily backtest_platform backup (15:30 Asia/Taipei, after the TWSE close)
+Documentation=file:%h/Quantitative_Trading/dev_docs/14_deployment_and_operations_guide.md
+
+[Timer]
+# Every day 15:30 Asia/Taipei — comfortably past the 13:30 TWSE close and after the
+# 14:35 after-close paper session, so the day's telemetry / runs ledger is captured.
+OnCalendar=*-*-* 15:30 Asia/Taipei
+# Catch up a backup missed while the machine was asleep/off (pg dump filename is the
+# date, so a same-day catch-up simply overwrites that day's dump — idempotent).
+Persistent=true
+# Jitter so the backup doesn't start at the exact same second the after-close run ends.
+RandomizedDelaySec=300
+Unit=backup.service
+
+[Install]
+WantedBy=timers.target

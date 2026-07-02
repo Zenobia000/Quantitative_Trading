@@ -75,3 +75,77 @@ crontab -e   # paste deploy/after-close.cron.example, edit path + universe
 Cron has no per-line timezone: the example assumes the host clock is Asia/Taipei
 (use 06:35 UTC otherwise). The systemd timer's `OnCalendar=... Asia/Taipei` is
 timezone-correct and preferred.
+
+---
+
+# backup — daily backup of the non-reproducible assets
+
+`backup.sh` backs up the three assets that cannot be regenerated (doc 14 §4, doc 13 §D.2):
+
+| Asset | Source | Destination | Method |
+| :--- | :--- | :--- | :--- |
+| TimescaleDB telemetry | `timescaledb` container (`quant_trading` DB) | `$BACKUP_DEST/pg/<date>.sql.gz` | gzipped plain `pg_dump`, newest **14** kept |
+| Runs ledger + markers | `reports/` | `$BACKUP_DEST/reports/` | `rsync -a --delete` mirror |
+| Paid FinLab + clean cache | `data/parquet*` (incl. manifest) | `$BACKUP_DEST/data/<name>/` | `rsync -a --delete` mirror |
+
+`$BACKUP_DEST` is a **local** path — an external drive or NAS mount point (standalone /
+single-machine, ADR-031). It is never hardcoded; set it via env / `.env`. If it is unset
+or not a mounted directory the script exits 1 with a clear message. Every run alerts Discord
+(success **and** failure via `monitoring.discord_notifier`); a missing `DISCORD_BOT_TOKEN`
+degrades to a local log line, never a crash. Any `pg_dump` / `rsync` failure aborts the whole
+run and fires a Discord error alert (RPO 24h / RTO < 1h).
+
+## Prerequisites
+
+- The docker stack up (`docker compose up -d`) — `pg_dump` runs inside the `timescaledb` container.
+- `BACKUP_DEST` set to a mounted backup path, e.g. `/mnt/nas/qt-backup` (put it in `.env`).
+- `uv` on PATH (used only for the Discord alert; the backup itself works without it).
+
+Manual run:
+
+```bash
+BACKUP_DEST=/mnt/nas/qt-backup bash deploy/backup.sh
+# override retention (default 14 pg dumps):  PG_KEEP=30 BACKUP_DEST=... bash deploy/backup.sh
+```
+
+## Option A — systemd user timer (recommended)
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp deploy/backup.service deploy/backup.timer ~/.config/systemd/user/
+# Ensure BACKUP_DEST is in .env (EnvironmentFile), or:
+#   systemctl --user edit backup.service   → [Service] Environment=BACKUP_DEST=/mnt/nas/qt
+systemctl --user daemon-reload
+systemctl --user enable --now backup.timer
+loginctl enable-linger "$USER"                  # let it run while you're logged out
+systemctl --user list-timers backup.timer       # verify next trigger (15:30 Asia/Taipei)
+journalctl --user -u backup.service -n 50        # inspect the last run
+```
+
+## Option B — cron
+
+```bash
+crontab -e   # paste deploy/backup.cron.example, edit the absolute path
+```
+
+The cron line sources `.env` (so `BACKUP_DEST` lives there) and logs to
+`reports/backup.cron.log`. The systemd timer's `OnCalendar=... Asia/Taipei` is
+timezone-correct and preferred (cron assumes the host clock is Asia/Taipei).
+
+## Restore
+
+```bash
+# 1. TimescaleDB — decompress the chosen dump and pipe into psql inside the container.
+#    (--clean handled by the dump; drop/recreate the DB first if you want a pristine load.)
+gunzip -c "$BACKUP_DEST/pg/2026-07-02.sql.gz" \
+    | docker compose exec -T timescaledb psql -U quant -d quant_trading
+
+# 2. reports/ + data/parquet* — reverse rsync from the backup back into the checkout.
+rsync -a "$BACKUP_DEST/reports/" reports/
+rsync -a "$BACKUP_DEST/data/parquet/" data/parquet/
+rsync -a "$BACKUP_DEST/data/parquet_finlab_universe/" data/parquet_finlab_universe/
+```
+
+Recovery drill (quarterly, doc 14 §4.2): delete one day of data → restore → run
+`uv run python -m backtest_platform.research.cli truth-gate --strategy <s> --dry-run` smoke.
+
