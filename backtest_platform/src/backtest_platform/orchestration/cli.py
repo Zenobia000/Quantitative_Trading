@@ -15,14 +15,28 @@ strategy to run (the signal_fn) is an edge/deployment decision, not infra.
 """
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta, timezone
+
 import click
 
+from backtest_platform.orchestration.after_close import (
+    build_session_runner,
+    run_after_close,
+    safe_discord_notify,
+)
 from backtest_platform.orchestration.daily_flow import (
     FlowContext,
     build_daily_stages,
     demo_stages,
     run_flow,
 )
+
+_TWT = timezone(timedelta(hours=8))
+
+
+def _today_taipei() -> date:
+    """Today's date in Asia/Taipei — the default as-of for a live after-close run."""
+    return datetime.now(_TWT).date()
 
 
 @click.group()
@@ -49,6 +63,51 @@ def list_stages_cmd() -> None:
     """List the canonical daily-pipeline stage order."""
     for name, _ in build_daily_stages():
         click.echo(name)
+
+
+@cli.command("after-close")
+@click.option("--strategy", required=True, help="registered strategy name (e.g. inst_flow)")
+@click.option("--date", "date_str", default=None,
+              help="as-of session (YYYY-MM-DD); default = today Asia/Taipei (back-fill supported)")
+@click.option("--dry-run", is_flag=True, default=False,
+              help="pass the guards but DON'T trigger the daily flow (no finlab/DB touched)")
+@click.option("--force", is_flag=True, default=False,
+              help="skip the 14:30 Asia/Taipei after-close time gate")
+@click.option("--universe", default=None,
+              help="comma-separated symbols; else env AFTER_CLOSE_UNIVERSE")
+@click.option("--equity", type=float, default=None,
+              help="starting paper cash; else env AFTER_CLOSE_EQUITY or 10,000,000")
+def after_close_cmd(
+    strategy: str,
+    date_str: str | None,
+    dry_run: bool,
+    force: bool,
+    universe: str | None,
+    equity: float | None,
+) -> None:
+    """Run the forward after-close session for one strategy/date (cron/systemd entry).
+
+    Guards a real-calendar run (trading-day → after-close time → idempotency) then
+    drives the proven live-panel forward chain. Non-trading / too-early / already-done
+    exit 0 with a clear message; a failed daily flow exits 1 (and alerts Discord).
+    """
+    as_of = date.fromisoformat(date_str) if date_str else _today_taipei()
+
+    def _lazy_runner(strat: str, on: date):  # built only if the guards actually run it
+        return build_session_runner(strategy, universe, equity)(strat, on)
+
+    # Defer the production wiring (broker / live-panel / universe requirement) until
+    # AFTER the cheap guards pass — a non-trading / too-early / already-done day must
+    # no-op cleanly (exit 0) without needing a universe or touching finlab/DB. dry-run
+    # never runs the flow, so it needs no runner at all.
+    runner = None if dry_run else _lazy_runner
+    result = run_after_close(
+        strategy, as_of,
+        dry_run=dry_run, force=force,
+        session_runner=runner, notifier=safe_discord_notify,
+    )
+    click.echo(result.message)
+    raise SystemExit(result.exit_code)
 
 
 if __name__ == "__main__":
