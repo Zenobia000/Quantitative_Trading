@@ -84,27 +84,57 @@ docker compose up -d influxdb grafana
 
 ---
 
-## 3. 排程（after-close，收 live OOS 的下一步）
+## 3. 排程（after-close，收 live OOS）
 
-收 live OOS 的唯一剩餘 blocker 是 after-close 排程器（審查缺陷 #17）。方向已定為 **cron / systemd timer**，不用企業 scheduler。
+收 live OOS 的最後一塊——after-close 排程器（審查缺陷 #17）——已落地為 **cron / systemd timer 級**（不用企業 scheduler，對齊 PRD v4.0）。CLI 入口 `orchestration.cli after-close` 自帶三道守門，週末 / 假日 / 未到收盤 / 重複觸發都是乾淨 no-op（exit 0）；唯有 daily flow 失敗才 exit 1 並推 Discord 告警。
 
-現況：paper 鏈可手動觸發——
+### 3.1 CLI 入口
 
 ```bash
-# 逐日跑 ETL→signals→risk→orders→log（paper-replay 工作流，ADR-029）
-uv run python -m backtest_platform.research.cli paper-replay --strategy inst_flow
+# 今日盤後跑一次（預設 --date = 今日 Asia/Taipei）
+uv run python -m backtest_platform.orchestration.cli \
+    after-close --strategy inst_flow --universe 2330,2317,2454
+
+# 補跑某個交易日（back-fill；過去日期自動視為已收盤）
+uv run python -m backtest_platform.orchestration.cli \
+    after-close --strategy inst_flow --date 2026-07-01 --universe 2330,2317
+
+# 煙霧測試：過守門但不觸發 daily flow（不碰 finlab / DB）
+uv run python -m backtest_platform.orchestration.cli \
+    after-close --strategy inst_flow --dry-run --force
 ```
 
-規劃中的 after-close timer（盤後資料齊後跑）以下列形狀落地（**尚未實作**）：
+守門順序與行為：
 
-```ini
-# ~/.config/systemd/user/backtest-afterclose.timer（示意）
-[Timer]
-OnCalendar=Mon..Fri 17:30 Asia/Taipei     # 台股盤後資料齊
-Persistent=true
+| 守門 | 判準 | 未過 → | exit |
+| :--- | :--- | :--- | :--- |
+| 交易日 | XTAI 日曆（裝 `--extra mainframe`）；否則週一至五近似 | `NON_TRADING_DAY` no-op | 0 |
+| 收盤後 | 台北時區 ≥ 14:30（過去日期自動過；`--force` 跳過）| `TOO_EARLY` 拒跑 | 0 |
+| 冪等 | 同 (strategy, date) 已成功 → done-marker JSONL | `ALREADY_DONE` skip | 0 |
+| daily flow | 走既有 live-panel forward 鏈（`market_reader.live_config_for_date` → `run_forward_session`）| `FAILED` 推 Discord 告警 | **1** |
+
+> **日曆限制**：未裝 `mainframe` extra 時退化為週一至五近似——落在平日的國定 / 農曆假日會被誤判為交易日（年約 10–15 天）。裝 `uv sync --extra mainframe` 取得精確 XTAI sessions；冪等 + 風控仍限縮誤觸發的爆炸半徑。
+>
+> **收盤時間校準**：14:30 是台股 13:30 收盤後的 EOD 資料緩衝；若你的資料源較晚才發布三大法人 net-buy，把 timer 與 gate 一併後移（如 17:35）。
+>
+> **portfolio 狀態限制**：每次 CLI process 起一個全新 `PaperBroker`；每日 signals / fills / equity 皆經 sink 落庫，但跨日的 in-process 倉位尚未從 DB 回填（屬 db hardening 工作包）。足以觀察每日 live 訊號。
+
+### 3.2 安裝（systemd user timer，建議）
+
+`deploy/` 附完整範例（`after-close.service` / `after-close.timer` / `after-close.cron.example` / `README.md`）。
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp backtest_platform/deploy/after-close.{service,timer} ~/.config/systemd/user/
+# 編輯 .service 的 WorkingDirectory / EnvironmentFile / --universe 成你的路徑
+systemctl --user daemon-reload
+systemctl --user enable --now after-close.timer
+loginctl enable-linger "$USER"                    # 登出後 timer 續跑
+systemctl --user list-timers after-close.timer    # 確認下次觸發
+journalctl --user -u after-close.service -n 50     # 看最近一次結果
 ```
 
-對應 service 跑：資料 ingest（§2 資料路徑）→ 每日訊號生成 → paper 撮合 → Discord 成敗通知。成功與失敗都推 Discord（`INFO` digest / `HIGH` 失敗）。
+Timer：`OnCalendar=Mon..Fri 14:35 Asia/Taipei` + `Persistent=true`（補跑睡眠中錯過的觸發，冪等擋雙跑）。cron 替代方案見 `deploy/after-close.cron.example`（cron 無時區，假設 host 為 Asia/Taipei）。service 讀 `.env`（`FINLAB_API_TOKEN` / `POSTGRES_*` / `DISCORD_*`）。成功推 `INFO` digest、失敗推 `ERROR` 告警。
 
 ---
 

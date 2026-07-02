@@ -152,6 +152,8 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 uv run python -m backtest_platform.orchestration.cli run --dry-run   # no-op demo 管線（安全）
 uv run python -m backtest_platform.orchestration.cli run --real      # 套 build_daily_stages（需注入 collaborators）
 uv run python -m backtest_platform.orchestration.cli list-stages     # 列出 ETL→signals→risk→orders→log
+uv run python -m backtest_platform.orchestration.cli \
+    after-close --strategy inst_flow --universe 2330,2317   # 盤後 forward paper session（收 live OOS）
 ```
 
 | 子命令 | 用途 | 後端 |
@@ -159,6 +161,7 @@ uv run python -m backtest_platform.orchestration.cli list-stages     # 列出 ET
 | `run --dry-run` | 跑 no-op demo 管線（不碰資料/broker/網路）→ flow engine smoke test | `daily_flow.run_flow` + `demo_stages` |
 | `run --real` | 跑 ETL→signals→risk→orders→log 正式管線；collaborator 未注入時乾淨回報缺哪個（不 crash），real 接線見 7.D.3 | `daily_flow.build_daily_stages` |
 | `list-stages` | 列出每日管線 stage 順序 | `daily_flow.build_daily_stages` |
+| `after-close` | 盤後 forward paper session（cron/systemd 入口）：交易日 / 收盤後（14:30 Asia/Taipei，`--force` 跳過）/ 冪等三守門 → 既有 live-panel forward 鏈 → Discord 成敗告警。`--strategy`（必填）/ `--date`（補跑）/ `--dry-run` / `--universe` / `--equity`。no-op 守門 exit 0；daily flow 失敗 exit 1。安裝 SOP 見 doc 14 §3 + `deploy/` | `after_close.run_after_close` + `market_reader.run_forward_session` |
 
 ---
 
