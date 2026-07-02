@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 # 一鍵啟動 Scrum 看板伺服器。
 #
-#   ./tools/scrum_board/start.sh            # 綁 0.0.0.0:8765（區網可達）
+#   ./tools/scrum_board/start.sh            # 綁 127.0.0.1:8765（僅本機，對齊 ADR-031）
 #   ./tools/scrum_board/start.sh 9000       # 換 port
-#   HOST=127.0.0.1 ./tools/scrum_board/start.sh   # 鎖回本機
+#   HOST=0.0.0.0 ./tools/scrum_board/start.sh   # 開放區網（無認證，慎用）
 #
 # 自動定位 repo 內的 venv python，無需先 activate。
 set -euo pipefail
 
 PORT="${1:-8765}"
-HOST="${HOST:-0.0.0.0}"
+HOST="${HOST:-127.0.0.1}"
 
 # 由腳本位置回推 repo 根目錄（tools/scrum_board/ → ../../）
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

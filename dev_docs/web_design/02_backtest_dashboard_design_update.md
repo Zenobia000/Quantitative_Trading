@@ -1,7 +1,7 @@
 # 設計更新文件 — backtest_platform 監控儀表板（React 版）
 
 > **版本**：v1.0 ｜ **日期**：2026-06-01
-> **用途**：本文件是把 `dev_docs/20_dashboard_specification.md`（Streamlit 面板 A–E）導入新設計系統、交付給 Lovable 產出 React 版的**設計更新總綱與索引**。
+> **用途**：本文件是 backtest_platform 監控儀表板（React）的**設計系統總綱與索引**——把 `dev_docs/20_dashboard_specification.md` 的面板 A–E 功能規格對映到 dark-first 設計 token 與頁面規格。
 > **依據 SOP**：[`lovable_組裝.md`](./lovable_組裝.md)（Global 壓縮 → 組裝 Master Prompt → 餵 Lovable → 驗收）。
 > **設計來源**：Grok 單色 dark 設計語言（`global/02_backtest_platform_brand_system.md` v2.0；v1 曾誤用 x.ai teal 差異化，已修正為 Grok 單色）。
 > **IA 對齊**：頁面命名已依 `03_uiux_benchmark_and_reinforcement_plan.md` 的三區 IA 重整為 `pages/monitor_{a-d}_*.md`（監控區）與 `pages/research_0N_*.md`（研究區）；route 由 `/dashboard/*` 改為 `/monitor/*`。
@@ -17,7 +17,7 @@
 | 純 Streamlit | 升級路徑：React + Tailwind + Recharts/Plotly（保留 Plotly 圖型與互動） |
 | 對比/色盲未系統化 | 文字 AA、KPI 數值 AAA、漲跌「色+文字」雙編碼 |
 
-> 設計更新不丟棄 Streamlit MVP（M3 仍可用）；本文件定義其**視覺/前端升級版**的規格，供平行開發與後續 React 化。
+> 監控儀表板為 React（Tailwind + Recharts/Plotly）；本文件定義其設計系統與頁面規格。
 
 ## 2. 三層交付物對應（玩具城理論）
 

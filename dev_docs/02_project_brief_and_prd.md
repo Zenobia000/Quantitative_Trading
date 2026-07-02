@@ -10,44 +10,7 @@
 
 ---
 
-## 決策沿革（Decision Lineage）
-
-本文 §1-§7 已對齊以下決策的最新狀態。完整 M2-M5 規劃以 [17_m2_to_m5_master_plan.md](./17_m2_to_m5_master_plan.md) 為準；里程碑狀態以 [16 WBS](./16_wbs_development_plan.md) 為單一真相源。
-
-### 骨架與基礎建設（M1-M2 定案，維持有效）
-
-| 主題 | 最終決策（最新） | 沿革 | 正式文檔 |
-| :--- | :--- | :--- | :--- |
-| **回測引擎主骨架** | **zipline-reloaded**（社群版，免商業綁定） | rqalpha → TQuant-Lab/zipline-tej → zipline-reloaded | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)（supersedes [ADR-005](./adrs/ADR-005-mainframe-tquant-lab-zipline-fork.md)、[ADR-001](./adrs/ADR-001-engine-rqalpha-plus-vectorbt.md)）|
-| **資料源** | **付費 FinLab** 為主（全史 2007→今 + 原生 survivorship-clean）+ FinMind 免費版 fallback | FinMind 免費版 + sponsor → 付費 FinLab（[ADR-006 realized](./adrs/ADR-006-data-source-finlab-paid.md)）| [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
-| **引擎策略** | **雙引擎**（Zipline event 主 + vectorbt vector） | 單引擎 → 雙引擎 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md)（vector 半邊隨 [ADR-014](./adrs/ADR-014-zipline-reloaded-3-1-1-upgrade-reverses-adr-013-constraints.md) 恢復）|
-| **系統定位** | **三模式共用 strategy code**（backtest / paper / live） | 純回測平台 → 三模式 | [ADR-008](./adrs/ADR-008-tri-mode-shared-strategy-code.md) |
-| **監控/告警** | **React 儀表板 + Discord** 主線（Grafana 為系統面板輔） | Grafana 單一 → Streamlit → **React（ADR-021/015）** + Discord（Telegram → Discord）| [ADR-009](./adrs/ADR-009-dual-dashboard-telegram-monitoring.md) + [ADR-010](./adrs/ADR-010-discord-alerter-supersedes-telegram.md) + [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) |
-| **前後端契約** | **單一 REST 契約 doc 25 + OpenAPI 機器真相**（envelope / 錯誤碼 / 分頁 / polling） | 三處分裂 → 合一 | [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) |
-| **套件管理** | **uv** | poetry → uv | [ADR-012](./adrs/ADR-012-adopt-uv-package-manager.md) |
-| **M2 目錄結構** | engines/ + adapters/ + validation/ 模組邊界 | — | [ADR-011](./adrs/ADR-011-m2-directory-structure-and-module-boundaries.md) |
-
-### 產品主軸與審判庭（現今產品由此定義 — v4.0 補登 ADR-016~031）
-
-> **這一段是 v4.0 的核心補課**：以下決策定義了「產品實際在做什麼」，在 v3.0 決策沿革中全數缺席。閱讀順序 = 產品演化順序：ADR-016 立絕對門檻 → ADR-017/019/020 四層 IS 重設探索 → ADR-022 艦隊營運 → ADR-023/024 連續 NO-GO → ADR-025 驗證機制修正 → ADR-026~029 平台契約化 → ADR-030/031 審判庭與部署收尾。
-
-| 主題 | 最終決策（最新） | 一句話摘要 | 正式文檔 |
-| :--- | :--- | :--- | :--- |
-| **M2 acceptance 門檻** | binary 絕對門檻（CAGR>18% / Sharpe>1.0 / 滑點 Sharpe>1.0）— **已由 ADR-025 修正為兩段閘** | 凍結審慎下限；後被檢出對研究迭代與市場中性策略錯配 | [ADR-016](./adrs/ADR-016-m2-acceptance-kpi-freeze.md) |
-| **四層 IS gate FAIL** | 觸發退場 → 回 M0 重設**進場**假設 | 參數探針定位約束在進場非出場（legacy 探索）| [ADR-017](./adrs/ADR-017-m2-is-gate-failed-return-to-m0-entry-redesign.md) |
-| **監控 → 研究迴圈優先 pivot** | Run 物件化 + 研究工作區 IA + IS→WFA→OOS gate + OOS sealed vault + 試驗次數 deflate + 晉升狀態機 | 產品主軸從「監控」轉「研究迴圈與審判庭」| [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) |
-| **v3 進場重設** | 四層參數化分級放寬 + flameout 最小 exit（legacy）| 四層探索最後一輪；反過擬合硬約束 | [ADR-019](./adrs/ADR-019-v3-entry-redesign-relaxation-and-minimal-exit-pairing.md) |
-| **候選 D 中小型 universe** | escalate 換 point-in-time 中小型動能 universe（legacy）| large-cap IS FAIL 後的 universe 升級探針 | [ADR-020](./adrs/ADR-020-candidate-d-smallcap-universe-escalation.md) |
-| **多策略艦隊營運（lite）** | 營運層擴張為同時操作數隻已晉升策略 + 退化換掉（研究層仍單策略）| gated 於 ≥1 策略完成 3 個月 paper（現 0）| [ADR-022](./adrs/ADR-022-multi-strategy-fleet-operations.md) |
-| **策略評估第一輪結論** | **四層共振廢止（負 edge、毀價值）+ 動能 12-1 NO-GO**（真實但太溫和，守 ADR-016 不放寬）| 平台量出「過擬合/偏誤稅」擋下壞策略 = 平台優先鐵證 | [ADR-023](./adrs/ADR-023-momentum-no-go-hold-gate.md) |
-| **三大法人資金流候選** | binary ADR-016 下 survivorship-clean FAIL → **ADR-025 兩段閘 + FinLab 全史重驗 = TRUTH GATE REAL / paper-ready** | 平台首個 paper-ready 候選；剩 forward live OOS | [ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md) |
-| **驗證閘兩段化 + paper 前移** | 真偽閘（PBO/DSR/WFA/survivorship-clean，hard-fail）+ 配置閘（Sharpe/相關性/容量→倉位，連續；絕對 CAGR 降參考）| 修正 ADR-016 binary 三缺陷；不翻案 ADR-023/024 | [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) |
-| **共用回測機制抽出** | `rebalance_dates`/`vol_target`/`clean_returns`/`TRADING_DAYS` 抽至 `strategies/common` | 解策略間反向 import 私有函式的 leaky abstraction | [ADR-026](./adrs/ADR-026-extract-shared-backtest-mechanics-from-momentum.md) |
-| **策略契約 + registry** | 接縫畫在**輸出**邊界（`StrategyRunner.run → StrategyRun`）+ 輕量 name→runner registry | 解除 four_layer 引擎特權；新增策略 7-12→2-3 檔 | [ADR-027](./adrs/ADR-027-strategy-contract-and-registry.md) |
-| **策略派發契約 + preset 移除** | `POST /runs {strategy, params}` 經 registry dispatch；策略自描述（`GET /strategies`）+ conformance gate | 任意 AI-authored 策略可由 HTTP/CLI 啟動；preset 路徑全移除 | [ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md) |
-| **研究工作流標準化** | 通用工作流 `doe`/`go_gates`/`truth_gate`/`paper_replay` 住 `research/workflows/`；各策略以 `research_config.py` 宣告參數 | 新增策略只寫 `research_config.py` 即參與所有工作流，零新腳本 | [ADR-029](./adrs/ADR-029-research-workflow-standardization.md) |
-| **審判庭真偽閘修正** | truth gate DSR 單位 / OOS holdout / survivorship 判準修正 | 修復審判庭核心可信度（**本 worktree 未含，另分支 PR #137**）| ADR-030（truth gate 修正，PR #137）|
-| **standalone auth 裁決** | **localhost-only 綁定宣告 + 移除 doc 25 的 Bearer 承諾**（降為 M5 遠端存取時重議）| 20 行 static Bearer 對 localhost 不增實質安全、卻增每 client 摩擦 | [ADR-031](./adrs/ADR-031-standalone-auth-decision.md) |
+架構與產品決策記錄於 [adrs/](./adrs/)（ADR-001~032），本 PRD 只描述現行產品。
 
 ---
 
@@ -123,7 +86,7 @@
 | **paper 前移** | 過真偽閘 + OOS>0 即可最小倉位 paper 收 live OOS | 不再排在絕對 CAGR 門檻後 |
 | **實盤解鎖** | paper 期 live OOS + 配置閘 sign-off（不可逆晉升） | 唯一硬 gated 於此 |
 
-> **絕對門檻（legacy 參考）**：ADR-016 的 CAGR>18% / Sharpe>1.0 曾為 binary 部署門檻，已由 ADR-025 降為配置閘的 sizing 參考（見決策沿革）。
+> **絕對門檻（legacy 參考）**：ADR-016 的 CAGR>18% / Sharpe>1.0 曾為 binary 部署門檻，已由 [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md) 降為配置閘的 sizing 參考。
 
 ### 3.3 價值關鍵路徑（下一個里程碑）
 

@@ -1,8 +1,8 @@
 # Page-Level Prompt: 面板 C — 訊號日誌 (Signal Log, M3)
 
-> 從 Streamlit 原型升級為 React 版頁面規格。對齊 `pages/page_template.md` 章節。
+> React 版頁面規格。對齊 `pages/page_template.md` 章節。
 > 來源：`dev_docs/20_dashboard_specification.md` 面板 C。
-> Streamlit → React 對照：st.metric → KPI Card、st.dataframe → DataTable、Plotly 圖 → Recharts / Plotly.js 元件；保留原互動（drill-down / filter / refresh TTL）。
+> 元件對應：KPI Card / DataTable / Recharts / Plotly.js 元件；保留原互動（drill-down / filter / refresh TTL）。
 
 ---
 

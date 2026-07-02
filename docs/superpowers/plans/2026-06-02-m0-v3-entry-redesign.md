@@ -1,5 +1,7 @@
 # M0 v3 進場重設 Implementation Plan
 
+> ⚠️ 本文件主題（四層共振）已於 ADR-023 判負 edge 廢止，僅存 audit trail。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or the Execute Plan phase of superpowers:sunnydata-design to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 把四層共振「進場過嚴」重設為參數化分級放寬（必含層+可選 + confirm + cooldown + 負向 veto）+ 最小 exit 搭配（flameout 2-bar 確認），v2 預設精確重現 baseline。

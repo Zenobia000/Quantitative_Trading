@@ -1,301 +1,216 @@
 # 部署與運維指南 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26
+> **版本：** v2.0 | **更新：** 2026-07-02
+> **部署假設：** 單機自託管、內網 localhost、單人（[02 PRD v4.0 §2.3](./02_project_brief_and_prd.md)、[ADR-031](./adrs/ADR-031-standalone-auth-decision.md)）。
+> **關聯：** [23_deployment_topology.md](./23_deployment_topology.md)（拓撲）、[13_security_and_readiness_checklists.md](./13_security_and_readiness_checklists.md)（安全 / 備份）、[24_risk_management_spec.md](./24_risk_management_spec.md)（風控 SOP）。
+
+本文是**現行單機部署與運維 SOP**：如何把整套跑起來、如何備份、出事怎麼查。企業級 scheduler / VPS / 藍綠部署不在範圍（standalone lite 原則，PRD v4.0 §5「不做什麼」）。
 
 ---
 
-## 1. 部署架構
-
-> **2026-05-31 補註**：本節為高層概述。**完整三環境拓撲（Dev/Staging/Production）含 docker-compose 詳細草案、port mapping、secrets 管理、災難復原拓撲 → 詳見 [23_deployment_topology.md](./23_deployment_topology.md)**。
-> 本文聚焦運維 SOP 與 Runbook；23 號文件聚焦拓撲與基礎設施設計。
-
-### 當前（M1–M3：開發/回測階段）
+## 1. 部署架構（單機）
 
 ```
-本機 PC（Windows / WSL2）
-    ├── Python venv（backtest_platform 套件）
-    └── Docker Compose
-            ├── TimescaleDB（資料）
-            ├── Prefect（排程，M2 啟用）
-            └── Grafana（監控，M4 啟用）
+單台 PC（Linux / WSL2）
+├── uv 管理的 Python 環境（backtest_platform 套件）
+│   ├── FastAPI（uvicorn，綁 127.0.0.1:8000）
+│   ├── research CLI（doe / truth-gate / build-universe / paper-replay …）
+│   └── monitoring（Discord notifier + alert rules）
+├── Node / Vite（前端：dev 走 5173、prod 出 static build）
+└── Docker Compose
+    ├── TimescaleDB          :5432   ← 必要（telemetry + runs + bundle cache）
+    ├── InfluxDB 2.7         :8086   ← M4 選配（系統 metrics）
+    └── Grafana 10.4         :3000   ← M4 選配（系統面板）
 ```
 
-### M4 階段（Paper Trading）
-
-```
-本機 PC（持續開機 / 同上）
-    ├── Prefect schedule（每日 17:00 ETL + 18:00 訊號生成）
-    └── Grafana + Discord bot
-```
-
-### M5 階段（小倉位實盤）
-
-```
-雲端 VPS（推薦 GCP Compute Engine e2-small）
-    ├── Docker Compose（同上 + Shioaji 容器）
-    ├── Prefect schedule
-    ├── Grafana + Discord bot
-    └── 自動備份 → GCS / S3
-```
-
-### 基礎設施元件
-
-| 元件 | 用途 | 技術選型 |
+| 元件 | 用途 | 技術 |
 | :--- | :--- | :--- |
-| 應用容器（M5） | backtest_platform 套件 | Docker (Python 3.11-slim) |
-| 資料庫 | TimescaleDB | timescale/timescaledb:2.14.2-pg16 |
-| 排程 | Prefect Server 2.x | prefecthq/prefect:2.19 |
-| 監控 | Grafana | grafana/grafana:10.4.2 |
-| 告警 | Discord Bot | httpx (REST direct，ADR-010) |
-| 雲端（M5） | GCP Compute Engine | e2-small / e2-medium |
-| 備份（M5） | GCS / S3 | gsutil / aws s3 |
+| 後端 API | REST 契約（端點 registry 見 25 §6）| FastAPI + uvicorn |
+| 前端 | React 三 zone GUI | Vite + React 19（build → static）|
+| 資料庫 | telemetry / runs / bundle cache | TimescaleDB 2.14.2-pg16 |
+| 系統 metrics（選配）| ETL / quota / 排程健康面板 | InfluxDB 2.7 + Grafana 10.4 |
+| 告警 | 退化 / 風控推播 | Discord（`monitoring/`，httpx REST，ADR-010）|
+| 排程 | after-close 收 live OOS | cron / systemd timer（**下一步**，見 §3）|
+
+> **排程器方向（PRD v4.0）**：個人 standalone 不需企業 scheduler；一條 cron / systemd timer + Discord 成敗通知即足。`docker-compose.yml` 目前仍宣告一個未使用的 `prefect-server` 服務（殘留），排程方向已定為 cron/systemd，該服務可不啟動。
 
 ---
 
-## 2. CI/CD 流水線
+## 2. 環境建置 SOP
 
-### 當前（M1）— 手動
+### 2.1 後端 + 資料庫
 
 ```bash
-# Lint
-ruff check src/ tests/
+cd backtest_platform
 
-# Test
-PYTHONPATH=src python3 -m pytest -p no:asyncio
+# 1. Python 環境（uv，ADR-012）
+uv sync --all-extras            # 全 extras：api / dev / sprint1 / validation …
 
-# 端到端
-PYTHONPATH=src python3 -m backtest_platform.pipeline run \
-    --stock-id 2330 --start 2023-01-01 --end 2024-12-31
+# 2. 秘密：複製並填入 .env（gitignored，絕不入版控）
+cp .env.example .env
+#   至少填 FINLAB_API_TOKEN（主資料源）、POSTGRES_PASSWORD（改掉預設值）、DISCORD_*（告警）
+
+# 3. TimescaleDB（init.sql 於首次啟動自動建 13 張表）
+docker compose up -d timescaledb
+docker compose ps              # 確認 quant-timescaledb healthy
+
+# 4. 啟動 API（standalone MUST 綁 loopback，ADR-031）
+uv run uvicorn backtest_platform.api.app:app --host 127.0.0.1 --port 8000
+#   OpenAPI 文件：http://127.0.0.1:8000/docs
 ```
 
-### M3 起：GitHub Actions
+### 2.2 前端
 
-```yaml
-# .github/workflows/ci.yml（規劃）
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      timescaledb:
-        image: timescale/timescaledb:2.14.2-pg16
-        env:
-          POSTGRES_PASSWORD: test_pw
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with: { python-version: '3.10' }
-      - run: pip install -e ".[dev]"
-      - run: ruff check src/ tests/
-      - run: mypy --strict src/
-      - run: pytest -v --cov=src --cov-fail-under=80
-      - run: pytest -m integration  # 需 DB
+```bash
+cd frontend
+npm ci
+
+# dev：vite proxy 把 /runs /research /monitor /system /home 等前綴代理到 127.0.0.1:8000
+npm run dev                    # http://localhost:5173
+
+# prod：靜態 build（以任意 static server / uvicorn 掛載 dist/ 提供）
+npm run build                  # tsc --noEmit && vite build → dist/
 ```
 
-### M5：部署流程
+> 契約型別由 OpenAPI 生成：後端 `app.openapi()` → `frontend/openapi.json` → `npm run gen:api`。CI `contract-drift` job 硬 gate 兩者一致（見 §5）。
 
-| 階段 | 步驟 |
+### 2.3 系統面板（M4 選配）
+
+```bash
+docker compose up -d influxdb grafana
+#   Grafana http://localhost:3000（provisioning 自動載入 4 個系統面板：ETL / quota / 排程 / 資源）
+#   資料來源對齊 monitoring/influx_writer.py emit 的 measurements（見 20 §Grafana）
+```
+
+---
+
+## 3. 排程（after-close，收 live OOS 的下一步）
+
+收 live OOS 的唯一剩餘 blocker 是 after-close 排程器（審查缺陷 #17）。方向已定為 **cron / systemd timer**，不用企業 scheduler。
+
+現況：paper 鏈可手動觸發——
+
+```bash
+# 逐日跑 ETL→signals→risk→orders→log（paper-replay 工作流，ADR-029）
+uv run python -m backtest_platform.research.cli paper-replay --strategy inst_flow
+```
+
+規劃中的 after-close timer（盤後資料齊後跑）以下列形狀落地（**尚未實作**）：
+
+```ini
+# ~/.config/systemd/user/backtest-afterclose.timer（示意）
+[Timer]
+OnCalendar=Mon..Fri 17:30 Asia/Taipei     # 台股盤後資料齊
+Persistent=true
+```
+
+對應 service 跑：資料 ingest（§2 資料路徑）→ 每日訊號生成 → paper 撮合 → Discord 成敗通知。成功與失敗都推 Discord（`INFO` digest / `HIGH` 失敗）。
+
+---
+
+## 4. 備份與災難恢復
+
+### 4.1 備份（單人不可再生資產，審查缺陷 #10）
+
+三類不可再生資產：FinLab 付費 parquet cache、研究血統 `reports/*.jsonl`、TimescaleDB telemetry。
+
+```bash
+# 每日 TimescaleDB dump（cron 建議 02:00）
+docker exec quant-timescaledb pg_dump -U quant -Fc quant_trading \
+    > backups/quant_trading_$(date +%F).dump
+
+# 付費資料 + 研究血統（rsync 到備份目錄 / 外接碟）
+rsync -a data/parquet/ data/parquet_finlab_universe/ backups/parquet/
+rsync -a reports/ backups/reports/
+```
+
+- **RPO**：24 小時（每日一次 dump）。**RTO**：< 1 小時（單機 restore）。
+- parquet cache 已具原子寫回 + 缺口 merge（`parquet_cache.py`），舊歷史不被新 ingest 覆蓋。
+
+### 4.2 恢復
+
+```bash
+# 資料庫恢復
+docker exec -i quant-timescaledb pg_restore -U quant -d quant_trading --clean \
+    < backups/quant_trading_YYYY-MM-DD.dump
+
+# parquet / reports 恢復：反向 rsync
+rsync -a backups/parquet/ data/parquet/
+```
+
+恢復演練（建議每季）：刪 1 日資料 → restore → 跑一次 `research truth-gate --strategy <s> --dry-run` smoke。
+
+### 4.3 資料源中斷降級
+
+| 失效 | Fallback | 通知 |
+| :--- | :--- | :--- |
+| FinLab API | 切 FinMind bundle ingest（`zipline_adapter cli ingest`）| Discord HIGH |
+| TimescaleDB | 無 fallback，停 paper 鏈 | Discord CRITICAL |
+| Discord | 寫本機 log（告警不阻塞主流程）| system log |
+
+---
+
+## 5. CI（品質守門，已上線）
+
+`.github/workflows/ci.yml` 三 job，每次 push main / PR 觸發（詳見 [22 §CI](./22_test_strategy.md)）：
+
+| Job | 內容 |
 | :--- | :--- |
-| 1. 建置 | `docker build` 產出 image，push 到 registry |
-| 2. 部署到 staging | `docker-compose -f docker-compose.staging.yml up -d` |
-| 3. 測試 | smoke test：訊號重現驗證、Shioaji 模擬下單 |
-| 4. 部署到 production | `docker-compose up -d`，藍綠部署 |
-| 5. 驗證 | 健康檢查、首日訊號比對 paper trading |
+| **backend** | `uv sync --all-extras` → `uv run pytest`（coverage gate 80%）|
+| **frontend** | `npm ci` → `tsc --noEmit` → `vitest run --coverage` |
+| **contract-drift** | `scripts/check_openapi_drift.py`：OpenAPI live↔snapshot + runs DDL↔`_RUNS_COLS`（hard gate）|
 
 ---
 
-## 3. 部署檢查清單
+## 6. 告警 Runbook（Discord）
 
-### M5 上線前（一次性）
-
-- [ ] 13_security_and_readiness P0 行動項全部完成
-- [ ] Paper trading 已跑 3 個月，Sharpe > 回測 × 0.7
-- [ ] 滑點實測 < 預估值 1.5x
-- [ ] Shioaji TLS、auth 測試通過
-- [ ] backup 演練：刪 1 day 資料 → restore 成功
-- [ ] 緊急停機腳本準備好（`kill_switch.sh`）
-- [ ] Discord bot 告警測試通過
-- [ ] Runbook 完成（H 章）
-- [ ] 設定停損上限：DD 25% 自動全平
-- [ ] 設定資金上限：1/4 倉位
-
-### 每次新版本部署前（M5 後）
-
-- [ ] code review 通過
-- [ ] 所有測試通過
-- [ ] paper trading 跑同版本 1 週驗證
-- [ ] DB migration（如有）已測試
-- [ ] 回滾計畫文字化
-- [ ] 監控告警閾值已配置
-- [ ] 上線時間避開盤中（建議週末晚上）
-
-### 部署中
-
-- [ ] 監控部署進度（docker logs）
-- [ ] 驗證健康檢查（`/health`）
-- [ ] 檢查應用日誌（Loguru）
-- [ ] 驗證 ETL 排程正常觸發
-- [ ] 監控 TimescaleDB connection
-
-### 部署後
-
-- [ ] 隔日盤後 smoke test 通過
-- [ ] 訊號頻率符合預期
-- [ ] 滑點實測未顯著變化
-- [ ] 文檔已更新
-
----
-
-## 4. 部署策略
-
-| 策略 | 適用場景 | 回滾時間 |
-| :--- | :--- | :--- |
-| **Blue-Green** | M5 重大版本 | < 30 秒 |
-| **Rolling** | 不適用（單機） | — |
-| **Canary** | M5 後策略參數調整 | 透過 paper trading 先試 |
-
-當前單機部署，使用 Blue-Green 概念：
-- 用 docker tag 區分 `blue` / `green` 版本
-- nginx / traefik 切換流量（M5 才有 HTTP layer）
-- 切換後保留舊容器 24 小時，方便 rollback
-
----
-
-## 5. 監控與告警
-
-### 關鍵指標
-
-| 類別 | 指標 | 閾值 |
-| :--- | :--- | :--- |
-| **資料健康** | FinMind ETL 完成時間 | < 18:00 |
-| 資料健康 | 三表 join 後行數 | == 訊號日數 |
-| 資料健康 | 異常值（單日 ±10%） | 標記人工確認 |
-| **策略健康** | 30D 滾動 Sharpe | > 回測平均 -2σ |
-| 策略健康 | 30D 滾動 PF | > 1.0 |
-| 策略健康 | 30D 訊號頻率 | 偏離歷史 ±50% 告警 |
-| **執行品質** | 平均滑點 | < 預估值 1.5x |
-| 執行品質 | 訊號 → 成交比例 | > 80% |
-| **Portfolio** | Current DD | > 10% 警告 |
-| Portfolio | Heat | > 6% 告警 |
-| **基礎設施** | TimescaleDB connection | timeout 5s |
-| 基礎設施 | Container restart count | > 0 / day 告警 |
-
-### 告警分級
-
-| 名稱 | 條件 | 嚴重程度 | 通知 |
-| :--- | :--- | :--- | :--- |
-| 連虧 5 筆 | streak_loss >= 5 | Critical | Discord + Email |
-| 單日 DD > 5% | daily_pnl < -0.05 × equity | Warning | Discord |
-| 單日 DD > 10% | daily_pnl < -0.10 × equity | Critical | Discord + Email |
-| Heat 超標 | heat > 0.06 | Warning | Discord |
-| 資料延遲 | etl_done_time > 18:00 | Warning | Discord |
-| 資料缺失 | row_count != expected | Critical | Discord |
-| Container down | docker container status != running | Critical | Discord + Email |
-| Shioaji 異常 | shioaji response error | Critical | Discord + 自動停止下單 |
-
----
-
-## 6. 回滾流程
-
-### 自動回滾觸發（M5）
-
-- DD > 25% → 全平 + 停機
-- 連虧 8 筆 → 停機檢討
-- Shioaji 連續錯誤 5 次 → 自動停止下單
-
-### 手動回滾步驟
-
-1. 緊急停機：`scripts/kill_switch.sh`（M5 要寫）
-2. 確認最後一個穩定 git tag：`git tag --sort=-creatordate | head -5`
-3. 執行回滾：
-   ```bash
-   git checkout <stable_tag>
-   docker compose down
-   docker compose up -d --build
-   ```
-4. 驗證：
-   - `docker compose ps` 全部 healthy
-   - `pipeline run` smoke test 通過
-   - Discord 收到 "rollback complete" 訊息
-5. 監控應用健康 24 小時
-
-### 部位處理
-
-回滾時若有持倉：
-- 預設規則：**繼續持有，按原規則執行至完成**
-- 例外：若回滾原因是策略本身錯誤 → 人工決定是否全平
-
----
-
-## 7. Runbook：常見狀況
-
-### 7.1 FinMind ETL 失敗
+告警經 `monitoring/`：`alert_rules.py`（決策層：三級規則 + 去重 + 靜默時段）+ `discord_notifier.py`（發送層：httpx REST embed）。等級與觸發規則見 [20 §Discord 告警規格](./20_dashboard_specification.md)。
 
 ```bash
-# 查看 log
-docker logs quant-prefect | grep ERROR
-
-# 手動重跑
-PYTHONPATH=src python3 -m backtest_platform.data.finmind_etl \
-    --stock-id 2330 --start <yesterday> --end <yesterday> --db
+# 測試 Discord 送達（後端須設 DISCORD_BOT_TOKEN 等）
+curl -X POST http://127.0.0.1:8000/system/alerts/test
+#   或看告警規則 catalog：GET /system/alerts/rules
 ```
 
-常見原因：
-- API rate limit → 等 1 小時
-- token 過期 → 重新註冊 / sponsor 續費
-- FinMind 服務中斷 → 切備用源（手動從 TWSE 抓）
+| 等級 | 觸發類別 | 通知節奏 |
+| :--- | :--- | :--- |
+| **Critical** 🚨 | 熔斷觸發、下單失敗連 3、資料源全斷 | 即時（5 秒內）|
+| **High** ⚠️ | ETL 失敗、訊號缺漏、部位偏離 > 5%、quota < 500MB | 5 分鐘內 |
+| **Info** ℹ️ | 每日盤後績效 + 訊號 digest | 每日一次 |
+
+去重：同 `rule_id` 30 分鐘內只發一次；靜默時段 22:00–08:00 只推 Critical（`alert_rules.py` `DEDUPE_WINDOW` / `SILENT_*`）。
+
+---
+
+## 7. 常見狀況 Runbook
+
+### 7.1 FinLab / FinMind ingest 失敗
+
+```bash
+# FinLab（主）：確認 token 有效、quota 未爆
+uv run python -c "from backtest_platform.data.finlab_source import login; login()"
+
+# FinMind（fallback）：重跑同指令，cache 命中已成功的只補失敗的
+uv run python -m backtest_platform.engines.zipline_adapter.cli ingest \
+    --start <start> --end <end>
+```
+常見原因：token 過期 / quota 上限（等冷卻）、部分 symbol 5xx（重跑補抓）。詳見 [runbooks/m2_universe_ingest_runbook.md](./runbooks/m2_universe_ingest_runbook.md)。
 
 ### 7.2 TimescaleDB connection refused
 
 ```bash
-docker compose ps  # 確認 timescaledb 是 healthy
+docker compose ps                      # 確認 quant-timescaledb healthy
 docker compose logs timescaledb | tail -50
-
-# 重啟
-docker compose restart timescaledb
-
-# 大絕招（保留資料）
-docker compose down
-docker compose up -d
+docker compose restart timescaledb     # 重啟（資料在 named volume，不遺失）
 ```
 
-### 7.3 訊號異常（與 paper trading 不一致）
+### 7.3 API 起不來 / 前端打不到後端
 
-1. 比對 `compute_signals` 線上 vs 線下重算
-2. 檢查 ETL 資料延遲 / 缺漏
-3. 檢查 `StrategyConfig` 是否被修改
-4. 如差異 > 5% → 立即停止新訊號，人工排查
+- 確認 uvicorn 綁的是 `127.0.0.1:8000`，且 vite proxy target（`vite.config.ts` `API_TARGET`）指向同一位址。
+- `contract-drift` 紅燈 → 後端 schema 變了但 `openapi.json` / `api.gen.ts` 未重生：`npm run gen:api` 後重跑。
 
-### 7.4 績效退化
+### 7.4 判決異常（GUI 與 CLI truth-gate 不一致）
 
-按 v2.md 5.4 退化處理流程：
-1. 30D 績效 < 歷史 -1σ → 加強監控
-2. -2σ → 倉位降 50%
-3. 60D < -2σ → 暫停新進場
-4. 90D < -2σ → 全平檢討
-
----
-
-## 8. 災難恢復
-
-### 資料遺失
-- **預防**：每日 backup pg_dump → GCS
-- **恢復**：
-  ```bash
-  gsutil cp gs://backup/quant_trading_YYYYMMDD.dump .
-  pg_restore -h localhost -U quant -d quant_trading quant_trading_YYYYMMDD.dump
-  ```
-- **RPO**：24 小時（每日一次 backup）
-- **RTO**：1 小時（單機 restore）
-
-### 機器壞掉
-- **預防**：策略狀態（持倉、entry_price）也存 DB
-- **恢復**：開新 VPS → pull docker image → restore DB → 切流量
-- **RTO**：2 小時
-
-### 策略邏輯出錯（虧大錢）
-- **預防**：DD 熔斷規則
-- **恢復**：人工檢討 → 修復 → paper trading 1 個月 → 重新評估
+1. 確認 run 的 `strategy` 欄正確（gate 依策略 dispatch，非四層預設）。
+2. 以 CLI 重跑 `research truth-gate --strategy <s>` 對照（審判庭真相源）。
+3. 差異持續 → 走 [24 風控 SOP](./24_risk_management_spec.md) 排查。

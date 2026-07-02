@@ -50,127 +50,99 @@ backtest_platform/
 
 ```plaintext
 src/backtest_platform/
-├── __init__.py
+├── __init__.py                   # 版本 + v2.md（legacy）章節對照註記
+├── pipeline.py                   # M1 shim（單檔四層計分 pipeline，保留相容）
 │
-├── config/                       # 純資料層
-│   ├── __init__.py
-│   ├── strategy_config.py        # StrategyConfig (Pydantic frozen) + four_layer presets
-│   └── settings.py               # ★ ADR-027 Stage 2 — 集中環境設定 (Settings/BaseSettings)：憑證+Postgres+路徑，取代散落 os.getenv
+├── config/                       # 純資料層設定
+│   ├── settings.py               # 集中環境設定（憑證 / Postgres / 路徑）
+│   └── universe.py               # 中立 DEFAULT_UNIVERSE（策略 research_config 由此 import，無 zipline 依賴）
 │
-├── data/                         # Infrastructure：IO + 外部 API
-│   ├── __init__.py
-│   ├── schemas.py                # Pydantic models + ETLBundle
-│   ├── finmind_etl.py            # FinMind 拉取 + normalize + CLI（fallback 來源）
-│   ├── adjustment.py             # 前復權因子計算（FinMind 用；FinLab 已預調整）
-│   ├── db_writer.py              # TimescaleDB idempotent upsert
-│   ├── universe.py               # 標的池過濾（v2.md 2.2）
-│   └── universe_builder.py       # ★ 候選 D：point-in-time 中小型 universe builder（ADR-020，純函式）
+├── data/                         # ETL + 血統
+│   ├── finlab_source.py          # FinLab 主資料源（全史 + 下市股；ingest_universe_finlab）
+│   ├── finmind_etl.py            # FinMind fallback ETL（三表 → parquet，原子寫）
+│   ├── adjustment.py             # 除權息還原
+│   ├── universe_builder.py       # point-in-time universe 過濾
+│   ├── universe.py               # universe 輔助
+│   ├── db_writer.py / db_reader.py  # TimescaleDB upsert / telemetry 讀取
+│   └── schemas.py                # Pydantic 資料 schema
 │
-├── strategies/                   # ★ M2 改名 — 多策略 namespace（每隻策略自包含 config+邏輯+runner）
-│   ├── __init__.py
-│   ├── protocol.py               # ★ ADR-027 — 策略契約 + registry（StrategyRunner / StrategyRun / register_strategy / get_strategy）
-│   ├── _template/                # ★ ADR-027 — 可複製的策略撰寫骨架（玩家複製此夾→填 alpha）；註冊為 "template"（等權買進持有 baseline）
-│   │   ├── __init__.py
-│   │   ├── strategy.py           # TemplateConfig + backtest_template（純函式；填你的訊號邏輯）
-│   │   ├── runner.py             # TemplateRunner（4 行 adapter：建 panel→跑 backtest→回 StrategyRun）
-│   │   └── README.md             # 撰寫 checklist + I/O 契約說明
-│   ├── common/                   # ★ ADR-026/027 — 中立共用層（策略間零互相依賴）
-│   │   ├── __init__.py           # TRADING_DAYS / clean_returns / rebalance_dates / vol_target re-export
-│   │   ├── mechanics.py          # 再平衡日曆 + 波動目標部位 + 報酬清洗（原 momentum 私有函式抽出，ADR-026）
-│   │   └── panel.py              # ★ ADR-027 — 橫斷面策略共用：column_panel / flow_panels / panel_metrics（用 validation.metrics）
-│   ├── four_layer_resonance/     # M1 四層共振策略（診斷證實負 edge，待砍）
-│   │   ├── __init__.py           # 對外 re-export (compute_scores, compute_signals, ...)
-│   │   ├── indicators.py         # RSI / KD / MACD / SwingHigh/Low
-│   │   ├── scoring.py            # compute_scores（四層計分）
-│   │   ├── signals.py            # compute_signals + evaluate_bar
-│   │   ├── sim.py                # ★ ADR-027 — 純 close-to-close 組合 sim helper（原 is_harness 私有，下移至策略層）
-│   │   └── runner.py             # ★ ADR-027 — FourLayerRunner（per-stock event-driven，註冊 "four_layer"）
-│   ├── momentum/                 # ★ v0.8 新增 — 跨截面 12-1 動能（Jegadeesh-Titman）；ADR-026 解耦後改依賴 common
-│   │   ├── __init__.py           # MomentumConfig / backtest_momentum re-export
-│   │   ├── strategy.py           # MomentumConfig + backtest_momentum（純函式 over 價格面板）
-│   │   └── runner.py             # ★ ADR-027 — MomentumRunner（註冊 "momentum"）
-│   └── inst_flow/                # ★ 正式 paper-ready 候選（ADR-024/025）；依賴 common（非反向挖 momentum）
-│       ├── strategy.py           # InstFlowConfig + backtest_inst_flow
-│       ├── signal_fn.py          # paper/live 訊號函式
-│       └── runner.py             # ★ ADR-027 — InstFlowRunner（註冊 "inst_flow"）
+├── strategies/                   # ★ 策略契約層（ADR-027/028）
+│   ├── protocol.py               # StrategyRunner Protocol + GateSpec + registry（register/get/list）
+│   ├── conformance.py            # 契約 conformance gate（parametrized 全 registry；gate keys ⊆ metrics）
+│   ├── common/                   # 中立回測機制（clean_returns / rebalance_dates / vol_target / trim_overlap / panel）
+│   ├── _template/                # 新策略複製骨架（config + 純邏輯 + runner 自包含）
+│   ├── four_layer_resonance/     # legacy 契約實作之一（ADR-023 判負 edge；registry 對照標本）
+│   ├── momentum/                 # 12-1 動能（NO-GO，ADR-023）
+│   └── inst_flow/                # 三大法人資金流（REJECTED @ 真實成本，見 inst_flow_truth_gate_verdicts）
 │
-├── adapters/                     # ★ M2 新增 — 廠商接口層 (ADR-005/006/008)
-│   ├── __init__.py
-│   ├── data_bundle/              # Zipline bundle ingesters
-│   │   ├── __init__.py
-│   │   ├── finlab_bundle.py      # M2：FinLab → Zipline bundle (主)
-│   │   └── finmind_bundle.py     # M2：包裝 M1 finmind_etl (fallback)
-│   ├── data_feed/                # 即時資料 (M4+)
-│   │   ├── __init__.py
-│   │   ├── finlab_live.py        # FinLab realtime polling
-│   │   └── shioaji_quote.py      # Shioaji 報價（備援）
-│   └── brokers/                  # 下單接口 (M4-M5)
-│       ├── __init__.py
-│       ├── paper_broker.py       # M4：模擬撮合
-│       └── shioaji_broker.py     # M5：永豐金實盤
+├── research/                     # 研究迴圈
+│   ├── workflows/                # ★ 平台工作流（ADR-029/032）：doe / go_gates / truth_gate / paper_replay / universe
+│   │   ├── config.py             # 各工作流 frozen config（含 TruthGateConfig.parquet_dir / UniverseConfig）
+│   │   └── loader.py             # 依策略名載入 research_config 宣告
+│   ├── is_harness.py             # run_and_judge（gate 隨策略 dispatch）+ load_merged_parquet
+│   ├── run_config.py             # RunConfig（strategy + params，ADR-028）
+│   ├── runs_store.py / run_series_store.py / run_tags_store.py  # runs ledger（JSONL）
+│   ├── promotion_service.py / promotion_store.py  # 晉升狀態機服務
+│   ├── trials_counter_store.py   # 試驗計數（DSR deflation 審計）
+│   ├── sweep.py / compare.py / validation_store.py / saved_views_store.py
+│   ├── finlab_universe.py        # survivorship universe 選擇（select_survivorship_universe / cached_universe_symbols）
+│   ├── momentum_harness.py       # 委派 runner 的相容層
+│   ├── runners.py                # registry 聚合 re-export（相容層）
+│   └── cli.py                    # 研究 CLI（run-is / runs / compare / validate / promote-check / sweep / doe / go-gates / truth-gate / build-universe / paper-replay）
 │
-├── engines/                      # M3+：vectorbt 副引擎 (ADR-007)
-│   ├── __init__.py
-│   └── vectorbt_adapter.py       # grid/WFA 最佳化
-│                                 # (註：ADR-001 rqalpha 已 superseded by ADR-005)
+├── validation/                   # ★ 審判庭（純函式）
+│   ├── two_stage_gate.py         # ADR-025 真偽閘 + 配置閘（TruthGateInput / SizingInput / evaluate_two_stage）
+│   ├── gate_state.py             # gate 準則（DEFAULT_GATE / MOMENTUM_GATE / PANEL_GATE）
+│   ├── gate_machine.py           # IS→WFA→OOS 不可逆狀態機
+│   ├── dsr.py / pbo.py / wfa.py  # 防過擬合統計（DSR 含輸入衛兵，ADR-030）
+│   ├── metrics.py                # sharpe / cagr / maxdd 單一規範源
+│   ├── full_report.py / tearsheet.py / resampling.py / trials.py / health_indicators.py
 │
-├── validation/                   # M3+：統計驗證
-│   ├── __init__.py
-│   ├── metrics.py                # 30+ 指標 enum + functions
-│   ├── pbo.py                    # PBO/CSCV (自寫，避 pypbo AGPL)
-│   ├── dsr.py                    # Deflated Sharpe Ratio (López de Prado)
-│   ├── wfa.py                    # Walk-Forward splitter
-│   └── reports.py                # quantstats wrapper
+├── risk/                         # 風控（純函式、狀態注入）
+│   ├── risk_gate.py              # 12 條 ex-ante 規則（EX-001..012）
+│   ├── circuit_breaker.py        # 3 級熔斷狀態機
+│   └── types.py                  # AccountState / Order / Position
 │
-├── orchestration/                # ★ M2/M4 新增 — 排程編排
-│   ├── __init__.py
-│   ├── daily_flow.py             # 每日 ETL → algo → 下單 → log
-│   └── cli.py                    # click entry (M2+ 主入口)
+├── orchestration/                # 每日流程引擎
+│   ├── daily_flow.py             # staged ETL→signals→risk→orders→log（fail-fast）
+│   ├── collaborators.py          # production 協作者工廠（真實倉位快照 + 批次現金遞減 + side 轉換）
+│   └── cli.py
 │
-├── monitoring/                   # ★ M4 新增 — 監控與告警 (ADR-009)
-│   ├── __init__.py
-│   ├── metrics_emitter.py        # Algorithm hook，每 bar 寫 metrics
-│   └── alerter.py                # Discord bot + 規則引擎 (3 級)
+├── runtime/                      # paper 執行
+│   ├── paper_daemon.py           # 逐日重放 / 前進 daemon
+│   └── market_reader.py          # FinLab EOD 活 panel + make_position_signal_fn 通用 adapter
 │
-├── dashboard/                    # ★ M3/M5 新增 — UI (ADR-009)
-│   ├── __init__.py
-│   ├── streamlit_app.py          # 5 策略面板 (A 績效 B 部位 C 訊號 D 風控 E 驗證)
-│   ├── grafana_dashboards.json   # 4 系統面板 (F ETL G quota H 排程 I 資源)
-│   └── db_schema.sql             # TimescaleDB 13 表 DDL
+├── adapters/
+│   └── brokers/paper_broker.py   # 紙上券商（簡化撮合 + heat）；shioaji（M5）
 │
-├── api/                          # ★ v0.6 新增 — HTTP API (FastAPI, ADR-015 / 21 §8)
-│   ├── __init__.py               # create_app / API_VERSION re-export
-│   ├── app.py                    # create_app 工廠 + 信封 exception handlers
-│   ├── envelope.py               # {success,data,error,meta} 統一信封
-│   ├── schemas.py                # 請求模型（extra=forbid 邊界驗證）
-│   ├── deps.py                   # runs path + run executor 依賴注入
-│   └── routers/                  # presets / runs / gate / metrics（薄轉接層）
+├── engines/                      # zipline 整合（研究迴圈主力是離線 sim）
+│   ├── protocol.py               # DEPRECATED（ADR-027 策略契約取代）
+│   └── zipline_adapter/          # cli / bundles（finmind_bundle + parquet_cache + ensure_registered）/ algorithms / controls / validation（對拍）
 │
-└── pipeline.py                   # Application：M1 端到端 CLI（backward-compat shim）
-                                  # M2+ 主入口改為 orchestration/cli.py
+├── api/                          # FastAPI（127.0.0.1，ADR-031）
+│   ├── app.py                    # 15 routers + /health；統一 envelope
+│   ├── routers/                  # runs / gate / metrics / strategies / research_* / monitor / system / home
+│   ├── schemas.py / response_models.py / envelope.py / deps.py
+│
+├── monitoring/                   # Discord 告警 + InfluxDB
+│   ├── alert_rules.py / discord_notifier.py / influx_writer.py
+│
+├── jobs/                         # 輕量背景 job（JSONL 快照 + daemon thread）
+│   ├── job_runner.py / job_store.py / models.py
+│
+└── dashboard/                    # 空殼保留（React 前端已取代，見 frontend/）
 ```
 
-### 模組啟用 milestone
+### 模組現況一覽
 
-| 模組 | M1 | M2 | M3 | M4 | M5 |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| `config/` | ✅ | + settings.py | | | |
-| `data/` | ✅ | | | | |
-| `strategies/four_layer_resonance/` | ✅（改名搬入）| | | | |
-| `strategies/momentum/` | | | ✅ v0.8（12-1 跨截面動能 + IS harness + MOMENTUM_GATE；證平台 strategy-agnostic） | | |
-| `adapters/data_bundle/` | | ✅ | | | |
-| `adapters/data_feed/` | | | | ✅ | |
-| `adapters/brokers/paper_broker.py` | | | | ✅ | |
-| `adapters/brokers/shioaji_broker.py` | | | | | ✅ |
-| `engines/vectorbt_adapter.py` | | | ✅ | | |
-| `validation/` | | | ✅ | | |
-| `orchestration/` | | | ✅ v0.7 daily_flow（fail-fast staged engine + cli，Prefect-optional；real collaborator 接線 = 7.D.3 follow-up） | | |
-| `monitoring/` | | | | ✅ | |
-| `dashboard/streamlit_app.py` | | | ✅ MVP | | + D/E 面板 |
-| `dashboard/grafana_dashboards.json` | | | | ✅ | |
-| `api/` (FastAPI HTTP) | | | ✅ v0.6（提前；研究迴圈讀寫面） | + 監控/風控面板端點 | |
-| `research/` (run loop) | | | ✅ v0.1-v0.3（RunConfig/IS harness/runs ledger/sweep/compare/CLI） | | |
-| `pipeline.py` (M1 shim) | ✅ | (保留) | | | |
+| 模組 | 狀態 | 備註 |
+| :--- | :--- | :--- |
+| `config/` `data/` `strategies/` `research/` `validation/` `risk/` | ✅ 現行 | 研究迴圈 + 審判庭主體 |
+| `orchestration/` `runtime/` `adapters/brokers/paper_broker` | ✅ 現行 | paper 鏈；after-close 排程器待補（cron/systemd 級） |
+| `api/` `monitoring/` `jobs/` | ✅ 現行 | 15 routers；Discord 告警 |
+| `engines/zipline_adapter/` | ✅ 輔助 | 對拍 / bundle ingest；`engines/protocol.py` DEPRECATED |
+| `adapters/data_bundle` `data_feed` `dashboard/` | 空殼 | 保留套件位；React 前端已取代 dashboard |
+| `adapters/brokers/shioaji_broker` | M5 | 實盤下單（未實作） |
 
 ---
 

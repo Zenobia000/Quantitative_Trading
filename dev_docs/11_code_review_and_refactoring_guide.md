@@ -1,17 +1,15 @@
 # 程式碼審查與重構指南 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26
-
 ---
 
 ## 審查前自我檢查
 
-- [ ] `PYTHONPATH=src python3 -m pytest -p no:asyncio` 全綠
+- [ ] `uv run pytest` 全綠、coverage ≥ 80%（CI 三 job 綠）
 - [ ] `ruff check .` 無 error
-- [ ] `mypy --strict src/` 無 error（M2 才嚴格執行）
-- [ ] 對應的 dev_docs 已更新（v2.md 改了 → 05/07 跟著改）
-- [ ] 完成自我 review：`git diff main...HEAD`
-- [ ] 無殘留 `print` debug / `TODO` 沒寫清楚
+- [ ] `mypy --strict src/` 無 error
+- [ ] 對應的 dev_docs 已更新（依 `code-doc-sync.md` 觸發表，含 16 WBS 進度）
+- [ ] 已自我 review：`git diff main...HEAD`
+- [ ] 無殘留 `print` debug / 未寫清楚的 `TODO`
 - [ ] 新增程式碼有對應單元測試
 
 ---
@@ -25,46 +23,60 @@
 | 可讀性 | 命名清楚，函式 < 50 行，巢狀 < 4 層 |
 | 一致性 | 遵循 `08_project_structure_guide.md` 命名慣例 |
 | 複雜度 | 複雜邏輯有 docstring 說明 WHY |
-| pure function | `strategy/` 內函式無副作用 |
-| 不可變 | `StrategyConfig` 等 frozen，不寫 `.update()` 之類 |
+| pure function | `strategies/` 內策略邏輯無副作用（IO 在呼叫端） |
+| 不可變 | Pydantic config frozen，不修改既有物件 |
 
 ### 2. 架構與設計
 
 | 項目 | 檢查 |
 | :--- | :--- |
-| 依賴方向 | Domain 不依賴 Infrastructure（見 09 file_dependencies） |
+| 依賴方向 | Domain 不依賴 Infrastructure（見 [09](./09_file_dependencies_template.md)）；策略不反向 import 別的策略私有函式 |
 | SOLID | 新類別檢核 SOLID 5 條 |
-| 邊界驗證 | 外部資料進 Pydantic schema 才能往下流 |
-| 訊號邏輯單一來源 | 不能在 engine wrapper 重寫 scoring 邏輯 |
-| 配置外部化 | 無 hardcode 的 path / token / DB credential |
+| 邊界驗證 | 外部輸入（HTTP body / CLI overrides）走 `model_validate`，不用 `model_copy(update=)` 繞過 frozen + validator |
+| 配置外部化 | 無 hardcode 的 path / token / DB credential；路徑走 `config/settings.py` |
+| 不靜默吞錯 | `except Exception: continue` 需能區分「空資料」與「真錯誤」，全空即 raise 而非回 0 分假判決 |
 
-### 3. 策略邏輯（特殊性）
+### 3. 策略契約（ADR-027/028/029）
 
-| 項目 | 檢查 |
-| :--- | :--- |
-| 對齊 v2.md | scoring / signals 改動須有 v2.md 對應條款 |
-| Pydantic Field 範圍 | 新增參數有合理 ge/le 限制 |
-| 衍生 cost 計算 | 不繞過 cost_round_rate property |
-| 風控優先序 | 不破壞 stoploss > exit > ... > buy > hold |
-| Cost filter 不擋風控 | `_evaluate_priority` 中 stoploss/exit 不檢查 net_profit_rate |
-
-### 4. 效能與安全
+策略是消耗品、平台是資產——審查確保新策略乾淨接入契約，不腐蝕平台。
 
 | 項目 | 檢查 |
 | :--- | :--- |
-| pandas 操作 vectorize | 避免 `df.iterrows()` 除非必要（signals 例外） |
-| Secrets | 從 env 讀，不入 git |
-| SQL injection | 用 parameterized query（psycopg2 + execute_values） |
-| ETL idempotent | 重跑結果一致 |
+| StrategyRunner 契約 | 新策略提供 `runner.py`，`run()` 回 `StrategyRun`；不繞過契約直接被引擎掛載 |
+| registry 註冊 | 經 `register_strategy` 註冊；`config_model` / `title` ClassVar 完整（feeds `GET /strategies`） |
+| conformance gate | `check_strategy(name)` 通過（parametrized CI 覆蓋所有已註冊策略） |
+| research_config 完整性 | 宣告 `UNIVERSE` / `DOE` / `GO_GATES` / `TRUTH_GATE` / `PAPER_REPLAY`，frozen Pydantic；作者只填參數，不寫工作流邏輯 |
+| dispatch 純度 | 工作流走 `get_strategy(name).run()`，**絕不** `import` 策略的 backtest 函式（AST 測試守門） |
+| gate 隨策略 dispatch | 策略宣告自己的 GateSpec；審判用該策略的 gate，非四層專屬 DEFAULT_GATE |
+| gate health ⊆ metrics | gate 引用的 health 指標必須 ⊆ 該策略 runner 產出的 metrics keys（conformance 斷言） |
+| 空結果完整性 | 策略空結果（`_EMPTY_METRICS`）需含 gate 所需全部 keys，避免判成假 INCOMPLETE |
+
+### 4. 審判庭變更（gate / DSR / oracle）— 特殊審查
+
+審判庭是唯一護城河，改動風險最高，額外要求：
+
+- **判決級 oracle 測試必須先 RED**：改 gate / DSR / two_stage_gate 前，先寫一個釘住已知期望的測試（含已知 REJECTED 案例，如年化 SR 0.333 → DSR ≤ 0.95），跑到失敗，再改實作到通過。禁止只有 shape-only（型別 + 0-1 範圍）測試放行判決級 bug。
+- **單位一致性**：DSR 用 per-period SR + cross-trial variance；輸入單位不符即 fail-fast，不靜默算錯。
+- **OOS holdout 真評估**：宣告的 OOS 窗口必須被實際讀取並入判，不可只寫窗口卻只跑 IS。
+- **survivorship 由資料決定**：`survivorship_clean` 由 universe 建構器輸出，禁止寫死 True。
+
+### 5. 效能與安全
+
+| 項目 | 檢查 |
+| :--- | :--- |
+| pandas vectorize | 避免 `df.iterrows()` 除非必要 |
+| Secrets | 從 env / `settings.py` 讀，不入 git、不入回應或前端 bundle |
+| SQL injection | parameterized query（psycopg2 + execute_values） |
+| ETL idempotent | 重跑結果一致；parquet 快取部分覆蓋走 read-merge-write，不覆寫既有歷史 |
 | 大資料 | 大檔（parquet > 100MB）gitignore |
 
-### 5. 測試覆蓋
+### 6. 測試覆蓋
 
 | 項目 | 檢查 |
 | :--- | :--- |
-| 新函式有測試 | happy / boundary / failure 三類各一 |
-| 對應 BDD scenario | 03_bdd 文檔有對應 Gherkin |
-| 不用 sleep / random（除非 seeded） | 測試需可重現 |
+| 新函式有測試 | happy / boundary / failure 三類 |
+| 對應 BDD scenario | [03](./03_behavior_driven_development_guide.md) 有對應 Gherkin |
+| 可重現 | 不用 sleep / 未 seeded 的 random |
 | integration 標記 | 需 DB / API 的測試標 `@pytest.mark.integration` |
 
 ---
@@ -73,12 +85,12 @@
 
 | Smell | 訊號 | 重構建議 |
 | :--- | :--- | :--- |
-| 大型函式（> 50 行） | scoring/signals 函式肥大 | Extract Method：拆出 indicator 計算 |
-| Magic Number | scoring 內 hardcode `5`、`0.10` | 改用 `StrategyConfig` 欄位 |
-| 重複的 normalize 邏輯 | 三個 `_normalize_*` 都有 `pd.to_datetime` 處理 | Extract Helper `_to_date_col` |
-| 條件式爆炸 | `_evaluate_priority` 7 個 if-block | （目前可接受，因為每個條件對應一個獨立訊號）若再多訊號 → 抽 Strategy Pattern |
-| Pydantic schema 散落 | schemas 跨檔重複定義 | 集中到 `data/schemas.py` |
-| pure / impure 混雜 | strategy 函式呼叫 IO | 立即重構：IO 移到 application 層 |
+| 大型函式（> 50 行） | 策略 sim / 工作流函式肥大 | Extract Method 拆子步驟 |
+| Magic Number | 門檻 hardcode 在函式內 | 改用 config 欄位 |
+| 反向 import 私有函式 | 策略 A 挖策略 B 的 `_helper` | 抽至 `strategies/common`（ADR-026） |
+| 假的邊界驗證 | `model_copy(update=dict)` 套外部輸入 | 改 `model_validate`，讓 frozen + validator 生效 |
+| 靜默吞錯 | `except Exception: continue` | 收集失敗、全空即 raise |
+| Schema 散落 | Pydantic model 跨檔重複 | 集中到 `data/schemas.py` |
 
 ---
 
@@ -86,98 +98,34 @@
 
 | 策略 | 適用 |
 | :--- | :--- |
-| **Extract Method** | `compute_signals` 內 walk-loop 可能可拆 `_step(i)` |
-| **Extract Variable** | 複雜布林條件先存 local `is_strong_buy_today = ...` |
-| **Replace Magic with Config** | hardcode 改為 `StrategyConfig.xxx` |
-| **Replace Conditional with Polymorphism** | M2 三模型進場 → IEntryModel 介面 + 三實作 |
-| **Introduce Parameter Object** | `evaluate_bar` 收 21 個參數 → `EvaluateBar` dataclass（已做） |
-| **Move Method** | 若 `_evaluate_priority` 邏輯被 engine 需要 → 移到 `signals.py` 公開 API |
+| **Extract Method** | walk-loop 內邏輯拆 `_step(i)` |
+| **Extract Variable** | 複雜布林條件先存 local |
+| **Replace Magic with Config** | hardcode 改為 config 欄位 |
+| **Introduce Parameter Object** | 多參數函式收成 dataclass / Pydantic model |
+| **Move to common** | 被 2+ 策略需要的機制上移 `strategies/common`（ADR-026） |
 
 ---
 
 ## PR / Commit 模板
 
-### Commit message（沿用 root CLAUDE.md）
+Commit message 沿用 `git-workflow.md` 的 WHY / WHAT / IMPACT 三段式；結尾加：
 
 ```
-<type>(<optional scope>): <subject>
-
-<WHY — 背景與動機>
-
-<WHAT — 關鍵變更摘要>
-
-<IMPACT — 影響範圍與破壞性變更>
+Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-範例：
-
-```
-feat(strategy): add IC-weighted scoring as alternative to equal-weight sum
-
-WHY: 蘇格拉底審查指出等權加總假設四因子獨立，未經實證。
-v2.2 IC 測試將提供因子 IC，需有 IC 加權版本可切換。
-
-WHAT:
-- 新增 strategy.scoring.compute_scores_ic_weighted
-- StrategyConfig 加 use_ic_weighting flag（預設 False，保持向後相容）
-- 對應 ic_weights dict 透過 config 注入
-
-IMPACT:
-- 既有等權路徑不變
-- compute_signals 不需改（讀 total_score 不在乎來源）
-- v2.md 2.3.1 標註 IC 加權為可選方案
-
-Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
-```
-
-### PR Body 範本
-
-```markdown
-## 摘要
-[1–2 句變更說明]
-
-## 變更類型
-- [ ] Bug 修復
-- [ ] 新功能
-- [ ] 重構（行為不變）
-- [ ] 文檔更新
-- [ ] 破壞性變更（升級 MAJOR）
-
-## 動機
-[WHY — 為何要做]
-
-## 變更細節
-- 主要修改 1
-- 主要修改 2
-
-## 影響
-- 影響模組：
-- 破壞性變更：
-- v2.md 相關段落：
-
-## 測試
-- [ ] 單元測試通過（pytest）
-- [ ] integration 測試（如有 DB 改動）
-- [ ] 手動 end-to-end 驗證（pipeline run）
-- [ ] 文檔更新
-
-## 檢查清單
-- [ ] 符合 ruff / mypy
-- [ ] 自我審查 git diff
-- [ ] 對應 dev_docs 已更新
-- [ ] 無 secrets / 大檔
-```
+PR Body 四區段：**Background**（動機）/ **Changes**（決策取捨，非 file list）/ **Impact**（破壞性變更、migration）/ **Test Plan**（驗證步驟 checklist）。
 
 ---
 
 ## 品質關卡
 
 ### 合併前
-- [ ] `pytest` 全綠
-- [ ] `ruff check` 通過
-- [ ] 至少看過自己的 diff 一遍
-- [ ] 對應 dev_docs 同步
-- [ ] v2.md 對應段落同步（若策略邏輯變動）
+- [ ] `uv run pytest` 全綠、CI 三 job 綠
+- [ ] `ruff check` / `mypy --strict` 通過
+- [ ] 自我 review diff 一遍
+- [ ] 對應 dev_docs 同步（含 16 WBS）
+- [ ] 審判庭級變更有先 RED 的 oracle 測試
 
 ### 合併後（M5 後實盤）
 - [ ] paper trading 一週無異常
@@ -188,26 +136,8 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 
 ## 特殊規則（量化專案）
 
-### 1. 策略邏輯的 WHY 必須留證
-任何 scoring / signals 改動必須在 commit body 中說明：
-- v2.md 的哪一條對應變更
-- 是修 bug、套用 PASS 區結論、還是新增實驗
-
-### 2. 參數調整必走 changelog
-即使是 `box_period = 60 → 90` 也要：
-- 更新 `StrategyConfig` Field 預設
-- 在 `v2.md` Part 6.3 留下時間戳 + 動機 + 預期影響
-- 升 v2.x MINOR 版本
-
-### 3. 訊號邏輯破壞性變更
-- 升 v3 MAJOR
-- 重跑完整 OOS 驗證
-- Paper trading 1 個月以上才能切實盤
-
-### 4. 不在 OOS 反覆調參數
-- OOS 用過一次就「燒掉」
-- 想再驗證 → 等新資料累積一年
-
-### 5. DSR N 必須記錄
-- 任何參數測試（包括 git 上沒留的 jupyter 嘗試）都算
-- 寫進 `strategy/research/experiment_log.md`
+1. **策略是消耗品，透過 `research_config.py` 宣告**：新增策略只寫 config + runner + research_config，不新增一次性腳本。
+2. **OOS 用過一次就燒掉**：不在 OOS 反覆調參；想再驗證等新資料累積一年。
+3. **試驗計數必記錄**：任何參數測試（含未進 git 的嘗試）都計入 n_trials，餵給 DSR deflate。
+4. **門檻不因單一策略放寬**：gate 是紀律；救策略不得改閘（ADR-023）。
+5. **血統可稽核**：每個 run 記 bundle hash / git_sha，判決可在標準化工作流下重現。

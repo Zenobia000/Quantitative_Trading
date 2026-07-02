@@ -11,12 +11,12 @@
     POST /api/board       寫回整份看板 JSON → 同步 16_wbs §7 表格
 
 啟動：
-    python tools/scrum_board/server.py            # 預設綁 0.0.0.0:8765（區網可達）
+    python tools/scrum_board/server.py            # 預設綁 127.0.0.1:8765（僅本機，對齊 ADR-031）
     python tools/scrum_board/server.py --port 9000
-    python tools/scrum_board/server.py --host 127.0.0.1   # 僅本機
+    python tools/scrum_board/server.py --host 0.0.0.0     # 開放區網（無認證，慎用）
 
-預設綁 0.0.0.0 方便遠端 / 容器外瀏覽器存取；此 server 無認證，**請只在可信任的內網使用**，
-不要暴露到公網。要鎖回本機請加 --host 127.0.0.1。
+預設綁 127.0.0.1（localhost-only，對齊 ADR-031 single-user standalone）。此 server 無認證，
+要開放區網 / 容器外存取才加 --host 0.0.0.0，且僅在可信任內網使用、勿暴露公網。
 """
 from __future__ import annotations
 
@@ -105,7 +105,7 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     parser = argparse.ArgumentParser(description="Scrum board 本地伺服器")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--host", default="127.0.0.1")
     args = parser.parse_args()
 
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)

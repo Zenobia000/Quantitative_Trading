@@ -1,8 +1,8 @@
 # Page Layer Spec — 面板 A 績效總覽 (Panel A · Performance Overview)
 
-> M3 React 版（自 Streamlit 原型升級）。對應 `dev_docs/20_dashboard_specification.md` 面板 A。
+> M3 React 頁面規格。對應 `dev_docs/20_dashboard_specification.md` 面板 A。
 > 填完後貼入 `assembly/PIPELINE_ORCHESTRATOR.md` 的 PAGE SPECIFICATION 區段。
-> Streamlit → React 映射：`st.metric` → KPI Card、`st.dataframe` → DataTable、Plotly 圖 → Recharts / Plotly.js 元件；保留 drill-down / filter / refresh TTL 互動。
+> 元件對應：KPI Card / DataTable / Recharts / Plotly.js；保留 drill-down / filter / refresh TTL 互動。
 
 ---
 

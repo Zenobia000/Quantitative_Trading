@@ -1,7 +1,7 @@
 # ADR-024: 三大法人資金流因子 — 候選策略（🔴 binary ADR-016 NO-GO → 🟢 ADR-025 兩段閘 REAL/paper-ready）
 
 > **狀態：** 🔴 NO-GO under binary ADR-016（2026-06-08）→ **🟢 REAL / paper-ready under [ADR-025](./ADR-025-two-stage-validation-gate-and-paper-promotion.md) 兩段閘** | **日期：** 2026-06-07 | **決策者：** Self
-> **更新（2026-06-15，FinLab 全史重驗 ②）**：ADR-025 把絕對 CAGR 從 hard gate 降為 sizing 參考、真偽閘靠 OOS 廣度+DSR（landscape PBO 不連坐 pre-registered 單 config）。在付費 FinLab survivorship-clean 全史（2010-2024）重驗 → **TRUTH GATE: REAL**（OOS Sharpe ~1.5 / DSR≈1.0 / CAGR 16-20% universe-dependent），跨 universe breadth robust。條件式 GO 在 ADR-025 框架下**恢復為 paper-ready**（剩 ③ forward live OOS）。詳見 [`inst_flow_truth_gate_finlab_result_2026-06-15.md`](../inst_flow_truth_gate_finlab_result_2026-06-15.md)。
+> **更新（2026-06-15，FinLab 全史重驗 ②）**：ADR-025 把絕對 CAGR 從 hard gate 降為 sizing 參考、真偽閘靠 OOS 廣度+DSR（landscape PBO 不連坐 pre-registered 單 config）。在付費 FinLab survivorship-clean 全史（2010-2024）重驗 → **TRUTH GATE: REAL**（OOS Sharpe ~1.5 / DSR≈1.0 / CAGR 16-20% universe-dependent），跨 universe breadth robust。條件式 GO 在 ADR-025 框架下**恢復為 paper-ready**（剩 ③ forward live OOS）。詳見 [`inst_flow_truth_gate_verdicts.md`](../inst_flow_truth_gate_verdicts.md)（三輪判決總表）。
 > **Related：** [ADR-016](./ADR-016-m2-acceptance-criteria.md)（部署門檻 CAGR>18%/Sharpe>1.0/DSR>0.95/PBO<30%）、[ADR-023](./ADR-023-momentum-no-go-hold-gate.md)（動能 NO-GO，釋放 capacity 換 family）
 >
 > **⚠️ 2026-06-08 更新（決定性）**：survivorship-clean 複驗（116 檔＝40 survivors + 76 下市，

@@ -1,184 +1,105 @@
-# 開發流程說明 — backtest_platform
+# 開發流程手冊 — backtest_platform
 
-> ⚠️ **Tombstone 凍結 banner（2026-07-02，審查缺陷 #15）**：本文件部分內容凍結於 2026-05/06（此檔仍寫 TQuant-Lab/ADR-005 路線），與現況（ADR-023~030、React 前端、研究工作流標準化）存在**已知 drift**，閱讀時以 [16 WBS](./16_wbs_development_plan.md) + [platform_full_audit_2026-07-02](./platform_full_audit_2026-07-02.md) 為準；本文件更新排程於架構文件償還 sweep（audit 路線圖 Phase 3）。
-
-> **版本：** v1.1 | **更新：** 2026-05-31 | **狀態：** 活躍
-> **v1.1**：合併原 `19_sprint_0_design.md` 內容（M1→M2 Sprint 0 Gate）；19 號文檔已撤回
+本手冊描述現行開發工作流：**研究迴圈**（策略如何被審判）+ **工程流程**（分支 / TDD / CI / PR）。里程碑現況以 [16 WBS](./16_wbs_development_plan.md) 為單一狀態真相源，本手冊只講「怎麼做」，不記錄「做到哪」。
 
 ---
 
-## 1. 模式選擇：MVP 快速迭代
+## 1. 產品定位（一句話）
 
-本專案採用 **MVP 模式**，理由：
-
-| 條件 | 是否觸發完整流程 |
-| :--- | :---: |
-| 金流/法遵/隱私資料 | ❌（個人研究專案，無外部使用者資料） |
-| 高可用與規模化 | ❌（單機、批次處理為主） |
-| 跨 3+ 團隊協作 | ❌（單人開發） |
-| **快速驗證策略價值假設** | ✅ |
-| 時間/預算有限 | ✅ |
-
-→ MVP 模式，按 milestone（M0–M5）迭代。
-
-**升級觸發**：實盤對外、加入第二位協作者、引入即時下單則升級為完整流程。
+個人量化 **edge 驗證工廠 + 晉升管線**：single-user、standalone、台股專用。策略是消耗品、審判庭是資產、連續 NO-GO 是產品正常運作的證據。完整定位見 [02 PRD](./02_project_brief_and_prd.md)。
 
 ---
 
-## 2. 開發里程碑（對應 README）
+## 2. 研究迴圈（策略審判流程）
+
+新增或驗證一隻策略，只寫一個 `strategies/<name>/research_config.py` 宣告參數，即可參與所有標準化工作流（ADR-029）。工作流本身與策略無關，全走 registry dispatch（`get_strategy(name).run()`，ADR-028），絕不直接 import 策略的 backtest 函式（AST 測試守門）。
 
 ```mermaid
 graph LR
-  M0[策略規格定稿] --> M1[資料+策略骨架]
-  M1 --> M2[IS 回測]
-  M2 --> M3[OOS+統計驗證]
-  M3 --> M4[Paper Trading 3 月]
-  M4 --> M5[小倉位實盤]
+  RC[宣告 research_config.py] --> BU[build-universe]
+  BU --> DOE[doe 參數掃描]
+  DOE --> GG[go-gates WFA+PBO]
+  GG --> TG[truth-gate 兩段閘]
+  TG -->|REAL| PR[paper-replay]
+  TG -->|REJECTED| KILL[砍策略 / 換 edge family]
+  PR --> PROMOTE[晉升 IS→WFA→OOS→paper→live]
 ```
 
-| 階段 | 目標 | Gate |
+| 步驟 | CLI | 做什麼 | 判準 |
+| :--- | :--- | :--- | :--- |
+| 宣告 | 寫 `research_config.py` | 宣告 UNIVERSE / DOE / GO_GATES / TRUTH_GATE / PAPER_REPLAY | frozen Pydantic，作者只填參數不寫工作流邏輯 |
+| 建 universe | `research build-universe --strategy <name>` | FinLab 全史 survivorship-clean universe（季度 rebalance）+ manifest 血統 | ADR-032 |
+| DOE | `research doe --strategy <name>` | 系統化掃描參數空間（非手敲）| 全網格輸出，防 cherry-pick |
+| GO 閘 | `research go-gates --strategy <name>` | WFA OOS 廣度 + PBO | 過擬合初篩 |
+| 真偽閘 | `research truth-gate --strategy <name>` | 兩段閘：真偽閘（PBO/DSR/WFA/survivorship-clean，hard-fail）+ 配置閘（sizing） | REAL / REJECTED（ADR-025） |
+| paper 重放 | `research paper-replay --strategy <name>` | 過真偽閘的候選逐日跑 ETL→signals→risk→orders→log | 接真 daemon 前先驗晉升鏈 |
+| 晉升 | `research validate` / `promote-check` | IS→WFA→OOS 不可逆 gate + 晉升資格查詢 | OOS sealed vault，狀態不可回退 |
+
+### 鐵律
+
+- **OOS 用過一次就燒掉**：前置 gate 未過前 OOS 封存不可讀；OOS 失敗即淘汰，不允許「再調一次」。
+- **hypothesis 預先註冊**：run 強制填 `--hypothesis`；違反預註冊紀律 → 強制重跑該階段。
+- **試驗計數進 DSR**：所有參數測試計入 n_trials，DSR deflate（防過擬合稅被低估）。
+- **審判庭優先於策略**：gate 門檻不因單一策略瓶頸放寬（ADR-023）。策略死於閘 = 產品在工作，不是專案失敗。
+
+---
+
+## 3. 工程流程
+
+### 3.1 分支
+
+- 保護分支 `main` 禁止直接改碼，一律開 `<type>/<desc>` 分支走 PR。
+- 一個分支只做一件事；多 session 並行用 git worktree 隔離。
+- 操作細節見 `.claude/rules/development-workflow.md` + `git-workflow.md`。
+
+### 3.2 TDD（強制）
+
+先寫測試 (RED) → 跑（失敗）→ 最小實作 (GREEN) → 跑（通過）→ 重構 → 驗覆蓋率（≥ 80%）。**審判庭級變更**（gate / DSR / oracle）的判決測試必須先 RED 釘住已知期望（含已知 REJECTED 案例），再改實作。
+
+### 3.3 CI（三 job）
+
+每個 PR 由 GitHub Actions 守門：
+
+1. **後端** — `uv run pytest`（`--cov-fail-under`）
+2. **前端** — `tsc` + `vitest`
+3. **契約 drift** — `app.openapi()` vs `frontend/openapi.json` diff、`init.sql` ↔ `db_writer` 欄位對齊
+
+### 3.4 PR
+
+前置條件：測試全綠、commit 歷史 WHY/WHAT/IMPACT 完整、自我 review diff、無殘留 debug code、已對映 `code-doc-sync.md` 觸發表更新受影響 dev_docs（含 16 WBS 進度）。Body 四區段：Background / Changes / Impact / Test Plan。
+
+### 3.5 程式碼 ↔ 文件同步
+
+實作 code 與更新 dev_docs 屬同一 PR，禁止「以後再補」。觸發對映表見 `.claude/rules/code-doc-sync.md`。
+
+---
+
+## 4. 里程碑現況一覽
+
+目標與 Gate 如下；**實際進度以 [16 WBS](./16_wbs_development_plan.md) 為單一真相源**，本表不寫狀態欄。
+
+| 里程碑 | 目標 | Gate |
 | :--- | :--- | :--- |
-| **M0** | 策略規格定稿（`strategy/v2.md`） | 蘇格拉底審查通過 |
-| **M1** | 資料 + 策略骨架 + 端到端 smoke | 44 unit tests 全綠，2330 端到端跑通 |
-| **M2** | IS 回測通過（2015-2020） | TQuant-Lab 整合 + IS 全綠燈（ADR-005）|
-| **M3** | OOS + 統計驗證 | PBO < 30%、DSR > 0.95 |
-| **M4** | Paper trading 3 個月 | Sharpe > 0.7 × 回測 Sharpe |
-| **M5** | 小倉位實盤（1/4 倉位） | 月績效不退化、Shioaji 整合 |
+| M1 | 資料層 + 策略契約 + 端到端 smoke | 單元測試全綠、端到端跑通 |
+| M2 | IS 回測（zipline-reloaded 引擎）| 引擎整合 + 研究迴圈可跑 |
+| M3 | 統計驗證（審判庭）+ 研究工作流 | PBO/DSR/WFA/兩段閘 + doe/truth-gate/paper-replay |
+| M4 | Paper trading 3 個月收 live OOS | after-close 排程器 + 觀察期倒數 + 退化偵測 |
+| M5 | 小倉位實盤（1/4 倉位）| paper live OOS + 配置閘 sign-off（不可逆晉升）|
 
-> **當前狀態**：見 [`16_wbs_development_plan.md`](./16_wbs_development_plan.md)（單一狀態真相源；本表只列目標與 Gate）
-
----
-
-## 3. 每階段紀律
-
-### M0 規格階段
-- 任何策略變更必須更新 `strategy/v2.md` Part 6.3 changelog
-- 版本號規則：MAJOR（策略本體）/ MINOR（參數）/ PATCH（bug fix）
-
-### M1 開發階段（當前）
-- 訊號邏輯**只有一份**：`strategy/scoring.py` + `strategy/signals.py` 為單一真相
-- 任何修改必須伴隨單元測試（測 happy / boundary / failure 三類）
-- 端到端 smoke test 確保 `pipeline.py` 在真實 FinMind 資料上能跑通
-
-### M2 回測階段
-- IS 回測在 2015–2020，可反覆調參數
-- 所有測試的參數組合必須記錄（DSR N 計算）
-- 對標 `strategy/v2.md` 4.3.1 綠/黃/紅燈表
-
-### M3 統計階段
-- OOS 期間 2023–2024
-- **OOS 失敗 → 淘汰策略，不允許「再調一次」**
+**下一個價值里程碑**：修好審判庭（ADR-030）→ 用可信的閘重驗 inst_flow → after-close 排程器收 live OOS。
 
 ---
 
-## 4. 文檔產出對照
-
-每個 milestone 完成時必須產出對應文檔：
-
-| 階段 | 必要文檔 |
-| :--- | :--- |
-| M0 | `strategy/v2.md` |
-| M1 | `dev_docs/05_architecture_and_design_document.md`、`dev_docs/07_module_specification_and_tests.md`、`backtest_platform/docs/M1_setup.md` |
-| M2 | `backtest_platform/docs/M2_backtest_report.md`（待產出） |
-| M3 | `backtest_platform/docs/M3_statistical_validation_report.md`（待產出） |
-| M4 | `backtest_platform/docs/M4_paper_trading_log.md`（待產出） |
-| M5 | `backtest_platform/docs/M5_live_runbook.md`（待產出） |
-
----
-
-## 5. Gate 度量
-
-| Gate | 度量 |
-| :--- | :--- |
-| M1 → M2 | Sprint 0 6 spike 全綠（見 §5.A）+ 單元測試 100% 通過、端到端 smoke 跑得起來 |
-| M2 → M3 | IS 期間達到綠燈（CAGR > 18%、Sharpe > 1.0 等，含生存者偏誤 buffer） |
-| M3 → M4 | OOS Sharpe > IS × 0.6、PBO < 30%、DSR > 0.95 |
-| M4 → M5 | Paper trading 模擬 Sharpe > 回測 Sharpe × 0.7 |
-| M5 → 全倉 | 連續 3 個月實盤不退化、無單日 DD > 5% |
-
-### 5.A Sprint 0 — M1→M2 Gate 詳細規格
-
-> 2026-05-31 從原 `19_sprint_0_design.md` 合併入本節；可執行腳本在 `backtest_platform/sprint_0_spikes/`，操作步驟詳見該目錄 `RUNBOOK.md`。
-
-#### 5.A.1 為什麼需要 Gate（風險清單）
-
-| 風險 | 不做 Sprint 0 的後果 |
-| :--- | :--- |
-| TQuant-Lab 安裝 / XTAI 日曆不通 | M2 第 1 週才發現，整個技術線失敗（**此風險於 Sprint 0 S1 實際觸發 → ADR-013 切換到 zipline-reloaded**） |
-| M1 純函式 plug 進 Zipline Algorithm 不順 | M2 第 2-3 週才發現，需重設計 wrapper |
-| FinLab bundle ingester 跑不出來 | M3 才發現，被迫切回 FinMind fallback |
-| Shioaji 沙箱範例跑不通 | M5 才發現，實盤路徑失敗 |
-| FinLab 即時資料 polling 不穩 | M4 paper trading 失敗 |
-| Streamlit + TimescaleDB 連不上 | M3 monitor 失敗，被迫改方案 |
-
-**核心精神**：用 1 週把 6 個 unknown 提前驗證；任一 fail 立即退場，不浪費 M2 的 4 週。
-
-#### 5.A.2 6 spike 摘要表
-
-| Spike | 主題 | 估時 | 並行 | Pass 標準 |
-| :---: | :--- | :---: | :---: | :--- |
-| S1 | TQuant-Lab + XTAI 安裝（**實際結果：F1 fail → ADR-013 改 zipline-reloaded**）| 4h | + S5 | `zipline ingest` + `zipline run` hello world 跑通；XTAI 2024 sessions ≈ 245 |
-| S2 | M1 純函式 plug 進 Zipline Algorithm | 8h | — | 對 2330 一年資料，action 序列與 M1 `pipeline.py` 差異 < 0.1% |
-| S3 | FinLab Bundle Ingester POC | 8h | — | 3 檔 × 1 年 ingest 成功，價格欄位與 FinLab raw 100% 一致 |
-| S4 | Shioaji 沙箱範例 | 4h | + S6 | 沙箱登入 + 下單 + callback 收到 fill 事件 |
-| S5 | FinLab 即時資料 Polling | 3h | + S1 | 60 次 polling ≥ 55 次成功；對拍 Yahoo/TWSE < 0.5% |
-| S6 | Streamlit 連 TimescaleDB | 3h | + S4 | equity curve 渲染正確，首次載入 < 2 秒 |
-
-#### 5.A.3 1 週日程
-
-| Day | Spike | 平行 |
-| :---: | :--- | :---: |
-| D1 | S1 + S5 | ✅ |
-| D2 | S2 | — |
-| D3 | S3 | — |
-| D4 | S4 + S6 | ✅ |
-| D5 | Gate Review + 修復 | — |
-| D6-D7 | Buffer | — |
-
-#### 5.A.4 Gate Review 決策樹
-
-| Spike Fail 組合 | 退場路線 | 上線時間 |
-| :--- | :--- | :---: |
-| 全綠 | **Pass — 啟動 M2 Sprint 1** | 17 週 |
-| 只 S5 fail | 維持 plan，M4 用 Shioaji 報價 | 17 週 |
-| 只 S6 fail | 改 Plotly Dash 或 Gradio | 17 週 |
-| 只 S4 fail | M5 才驗證 Shioaji（風險集中後段） | 18 週 |
-| 只 S3 fail | Hybrid（FinMind 主 + FinLab 補） | 18 週 |
-| 只 S1 fail | Hybrid（zipline-reloaded + 自寫 XTAI） | 18 週 |
-| S1 + S3 都 fail | FinMind Fallback + 自寫 calendar | 20 週 |
-| S1 + S3 + S5 都 fail | 自寫 Adapter Fallback | 21 週 |
-| **S2 fail** | **強制 debug，不退場**（純函式 plug 是 deal-breaker） | 17 + 不定 |
-
-#### 5.A.5 失敗備援路線（高層摘要）
-
-| 路線 | 觸發 | 主要變更 |
-| :--- | :--- | :--- |
-| **Hybrid** | S1 或 S3 單獨 fail | 換成 zipline-reloaded + 自寫 calendar；或 FinMind 為主 FinLab 為輔 |
-| **FinMind Fallback** | S3 + S5 都 fail | 100% FinMind + TWSE 補爬；FinLab 訂閱取消 |
-| **自寫 Adapter Fallback** | S1 fail 且 zipline-reloaded 也不通 | 純 vectorbt + 自寫薄薄 event-driven，~5500 LOC |
-
-#### 5.A.6 Sprint 0 產出物
-
-| 文件 / 程式碼 | 位置 |
-| :--- | :--- |
-| 6 個 Spike 報告 | `backtest_platform/sprint_0_spikes/results/S*.json` |
-| Gate Review 決議書 | `backtest_platform/sprint_0_spikes/results/gate_review.md` |
-| FinLab Bundle POC | `backtest_platform/sprint_0_spikes/s3_finlab_bundle_poc.py` |
-| Shioaji 沙箱範例 | `backtest_platform/sprint_0_spikes/s4_shioaji_sandbox.py` |
-| Streamlit MVP | `backtest_platform/sprint_0_spikes/s6_streamlit_dashboard.py` |
-| 退場路線 ADR（若觸發） | `dev_docs/adrs/ADR-010-fallback-route.md` |
-
----
-
-## 6. 檢查清單（每階段必過）
+## 5. 每階段檢查清單
 
 ### 通用
-- [ ] 對應 milestone 的文檔已更新
-- [ ] 對應的 ADR 已記錄重大決策
-- [ ] 測試覆蓋率 > 80%
-- [ ] 沒有 hardcoded secrets
+- [ ] 對應 dev_docs 已更新（code-doc-sync 觸發表）
+- [ ] 重大決策已寫 ADR 或 cross-ref
+- [ ] 測試覆蓋率 ≥ 80%、CI 三 job 綠
+- [ ] 無 hardcoded secrets
 
-### 策略相關
-- [ ] 訊號邏輯與 `strategy/v2.md` 一致
-- [ ] 任何門檻調整在 v2.md 6.3 留下時間戳
-- [ ] DSR N（測試組合數）已記錄
+### 研究迴圈
+- [ ] 新策略只透過 `research_config.py` 宣告，未新增一次性腳本
+- [ ] 工作流走 `get_strategy(name).run()`，未直接 import 策略 backtest 函式（AST 測試守門）
+- [ ] hypothesis 已預先註冊、n_trials 計入 DSR
+- [ ] OOS 未被 post-hoc 污染

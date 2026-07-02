@@ -1,250 +1,150 @@
 # 安全與生產準備檢查清單 — backtest_platform
 
-> **版本：** v1.0 | **更新：** 2026-05-26 | **審查：** Self
-> **適用範圍：** M1 已過、M5 實盤前必過
+> **版本：** v2.0 | **更新：** 2026-07-02 | **審查：** Self
+> **威脅模型基準：** [ADR-031](./adrs/ADR-031-standalone-auth-decision.md)（standalone = localhost-only）、[02 PRD v4.0 §2.3](./02_project_brief_and_prd.md)（部署假設）、`rules/security.md`。
+> **關聯：** [24_risk_management_spec.md](./24_risk_management_spec.md)（風控規格，paper/live gate 真相源）。
 
 ---
 
-## A. 核心安全原則
+## A. Standalone 威脅模型（ADR-031）
 
-- [x] **最小權限**：FinMind token 只給 ETL 用、Shioaji token 只給 live 用，互不共用
-- [x] **縱深防禦**：.env + .gitignore + 程式內 fail-fast 三層
-- [x] **預設安全**：DB 預設 password = `change_me_in_production`，看到字串就會 trigger 改密碼
-- [x] **攻擊面最小化**：M1–M3 不開 HTTP port（純本機）；M5 才暴露 API
+本平台是**單機自託管、內網 localhost、單人、無多人協作、無合規審批**的個人系統（PRD v4.0 §2.3）。安全設計據此假設一次裁定，不做企業級 gold-plating。
+
+### A.1 安全邊界 = loopback bind（唯一防線）
+
+- [ ] **後端 API MUST 綁 `127.0.0.1`**（loopback）：`uvicorn --host 127.0.0.1`，前端走 vite proxy 同機存取，無公網暴露。**綁定本身即安全邊界。**
+- [ ] **無 app 層 auth**（ADR-031 裁決）：能存取 `127.0.0.1` 者已擁有這台機器，20 行 static Bearer 不增實質防線、卻增每個 client（curl / CLI / 排程器）摩擦。前端 `http.ts` 的 `dev-token` 為無害殘留（後端不檢查）。
+- [ ] **DB / 監控埠建議綁 loopback**：docker-compose 的 `5432 / 8086 / 3000` port mapping 預設對 host 全介面開放；單機部署應改綁 `127.0.0.1:<port>:<port>`，避免同網段其他機器直連。
+- [ ] `401 UNAUTHORIZED` 保留於錯誤碼 enum（25 §2），供 **M5 遠端存取**啟用 auth 時使用（reverse-proxy guard 或 static Bearer），standalone 期不觸發。
+
+### A.2 威脅模型明確排除（standalone 不做）
+
+- 多角色 RBAC、跨人 leaderboard、簽核鏈 → 單人單角色，不適用。
+- 公網 DoS / rate-limit → 無公網暴露，不適用（唯一「DoS 自己」風險由 EX-009 訂單頻率上限處理，見 24 §2）。
+- WAF / IDS / 容器逃逸強化 → 個人機不投資；M5 遠端存取時重議。
 
 ---
 
-## B. 資料安全與隱私
+## B. 秘密管理（不因 standalone 放鬆）
 
-### 資料分類
+第三方 token **僅後端持有、絕不出現在任何 API 回應或前端 bundle**（ADR-031 明文）。
 
-| 類別 | 範例 | 處理 |
-| :--- | :--- | :--- |
-| 公開（市場資料） | 股價、法人籌碼 | 不需加密、可寫 disk |
-| 個人（API token） | FINMIND_TOKEN、SHIOAJI_API_SECRET | env 變數，不入 git，不入 log |
-| Audit（交易紀錄） | trades 表 | 永久保留，不可改寫 |
+| Secret | 用途 | 載體 | 輪換 |
+| :--- | :--- | :--- | :--- |
+| `FINLAB_API_TOKEN` | 主資料源（付費，ADR-006）| `.env`（gitignored）| 年度（伴隨續費）|
+| `FINMIND_TOKEN` | fallback 資料源 | `.env` | 免費版，變更時 |
+| `DISCORD_BOT_TOKEN` / `DISCORD_*_ID` | 告警通道（ADR-010）| `.env` | Bot token 變更時 |
+| `INFLUXDB_TOKEN` | 系統 metrics（M4 選配）| `.env` | 季度 |
+| `POSTGRES_PASSWORD` | TimescaleDB | `.env` | 季度 |
+| `SHIOAJI_*` | 實盤下單（M5）| `.env` | 半年 |
 
-### 資料收集
+檢查項：
 
-- [x] 只收集策略需要的資料（不抓不必要的 indicators）
-- [x] 無使用者 PII 收集（單人專案，不適用）
-
-### 傳輸安全
-
-- [x] FinMind API 使用 HTTPS（套件強制）
-- [x] TimescaleDB 本機連線（local socket / 127.0.0.1）
-- [ ] Shioaji 強制 TLS（M5 須驗證）
-
-### 儲存安全
-
-- [x] secrets 從 env 載入，不寫入檔案
-- [x] DB 預設 password 故意設為 `change_me_in_production`，部署時必改
-- [ ] M5 backup 加密（待規劃）
-
-### 資料生命週期
-
-- [x] log 不印 token（grep "TOKEN" + "SECRET" 確認）
-- [ ] 資料保留期：daily_bars / institutional / broker_chips 永久保留
-- [ ] equity_snapshots：M5 上線後保留 3 年
-- [ ] data_quality_log：保留 1 年
-- [ ] M5 引入 retention policy（TimescaleDB 內建支援）
+- [x] secrets 一律從 env 載入（`config/settings.py` + `pydantic-settings`），不寫入原始碼、不入 git（`.env` gitignored）
+- [x] log 不印 token（`grep -rE "TOKEN|SECRET"` 確認無明文輸出）
+- [x] `/system/alerts/channels` 回應遮罩（`bot_token → "***"`，25 §4）
+- [ ] **`POSTGRES_PASSWORD` 預設仍為 `change_me_in_production`**（`settings.py:44`）且**無啟動期驗證**——部署時必改；建議加 startup 檢查拒絕預設值（審查缺陷 #19，hardening 待辦）
+- [ ] 疑似外洩（貼到 chat / log / PR）即到對應後台輪換
 
 ---
 
 ## C. 應用程式安全
 
-### 認證
+### 輸入驗證（系統邊界）
 
-- [ ] M5 HTTP API 加 token-based auth
-- [ ] Shioaji 帳號 password 使用環境變數
-- [ ] M5 開啟 IP 白名單（只允許自己 IP）
+- [x] CLI 參數經 Click 型別驗證（date / choice / required）
+- [x] 資料源回應經 Pydantic schema 驗證（`data/schemas.py` `ETLBundle` 等）
+- [x] 策略 config 為 Pydantic **frozen** model（ADR-004），Field 驗證參數範圍
+- [x] API body `extra='forbid'`，未知欄位 → 422 逐欄（25 §2 `VALIDATION_ERROR`）
+- [ ] **HTTP / CLI overrides 路徑仍用 `model_copy(update=)`**（`api/routers/research_workflows.py:75`）繞過 validator——應改 `model_validate` 重新校驗（審查缺陷 #11，hardening 待辦）
 
-### 授權
+### 注入與輸出
 
-- 不適用（單人專案、單一角色）
-
-### 輸入驗證
-
-- [x] CLI 參數透過 Click 型別驗證
-- [x] FinMind 回應透過 Pydantic schema 驗證
-- [x] DB 寫入透過 `_upsert_frame` 檢查 columns
-- [x] `StrategyConfig` Field 驗證所有參數範圍
-
-### API 安全（M5）
-
-- [ ] FastAPI endpoints 全部需認證
-- [ ] Rate limit（防止意外 DoS 自己）
-- [ ] 參數白名單嚴格驗證
-- [ ] 回應不洩露 stack trace
+- [x] SQL 全參數化（`psycopg` `execute_values` / bind params，無字串拼接）
+- [x] 錯誤回應不洩露 stack / 秘密（全域 `Exception` handler → `INTERNAL`，25 §2）
+- [x] React 自動 HTML 跳脫；秘密不入 bundle（§B）
 
 ### 依賴安全
 
-- [x] `pip install` 時不裝來源不明套件
-- [ ] M2 引入 `uv.lock` lock file（ADR-012）
-- [ ] M3 引入 `pip-audit` 定期掃描
-- [ ] M3 引入 Dependabot（如果 repo 是 public）
+- [x] 提交 lock file（`uv.lock` / `package-lock.json`）
+- [x] 不裝來源不明套件
+- [ ] `pip-audit` / `npm audit` 排程掃描（hardening 待辦）
 
 ---
 
-## D. 基礎設施安全
+## D. 資料安全與備份
 
-- [x] docker-compose ports 只 expose 必要的
-  - TimescaleDB: 5432（M5 可關掉只走 docker network）
-  - Prefect: 4200（內部用，M5 加 reverse proxy）
-  - Grafana: 3000（內部用，M5 加 reverse proxy + auth）
-- [x] Secrets 不硬編碼（grep 過：clean）
-- [ ] M5 容器以非 root 執行
-- [ ] M5 容器映像最小化（distroless / alpine）
-- [ ] M5 安全事件日誌（auth 失敗 / shioaji 異常）
+### D.1 資料分類
+
+| 類別 | 範例 | 處理 |
+| :--- | :--- | :--- |
+| 公開（市場資料）| 股價、法人籌碼 | 不需加密、可寫 disk（parquet cache）|
+| 秘密（API token）| §B 清單 | env 變數，不入 git、不入 log |
+| Audit（研究血統）| `reports/runs.jsonl`、`positions` / `fills` 表、晉升 audit log | 不可改寫，長期保留 |
+
+### D.2 備份（單人不可再生資產裸奔的緩解，審查缺陷 #10）
+
+不可再生資產有三類：FinLab 付費 ingest 的 parquet cache、研究血統 `reports/*.jsonl`、TimescaleDB telemetry。最小備份策略：
+
+- [ ] **每日 `pg_dump`** TimescaleDB → 本機備份目錄（保留 N 份輪替）
+- [ ] **`rsync` `data/parquet*` + `reports/`** → 備份目錄 / 外接碟（付費資料 + 研究血統）
+- [ ] parquet cache 已具**原子寫回 + 缺口 merge**（`parquet_cache.py`），舊歷史不被新 ingest 覆蓋
+- [ ] 恢復演練：刪 1 日資料 → restore → smoke test 通過（詳見 [14 §災難恢復](./14_deployment_and_operations_guide.md)）
 
 ---
 
-## E. 合規性
+## E. CI 品質守門（已上線）
 
-| 法規 | 適用 | 處理 |
+三起 doc-drift 事故（runs DDL、openapi.json stale、契約 registry 漂移）的共同根因是無機器守門——現已由 GitHub Actions（`.github/workflows/ci.yml`）三 job 補上：
+
+| Job | 守門內容 |
+| :--- | :--- |
+| **backend** | `uv run pytest`（coverage gate 80% 由 `pyproject.toml --cov-fail-under=80` 強制）|
+| **frontend** | `tsc --noEmit` + `vitest run --coverage`（`@vitest/coverage-v8`）|
+| **contract-drift** | live OpenAPI ↔ `frontend/openapi.json` + runs DDL ↔ `db_writer._RUNS_COLS`（`scripts/check_openapi_drift.py`，hard gate）|
+
+> 測試體系與缺口見 [22_test_strategy.md](./22_test_strategy.md)。
+
+---
+
+## F. Paper / Live 上線就緒（引用 24 號風控規格）
+
+進 paper（收 live OOS）與 M5 實盤前的 gate 判準以 **[24_risk_management_spec.md](./24_risk_management_spec.md) 為單一真相源**（本節只列 checklist，不複製門檻）。
+
+### F.1 進 paper 前
+
+- [ ] 策略過真偽閘（PBO / DSR / WFA / survivorship-clean）+ OOS>0（ADR-025 兩段閘，24 §8）
+- [ ] after-close 排程器就緒（cron / systemd timer + Discord 成敗通知；為收 live OOS 的下一步 blocker，審查缺陷 #17）
+- [ ] paper 風控接真實部位快照（EX-002/003/004/007 組合層規則不再對空倉評估，審查缺陷 #3）
+- [ ] Discord 告警測試通過（`POST /system/alerts/test` 送達）
+
+### F.2 M5 實盤前（一次性）
+
+- [ ] §D.2 備份 + 恢復演練已跑過
+- [ ] Shioaji TLS + 帳號驗證通過（`SHIOAJI_SIMULATION=false` 前）
+- [ ] 三級熔斷自動執行驗證（L1/L2/L3，24 §4）
+- [ ] `kill_switch.sh` 緊急停機腳本就緒（24 §9.5）
+- [ ] 遠端存取 auth 決策重開（若需跨機，ADR-031 §4）
+- [ ] 設定資金上限與 DD 熔斷（24 §4）
+
+---
+
+## G. 合規性（個人資金，最小適用）
+
+| 項目 | 適用 | 處理 |
 | :--- | :---: | :--- |
-| 個資法 | ❌ | 無第三方使用者資料 |
-| GDPR | ❌ | 無歐盟使用者 |
-| SOC2 | ❌ | 個人專案 |
-| 證券交易所紀律 | ✅ | 不做拉抬、不做高頻 quote stuffing |
-| 個人所得稅（證券交易） | ✅ | 自行申報 |
+| 個資法 / GDPR / SOC2 | ❌ | 無第三方使用者資料、個人專案 |
+| 證券交易紀律 | ✅ | 不做拉抬、不做高頻 quote stuffing |
+| 個人所得稅（證券交易）| ✅ | 自行申報 |
 | 健保補充保費 | ✅ | 單筆 > 2 萬時自動扣繳 |
 
 ---
 
-## F. 審查結論（當前狀態）
+## H. 風險管理總覽（詳見 24 號文件）
 
-| # | 行動項 | 優先級 | 預計 milestone |
-| :--- | :--- | :---: | :--- |
-| 1 | 引入 `uv.lock`（ADR-012） | P1 | M2 |
-| 2 | 引入 `pip-audit` 排程掃描 | P2 | M3 |
-| 3 | M5 backup 加密策略 | P0 | M5 前 |
-| 4 | M5 HTTP API auth + rate limit | P0 | M5 前 |
-| 5 | Shioaji TLS 驗證 | P0 | M5 前 |
-| 6 | TimescaleDB retention policy | P1 | M5 |
-| 7 | 容器非 root + 最小映像 | P2 | M5 |
-| 8 | 監控告警分級 | P1 | M4 |
+風控是產品護城河「驗證信心」的執行層，完整規範（兩階段框架、12 條 ex-ante 規則、3 級熔斷狀態機、SOP、`kill_switch.sh`、配置閘目標倉位）以 **[24_risk_management_spec.md](./24_risk_management_spec.md)** 為準。設計鐵律：
 
-**整體評估：M1–M4 階段可繼續開發。M5 上線前必須完成 P0 行動項。**
-
----
-
-## G. 生產準備就緒（M5 上線前 Checklist）
-
-### 可觀測性
-
-- [ ] Grafana 監控儀表板已建立（策略健康度 / 資料延遲 / 部位 heat）
-- [ ] SLI 已定義
-  - 訊號生成延遲 < 30 sec after 17:00 資料齊
-  - 訊號重現率 > 99%
-- [ ] 結構化日誌（Loguru JSON format）接入中央位置
-- [ ] 關鍵告警（Discord，見 ADR-010）：
-  - 連虧 5 筆
-  - 單日 DD > 5%
-  - 資料源延遲 > 1 小時
-
-### 可靠性
-
-- [ ] `/health` 健康檢查端點（M5 API）
-- [ ] 優雅停機（SIGTERM 處理）
-- [ ] 外部呼叫（FinMind / Shioaji）有 timeout + retry（指數退避）
-- [ ] 備份與恢復演練（pg_dump / restore 全流程跑過）
-- [ ] 熔斷規則自動執行（DD 25% → 全平、月績效 < -15% → 停機）
-
-### 效能與擴展
-
-- [x] 端到端 pipeline 單檔 2 年資料 < 5 秒（M1 實測 OK）
-- [ ] Portfolio 100 檔 10 年回測 < 30 分鐘（M2 驗證）
-- [ ] vectorbt 參數網格 24 cells × 30 windows < 1 小時（M3 驗證）
-- 服務本身為單機批次，無水平擴展需求
-
-### 可維護性
-
-- [ ] M5 Runbook（出問題怎麼處理）
-- [x] CI/CD 為 local script（M1 / 個人專案 OK）
-  - 建議 M3 引入 GitHub Actions 跑 pytest
-- [x] 配置集中於 `StrategyConfig` + `.env`
-- [ ] M5 重大變更使用 git tag + 回滾流程文件化
-
----
-
-## H. 已發現的安全狀況（自評）
-
-### 正向
-
-- ✅ secrets 都在 env，repo 內無洩漏
-- ✅ 程式碼層級無 SQL injection（execute_values + parameterized）
-- ✅ Pydantic 驗證在所有邊界
-- ✅ pure function 設計減少狀態相關 bug
-- ✅ `_evaluate_priority` 風控優先序硬寫死，沒辦法繞過
-
-### 待改進
-
-- ⚠️ DB password 預設值雖然故意醒目但仍是 plaintext，建議 M5 用 Docker secrets / Vault
-- ⚠️ 無自動化漏洞掃描（M3 補）
-- ⚠️ 無依賴 lock file（M2 補）
-- ⚠️ 無 backup 機制（M5 前必補）
-- ⚠️ 無 SOP 文件給「如果 strategy 大虧怎麼處理」（M5 前必補）
-
----
-
-## I. 緊急狀況處理（M5 上線後）
-
-| 情境 | 立即行動 | 後續 |
-| :--- | :--- | :--- |
-| 連虧 5 筆 | Discord alert + 自動暫停新進場 | 1 週冷卻後檢討 |
-| 單日 DD > 5% | 觀察、不自動行動 | 隔日盤前評估 |
-| 單日 DD > 10% | 自動降倉 50% | 暫停 1 週 |
-| DD > 25% | 全平 + 停機 | 書面檢討 |
-| 資料源中斷 | 暫停訊號生成 | 切備用源或人工 |
-| Shioaji 異常 | 不下新單、現有單照常 | 修復或暫停 |
-| 程式 bug | 立即停機 + 回滾 | 修復 → paper 1 週 → 再上線 |
-
-完整流程詳見 M5 Runbook（待寫）。
-
----
-
-## J. 風險管理規範（總覽，詳見 24 號文件）
-
-> **2026-05-31 增補**：本章節為 24 號文件的高層摘要。**完整風控規範（兩階段框架、12 條 ex-ante 規則細節、3 級熔斷狀態機、4 個 SOP 步驟、kill_switch.sh 腳本） → 詳見 [24_risk_management_spec.md](./24_risk_management_spec.md)**。
-
-### J.1 風控框架（兩階段）
-
-| 階段 | 何時 | 失敗動作 |
-| :--- | :--- | :--- |
-| **Ex-ante**（事前）| 訊號 → broker submit 之前 | reject 訂單、寫 data_quality_log、Discord HIGH |
-| **Ex-post**（事後）| 每筆 fill 後 + 每 5 分鐘 + 收盤 | 觸發熔斷 L1/L2/L3、Discord CRITICAL |
-
-### J.2 Ex-ante 規則表（12 條，詳見 24 §2）
-
-| Rule ID | 名稱 | 閾值 | M |
-| :--- | :--- | :--- | :---: |
-| EX-001 | 單筆下單金額上限 | < NT$ 500k（M5 小倉）/ < 5% equity（全倉）| M4 |
-| EX-002 | 單檔持倉比例上限 | < 8% equity | M4 |
-| EX-003 | 產業集中度上限 | < 35% equity（單產業）| M4 |
-| EX-004 | Portfolio Heat 上限 | < 6%（v2.md §6）| M4 |
-| EX-005 | 現金保留下限 | > 10% equity | M4 |
-| EX-006 | 漲跌停價檢查 | 限價 ±10% from prev_close | M4 |
-| EX-007 | 最大同時持倉檔數 | ≤ 15（v2.md §2.2）| M4 |
-| EX-008 | 最小停損距離 | stop_loss ≥ entry × 0.95 | M4 |
-| EX-009 | 訂單頻率上限 | < 30 訂單 / minute（防 bug 暴衝）| M4 |
-| EX-010 | 流動性檢查 | qty ≤ 20% × 20D 平均日成交量 | M5 |
-| EX-011 | 黑名單檢查 | stock_id ∉ blacklist | M4 |
-| EX-012 | 風控熔斷狀態 | breaker.state != HALTED | M4 |
-
-### J.3 熔斷規則（3 級）
-
-| Level | 觸發 | 動作 |
-| :--- | :--- | :--- |
-| **L1 暫停** | DD > 限額 1.0x | 暫停加碼，仍允許停損 |
-| **L2 減倉** | DD > 限額 1.5x | 強制減半部位 + Discord CRITICAL |
-| **L3 全停** | DD > 限額 2.0x | 全部出場 + 停機 + 通知 |
-
-### J.4 設計鐵律
-
-1. 風控不可繞過：所有 signal 必經 `risk_gate.evaluate()`
-2. 熔斷自動執行：L2/L3 觸發 → 自動下單，不等人工確認
-3. 保守優先：拿不準時拒單
-4. 可追溯：每次拒單寫 audit trail（rule_id + context_json）
-
-完整實作邏輯（gate 評估順序、SOP 應變、kill_switch.sh）詳見 24 號文件。
+1. **風控不可繞過**：所有 signal 必經 `risk_gate.evaluate()`
+2. **熔斷自動執行**：L2/L3 觸發自動下單，不等人工確認
+3. **保守優先**：拿不準時拒單
+4. **可追溯**：每次拒單寫 audit trail（`rule_id` + `context_json`）

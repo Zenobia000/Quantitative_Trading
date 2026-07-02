@@ -4,7 +4,7 @@ All functions take pandas Series (price aligned by date) and return Series of th
 same length. NaN propagates naturally for warmup periods — caller should drop
 NaN rows before evaluating signals.
 
-Match XQ XScript semantics in ``strategy/v2.md`` 2.7 wherever possible:
+Match XQ XScript semantics in ``strategy/archive/v2.md`` 2.7 wherever possible:
     - Stochastic(5, 3, 3) — RSV smoothed twice to K/D
     - MACD(weightedClose, 5, 10, 3) — weighted close = (H + L + 2C) / 4
     - RSI: Wilder smoothing

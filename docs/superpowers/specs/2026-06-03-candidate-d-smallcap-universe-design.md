@@ -1,5 +1,7 @@
 # 候選 D 設計 spec — 中小型動能 universe 換池 + 雙窗口 IS 驗證
 
+> ⚠️ 本文件主題（四層共振）已於 ADR-023 判負 edge 廢止，僅存 audit trail。
+
 > **狀態：** 設計定稿 / 待資料 spike 解鎖後實作
 > **日期：** 2026-06-03
 > **觸發：** [[ADR-017]] §5「重新定義 edge 與 universe（large-cap 可能非目標，考慮中小型動能股）」+ [[ADR-019]] §3「誠實退場 → 回 M0 換 edge 來源」+ 16 WBS R9「escalate：換中小型動能 universe 候選 D」

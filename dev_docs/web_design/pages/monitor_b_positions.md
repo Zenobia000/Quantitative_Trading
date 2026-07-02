@@ -1,6 +1,6 @@
 # Page-Level Prompt: 面板 B — 部位狀態 (Positions)
 
-> backtest_platform M3 儀表板頁面規格。React 版（自 Streamlit 升級）。
+> backtest_platform M3 儀表板頁面規格（React）。
 > 對應 `pages/page_template.md` 結構。繼承 `global/02_backtest_platform_brand_system.md`。
 
 ---

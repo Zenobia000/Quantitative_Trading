@@ -1,6 +1,6 @@
 # Page Layer Spec — 面板 D 風控指標 (Risk Metrics)
 
-> 對應 `dev_docs/20_dashboard_specification.md` 面板 D。React 版（自 Streamlit 升級）。
+> 對應 `dev_docs/20_dashboard_specification.md` 面板 D。React 版。
 > 填完後貼入 `assembly/monitor_d_risk_integrated.md` 的 CURRENT TASK 區段。
 
 ---
