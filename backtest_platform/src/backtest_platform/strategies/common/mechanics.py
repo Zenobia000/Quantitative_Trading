@@ -52,3 +52,20 @@ def vol_target(returns: pd.Series, target_annual: float, lookback: int, max_lev:
     scale = (target_daily / realized).clip(upper=max_lev)
     scale = scale.where(realized.notna() & (realized > 0), other=1.0).clip(upper=max_lev)
     return returns * scale
+
+
+def trim_overlap(seg: pd.Series, segs: list[pd.Series]) -> pd.Series:
+    """Drop ``seg``'s first row when the previous stitched segment already owns it.
+
+    Rebalance segments are sliced ``rb..next_rb`` inclusive, so consecutive
+    segments overlap on the rebalance day. The day belongs to the *old* holdings
+    (trade at that day's close); trimming here keeps exactly one row per date so
+    the lump transaction cost charged on the new segment's first surviving row is
+    never silently discarded by a later de-duplication pass.
+    """
+    for prev_seg in reversed(segs):
+        if len(prev_seg):
+            if len(seg) and seg.index[0] == prev_seg.index[-1]:
+                return seg.iloc[1:]
+            return seg
+    return seg

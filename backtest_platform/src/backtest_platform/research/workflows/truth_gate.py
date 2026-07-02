@@ -184,9 +184,19 @@ def _slippage_sharpe(runner: Any, cfg: TruthGateConfig, sconf: Any, loader: Load
 
 
 def _add_slippage(config: Any, stress: float) -> dict[str, Any]:
-    """Param dict adding ``stress`` to the config's slippage/cost field."""
+    """Param dict adding ``stress`` to the config's slippage/cost field.
+
+    The strategy contract's ``with_extra_slippage`` wins; the attribute probes
+    only cover legacy configs. An unknown shape raises — a silent no-op here
+    would void the K3 leg of the truth gate (審查缺陷 #18).
+    """
+    if hasattr(config, "with_extra_slippage"):
+        return config.with_extra_slippage(stress).model_dump()
     if hasattr(config, "slip_rate"):
         return {"slip_rate": config.slip_rate + stress}
     if hasattr(config, "cost_round_rate"):
         return {"cost_round_rate": config.cost_round_rate + 2 * stress}
-    return {}
+    raise ValueError(
+        f"{type(config).__name__} exposes no slippage seam "
+        "(with_extra_slippage / slip_rate / cost_round_rate) — K3 stress cannot run"
+    )
