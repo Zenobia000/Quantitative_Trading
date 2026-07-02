@@ -41,8 +41,14 @@ import pandas as pd
 PBO_MAX: float = 0.30
 #: Min fraction of WFA folds with OOS Sharpe > 0 for a PRE-REGISTERED config.
 WFA_OOS_POSITIVE_MIN: float = 0.60
-#: Min trials-deflated Sharpe Ratio for a PRE-REGISTERED config.
+#: Min trials-deflated Sharpe Ratio for a PRE-REGISTERED config to DEPLOY capital.
 DSR_MIN: float = 0.95
+#: Floor of the ADR-033 Paper-Watch band. A pre-registered config that clears EVERY
+#: hard-fail clause but lands DSR ∈ [PAPER_WATCH_DSR_MIN, DSR_MIN) is not a false edge
+#: (still ≥ 90% prob of beating the max-of-N-trials noise floor) — it enters a
+#: ZERO-CAPITAL 3-month observation艙 to collect live OOS. This is an evidence channel,
+#: NOT a deployment-threshold relaxation: DSR_MIN (0.95) still gates every allocation.
+PAPER_WATCH_DSR_MIN: float = 0.90
 #: K3 robustness: OOS must not collapse under 0.3% per-leg slippage (Sharpe > 0).
 SLIPPAGE_SHARPE_MIN: float = 0.0
 #: The locked OOS holdout [oos_start, is_end] must not lose money (Sharpe > 0). This
@@ -51,9 +57,11 @@ OOS_HOLDOUT_SHARPE_MIN: float = 0.0
 
 
 class TruthVerdict(str, Enum):
-    """Binary anti-self-deception verdict (with an explicit INCOMPLETE)."""
+    """Anti-self-deception verdict. REAL/REJECTED are the deploy dichotomy; PAPER_WATCH
+    (ADR-033) is the zero-capital observation tier between them; INCOMPLETE is explicit."""
 
-    REAL = "REAL"            # cleared every truth check → edge is not a false positive
+    REAL = "REAL"            # cleared every truth check AND DSR ≥ 0.95 → deployable
+    PAPER_WATCH = "PAPER_WATCH"  # every hard-fail cleared but DSR ∈ [0.90, 0.95) → 觀察艙, 0 capital
     REJECTED = "REJECTED"    # hard-fail (survivor inflation / overfit / slippage collapse)
     INCOMPLETE = "INCOMPLETE"  # a required metric was missing → cannot claim REAL
 
@@ -82,20 +90,38 @@ class TruthGateResult:
     def is_real(self) -> bool:
         return self.verdict is TruthVerdict.REAL
 
+    @property
+    def is_paper_watch(self) -> bool:
+        """True only for the ADR-033 zero-capital observation tier."""
+        return self.verdict is TruthVerdict.PAPER_WATCH
 
-def evaluate_truth_gate(inp: TruthGateInput) -> TruthGateResult:
-    """Judge whether an edge is real (binary hard-fail). REJECTED dominates
-    INCOMPLETE: a definitive failure (e.g. dirty survivorship) is reported even
-    if some other metric is missing, because the candidate is already dead.
+
+def _classify_dsr(dsr: float | None) -> tuple[str, str]:
+    """Band a PRE-REGISTERED config's DSR, returning ``(band, human_line)`` where
+    band ∈ {"ok", "watch", "reject", "missing"}. The band is judged SEPARATELY from
+    the other hard-fails so a near-miss (ADR-033 Paper-Watch) is distinguished from a
+    definitive deflation failure: "reject" (< 0.90) is a dead edge; "watch"
+    ([0.90, 0.95)) is high-but-sub-deployment evidence → zero-capital observation.
     """
+    if dsr is None:
+        return "missing", "dsr missing (trials-deflated SR unverifiable)"
+    if dsr >= DSR_MIN:
+        return "ok", ""
+    if dsr >= PAPER_WATCH_DSR_MIN:
+        return "watch", (
+            f"DSR {dsr:.3g} ∈ [{PAPER_WATCH_DSR_MIN:.3g}, {DSR_MIN:.3g}) — paper-watch "
+            "band (ADR-033): zero-capital 3-month live-OOS observation艙, NOT deployable"
+        )
+    return "reject", f"DSR {dsr:.3g} < {PAPER_WATCH_DSR_MIN:.3g} (deflated significance)"
+
+
+def _universal_hard_fails(inp: TruthGateInput) -> tuple[list[str], list[str]]:
+    """Preconditions on EVERY path: survivorship, K3 slippage, locked OOS holdout.
+    Returns ``(rejected, missing)``; the holdout is optional (None ⇒ not evaluated)."""
     rejected: list[str] = []
     missing: list[str] = []
-
-    # 1. survivorship-clean — a hard precondition for every path.
     if not inp.survivorship_clean:
         rejected.append("survivorship not clean (survivor-only universe inflates edge)")
-
-    # 2. K3 slippage robustness — applies to every path.
     if inp.slippage_sharpe is None:
         missing.append("slippage_sharpe missing (K3 robustness unverifiable)")
     elif inp.slippage_sharpe <= SLIPPAGE_SHARPE_MIN:
@@ -103,18 +129,23 @@ def evaluate_truth_gate(inp: TruthGateInput) -> TruthGateResult:
             f"slippage Sharpe {inp.slippage_sharpe:.3g} <= {SLIPPAGE_SHARPE_MIN:.3g} "
             "(OOS collapses under 0.3% per-leg slippage)"
         )
-
-    # 2b. Locked OOS holdout — optional (None ⇒ not evaluated), but when supplied a
-    # non-positive Sharpe on the never-touched period is definitive overfit (ADR-030).
     if inp.oos_holdout_sharpe is not None and inp.oos_holdout_sharpe <= OOS_HOLDOUT_SHARPE_MIN:
         rejected.append(
             f"OOS holdout Sharpe {inp.oos_holdout_sharpe:.3g} <= {OOS_HOLDOUT_SHARPE_MIN:.3g} "
             "(edge does not survive the locked out-of-sample holdout)"
         )
+    return rejected, missing
 
-    # 3. overfit control — branch on how the config was obtained.
+
+def _overfit_control(inp: TruthGateInput) -> tuple[list[str], list[str], list[str]]:
+    """Overfit control, branched on how the config was obtained. Returns
+    ``(rejected, missing, watch)``. Pre-registered ⇒ OOS breadth + DSR band (the
+    only path that can yield a Paper-Watch ``watch`` line); selected ⇒ landscape PBO.
+    """
+    rejected: list[str] = []
+    missing: list[str] = []
+    watch: list[str] = []
     if inp.pre_registered:
-        # PBO (a selection metric) is deliberately ignored here.
         if inp.wfa_oos_positive_frac is None:
             missing.append("wfa_oos_positive_frac missing (pre-registered OOS breadth)")
         elif inp.wfa_oos_positive_frac < WFA_OOS_POSITIVE_MIN:
@@ -122,22 +153,32 @@ def evaluate_truth_gate(inp: TruthGateInput) -> TruthGateResult:
                 f"WFA OOS>0 frac {inp.wfa_oos_positive_frac:.3g} < {WFA_OOS_POSITIVE_MIN:.3g} "
                 "(out-of-sample breadth too thin)"
             )
-        if inp.dsr is None:
-            missing.append("dsr missing (trials-deflated SR unverifiable)")
-        elif inp.dsr < DSR_MIN:
-            rejected.append(f"DSR {inp.dsr:.3g} < {DSR_MIN:.3g} (deflated significance)")
-    else:
-        if inp.pbo is None:
-            missing.append("pbo missing (selection-overfit control unverifiable)")
-        elif inp.pbo >= PBO_MAX:
-            rejected.append(
-                f"PBO {inp.pbo:.3g} >= {PBO_MAX:.3g} (config-selection overfit)"
-            )
+        band, line = _classify_dsr(inp.dsr)
+        if band != "ok":  # ok ⇒ DSR clears the deploy bar, no line to record
+            {"reject": rejected, "missing": missing, "watch": watch}[band].append(line)
+    elif inp.pbo is None:
+        missing.append("pbo missing (selection-overfit control unverifiable)")
+    elif inp.pbo >= PBO_MAX:
+        rejected.append(f"PBO {inp.pbo:.3g} >= {PBO_MAX:.3g} (config-selection overfit)")
+    return rejected, missing, watch
 
+
+def evaluate_truth_gate(inp: TruthGateInput) -> TruthGateResult:
+    """Judge an edge across four verdicts. Priority: REJECTED ≻ INCOMPLETE ≻
+    PAPER_WATCH ≻ REAL. A definitive hard-fail (dirty survivorship, thin OOS breadth,
+    DSR < 0.90 …) dominates everything — the Paper-Watch band (ADR-033) is reachable
+    ONLY when every hard-fail clause passes and the *sole* shortfall is a DSR in
+    [0.90, 0.95); any missing metric collapses to INCOMPLETE, never the觀察艙.
+    """
+    r1, m1 = _universal_hard_fails(inp)
+    r2, m2, watch = _overfit_control(inp)
+    rejected, missing = r1 + r2, m1 + m2
     if rejected:
         return TruthGateResult(TruthVerdict.REJECTED, tuple(rejected + missing))
     if missing:
         return TruthGateResult(TruthVerdict.INCOMPLETE, tuple(missing))
+    if watch:
+        return TruthGateResult(TruthVerdict.PAPER_WATCH, tuple(watch))
     return TruthGateResult(TruthVerdict.REAL, ())
 
 
@@ -209,8 +250,10 @@ def evaluate_two_stage(
     sizing_cfg: SizingConfig = SizingConfig(),
 ) -> GateDecision:
     """Run the truth gate, then size only if the edge is REAL. The truth gate is
-    the hard precondition: a non-REAL verdict forces ``size == 0.0`` regardless
-    of how strong the sizing inputs look."""
+    the hard precondition: any non-REAL verdict forces ``size == 0.0`` regardless
+    of how strong the sizing inputs look. In particular PAPER_WATCH (ADR-033) is a
+    ZERO-CAPITAL observation tier — it is deliberately NOT ``is_real``, so the艙
+    never produces an allocation; live OOS is collected at position_size 0.0."""
     truth = evaluate_truth_gate(truth_input)
     size = compute_position_size(sizing_input, sizing_cfg) if truth.is_real else 0.0
     return GateDecision(truth=truth, size=size)

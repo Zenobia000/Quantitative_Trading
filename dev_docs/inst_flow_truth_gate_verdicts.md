@@ -5,7 +5,8 @@
 > 相關決策：[ADR-024](./adrs/ADR-024-institutional-flow-candidate-strategy.md)（首度 survivorship-clean NO-GO）、
 > [ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md)（驗證閘兩段化）、
 > [ADR-030](./adrs/ADR-030-truth-gate-judgement-fix.md)（審判庭數學缺陷修正）、
-> [ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md)（survivorship universe 建構平台化）。
+> [ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md)（survivorship universe 建構平台化）、
+> [ADR-033](./adrs/ADR-033-paper-watch-tier.md)（Paper-Watch 零資本觀察艙，DSR 邊緣候選收 live OOS）。
 
 ---
 
@@ -25,6 +26,8 @@ survivorship-clean 平台化重驗（ADR-032 工作流 + 423 檔含下市 univer
 | IS Sharpe（2010-2021，真實成本） | 1.025 | 參考 | — |
 
 唯一 fail 條款是 DSR 通縮顯著性——資金流 edge 方向真實（OOS 廣度 100%、封存段為正）但強度不足以在 16 次試驗通縮後過 0.95 檻，回到「~0.9 Sharpe 牆」。後續選項：(a) 掃描新 edge family；(b) 依 ADR-025 哲學討論「過 K3/OOS 但 DSR 邊緣」候選是否以極小倉位進 paper 收 live OOS（需新決策）。
+
+> **依 [ADR-033](./adrs/ADR-033-paper-watch-tier.md) 具 Paper-Watch 觀察艙資格**（DSR 0.908 ∈ [0.90, 0.95) 且 hard-fail 全過）：選項 (b) 已拍板為**零資本觀察艙**——非部署、非門檻放寬。inst_flow 可進**倉位恆 0.0** 的觀察艙收 3 個月 live OOS 補強證據；晉升仍需重評後 DSR ≥ 0.95。REJECTED 的部署地位不變。
 
 ---
 
