@@ -231,7 +231,9 @@ export interface paths {
         };
         /**
          * Gate Spec
-         * @description Return the default gate's criteria (key / op / threshold / kind / label).
+         * @description Return a gate's criteria (key / op / threshold / kind / label).
+         *
+         *     ``strategy`` → that strategy's declared gate; omitted → four-layer DEFAULT_GATE.
          */
         get: operations["gate_spec_gate_spec_get"];
         put?: never;
@@ -253,7 +255,9 @@ export interface paths {
         put?: never;
         /**
          * Gate Evaluate
-         * @description Judge a metrics dict against the default gate.
+         * @description Judge a metrics dict against a gate.
+         *
+         *     ``req.strategy`` → that strategy's declared gate; omitted → four-layer default.
          */
         post: operations["gate_evaluate_gate_evaluate_post"];
         delete?: never;
@@ -1606,6 +1610,11 @@ export interface components {
             metrics: {
                 [key: string]: number;
             };
+            /**
+             * Strategy
+             * @description registered strategy name → judge by ITS declared gate; omit for the four-layer DEFAULT_GATE (審查缺陷 #8)
+             */
+            strategy?: string | null;
         };
         /** GateSpecData */
         GateSpecData: {
@@ -2340,7 +2349,9 @@ export interface operations {
     };
     gate_spec_gate_spec_get: {
         parameters: {
-            query?: never;
+            query?: {
+                strategy?: string | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2354,6 +2365,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_GateSpecData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
