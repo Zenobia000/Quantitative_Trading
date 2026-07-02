@@ -45,6 +45,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 cd frontend
 npm install
 npm run dev                                # http://localhost:5173（研究/監控/系統三 zone + Cmd-K）
+# 後端不在預設 :8000 時（如共用機 port 被占）：cp .env.example .env 並設 DEV_API_PROXY_TARGET=http://localhost:<port>
 ```
 
 ---
