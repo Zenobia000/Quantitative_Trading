@@ -2653,6 +2653,76 @@
         }
       }
     },
+    "/system/datasets": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Datasets",
+        "description": "The FinLab dataset catalog as authoring-first cards (:mod:`data.finlab_catalog`).\n\nEach card layers three request-time facts onto the curated snapshot: local\npresence (``data.dataset_presence`` \u2014 the honest three-table bundle binary),\nthe strategy reverse-index (``data.strategy_data_index``), and the two author\nfilters (``?category`` exact, ``?q`` substring on key/name). Deliberately no\nmanifest read / staleness \u2014 the catalog is a data *dictionary*, not a cache\nmonitor.",
+        "operationId": "datasets_system_datasets_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter by category slug (exact)",
+              "title": "Category"
+            },
+            "description": "filter by category slug (exact)"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "case-insensitive substring on key / name_zh",
+              "title": "Q"
+            },
+            "description": "case-insensitive substring on key / name_zh"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_DatasetCard__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/system/ingest": {
       "post": {
         "tags": [
@@ -3247,6 +3317,58 @@
         "type": "object",
         "title": "CompareReportData",
         "description": "``GET /runs/compare`` \u2014 per-metric delta vs baseline + ranks + sign."
+      },
+      "DatasetCard": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name_zh": {
+            "type": "string",
+            "title": "Name Zh"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "freq": {
+            "type": "string",
+            "title": "Freq"
+          },
+          "history_start": {
+            "type": "string",
+            "title": "History Start"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "local": {
+            "type": "string",
+            "title": "Local"
+          },
+          "used_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name_zh",
+          "category",
+          "freq",
+          "history_start",
+          "description",
+          "local",
+          "used_by"
+        ],
+        "title": "DatasetCard",
+        "description": "One ``GET /system/datasets`` card \u2014 a strategy author's data-dictionary row.\n\nAnswers the three authoring-first questions: *what is this data* (key / name /\ncategory / freq / history / description), *is it local* (``local`` binary), and\n*which of my strategies use it* (``used_by``). No freshness / coverage \u2014 that is\na runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."
       },
       "Envelope": {
         "properties": {
@@ -3975,6 +4097,55 @@
           "success"
         ],
         "title": "Envelope[list[BundleRow]]"
+      },
+      "Envelope_list_DatasetCard__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DatasetCard"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[DatasetCard]]"
       },
       "Envelope_list_PromotionEvent__": {
         "properties": {

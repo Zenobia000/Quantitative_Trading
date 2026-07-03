@@ -1375,6 +1375,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/system/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Datasets
+         * @description The FinLab dataset catalog as authoring-first cards (:mod:`data.finlab_catalog`).
+         *
+         *     Each card layers three request-time facts onto the curated snapshot: local
+         *     presence (``data.dataset_presence`` — the honest three-table bundle binary),
+         *     the strategy reverse-index (``data.strategy_data_index``), and the two author
+         *     filters (``?category`` exact, ``?q`` substring on key/name). Deliberately no
+         *     manifest read / staleness — the catalog is a data *dictionary*, not a cache
+         *     monitor.
+         */
+        get: operations["datasets_system_datasets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/ingest": {
         parameters: {
             query?: never;
@@ -1646,6 +1673,33 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * DatasetCard
+         * @description One ``GET /system/datasets`` card — a strategy author's data-dictionary row.
+         *
+         *     Answers the three authoring-first questions: *what is this data* (key / name /
+         *     category / freq / history / description), *is it local* (``local`` binary), and
+         *     *which of my strategies use it* (``used_by``). No freshness / coverage — that is
+         *     a runtime concern, out of scope by design (see :mod:`data.finlab_catalog`).
+         */
+        DatasetCard: {
+            /** Key */
+            key: string;
+            /** Name Zh */
+            name_zh: string;
+            /** Category */
+            category: string;
+            /** Freq */
+            freq: string;
+            /** History Start */
+            history_start: string;
+            /** Description */
+            description: string;
+            /** Local */
+            local: string;
+            /** Used By */
+            used_by: string[];
+        };
+        /**
          * Envelope
          * @description The single response shape shared by every endpoint.
          *
@@ -1827,6 +1881,18 @@ export interface components {
             success: boolean;
             /** Data */
             data?: components["schemas"]["BundleRow"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[list[DatasetCard]] */
+        Envelope_list_DatasetCard__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["DatasetCard"][] | null;
             error?: components["schemas"]["ApiError"] | null;
             /** Meta */
             meta?: {
@@ -4381,6 +4447,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope_BundleQuality_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    datasets_system_datasets_get: {
+        parameters: {
+            query?: {
+                /** @description filter by category slug (exact) */
+                category?: string | null;
+                /** @description case-insensitive substring on key / name_zh */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_DatasetCard__"];
                 };
             };
             /** @description Validation Error */

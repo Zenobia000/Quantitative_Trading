@@ -196,7 +196,8 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 ---
 
-## §6 端點 registry（全 77）
+## §6 端點 registry（全 78）
+## §6 端點 registry（全 76）
 
 > **🔧 2026-07-02 對齊（審查缺陷 #20）**：移除已刪除的 `/presets` + `/presets/{name}`（由 `GET /strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；補 `GET /research/workflows/{strategy}` + `POST /research/workflows/{workflow}`（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md) 研究工作流 dispatch）。淨計數 71→72。
 
@@ -310,6 +311,7 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | PUT | `/system/alerts/rules` | ⬜ needs-work | `{id, rule}` → `{ok}` | 404/422 | sys_alerts | M4 |
 | GET | `/system/alerts/history` 📄 | 🔵 needs-data | `?page&limit` → `[{ts, rule, severity, acked}]`（alert_history store）| — | sys_alerts | M4 |
 | POST | `/system/alerts/history/{id}/ack` | ⬜ needs-work | — → `{acked:true}` | 404 | sys_alerts | M4 |
+| GET | `/system/datasets` | ✅ ready | `?category&q` → `[{key, name_zh, category, freq, history_start, description, local, used_by}]` + `meta.catalog_version`（FinLab dataset 目錄；**authoring-first 資料字典**：curated key 清單 + 本地三表 bundle 有無二元 + 策略反向索引；無 manifest/staleness）| — | sys_data | — |
 | GET | `/system/bundles` 📄 | ⬜ needs-data | `?page&limit` → `[{id, range, universe, count, quality, created}]`（bundle_manifest）| — | sys_data、run_02 | M3.5 |
 | GET | `/system/bundles/{id}/quality` | ⬜ needs-data | — → `{coverage, missing_days, delist_bias, look_ahead}`（DQ store）| 404 | sys_data | M3.5 |
 | POST | `/system/ingest` | ⬜ needs-work | `{source, range, …}` → `{job_id, status:"queued"}`（§5.2）| 422 | sys_data | M3.5 |
