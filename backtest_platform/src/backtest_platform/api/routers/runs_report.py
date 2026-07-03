@@ -210,7 +210,7 @@ def run_report(
     unsourceable field is ``null`` (never fabricated)."""
     record = _find_run(run_id, runs_path)
     if record is None:
-        raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+        raise HTTPException(status_code=404, detail={"resource": "run", "id": run_id})
 
     strategy = record.get("strategy")
     metrics = record.get("metrics") or {}
@@ -246,7 +246,7 @@ def run_notebook(run_id: str, runs_path: Path = Depends(get_runs_path)) -> JSONR
     """
     record = _find_run(run_id, runs_path)
     if record is None:
-        raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+        raise HTTPException(status_code=404, detail={"resource": "run", "id": run_id})
     notebook = notebook_export.build_notebook(record)
     return JSONResponse(
         content=notebook,

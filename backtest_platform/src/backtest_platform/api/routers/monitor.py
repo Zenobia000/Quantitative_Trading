@@ -5,7 +5,7 @@ PaperBroker / CircuitBreaker daemon driving them). The trade-log writers
 (``upsert_signals/orders/fills/equity_snapshots``) are implemented (7.A.2); what
 is still missing is the daemon that *runs* a paper strategy and feeds them. Per
 ADR-021, these endpoints ship now returning a typed
-*empty* envelope tagged ``meta.data_source="pending_m4"`` so the frontend can build
+*empty* envelope tagged ``meta.data_source=DataSource.PENDING`` so the frontend can build
 against stable shapes and render an honest pending state — never fabricated data.
 When the M4 producers land, each stub body is replaced; the shape stays.
 
@@ -22,27 +22,34 @@ from fastapi import APIRouter, Depends, Query
 from loguru import logger
 
 from backtest_platform.api.deps import get_telemetry_reader
-from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.envelope import DataSource, Envelope, ok, page_meta
 
 router = APIRouter(prefix="/monitor", tags=["monitor"])
 
-_PENDING = "pending_m4"
-_LIVE = "timescaledb"
 
+def _stub(
+    data: Any, ttl: int = 300, *, total: int | None = None, page: int = 1, limit: int = 50
+) -> Envelope:
+    """Typed-empty envelope marking an M4-deferred producer (``DataSource.PENDING``).
 
-def _stub(data: Any, ttl: int = 60, *, total: int | None = None) -> Envelope:
-    """Typed-empty envelope marking an M4-deferred producer."""
-    meta: dict[str, Any] = {"data_source": _PENDING, "ttl": ttl}
+    ``ttl`` defaults to 300 — the one default shared with ``envelope.pending`` for the
+    one pending concept. Paginated stubs echo the caller's real ``page``/``limit``
+    (was hard-coded ``{page:1, limit:50}`` regardless of the query — A3)."""
+    meta: dict[str, Any] = {"data_source": DataSource.PENDING, "ttl": ttl}
     if total is not None:
-        meta |= {"total": total, "page": 1, "limit": 50}
+        meta |= page_meta(total, page, limit)
     return ok(data, meta=meta)
 
 
-def _served(data: Any, ttl: int, *, total: int | None = None) -> Envelope:
-    """Envelope for data read from real TimescaleDB telemetry (8.H.8)."""
-    meta: dict[str, Any] = {"data_source": _LIVE, "ttl": ttl}
+def _served(
+    data: Any, ttl: int, *, total: int | None = None, page: int = 1, limit: int = 50
+) -> Envelope:
+    """Envelope for data read from real TimescaleDB telemetry (8.H.8).
+
+    Paginated responses echo the caller's real ``page``/``limit`` via ``page_meta``."""
+    meta: dict[str, Any] = {"data_source": DataSource.TIMESCALEDB, "ttl": ttl}
     if total is not None:
-        meta |= {"total": total, "page": 1, "limit": 50}
+        meta |= page_meta(total, page, limit)
     return ok(data, meta=meta)
 
 
@@ -143,18 +150,20 @@ def portfolio_summary(reader: Any = Depends(get_telemetry_reader)) -> Envelope:
 
 @router.get("/board", response_model=Envelope)
 def board(
+    page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=500),
     reader: Any = Depends(get_telemetry_reader),
 ) -> Envelope:
     """Run board (A2) — latest research runs from the runs table: lifecycle
     status (running|done|failed, mirrored by run_persist / run-batch) + 審判庭
-    verdict + metrics. Typed-empty pending fallback when no DB."""
+    verdict + metrics. Offset-paginated (A3); typed-empty pending fallback when no DB."""
     try:
-        rows = reader.runs_board(limit=limit)
+        rows = reader.runs_board(limit=page * limit)
     except Exception as exc:
         logger.warning("monitor /board degraded (no DB?): {}", exc)
-        return _stub([])
-    return _served(rows, ttl=5, total=len(rows))
+        return _stub([], ttl=5, total=0, page=page, limit=limit)
+    window = rows[(page - 1) * limit : page * limit]
+    return _served(window, ttl=5, total=len(rows), page=page, limit=limit)
 
 
 @router.get("/correlation", response_model=Envelope)
@@ -238,16 +247,18 @@ def pos_concentration() -> Envelope:
 @router.get("/signals", response_model=Envelope)
 def signals(
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=500),
     reader: Any = Depends(get_telemetry_reader),
 ) -> Envelope:
-    """Recent signals from real telemetry (8.H.8); pending fallback when no DB."""
+    """Recent signals from real telemetry (8.H.8); offset-paginated (A3 — ``page``
+    was accepted but ignored); pending fallback when no DB."""
     try:
-        rows = reader.recent_signals(limit=limit)
+        rows = reader.recent_signals(limit=page * limit)
     except Exception as exc:
         logger.warning("monitor /signals degraded (no telemetry?): {}", exc)
-        return _stub([], ttl=30, total=0)
-    return _served(rows, ttl=30, total=len(rows))
+        return _stub([], ttl=30, total=0, page=page, limit=limit)
+    window = rows[(page - 1) * limit : page * limit]
+    return _served(window, ttl=30, total=len(rows), page=page, limit=limit)
 
 
 @router.get("/signals/timeline", response_model=Envelope)
@@ -262,16 +273,19 @@ def signals_funnel() -> Envelope:
 
 @router.get("/fills", response_model=Envelope)
 def fills(
-    limit: int = Query(50, ge=1, le=200),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=500),
     reader: Any = Depends(get_telemetry_reader),
 ) -> Envelope:
-    """Recent order executions from real telemetry (8.H.8); pending fallback."""
+    """Recent order executions from real telemetry (8.H.8); offset-paginated (A3);
+    pending fallback."""
     try:
-        rows = reader.recent_fills(limit=limit)
+        rows = reader.recent_fills(limit=page * limit)
     except Exception as exc:
         logger.warning("monitor /fills degraded (no telemetry?): {}", exc)
-        return _stub([], ttl=300)
-    return _served(rows, ttl=300, total=len(rows))
+        return _stub([], ttl=300, total=0, page=page, limit=limit)
+    window = rows[(page - 1) * limit : page * limit]
+    return _served(window, ttl=300, total=len(rows), page=page, limit=limit)
 
 
 # ---- risk (monitor_d) ---------------------------------------------------
@@ -286,8 +300,12 @@ def risk_mdd_trend() -> Envelope:
 
 
 @router.get("/risk/events", response_model=Envelope)
-def risk_events(page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=200)) -> Envelope:
-    return _stub([], total=0)
+def risk_events(page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=500)) -> Envelope:
+    """Risk events — offset-paginated (A3 — ``page`` was accepted but ignored). No
+    producer yet, so the slice is empty, but ``page``/``limit`` are echoed honestly."""
+    rows: list[Any] = []
+    window = rows[(page - 1) * limit : page * limit]
+    return _stub(window, total=len(rows), page=page, limit=limit)
 
 
 @router.get("/risk/events/{event_id}", response_model=Envelope)

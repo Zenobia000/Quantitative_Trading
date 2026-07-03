@@ -9,7 +9,8 @@ tradable window) returns a typed-empty ``pending`` envelope rather than 404.
 ``/candles`` (Trade Review K-line) additionally reads the runs ledger — for the
 run's ``stocks`` + IS window — and the parquet OHLC cache, then overlays entry/
 exit markers re-derived from the run's signal pipeline (``research.run_candles``).
-A missing symbol in the cache yields a typed-empty ``pending`` envelope, not a 500.
+A missing ``stock_id`` in the cache yields a typed-empty ``pending`` envelope, not a 500.
+The chart selector is keyed by ``?stock_id=`` (doc 25 §1.3 canonical id —含前導零).
 
 Path depth (/runs/{id}/equity) is more specific than runs.py's /{run_id}, so
 route resolution is unambiguous regardless of include order.
@@ -65,34 +66,34 @@ def _find_run(run_id: str, runs_path: Path) -> dict[str, Any] | None:
 @router.get("/{run_id}/candles", response_model=Envelope)
 def run_candles_endpoint(
     run_id: str,
-    symbol: str | None = Query(
-        None, description="symbol to chart; default = the run's first traded symbol"
+    stock_id: str | None = Query(
+        None, description="stock_id to chart; default = the run's first traded stock_id"
     ),
     runs_path: Path = Depends(get_runs_path),
 ) -> Envelope:
-    """Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.
+    """Daily OHLC candles + entry ▲ / exit ▼ markers for one ``stock_id`` of a run.
 
-    ``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).
+    ``?stock_id=`` is the canonical id (doc 25 §1.3 — ``TEXT`` with leading zeros).
     Reads the run's ``stocks`` + IS window from the ledger (404 if the run is
     unknown), then loads OHLC from the parquet cache and overlays markers derived
     from the run's own signal pipeline (``research.run_candles``). A run with no
-    symbols, or a symbol absent from the parquet cache, returns a typed-empty
+    stock_ids, or a stock_id absent from the parquet cache, returns a typed-empty
     ``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).
     """
     record = _find_run(run_id, runs_path)
     if record is None:
-        raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+        raise HTTPException(status_code=404, detail={"resource": "run", "id": run_id})
 
-    symbols = [str(s) for s in (record.get("stocks") or [])]
-    if not symbols:
+    stock_ids = [str(s) for s in (record.get("stocks") or [])]
+    if not stock_ids:
         return pending(
-            {"run_id": run_id, "symbol": None, "symbols": [], "candles": [], "markers": []}
+            {"run_id": run_id, "stock_id": None, "stock_ids": [], "candles": [], "markers": []}
         )
 
-    # Honor an explicit, in-run symbol; otherwise fall back to the first symbol
-    # (never serve OHLC for a symbol the run never traded).
-    selected = symbol if symbol in symbols else symbols[0]
-    base = {"run_id": run_id, "symbol": selected, "symbols": symbols}
+    # Honor an explicit, in-run stock_id; otherwise fall back to the first
+    # (never serve OHLC for a stock_id the run never traded).
+    selected = stock_id if stock_id in stock_ids else stock_ids[0]
+    base = {"run_id": run_id, "stock_id": selected, "stock_ids": stock_ids}
 
     payload = run_candles.build_candles(record, selected)
     if payload is None:

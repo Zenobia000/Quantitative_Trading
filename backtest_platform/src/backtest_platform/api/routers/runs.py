@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 
 from backtest_platform.api.deps import RunExecutor, get_run_executor, get_runs_path
-from backtest_platform.api.envelope import Envelope, ok, page_meta, pending
+from backtest_platform.api.envelope import Envelope, ok, page_meta
 from backtest_platform.api.response_models import (
     CompareReportData,
     RunRecord,
@@ -124,12 +124,18 @@ def compare(
         by_id = {str(r.get("run_id")): r for r in records}
         missing = [w for w in wanted if w not in by_id]
         if missing:
-            raise HTTPException(status_code=404, detail=f"run_ids not found: {missing}")
+            raise HTTPException(
+                status_code=404,
+                detail={"resource": "run", "id": missing, "message": f"run_ids not found: {missing}"},
+            )
         records = [by_id[w] for w in wanted]
     try:
         rep = compare_runs(records, baseline_id=baseline)
     except KeyError as exc:
-        raise HTTPException(status_code=404, detail=f"baseline run not found: {exc}") from None
+        raise HTTPException(
+            status_code=404,
+            detail={"resource": "run", "id": baseline, "message": f"baseline run not found: {exc}"},
+        ) from None
     return ok(_serialize_compare(rep))
 
 
@@ -165,7 +171,7 @@ def get_run(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
         if str(record.get("run_id")) == run_id:
             match = record  # keep scanning → latest append wins, consistent with list
     if match is None:
-        raise HTTPException(status_code=404, detail=f"run {run_id!r} not found")
+        raise HTTPException(status_code=404, detail={"resource": "run", "id": run_id})
     return ok(match)
 
 
@@ -238,9 +244,9 @@ def create_run_async(
 @router.get("/{job_id}/log", response_model=Envelope)
 def run_log(job_id: str) -> Envelope:
     """Async-run job log (8.H.6): lifecycle (status/progress) + terminal
-    result/error. A typed-empty ``pending`` envelope when the id is unknown
-    (mirrors the sweep status route)."""
+    result/error. **404 NOT_FOUND** when the id is unknown (A4 / doc 25 §5.2 —
+    an unknown/expired job surfaces as an error, not an infinite pending)."""
     job = job_store.read_job(job_id)
     if job is None:
-        return pending({"job_id": job_id, "status": None, "progress": None})
+        raise HTTPException(status_code=404, detail={"resource": "job", "id": job_id})
     return ok(job.to_dict())

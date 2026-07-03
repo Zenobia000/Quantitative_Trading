@@ -183,7 +183,11 @@ def test_create_run_async_submits_then_logs_done(client, runs_path, stub_executo
     assert client.get("/runs").json()["meta"]["total"] == 1
 
 
-def test_run_log_unknown_is_pending(client, isolate_jobs):
-    body = client.get("/runs/ghost/log").json()
-    assert body["data"]["status"] is None
-    assert body["meta"]["data_source"] == "pending"
+def test_run_log_unknown_is_404(client, isolate_jobs):
+    # A4 / doc 25 §5.2: an unknown/expired job id is 404, so the FE poller surfaces
+    # an error state instead of an infinite pending.
+    resp = client.get("/runs/ghost/log")
+    assert resp.status_code == 404
+    err = resp.json()["error"]
+    assert err["code"] == "NOT_FOUND"
+    assert err["detail"] == {"resource": "job", "id": "ghost"}

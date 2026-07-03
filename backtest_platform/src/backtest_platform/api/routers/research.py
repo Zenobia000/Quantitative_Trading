@@ -28,10 +28,13 @@ router = APIRouter(prefix="/research", tags=["research"])
 
 
 def _validation_status(gate_status: str | None) -> str:
-    """Map a run's gate_status to a coarse strategy validation_status."""
-    if gate_status in ("PASS", "IS_PASS"):
+    """Map a run's gate_status to a coarse strategy validation_status.
+
+    ``GateStatus`` only ever emits ``PASS`` / ``FAIL`` / ``INCOMPLETE`` — the old
+    ``IS_PASS`` / ``IS_FAIL`` arms were dead vocabulary (A5) and are removed."""
+    if gate_status == "PASS":
         return "is_pass"
-    if gate_status in ("FAIL", "IS_FAIL"):
+    if gate_status == "FAIL":
         return "is_fail"
     return "draft"
 
@@ -77,7 +80,7 @@ def _project_strategies(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
 @router.get("/strategies", response_model=Envelope[list[StrategyRow]], tags=["research"])
 def list_strategies(
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=500),
     runs_path: Path = Depends(get_runs_path),
 ) -> Envelope:
     """Strategy roster projected over the runs ledger (grouped by preset)."""
