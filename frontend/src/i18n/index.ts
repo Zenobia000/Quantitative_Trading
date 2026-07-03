@@ -11,6 +11,7 @@ import commonZh from './resources/zh-TW/common.json'
 import navZh from './resources/zh-TW/nav.json'
 import homeZh from './resources/zh-TW/home.json'
 import researchZh from './resources/zh-TW/research.json'
+import liveOosZh from './resources/zh-TW/liveOos.json'
 import monitorZh from './resources/zh-TW/monitor.json'
 import systemZh from './resources/zh-TW/system.json'
 import statusZh from './resources/zh-TW/status.json'
@@ -21,6 +22,7 @@ import commonEn from './resources/en/common.json'
 import navEn from './resources/en/nav.json'
 import homeEn from './resources/en/home.json'
 import researchEn from './resources/en/research.json'
+import liveOosEn from './resources/en/liveOos.json'
 import monitorEn from './resources/en/monitor.json'
 import systemEn from './resources/en/system.json'
 import statusEn from './resources/en/status.json'
@@ -33,6 +35,7 @@ export const resources = {
     nav: navZh,
     home: homeZh,
     research: researchZh,
+    liveOos: liveOosZh,
     monitor: monitorZh,
     system: systemZh,
     status: statusZh,
@@ -44,6 +47,7 @@ export const resources = {
     nav: navEn,
     home: homeEn,
     research: researchEn,
+    liveOos: liveOosEn,
     monitor: monitorEn,
     system: systemEn,
     status: statusEn,

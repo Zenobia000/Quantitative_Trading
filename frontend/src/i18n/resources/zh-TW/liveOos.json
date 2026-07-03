@@ -1,0 +1,49 @@
+{
+  "queue": {
+    "title": "OOS 佇列",
+    "subtitle": "所有被人工勾選、待跑 / 正跑昂貴驗證的佇列——未勾選的候選不會自動跑",
+    "resource": "OOS 佇列",
+    "dataSource": {
+      "fixture": "fixture 模式 — 契約範例示範",
+      "fixtureHint": "後端 /research/live-oos/queue 尚未回應，暫以打包契約範例呈現；勾選消費在後端 after-close tick 進行。",
+      "live": "已接後端"
+    },
+    "empty": {
+      "headline": "尚無勾選進 Live OOS 的策略",
+      "subtitle": "只有被人工勾選的候選才消耗昂貴的 paper / live OOS。到候選池勾選一個 eligible 候選。",
+      "cta": "前往候選池勾選"
+    },
+    "filter": {
+      "all": "全部",
+      "noMatch": "此狀態下無佇列項。"
+    },
+    "state": {
+      "queued": "待跑",
+      "running": "進行中",
+      "paused": "已暫停",
+      "completed": "已完成",
+      "expired": "觀察期滿",
+      "cancelled": "已取消"
+    },
+    "kind": {
+      "paper_watch_berth": "觀察艙 berth",
+      "paper_replay": "Paper Replay",
+      "after_close": "盤後 session"
+    },
+    "override": "override 勾選",
+    "selectedBy": "由 {{who}} 於 {{at}} 勾選",
+    "overrideReason": "override 理由：{{reason}}",
+    "observedDays": "已觀察交易日",
+    "expiry": "到期 {{date}}",
+    "daysRemaining": "剩 {{days}} 天",
+    "overdue": "逾期 {{days}} 天",
+    "runResult": "replay 判決",
+    "replayPending": "paper replay 待消費（後端 after-close tick 觸發）",
+    "links": {
+      "report": "研究報表",
+      "reportNa": "報表未產",
+      "candidate": "候選池",
+      "strategy": "策略資產"
+    }
+  }
+}

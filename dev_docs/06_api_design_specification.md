@@ -159,6 +159,9 @@ uv run python -m backtest_platform.orchestration.cli run --real      # 套 build
 uv run python -m backtest_platform.orchestration.cli list-stages     # 列出 ETL→signals→risk→orders→log
 uv run python -m backtest_platform.orchestration.cli \
     after-close --strategy inst_flow --universe 2330,2317   # 盤後 forward paper session（收 live OOS）
+uv run python -m backtest_platform.orchestration.cli \
+    live-oos consume   # 消費人為選取佇列：勾選的 berth→enroll、paper_replay→run（Goal 10）
+uv run python -m backtest_platform.orchestration.cli live-oos list   # 列佇列（折疊態 + 勾選 audit）
 ```
 
 | 子命令 | 用途 | 後端 |
@@ -166,7 +169,10 @@ uv run python -m backtest_platform.orchestration.cli \
 | `run --dry-run` | 跑 no-op demo 管線（不碰資料/broker/網路）→ flow engine smoke test | `daily_flow.run_flow` + `demo_stages` |
 | `run --real` | 跑 ETL→signals→risk→orders→log 正式管線；collaborator 未注入時乾淨回報缺哪個（不 crash），real 接線見 7.D.3 | `daily_flow.build_daily_stages` |
 | `list-stages` | 列出每日管線 stage 順序 | `daily_flow.build_daily_stages` |
-| `after-close` | 盤後 forward paper session（cron/systemd 入口）：交易日 / 收盤後（14:30 Asia/Taipei，`--force` 跳過）/ 冪等三守門 → 既有 live-panel forward 鏈 → Discord 成敗告警。`--strategy`（必填）/ `--date`（補跑）/ `--dry-run` / `--universe` / `--equity`。no-op 守門 exit 0；daily flow 失敗 exit 1。安裝 SOP 見 doc 14 §3 + `deploy/` | `after_close.run_after_close` + `market_reader.run_forward_session` |
+| `after-close` | 盤後 forward paper session（cron/systemd 入口）：交易日 / 收盤後（14:30 Asia/Taipei，`--force` 跳過）/ 冪等 / **觀察艙 enrollment** 守門 → 既有 live-panel forward 鏈 → Discord 成敗告警。`--strategy`（必填）/ `--date`（補跑）/ `--dry-run` / `--universe` / `--equity`。no-op 守門 exit 0；daily flow 失敗 exit 1。安裝 SOP 見 doc 14 §3 + `deploy/` | `after_close.run_after_close` + `market_reader.run_forward_session` |
+| `watch enroll/status/pause/resume` | Paper-Watch 觀察艙 registry（ADR-033 enforcement surface）：enroll（band / ≤2 席 / one-shot 守則）/ status / app 層 pause/resume。手動 ops override；主要 enrollment 路徑改為佇列消費（ADR-040）| `watch_registry.enroll/status/pause/resume` |
+| `live-oos consume` | **消費人為選取佇列（ADR-040，Goal 10）**：queued 的 `paper_watch_berth`/`after_close` → `watch_registry.enroll`（band/≤2 席/one-shot 原封執行）→ `running`；`paper_replay` → 跑一次 → `completed`；running/paused berth 從 registry 摺疊同步 expired/paused/completed。**未被勾選的候選永不自動跑**（驗收 #1）。`--date`（as-of，預設今日 Asia/Taipei）。接 after-close 同 tick（`deploy/after-close.service` `ExecStartPre`），空佇列 clean no-op | `live_oos_consumer.consume_queue` |
+| `live-oos list` | 列 live-OOS 佇列：每項最新折疊態（queued/running/paused/completed/expired/cancelled）+ kind + 勾選 audit。`--state` 過濾 | `live_oos_queue.list_queue` |
 
 ---
 

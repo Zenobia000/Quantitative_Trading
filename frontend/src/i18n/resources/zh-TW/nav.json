@@ -2,6 +2,7 @@
   "home": "首頁",
   "zone": {
     "research": "研究",
+    "live-oos": "Live OOS",
     "monitor": "監控",
     "system": "系統"
   },
@@ -13,6 +14,7 @@
     "compare": "比較",
     "sweep": "參數掃描",
     "validate": "驗證守門",
+    "liveOosQueue": "OOS 佇列",
     "fleet": "策略艦隊",
     "board": "運行看板",
     "watch": "觀察艙",

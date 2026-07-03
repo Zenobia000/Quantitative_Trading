@@ -2,6 +2,7 @@
   "home": "Home",
   "zone": {
     "research": "RESEARCH",
+    "live-oos": "LIVE OOS",
     "monitor": "MONITOR",
     "system": "SYSTEM"
   },
@@ -13,6 +14,7 @@
     "compare": "Compare",
     "sweep": "Parameter Sweep",
     "validate": "Validation Gate",
+    "liveOosQueue": "Live OOS Queue",
     "fleet": "Strategy Fleet",
     "board": "Operations Board",
     "watch": "Watch Deck",

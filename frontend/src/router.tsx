@@ -3,7 +3,7 @@
  * 路徑對齊各 page 規格的 route_path（dev_docs/web_design/pages/）。
  */
 import type { ReactElement } from 'react'
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
 import { WiredPage } from '@/components/WiredPage'
 import { NotFoundPage } from '@/components/NotFoundPage'
@@ -19,6 +19,7 @@ import { CandidatePoolPage } from '@/features/research/pages/CandidatePoolPage'
 import { PromotePage } from '@/features/research/pages/PromotePage'
 import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
+import { LiveOosQueuePage } from '@/features/liveOos/pages/LiveOosQueuePage'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { FleetPage } from '@/features/monitor/pages/FleetPage'
 import { BoardPage } from '@/features/monitor/pages/BoardPage'
@@ -44,10 +45,14 @@ const REAL: Record<string, ReactElement> = {
   'research/validate': <ValidateGatePage />,
   'research/sweep': <SweepPage />,
   'research/promote/:strategyId': <PromotePage />,
+  // Live OOS zone — human-selected expensive OOS journey (rebuild IA §1.2)
+  'live-oos/queue': <LiveOosQueuePage />,
+  'live-oos/watch': <WatchPage />, // Paper-Watch 觀察艙 migrated from monitor (元件搬 route 不搬檔)
   // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
   monitor: <FleetPage />,
   'monitor/board': <BoardPage />,
-  'monitor/watch': <WatchPage />,
+  // watch migrated to Live OOS zone → keep the old path as a client redirect (rebuild IA §5.6)
+  'monitor/watch': <Navigate to="/live-oos/watch" replace />,
   'monitor/performance': <PerformancePage />,
   'monitor/positions': <PositionsPage />,
   'monitor/signals': <SignalsPage />,
@@ -81,10 +86,13 @@ const ROUTES: RouteDef[] = [
   { path: 'research/sweep', title: 'Sweep', spec: 'research_06_sweep' },
   { path: 'research/validate', title: 'Validate gate', spec: 'research_07_validate_gate' },
   { path: 'research/promote/:strategyId', title: 'Promote', spec: 'research_08_promote' },
+  // Live OOS
+  { path: 'live-oos/queue', title: 'OOS 佇列', spec: 'live_oos_queue' },
+  { path: 'live-oos/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
   // Monitor
   { path: 'monitor', title: '策略艦隊總控', spec: 'monitor_fleet' },
   { path: 'monitor/board', title: '運行看板', spec: 'monitor_board' },
-  { path: 'monitor/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
+  { path: 'monitor/watch', title: 'Paper-Watch 觀察艙（→ Live OOS）', spec: 'monitor_watch' },
   { path: 'monitor/performance', title: '績效總覽', spec: 'monitor_a_performance' },
   { path: 'monitor/positions', title: '部位狀態', spec: 'monitor_b_positions' },
   { path: 'monitor/signals', title: '訊號日誌', spec: 'monitor_c_signals' },

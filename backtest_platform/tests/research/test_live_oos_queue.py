@@ -55,3 +55,48 @@ def test_list_filters_by_state(path):
 
 def test_get_missing_returns_none(path):
     assert q.get_queue_item("nope", path=path) is None
+
+
+def test_enqueue_records_numeric_verdict_dsr(path):
+    # Goal 10: the consumer needs the numeric DSR (not just the band) to re-enroll a berth.
+    item = q.enqueue("cand_x", "inst_flow", "eval_2", selection_reason="berth",
+                     recommendation_at_selection="eligible", observation_kind="paper_watch_berth",
+                     dsr=0.908, path=path)
+    assert item["observation"]["verdict_dsr"] == 0.908
+
+
+# --------------------------------------------------------------------------- #
+# advance — folded state transitions (Goal 10 state machine)                   #
+# --------------------------------------------------------------------------- #
+def test_advance_folds_latest_state(path):
+    item = q.enqueue("c1", "s1", "e1", selection_reason=None, recommendation_at_selection="eligible",
+                     observation_kind="paper_watch_berth", dsr=0.91, path=path)
+    q.advance(item["queue_id"], to_state="running", path=path,
+              observation_patch={"observed_trading_days": 3, "days_remaining": 87})
+    folded = q.get_queue_item(item["queue_id"], path=path)
+    assert folded["state"] == "running"
+    assert folded["observation"]["observed_trading_days"] == 3
+    # unchanged audit fields survive the copy-restamp
+    assert folded["candidate_id"] == "c1"
+    assert "updated_at" in folded
+
+
+def test_advance_attaches_run_block(path):
+    item = q.enqueue("c1", "s1", "e1", selection_reason=None, recommendation_at_selection="not_recommended",
+                     observation_kind="paper_replay", path=path)
+    q.advance(item["queue_id"], to_state="completed", path=path,
+              run={"run_id": "paper_replay_s1_20260703", "gate_status": "PAPER_WATCH"})
+    folded = q.get_queue_item(item["queue_id"], path=path)
+    assert folded["state"] == "completed"
+    assert folded["run"]["run_id"] == "paper_replay_s1_20260703"
+
+
+def test_advance_unknown_state_raises(path):
+    item = q.enqueue("c1", "s1", "e1", selection_reason=None, recommendation_at_selection="eligible", path=path)
+    with pytest.raises(ValueError, match="queue state"):
+        q.advance(item["queue_id"], to_state="teleported", path=path)
+
+
+def test_advance_unknown_id_raises(path):
+    with pytest.raises(ValueError, match="no queue item"):
+        q.advance("loq_missing", to_state="running", path=path)
