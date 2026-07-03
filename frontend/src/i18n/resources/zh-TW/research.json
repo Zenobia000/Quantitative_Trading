@@ -79,7 +79,56 @@
       "slippageSharpe": "滑點 Sharpe"
     },
     "reproduce": "重現參數",
-    "pending": { "tearSheet": "Tear sheet（equity / drawdown / rolling Sharpe / heatmap / 分布）" },
+    "verdict": {
+      "criteriaTitle": "守門燈號（對現值評估）",
+      "noCriteria": "此策略未宣告守門準則。"
+    },
+    "dsr": {
+      "title": "DSR 標尺（真偽閘）",
+      "empty": "尚無真偽閘證據（策略尚未進觀察艙）。",
+      "needleAria": "DSR 指針位於 {{dsr}}",
+      "band": {
+        "REAL": "REAL 可部署",
+        "PAPER_WATCH": "PAPER_WATCH 觀察艙",
+        "REJECTED": "REJECTED 未達標"
+      }
+    },
+    "equity": {
+      "title": "分段權益曲線",
+      "empty": "此 run 尚無持久化權益序列（舊 run 或無交易窗）。",
+      "aria": "權益曲線與回撤，含封存邊界標注",
+      "sealed": "封存",
+      "sealedBoundary": "封存邊界 oos_start = {{date}}",
+      "basisHint": "日期為 business-day 近似（sidecar 未存日期索引，由 is_start 重建）"
+    },
+    "monthly": {
+      "title": "月報酬熱圖",
+      "empty": "尚無月報酬資料（無序列或缺 IS 區間）。",
+      "year": "年度",
+      "annual": "全年",
+      "basisHint": "日期為 business-day 近似，月份歸屬為估計"
+    },
+    "drawdown": {
+      "title": "回撤事件（前 5 深）",
+      "empty": "尚無回撤事件（無序列或全程未破前高）。",
+      "depth": "深度",
+      "peak": "峰值",
+      "trough": "谷底",
+      "recovery": "回復",
+      "duration": "持續 (bar)",
+      "unrecovered": "未回復"
+    },
+    "cost": {
+      "title": "成本敏感度",
+      "sharpe": "無滑點 Sharpe",
+      "slippageSharpe": "滑點後 Sharpe",
+      "diff": "滑點衝擊 (Δ)",
+      "hint": "滑點對 Sharpe 的侵蝕（負值＝變差）"
+    },
+    "notebook": {
+      "label": "在 Notebook 開啟",
+      "hint": "下載預填 .ipynb"
+    },
     "action": {
       "iterate": "再迭代",
       "compare": "比較多筆回測",
