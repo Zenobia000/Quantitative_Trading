@@ -25,6 +25,7 @@ from backtest_platform.api.routers import (
     metrics,
     monitor,
     research,
+    research_branches,
     research_candidates,
     research_evaluation,
     research_promote,
@@ -99,6 +100,7 @@ def create_app() -> FastAPI:
     app.include_router(research_evaluation.router)  # ADR-039: evaluation profiles + results (Goal 3)
     app.include_router(research_candidates.router)  # ADR-039: candidate pool + live-OOS queue (Goal 4)
     app.include_router(research_simulate.router)  # Goal 8: research-only what-if simulation
+    app.include_router(research_branches.router)  # Goal 9: branch experiment lineage + compare
     app.include_router(monitor.router)
     app.include_router(watch.router)  # ADR-033: Paper-Watch 觀察艙 overview + pause/resume
     app.include_router(system.router)

@@ -144,6 +144,10 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | `candidates list` | 列候選池（`--state/--strategy` 過濾） | `research.candidate_store.list_candidates` |
 | `candidates decide` | 追加候選決策（狀態機驗證）：`--action keep\|archive\|rerun\|mark_data_issue\|unarchive` `--label` `--reason`（archive/override 強制 reason）| `candidate_store.record_decision` |
 | `candidates select-live-oos` | 勾選候選進 live-OOS queue：`--reason --override --kind`（非 eligible/blocked 需 override + reason）| `candidate_store.select_live_oos` |
+| `branches create` | **分支實驗 fork（ADR-041，Goal 9）**：`--parent`（parent evaluation_id）`--set key=value`（可重複，config delta）`--origin simulation\|manual\|report_finding` `--profile` `--note`；套 delta 到新 config（parent 零改動）、驗 key 合法（config 欄位 ∪ overlay 詞彙）| `research.branch_store.create_branch` |
+| `branches list` | 列分支（`--strategy/--parent` 過濾，折疊態） | `branch_store.list_branches` |
+| `branches evaluate` | 跑分支 config（quick_triage，`--branch --data-dir`）→ distinct `run_id`/`evaluation_id`（不覆蓋 parent）；overlay-only 分支拒跑 | `branch_store.evaluate_branch` |
+| `branches compare` | 分支 vs parent headline delta 表 + Sharpe tie-break 決策（`--branch`；未評測回提示態） | `branch_store.compare_branch` |
 
 > `run-is`／`validate`／`promote-check` 區別：`run-is` 是**唯讀審判庭**（`evaluate_gate` 逐條綠紅）；`validate` 是**有狀態工作流 gate**（`ValidationGate`，強制 IS→WFA→OOS 不可逆推進 + OOS 封存）；`promote-check` 是**唯讀晉升資格查詢**（不推進狀態，只回報距 APPROVED 還缺哪些階段）。
 

@@ -242,6 +242,9 @@ def ingest_evaluation(
         },
         "report_pack_ref": result.get("report_pack_ref"),
         "next_action": _next_action_hint(recommendation, data_issue),
+        # When the latest evaluation was produced by a branch experiment (Goal 9), the
+        # candidate carries its branch lineage so the pool can badge the branch origin.
+        "branch_origin": result.get("branch"),
     }
     _append(snapshot, candidates_path)
 

@@ -118,7 +118,8 @@
       "headline": "The candidate pool is empty",
       "subtitle": "Run an evaluation first — results become candidates automatically, good or bad",
       "cta": "Run your first evaluation"
-    }
+    },
+    "branchOrigin": "Branch"
   },
   "strategyHub": {
     "list": {
@@ -189,16 +190,28 @@
       "label": "Hypothesis · single claim (required, locked after submit)",
       "placeholder": "e.g. Relaxing entry from N-of-4 to 3-of-4 reaches Sharpe ≥ 1.0 in-sample without overfitting"
     },
-    "strategy": { "label": "Strategy (registered strategy name · GET /strategies)" },
-    "stocks": { "label": "Stocks (comma-separated, at least 1)" },
+    "strategy": {
+      "label": "Strategy (registered strategy name · GET /strategies)"
+    },
+    "stocks": {
+      "label": "Stocks (comma-separated, at least 1)"
+    },
     "params": {
       "summary": "Advanced · Params (strategy params JSON, optional; defaults to empty object)",
       "errorObject": "Params must be a JSON object (e.g. {\"box_period\": 60})",
       "errorParse": "Invalid params JSON"
     },
-    "engine": { "label": "Engine" },
-    "period": { "isStart": "IS Start", "isEnd": "IS End" },
-    "submit": { "label": "Submit Backtest", "submitting": "Submitting…" },
+    "engine": {
+      "label": "Engine"
+    },
+    "period": {
+      "isStart": "IS Start",
+      "isEnd": "IS End"
+    },
+    "submit": {
+      "label": "Submit Backtest",
+      "submitting": "Submitting…"
+    },
     "pending": {
       "paramForm": "config_schema-driven param form / range-step / universe filter (pending backend)",
       "cost": "Cost modeling (fees / slippage / price limits / T+2) (pending backend)"
@@ -210,9 +223,14 @@
     "resource": "runs",
     "newRun": "New Backtest",
     "savedView": "Saved view: M0 candidates · last 90 days",
-    "filter": { "strategyLabel": "Strategy: ", "clearAria": "Clear strategy filter" },
+    "filter": {
+      "strategyLabel": "Strategy: ",
+      "clearAria": "Clear strategy filter"
+    },
     "showingCount": "Showing {{n}}",
-    "pending": { "guardrail": "Overfitting guardrail (cumulative trials / DSR / power gauge)" },
+    "pending": {
+      "guardrail": "Overfitting guardrail (cumulative trials / DSR / power gauge)"
+    },
     "empty": {
       "headline": "No runs yet — start with your first backtest",
       "headlineFiltered": "No runs yet for strategy {{strategyId}}",
@@ -332,7 +350,9 @@
       "hold": "Hold (bars)",
       "entryStructure": "Entry Structure"
     },
-    "pending": { "attribution": "Factor attribution (/runs/{id}/attribution pending backend)" }
+    "pending": {
+      "attribution": "Factor attribution (/runs/{id}/attribution pending backend)"
+    }
   },
   "compare": {
     "title": "Compare Runs",
@@ -346,7 +366,10 @@
       "equityOverlay": "Equity overlay (multiple runs, single-hue lightness steps)",
       "parcoords": "Parallel coordinates (params × metrics brushing, find the robust plateau)"
     },
-    "table": { "run": "Run", "gate": "Gate" },
+    "table": {
+      "run": "Run",
+      "gate": "Gate"
+    },
     "empty": "No comparable runs (ledger empty or run_ids not found)."
   },
   "sweep": {
@@ -385,7 +408,9 @@
       "title": "IS gate hard thresholds",
       "source": "(GET /gate/spec · spec)"
     },
-    "gateSpec": { "resource": "gate spec" },
+    "gateSpec": {
+      "resource": "gate spec"
+    },
     "history": {
       "title": "Validation state transitions",
       "source": "(gate-state · persisted history)",
@@ -548,6 +573,70 @@
         "total_trade_return": "Total trade return",
         "profit_factor": "Profit factor",
         "avg_hold": "Avg hold (days)"
+      },
+      "forking": "Saving…",
+      "forkDone": "Branch created: {{id}}",
+      "forkViewSection": "View in strategy branches",
+      "forkNeedsApi": "Fork needs a live backend report (not available in fixture mode)",
+      "forkError": "Could not create branch"
+    }
+  },
+  "branches": {
+    "title": "Branch experiments",
+    "createCta": "New branch",
+    "createNeedsParent": "Evaluate this strategy first — a branch forks from its latest evaluation",
+    "createGuide": "Fork an alternative config from the latest evaluation and compare it against the parent",
+    "empty": "No branch experiments yet.",
+    "unavailable": "Branch experiments unavailable: {{detail}}",
+    "evaluate": "Evaluate",
+    "evaluating": "Evaluating…",
+    "evaluateError": "Evaluate failed: {{detail}}",
+    "notEvaluable": "Overlay-only change — the runner does not consume it, so it cannot be re-run",
+    "compareToggle": "Compare vs parent",
+    "status": {
+      "draft": "Draft",
+      "evaluated": "Evaluated"
+    },
+    "origin": {
+      "simulation": "From simulation",
+      "manual": "Manual",
+      "report_finding": "Report finding"
+    },
+    "create": {
+      "title": "New branch experiment",
+      "subtitle": "Fork an alternative config of {{strategy}} from its latest evaluation.",
+      "keyLabel": "Config key",
+      "valueLabel": "New value",
+      "valuePlaceholder": "e.g. 90",
+      "noteLabel": "Note (optional)",
+      "notePlaceholder": "why this branch",
+      "submit": "Create branch",
+      "submitting": "Creating…"
+    },
+    "compare": {
+      "error": "Compare unavailable",
+      "notEvaluated": "Not evaluated yet — run the branch to compare against the parent.",
+      "decision": "Decision",
+      "parentVsBranch": "parent: {{parent}} · branch: {{branch}}",
+      "metricCol": "Metric",
+      "parentCol": "Parent",
+      "branchCol": "Branch",
+      "verdict": {
+        "branch_better": "Branch better",
+        "parent_better": "Parent better",
+        "inconclusive": "Inconclusive"
+      },
+      "metric": {
+        "cagr": "CAGR",
+        "total_return": "Total return",
+        "sharpe": "Sharpe",
+        "sortino": "Sortino",
+        "calmar": "Calmar",
+        "max_drawdown": "Max drawdown",
+        "volatility": "Volatility (ann.)",
+        "oos_holdout_sharpe": "OOS holdout Sharpe",
+        "dsr": "DSR",
+        "trades": "Trades"
       }
     }
   }

@@ -29,6 +29,7 @@ contract-drift gate (doc 25 §9) so it can land in parallel with other work.
 | `candidate_pool.example.json` | `GET /research/candidates` — full envelope (list + `page_meta`). | full envelope |
 | `live_oos_queue.example.json` | `GET /research/live-oos/queue` — full envelope. | full envelope |
 | `simulation_result.example.json` | One `SimulationResult` (`data` payload of `POST /research/simulate`) — a four-layer run with cost + stop-loss + take-profit applied (Goal 8, §13). | data payload |
+| `branch_experiment.example.json` | One branch record (`data` payload of `POST /research/branches` / `GET /research/branches/{id}`) — an evaluated `inst_flow` `lookback_days` fork (Goal 9, §14). | data payload |
 
 The two list fixtures (`candidate_pool`, `live_oos_queue`) are **full envelopes**
 (directly usable as fixtures). The two singleton fixtures (`evaluation_result`,
@@ -522,3 +523,82 @@ Top-level: `schema_version`, `run_id`, `strategy`, `research_only:true`,
 | `trade_metrics.*` | `research/simulation.py` over `run_series_store.read_series().trades` (four-layer `{ret,hold}`) |
 | cost-model scalars (`turnover_units`, `base_round_trip_cost`) | `api/routers/research_simulate.py` from the run record `metrics` / `params` |
 | `branch_suggestion` | `research/simulation.py::_branch_suggestion` (description only — no config write) |
+
+---
+
+## 14. Branch experiment (Goal 9)
+
+A **branch** is an alternative config of an already-evaluated strategy, forked from a
+parent `EvaluationResult` with an explicit `config_delta`. It exists so a researcher
+can iterate ("what if lookback were 90 not 60?") with **provable lineage** and a
+**side-by-side comparison** — never a silent in-place edit. Fixture:
+`branch_experiment.example.json`. **No AI**: the suggestion source is a simulation
+fork, a manual dialog, or a report finding (never an LLM).
+
+Append-only JSONL (`reports/branch_experiments.jsonl`), same folded-projection
+philosophy as the evaluation/candidate stores: `create` appends a `draft`; `evaluate`
+appends an `evaluated` record with the backfilled `evaluation_id` (the draft line is
+never mutated).
+
+### 14.1 Branch shape
+
+Top-level: `branch_id`, `parent_evaluation_id`, `parent_run_id`, `strategy`,
+`profile`, `origin` (`simulation | manual | report_finding`), `note`,
+`config_delta[{key, from, to}]`, `branch_config`, `applies_to_rerun`, `created_at`,
+`evaluation_id` (`null` until evaluated), `status` (`draft | evaluated`).
+
+- **`config_delta`** — the requested changes; `from` is resolved authoritatively from
+  the parent config (client-sent `from` is advisory).
+- **`branch_config`** — the parent config with the *config-key* subset of the delta
+  applied (a **new** object — the parent config is never mutated).
+- **`applies_to_rerun`** — `true` iff the delta changes at least one real
+  `config_model` field. An overlay-only branch is `false` and refuses to evaluate.
+
+### 14.2 Two delta-key vocabularies (create-time 422 guard)
+
+A `config_delta` key must be one of two kinds, else the create is `422`:
+
+- **config keys** — real `config_model` fields of the strategy (`lookback_days` …).
+  Applied to the re-run → a genuinely different backtest → a distinct `run_id`
+  (config hash) → a distinct `evaluation_id` that can never fold over the parent's.
+- **execution-overlay knobs** — the fixed simulation vocabulary (`cost_multiplier`,
+  `slippage_bps`, `capacity_scale`, `stop_loss_pct`, `take_profit_pct`, §13). A
+  `simulation`-origin fork records these as lineage, but the current runners do **not
+  consume** them (the §11 P1 blocker the simulation module already discloses), so an
+  overlay-only branch is honestly `applies_to_rerun = false` and its evaluate returns
+  `409` rather than fabricate a re-run identical to the parent.
+
+Any resolved config value that violates a strategy field's bounds is also `422`
+(eager `config_model(**branch_config)` validation).
+
+### 14.3 Compare (branch vs parent)
+
+`GET /research/branches/{id}/compare` reuses **both sides' persisted
+`EvaluationResult` headline metrics** (no re-run) → a per-metric delta table
+(`{metric, lower_is_better, parent, branch, delta, change}`) over `cagr` /
+`total_return` / `sharpe` / `sortino` / `calmar` / `max_drawdown` / `volatility` /
+`oos_holdout_sharpe` / `dsr` / `trades`, plus a deterministic `decision`
+(`branch_better | parent_better | inconclusive`, Sharpe tie-break + hand-checkable
+reasons). Before the branch is evaluated the table lists the parent column with
+`branch`/`delta` = `null` and `branch_evaluated = false` (a "evaluate first" prompt,
+not an error).
+
+### 14.4 Endpoints
+
+| Method | Path | Semantics |
+| :--- | :--- | :--- |
+| POST | `/research/branches` | Fork a branch (404 unknown parent · 422 illegal delta key/value) |
+| GET | `/research/branches` | List (filter `strategy` / `parent_evaluation_id` / `parent_run_id`; #176 pagination) |
+| GET | `/research/branches/{id}` | One branch (404 unknown) |
+| POST | `/research/branches/{id}/evaluate` | Run quick_triage synchronously → backfill `evaluation_id` (404 · 409 overlay-only) |
+| GET | `/research/branches/{id}/compare` | Branch-vs-parent delta table + decision (404) |
+
+### 14.5 Module mapping (Goal 2 §10 style)
+
+| Field / behaviour | Produced by |
+| :--- | :--- |
+| lineage record, `apply_config_delta`, `classify_delta`, compare, decision | `research/branch_store.py` |
+| the branch re-run (`param_overrides` / `branch_lineage`) | `research/evaluation/orchestrator.py::evaluate` |
+| candidate branch-origin badge (`branch_origin`) | `research/candidate_store.py::ingest_evaluation` (reads `result["branch"]`) |
+| endpoints + error mapping | `api/routers/research_branches.py` |
+| CLI `branches create/list/evaluate/compare` | `research/cli.py` |

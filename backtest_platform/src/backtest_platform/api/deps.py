@@ -46,6 +46,7 @@ EVALUATIONS_PATH_ENV = "EVALUATIONS_PATH"
 CANDIDATES_PATH_ENV = "CANDIDATES_PATH"
 CANDIDATE_DECISIONS_PATH_ENV = "CANDIDATE_DECISIONS_PATH"
 LIVE_OOS_QUEUE_PATH_ENV = "LIVE_OOS_QUEUE_PATH"
+BRANCHES_PATH_ENV = "BRANCHES_PATH"
 
 _TWT = timezone(timedelta(hours=8))  # Taiwan is fixed UTC+8 (no DST)
 
@@ -157,6 +158,26 @@ def get_live_oos_queue_path() -> Path:
 
     raw = os.environ.get(LIVE_OOS_QUEUE_PATH_ENV)
     return Path(raw) if raw else DEFAULT_QUEUE_PATH
+
+
+def get_branches_path() -> Path:
+    """Resolve the branch-experiment ledger path (``$BRANCHES_PATH`` or the default)."""
+    from backtest_platform.research.branch_store import DEFAULT_BRANCHES_PATH
+
+    raw = os.environ.get(BRANCHES_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_BRANCHES_PATH
+
+
+def get_branch_evaluator() -> Any:
+    """Return ``branch_store.evaluate_branch`` (rebuild Goal 9), imported lazily.
+
+    A branch evaluation runs the real orchestrator (parquet/engine), so it is hidden
+    behind a dependency: tests override it with a stub that uses a synthetic loader,
+    production resolves the genuine evaluator. Mirrors ``get_run_executor``.
+    """
+    from backtest_platform.research.branch_store import evaluate_branch
+
+    return evaluate_branch
 
 
 def get_watch_today() -> date:

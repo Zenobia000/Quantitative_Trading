@@ -58,6 +58,12 @@ export function CandidateCard({
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="text-base font-semibold">{candidate.strategy}</h3>
         <CandidateStateBadge state={candidate.state} />
+        {candidate.branch_origin && (
+          <StatusBadge tone="muted">
+            <span aria-hidden>⑂ </span>
+            {t('candidates.branchOrigin')}
+          </StatusBadge>
+        )}
         {locallyModified && <StatusBadge tone="muted">{t('candidates.localBadge')}</StatusBadge>}
         {candidate.latest_truth_verdict && (
           <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-text-muted">

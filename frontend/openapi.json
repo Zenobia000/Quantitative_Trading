@@ -2035,6 +2035,280 @@
         }
       }
     },
+    "/research/branches": {
+      "post": {
+        "tags": [
+          "research-branches"
+        ],
+        "summary": "Create Branch",
+        "description": "Fork a branch from a parent evaluation. 404 unknown parent; 422 illegal delta.",
+        "operationId": "create_branch_research_branches_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "research-branches"
+        ],
+        "summary": "List Branches",
+        "description": "Paginated branch list (newest-created first), filterable by strategy / parent.",
+        "operationId": "list_branches_research_branches_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "strategy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strategy"
+            }
+          },
+          {
+            "name": "parent_evaluation_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent Evaluation Id"
+            }
+          },
+          {
+            "name": "parent_run_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/branches/{branch_id}": {
+      "get": {
+        "tags": [
+          "research-branches"
+        ],
+        "summary": "Get Branch",
+        "description": "One branch (latest folded record).",
+        "operationId": "get_branch_research_branches__branch_id__get",
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/branches/{branch_id}/evaluate": {
+      "post": {
+        "tags": [
+          "research-branches"
+        ],
+        "summary": "Evaluate Branch",
+        "description": "Run the branch config (quick_triage, synchronous) \u2192 backfill its evaluation id.\n\n404 unknown branch; 409 for an overlay-only branch the runner cannot re-run\n(would reproduce the parent). Returns the evaluated branch record.",
+        "operationId": "evaluate_branch_research_branches__branch_id__evaluate_post",
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/branches/{branch_id}/compare": {
+      "get": {
+        "tags": [
+          "research-branches"
+        ],
+        "summary": "Compare Branch",
+        "description": "Branch-vs-parent headline delta table + a deterministic decision. 404 unknown.",
+        "operationId": "compare_branch_research_branches__branch_id__compare_get",
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/monitor/strategies": {
       "get": {
         "tags": [
@@ -3845,6 +4119,72 @@
         "type": "object",
         "title": "CompareReportData",
         "description": "``GET /runs/compare`` \u2014 per-metric delta vs baseline + ranks + sign."
+      },
+      "ConfigDeltaEntry": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Key"
+          },
+          "to": {
+            "title": "To"
+          },
+          "from": {
+            "title": "From"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "title": "ConfigDeltaEntry",
+        "description": "One config change ``{key, to, from?}`` \u2014 ``from`` is advisory (server resolves\nthe authoritative value from the parent config)."
+      },
+      "CreateBranchRequest": {
+        "properties": {
+          "parent_evaluation_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Parent Evaluation Id"
+          },
+          "config_delta": {
+            "items": {
+              "$ref": "#/components/schemas/ConfigDeltaEntry"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Config Delta"
+          },
+          "origin": {
+            "type": "string",
+            "title": "Origin",
+            "default": "manual"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "profile": {
+            "type": "string",
+            "title": "Profile",
+            "default": "quick_triage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parent_evaluation_id",
+          "config_delta"
+        ],
+        "title": "CreateBranchRequest",
+        "description": "Fork a branch from a parent evaluation with an explicit config delta."
       },
       "DatasetCard": {
         "properties": {

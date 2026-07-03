@@ -10,9 +10,12 @@
  * + per_param reason），面板照實顯示原因，不留無說明佔位（契約 §13.2 / rule #6）。
  */
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { StatusBadge } from '@/components/StatusBadge'
 import { ApiError } from '@/services/http'
+import { createBranch, type BranchExperiment, type ConfigDeltaEntry } from '../../api/branches'
+import { describeMutationError } from '../../api/candidates'
 import type { DataSource } from '../../api/reportViewer'
 import {
   deltaTone,
@@ -115,15 +118,44 @@ function MetricSpaceTable({
   )
 }
 
-export function SimulationPanel({ runId, source }: { runId: string; source: DataSource }) {
+export function SimulationPanel({
+  runId,
+  source,
+  evaluationId,
+  strategy,
+}: {
+  runId: string
+  source: DataSource
+  /** 該報告的 evaluation_id —— fork 分支的 parent（fixture 模式 / 缺席時 fork 停用）。 */
+  evaluationId?: string
+  /** 策略名 —— fork 成功後連到策略資產詳情頁的分支 section。 */
+  strategy?: string
+}) {
   const { t } = useTranslation('research')
   const [form, setForm] = useState<FormState>(DEFAULTS)
   const [result, setResult] = useState<SimulationResult | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Fork（Goal 9）本地 state：即打即記，不入 react-query 快取（沿用面板無快取哲學）。
+  const [forking, setForking] = useState(false)
+  const [forked, setForked] = useState<BranchExperiment | null>(null)
+  const [forkError, setForkError] = useState<string | null>(null)
   const isFixture = source === 'fixture'
+  // fork 需真 API 模式 + 真 parent evaluation_id（fixture 的 id 後端不存在 → 會 404）。
+  const canFork = !isFixture && !!evaluationId
 
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setForm((f) => ({ ...f, [k]: v }))
+
+  const fork = (suggestion: SimulationResult['branch_suggestion']) => {
+    if (!suggestion || !evaluationId) return
+    setForkError(null)
+    setForking(true)
+    const delta: ConfigDeltaEntry[] = suggestion.config_delta.map((d) => ({ key: d.key, to: d.to }))
+    createBranch({ parent_evaluation_id: evaluationId, config_delta: delta, origin: 'simulation', note: suggestion.description })
+      .then((b) => setForked(b))
+      .catch((e) => setForkError(e instanceof ApiError ? describeMutationError(e) : t('reportViewer.simulation.forkError')))
+      .finally(() => setForking(false))
+  }
 
   const execute = () => {
     setError(null)
@@ -263,16 +295,45 @@ export function SimulationPanel({ runId, source }: { runId: string; source: Data
                   </li>
                 ))}
               </ul>
-              <button
-                type="button"
-                data-testid="sim-fork"
-                disabled
-                title={t('reportViewer.simulation.forkDisabled')}
-                className="mt-2 rounded-md border border-border px-3 py-1 text-xs text-text-muted disabled:opacity-50"
-              >
-                {t('reportViewer.simulation.fork')}
-              </button>
-              <span className="ml-2 text-[11px] text-text-muted">{t('reportViewer.simulation.forkDisabled')}</span>
+              {forked ? (
+                <p className="mt-2 text-xs text-gain" data-testid="sim-fork-done">
+                  <span aria-hidden>✓ </span>
+                  {t('reportViewer.simulation.forkDone', { id: forked.branch_id })}
+                  {strategy && (
+                    <>
+                      {' · '}
+                      <Link
+                        to={`/research/strategies/${encodeURIComponent(strategy)}`}
+                        className="underline underline-offset-2 hover:text-text"
+                        data-testid="sim-fork-link"
+                      >
+                        {t('reportViewer.simulation.forkViewSection')}
+                      </Link>
+                    </>
+                  )}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    data-testid="sim-fork"
+                    disabled={!canFork || forking}
+                    onClick={() => fork(result.branch_suggestion)}
+                    title={!canFork ? t('reportViewer.simulation.forkNeedsApi') : undefined}
+                    className="mt-2 rounded-md border border-text/40 px-3 py-1 text-xs font-medium text-text hover:bg-input disabled:opacity-40"
+                  >
+                    {forking ? t('reportViewer.simulation.forking') : t('reportViewer.simulation.fork')}
+                  </button>
+                  {!canFork && (
+                    <span className="ml-2 text-[11px] text-text-muted">{t('reportViewer.simulation.forkNeedsApi')}</span>
+                  )}
+                  {forkError && (
+                    <p className="mt-1 text-[11px] text-error" data-testid="sim-fork-error">
+                      {forkError}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

@@ -106,6 +106,8 @@ export interface Candidate {
   report_pack_ref: string
   next_action: string
   note?: string
+  /** 最新評測若來自分支實驗（Goal 9），帶其血統（branch_id / parent 連結）；否則 null。 */
+  branch_origin?: { branch_id: string; parent_evaluation_id: string; parent_run_id: string; origin: string } | null
   decisions: CandidateDecision[]
 }
 

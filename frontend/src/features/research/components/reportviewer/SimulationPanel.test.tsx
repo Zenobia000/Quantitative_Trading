@@ -5,12 +5,22 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { SimulationPanel } from './SimulationPanel'
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
+
+/** 包 MemoryRouter —— fork 成功態渲染 <Link>（需 router context）。 */
+function renderPanel(props: Parameters<typeof SimulationPanel>[0]) {
+  return render(
+    <MemoryRouter>
+      <SimulationPanel {...props} />
+    </MemoryRouter>,
+  )
+}
 
 // 一份四層型結果（兩空間皆可用 + branch suggestion）。
 const FOUR_LAYER_RESULT = {
@@ -62,14 +72,27 @@ const PANEL_RESULT = {
   },
 }
 
-function stubSimulate(result: unknown): { posts: number } {
-  const box = { posts: 0 }
+function stubSimulate(result: unknown): { posts: number; forks: number } {
+  const box = { posts: 0, forks: 0 }
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
-      if (String(url).includes('/research/simulate') && (init?.method ?? 'GET') === 'POST') {
+      const method = init?.method ?? 'GET'
+      if (String(url).includes('/research/simulate') && method === 'POST') {
         box.posts += 1
         return { status: 200, json: async () => ({ success: true, data: result, error: null, meta: {} }) }
+      }
+      if (String(url).includes('/research/branches') && method === 'POST') {
+        box.forks += 1
+        return {
+          status: 201,
+          json: async () => ({
+            success: true,
+            data: { branch_id: 'branch_four_layer_abc123', status: 'draft', applies_to_rerun: false },
+            error: null,
+            meta: {},
+          }),
+        }
       }
       return { status: 404, json: async () => ({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'nf' }, meta: {} }) }
     }) as unknown as typeof fetch,
@@ -80,7 +103,7 @@ function stubSimulate(result: unknown): { posts: number } {
 describe('SimulationPanel', () => {
   it('shows the research-only label and does not call the API on render (button-gated)', () => {
     const box = stubSimulate(FOUR_LAYER_RESULT)
-    render(<SimulationPanel runId="fl1" source="api" />)
+    renderPanel({ runId: 'fl1', source: 'api' })
     expect(screen.getByText(/研究沙盤/)).toBeInTheDocument()
     // adjusting a slider must not fire the API (no keystroke calls).
     fireEvent.change(screen.getByTestId('sim-cost-multiplier'), { target: { value: '1.5' } })
@@ -89,7 +112,7 @@ describe('SimulationPanel', () => {
 
   it('runs the simulation on click and renders before/after deltas + affected count', async () => {
     const box = stubSimulate(FOUR_LAYER_RESULT)
-    render(<SimulationPanel runId="fl1" source="api" />)
+    renderPanel({ runId: 'fl1', source: 'api' })
     fireEvent.click(screen.getByTestId('sim-run'))
     await waitFor(() => expect(screen.getByTestId('sim-result')).toBeInTheDocument())
     expect(box.posts).toBe(1)
@@ -98,19 +121,32 @@ describe('SimulationPanel', () => {
     expect(screen.getByTestId('sim-delta-total_return').textContent).toContain('-')
   })
 
-  it('renders a disabled fork button with the Goal-9 note (branch suggestion, not applied)', async () => {
-    stubSimulate(FOUR_LAYER_RESULT)
-    render(<SimulationPanel runId="fl1" source="api" />)
+  it('forks the branch suggestion into a branch (POST /research/branches) with a success link', async () => {
+    const box = stubSimulate(FOUR_LAYER_RESULT)
+    renderPanel({ runId: 'fl1', source: 'api', evaluationId: 'eval_four_layer_x', strategy: 'four_layer_resonance' })
     fireEvent.click(screen.getByTestId('sim-run'))
     await waitFor(() => expect(screen.getByTestId('sim-branch-suggestion')).toBeInTheDocument())
     const fork = screen.getByTestId('sim-fork')
-    expect(fork).toBeDisabled()
-    expect(screen.getAllByText(/待分支實驗（Goal 9）/).length).toBeGreaterThanOrEqual(1)
+    expect(fork).not.toBeDisabled()
+    fireEvent.click(fork)
+    await waitFor(() => expect(screen.getByTestId('sim-fork-done')).toBeInTheDocument())
+    expect(box.forks).toBe(1)
+    // success shows the new branch id + a link into the strategy branch section.
+    expect(screen.getByText(/branch_four_layer_abc123/)).toBeInTheDocument()
+    expect(screen.getByTestId('sim-fork-link')).toHaveAttribute('href', '/research/strategies/four_layer_resonance')
+  })
+
+  it('disables the fork button without a live evaluation id (fixture / missing parent)', async () => {
+    stubSimulate(FOUR_LAYER_RESULT)
+    renderPanel({ runId: 'fl1', source: 'api' }) // no evaluationId
+    fireEvent.click(screen.getByTestId('sim-run'))
+    await waitFor(() => expect(screen.getByTestId('sim-branch-suggestion')).toBeInTheDocument())
+    expect(screen.getByTestId('sim-fork')).toBeDisabled()
   })
 
   it('honestly shows trade-space not_available for a panel strategy (no per-trade pnl)', async () => {
     stubSimulate(PANEL_RESULT)
-    render(<SimulationPanel runId="pn1" source="api" />)
+    renderPanel({ runId: 'pn1', source: 'api' })
     fireEvent.click(screen.getByTestId('sim-run'))
     await waitFor(() => expect(screen.getByTestId('sim-result')).toBeInTheDocument())
     const box = screen.getByTestId('sim-space-unavailable-trade_population')
@@ -121,7 +157,7 @@ describe('SimulationPanel', () => {
 
   it('disables the run button in fixture mode with a hint', () => {
     const box = stubSimulate(FOUR_LAYER_RESULT)
-    render(<SimulationPanel runId="fl1" source="fixture" />)
+    renderPanel({ runId: 'fl1', source: 'fixture' })
     expect(screen.getByTestId('sim-run')).toBeDisabled()
     expect(box.posts).toBe(0)
   })
