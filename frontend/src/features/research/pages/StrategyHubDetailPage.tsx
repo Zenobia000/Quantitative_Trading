@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useStrategyHubDetail } from '../hooks/useStrategyHub'
+import { BranchExperimentsSection } from '../components/branches/BranchExperimentsSection'
 import { CandidateStateBadge } from '../components/candidates/CandidateStateBadge'
 import { ScorecardLights } from '../components/candidates/ScorecardLights'
 import { runIdFromReportRef } from '../components/candidates/candidateDisplay'
@@ -126,6 +127,13 @@ export function StrategyHubDetailPage() {
         candidate={detail.candidate}
         query={candidatesQ}
         onEvaluate={() => navigate(evaluateHref(detail.name))}
+      />
+
+      {/* 分支實驗 section（Goal 9）—— 從候選最新評測 fork；config delta / evaluate / compare */}
+      <BranchExperimentsSection
+        strategy={detail.name}
+        parentEvaluationId={detail.candidate?.latest_evaluation_id ?? null}
+        configFields={fields}
       />
 
       {/* 觀察艙卡（在艙才顯示） */}

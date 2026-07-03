@@ -118,7 +118,8 @@
       "headline": "候選池還是空的",
       "subtitle": "先跑一次評測（evaluate），結果會自動成為候選 —— 好壞都留存",
       "cta": "去跑第一次評測"
-    }
+    },
+    "branchOrigin": "分支"
   },
   "strategyHub": {
     "list": {
@@ -189,16 +190,28 @@
       "label": "假設 · 單一論點（必填，提交後鎖定）",
       "placeholder": "例：N-of-4 進場放寬至 3-of-4 能在 IS 達 Sharpe ≥ 1.0 且不過擬合"
     },
-    "strategy": { "label": "策略（已註冊策略名 · GET /strategies）" },
-    "stocks": { "label": "標的（逗號分隔，至少 1）" },
+    "strategy": {
+      "label": "策略（已註冊策略名 · GET /strategies）"
+    },
+    "stocks": {
+      "label": "標的（逗號分隔，至少 1）"
+    },
     "params": {
       "summary": "進階 · 參數（策略參數 JSON，選填；預設空物件）",
       "errorObject": "參數需為 JSON 物件（例：{\"box_period\": 60}）",
       "errorParse": "參數 JSON 格式錯誤"
     },
-    "engine": { "label": "引擎" },
-    "period": { "isStart": "IS 起始", "isEnd": "IS 結束" },
-    "submit": { "label": "提交回測", "submitting": "提交中…" },
+    "engine": {
+      "label": "引擎"
+    },
+    "period": {
+      "isStart": "IS 起始",
+      "isEnd": "IS 結束"
+    },
+    "submit": {
+      "label": "提交回測",
+      "submitting": "提交中…"
+    },
     "pending": {
       "paramForm": "由 config_schema 驅動的參數表單 / range-step / 標的篩選（待後端擴充）",
       "cost": "成本攤平（手續費 / 滑點 / 漲跌停 / T+2）（待後端擴充）"
@@ -210,9 +223,14 @@
     "resource": "回測紀錄",
     "newRun": "新建回測",
     "savedView": "已存視圖：M0 候選 · 近 90 天",
-    "filter": { "strategyLabel": "策略：", "clearAria": "清除策略篩選" },
+    "filter": {
+      "strategyLabel": "策略：",
+      "clearAria": "清除策略篩選"
+    },
     "showingCount": "顯示 {{n}} 筆",
-    "pending": { "guardrail": "防過擬合護欄（累計試驗數 / DSR / power gauge）" },
+    "pending": {
+      "guardrail": "防過擬合護欄（累計試驗數 / DSR / power gauge）"
+    },
     "empty": {
       "headline": "尚無 run，從第一次回測開始",
       "headlineFiltered": "策略 {{strategyId}} 尚無 run",
@@ -332,7 +350,9 @@
       "hold": "持有 (bar)",
       "entryStructure": "進場結構"
     },
-    "pending": { "attribution": "因子歸因（/runs/{id}/attribution 待後端）" }
+    "pending": {
+      "attribution": "因子歸因（/runs/{id}/attribution 待後端）"
+    }
   },
   "compare": {
     "title": "比較",
@@ -346,7 +366,10 @@
       "equityOverlay": "Equity 疊圖（多筆回測，單色明度階）",
       "parcoords": "Parallel coordinates（參數 × 指標 brushing，找穩健高原）"
     },
-    "table": { "run": "回測", "gate": "守門" },
+    "table": {
+      "run": "回測",
+      "gate": "守門"
+    },
     "empty": "無可比較的 run（ledger 為空或 run_ids 未命中）。"
   },
   "sweep": {
@@ -385,7 +408,9 @@
       "title": "IS 守門硬門檻",
       "source": "（GET /gate/spec · 規格）"
     },
-    "gateSpec": { "resource": "守門規格" },
+    "gateSpec": {
+      "resource": "守門規格"
+    },
     "history": {
       "title": "驗證狀態轉移",
       "source": "（gate-state · 持久化紀錄）",
@@ -548,6 +573,70 @@
         "total_trade_return": "累積交易報酬",
         "profit_factor": "獲利因子",
         "avg_hold": "平均持有天數"
+      },
+      "forking": "建立中…",
+      "forkDone": "已建立分支：{{id}}",
+      "forkViewSection": "在策略分支中檢視",
+      "forkNeedsApi": "Fork 需真後端報告（fixture 模式不可用）",
+      "forkError": "建立分支失敗"
+    }
+  },
+  "branches": {
+    "title": "分支實驗",
+    "createCta": "新增分支",
+    "createNeedsParent": "先評估此策略 —— 分支從最新評測 fork",
+    "createGuide": "從最新評測 fork 一個替代 config，並與 parent 並排比較",
+    "empty": "尚無分支實驗。",
+    "unavailable": "分支實驗不可用：{{detail}}",
+    "evaluate": "評測",
+    "evaluating": "評測中…",
+    "evaluateError": "評測失敗：{{detail}}",
+    "notEvaluable": "僅改 overlay 旋鈕 —— runner 不消費、無法再跑",
+    "compareToggle": "與 parent 比較",
+    "status": {
+      "draft": "草稿",
+      "evaluated": "已評測"
+    },
+    "origin": {
+      "simulation": "來自模擬",
+      "manual": "手動",
+      "report_finding": "報告發現"
+    },
+    "create": {
+      "title": "新增分支實驗",
+      "subtitle": "從 {{strategy}} 的最新評測 fork 一個替代 config。",
+      "keyLabel": "Config 欄位",
+      "valueLabel": "新值",
+      "valuePlaceholder": "如 90",
+      "noteLabel": "備註（選填）",
+      "notePlaceholder": "為何建此分支",
+      "submit": "建立分支",
+      "submitting": "建立中…"
+    },
+    "compare": {
+      "error": "比較不可用",
+      "notEvaluated": "尚未評測 —— 先跑分支才能與 parent 比較。",
+      "decision": "決策",
+      "parentVsBranch": "parent：{{parent}} · branch：{{branch}}",
+      "metricCol": "指標",
+      "parentCol": "Parent",
+      "branchCol": "Branch",
+      "verdict": {
+        "branch_better": "分支較佳",
+        "parent_better": "Parent 較佳",
+        "inconclusive": "無定論"
+      },
+      "metric": {
+        "cagr": "CAGR",
+        "total_return": "總報酬",
+        "sharpe": "Sharpe",
+        "sortino": "Sortino",
+        "calmar": "Calmar",
+        "max_drawdown": "最大回撤",
+        "volatility": "年化波動",
+        "oos_holdout_sharpe": "OOS holdout Sharpe",
+        "dsr": "DSR",
+        "trades": "交易數"
       }
     }
   }

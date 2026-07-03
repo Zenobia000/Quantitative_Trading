@@ -111,8 +111,14 @@ export function ReportViewerPage() {
       {/* 4. Linked trade log */}
       <LinkedTradeLogSection runId={result.run_id} partial={tradesPartial} />
 
-      {/* 4.5 What-if 模擬（研究沙盤——唯讀不持久化，不影響正式判決；Goal 8） */}
-      <SimulationPanel runId={result.run_id} source={load.source} />
+      {/* 4.5 What-if 模擬（研究沙盤——唯讀不持久化，不影響正式判決；Goal 8）
+          fork 按鈕（Goal 9）以此報告 evaluation_id 為 parent 建分支 */}
+      <SimulationPanel
+        runId={result.run_id}
+        source={load.source}
+        evaluationId={result.evaluation_id}
+        strategy={result.strategy}
+      />
 
       {/* 6. Decision action bar（api 模式共用 Candidate Pool mutation；決策目標 cand_<strategy>） */}
       <DecisionActionBar
