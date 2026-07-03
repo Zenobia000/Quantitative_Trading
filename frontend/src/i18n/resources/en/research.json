@@ -117,22 +117,48 @@
   },
   "strategyHub": {
     "list": {
-      "title": "Strategy Hub",
-      "subtitle": "Strategy-axis view · catalog × verdict ledger × watch deck",
+      "title": "Strategy Assets",
+      "subtitle": "Strategy-axis research assets · hypothesis × evaluated candidate × five scorecards × next step",
       "resource": "strategies",
       "newRun": "New Backtest",
+      "evaluate": "Evaluate",
       "count": "{{n}} strategies",
       "card": {
         "latestGate": "Latest verdict",
         "noRuns": "No runs yet",
-        "runs": "{{n}} runs"
+        "runs": "{{n}} runs",
+        "profile": "Profile",
+        "notEvaluated": "Not evaluated"
       }
     },
     "detail": {
-      "back": "Strategy Hub",
+      "back": "Strategy Assets",
       "resource": "verdict timeline",
       "configFields": "Config fields (config_schema)",
       "notInRegistry": "Strategy {{name}} is not in the catalog (ledger-only)",
+      "premise": {
+        "title": "Research Premise",
+        "hypothesis": "Hypothesis",
+        "mechanism": "Mechanism",
+        "noHypothesis": "No hypothesis registered yet (filled after evaluation)",
+        "noMechanism": "No mechanism description in catalog"
+      },
+      "candidate": {
+        "title": "Candidate Lifecycle",
+        "unavailable": "Candidate data is temporarily unavailable",
+        "latestProfile": "Profile",
+        "label": "Label",
+        "nextAction": "Next",
+        "viewReport": "View report",
+        "noReport": "No report yet",
+        "viewPool": "Candidate Pool",
+        "trail": "Decision trail ({{n}})",
+        "empty": {
+          "headline": "Not evaluated yet",
+          "subtitle": "This strategy isn't in the candidate pool yet — run an evaluation and its state, five scorecards, and decision trail will appear here",
+          "cta": "Run evaluation"
+        }
+      },
       "watch": {
         "title": "Watch Deck"
       },
@@ -141,6 +167,7 @@
         "empty": "No runs yet for this strategy — start with a new backtest"
       },
       "actions": {
+        "evaluate": "Evaluate strategy",
         "newRun": "New Backtest (prefill strategy)",
         "tradeReview": "K-line Review",
         "needRun": "Needs a run before reviewing",

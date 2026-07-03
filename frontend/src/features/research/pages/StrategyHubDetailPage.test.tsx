@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { StrategyHubDetailPage } from './StrategyHubDetailPage'
 import type { WatchRow } from '@/features/monitor/hooks/useWatch'
+import type { Candidate } from '../api/candidates'
 
 function watchRow(over: Partial<WatchRow> = {}): WatchRow {
   return {
@@ -24,7 +25,60 @@ function watchRow(over: Partial<WatchRow> = {}): WatchRow {
   }
 }
 
-function mockApis(sets: { strategies?: unknown[]; runs?: unknown[]; watch?: unknown[] }) {
+function candidate(over: Partial<Candidate> = {}): Candidate {
+  return {
+    candidate_id: 'cand_four_layer',
+    strategy: 'four_layer',
+    hypothesis: 'Foreign net-buy flow predicts forward return',
+    created_at: '2026-06-14T10:00:00+08:00',
+    state: 'weak',
+    latest_evaluation_id: 'eval_four_layer_deployment_strict',
+    latest_profile: 'deployment_strict',
+    latest_label: 'Weak',
+    latest_truth_verdict: 'PAPER_WATCH',
+    live_oos_recommendation: 'eligible',
+    scorecard_summary: {
+      profitability: 'warn',
+      risk: 'pass',
+      risk_adjusted: 'warn',
+      win_rate: 'not_available',
+      liquidity: 'warn',
+    },
+    headline: {
+      sharpe: 1.02,
+      oos_holdout_sharpe: 0.89,
+      cagr: 0.16,
+      max_drawdown: 0.27,
+      dsr: 0.9,
+      trades: 60,
+      avg_turnover: 0.83,
+      survivorship_clean: true,
+    },
+    report_pack_ref: 'reports/research_runs/a1b9c3d4/manifest.json',
+    next_action: 'Collect 3-month zero-capital live OOS, then re-evaluate DSR.',
+    decisions: [
+      {
+        decision_id: 'dec_0002',
+        candidate_id: 'cand_four_layer',
+        at: '2026-07-02T18:45:00+08:00',
+        actor: 'operator',
+        action: 'keep',
+        from_state: 'triaged',
+        to_state: 'weak',
+        reason: 'DSR near-miss but OOS breadth 100%.',
+        evaluation_ref: 'eval_four_layer_deployment_strict',
+      },
+    ],
+    ...over,
+  }
+}
+
+function mockApis(sets: {
+  strategies?: unknown[]
+  runs?: unknown[]
+  watch?: unknown[]
+  candidates?: unknown[]
+}) {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
@@ -36,7 +90,9 @@ function mockApis(sets: { strategies?: unknown[]; runs?: unknown[]; watch?: unkn
             ? (sets.runs ?? [])
             : path === '/monitor/watch'
               ? (sets.watch ?? [])
-              : []
+              : path === '/research/candidates'
+                ? (sets.candidates ?? [])
+                : []
       return { status: 200, json: async () => ({ success: true, data, error: null, meta: { ttl: 300 } }) }
     }) as unknown as typeof fetch,
   )
@@ -70,6 +126,7 @@ describe('StrategyHubDetailPage', () => {
         { run_id: 'other', strategy: 'inst_flow', gate_status: 'PASS', metrics: { sharpe: 2.0 } },
       ],
       watch: [],
+      candidates: [],
     })
     renderDetail('four_layer')
     await waitFor(() => expect(screen.getByText('Four-Layer Breakout')).toBeInTheDocument())
@@ -82,6 +139,43 @@ describe('StrategyHubDetailPage', () => {
     expect(screen.getByText('未通過')).toBeInTheDocument()
     // config_model summary shows schema field
     expect(screen.getByText('box_period')).toBeInTheDocument()
+    // research premise section present
+    expect(screen.getByText('研究命題')).toBeInTheDocument()
+  })
+
+  it('candidate present → lifecycle section (state + profile + next_action + decision trail)', async () => {
+    mockApis({
+      strategies: [{ name: 'four_layer', title: 'Four-Layer Breakout', description: 'desc', config_schema: {} }],
+      runs: [{ run_id: 'run_new', strategy: 'four_layer', gate_status: 'PASS', metrics: {} }],
+      watch: [],
+      candidates: [candidate()],
+    })
+    renderDetail('four_layer')
+    // lifecycle section header + candidate state 'weak' → '偏弱'
+    await waitFor(() => expect(screen.getByText('候選生命週期')).toBeInTheDocument())
+    expect(screen.getByText('偏弱')).toBeInTheDocument()
+    expect(screen.getByText('deployment_strict')).toBeInTheDocument()
+    expect(
+      screen.getByText('Collect 3-month zero-capital live OOS, then re-evaluate DSR.'),
+    ).toBeInTheDocument()
+    // decision trail is collapsible → expand and see the recorded 'keep' action
+    fireEvent.click(screen.getByText('決策軌跡（1）'))
+    expect(screen.getByText('保留')).toBeInTheDocument()
+    expect(screen.getByText('triaged→weak')).toBeInTheDocument()
+  })
+
+  it('no candidate → honest "not evaluated" empty guide', async () => {
+    mockApis({
+      strategies: [{ name: 'four_layer', title: 'Four-Layer Breakout', description: '', config_schema: {} }],
+      runs: [{ run_id: 'run_new', strategy: 'four_layer', gate_status: 'PASS', metrics: {} }],
+      watch: [],
+      candidates: [],
+    })
+    renderDetail('four_layer')
+    await waitFor(() => expect(screen.getByText('尚未評估')).toBeInTheDocument())
+    // empty-state CTA ('立即評估') is distinct from the quick-entry primary ('評估此策略')
+    expect(screen.getByText('立即評估')).toBeInTheDocument()
+    expect(screen.getByText('評估此策略')).toBeInTheDocument()
   })
 
   it('enrolled → watch pod card (observed days N/~60 + expiry)', async () => {
@@ -89,6 +183,7 @@ describe('StrategyHubDetailPage', () => {
       strategies: [{ name: 'four_layer', title: 'Four-Layer Breakout', description: '', config_schema: {} }],
       runs: [{ run_id: 'run_new', strategy: 'four_layer', gate_status: 'PASS', metrics: {} }],
       watch: [watchRow({ observed_trading_days: 22, nominal_trading_days: 60 })],
+      candidates: [],
     })
     renderDetail('four_layer')
     await waitFor(() => expect(screen.getByText('22/~60')).toBeInTheDocument())
@@ -101,6 +196,7 @@ describe('StrategyHubDetailPage', () => {
       strategies: [{ name: 'four_layer', title: 'Four-Layer Breakout', description: '', config_schema: {} }],
       runs: [],
       watch: [],
+      candidates: [],
     })
     renderDetail('four_layer')
     await waitFor(() =>
