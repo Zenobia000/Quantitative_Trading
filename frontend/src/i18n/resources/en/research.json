@@ -79,7 +79,56 @@
       "slippageSharpe": "Slippage Sharpe"
     },
     "reproduce": "Reproduce",
-    "pending": { "tearSheet": "Tear sheet (equity / drawdown / rolling Sharpe / heatmap / distribution)" },
+    "verdict": {
+      "criteriaTitle": "Gate signals (evaluated vs current)",
+      "noCriteria": "This strategy declares no gate criteria."
+    },
+    "dsr": {
+      "title": "DSR ruler (truth gate)",
+      "empty": "No truth-gate evidence yet (strategy not enrolled in the watch berth).",
+      "needleAria": "DSR needle at {{dsr}}",
+      "band": {
+        "REAL": "REAL deployable",
+        "PAPER_WATCH": "PAPER_WATCH watch berth",
+        "REJECTED": "REJECTED below bar"
+      }
+    },
+    "equity": {
+      "title": "Segmented Equity Curve",
+      "empty": "This run has no persisted equity series yet (legacy run or no trading window).",
+      "aria": "Equity curve with drawdown and sealed-window boundary",
+      "sealed": "sealed",
+      "sealedBoundary": "sealed boundary oos_start = {{date}}",
+      "basisHint": "Dates are a business-day approximation (sidecar stores no date index; reconstructed from is_start)"
+    },
+    "monthly": {
+      "title": "Monthly Returns Heatmap",
+      "empty": "No monthly returns yet (no series or missing IS window).",
+      "year": "Year",
+      "annual": "Annual",
+      "basisHint": "Dates are a business-day approximation; month buckets are estimated"
+    },
+    "drawdown": {
+      "title": "Drawdown Events (top 5)",
+      "empty": "No drawdown events yet (no series or never dipped below a prior high).",
+      "depth": "Depth",
+      "peak": "Peak",
+      "trough": "Trough",
+      "recovery": "Recovery",
+      "duration": "Duration (bars)",
+      "unrecovered": "Not recovered"
+    },
+    "cost": {
+      "title": "Cost Sensitivity",
+      "sharpe": "Sharpe (no slippage)",
+      "slippageSharpe": "Sharpe (after slippage)",
+      "diff": "Slippage impact (Δ)",
+      "hint": "How much slippage erodes Sharpe (negative = worse)"
+    },
+    "notebook": {
+      "label": "Open in Notebook",
+      "hint": "download prefilled .ipynb"
+    },
     "action": {
       "iterate": "Iterate again",
       "compare": "Compare Runs",
