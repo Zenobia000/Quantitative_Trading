@@ -900,6 +900,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Simulation
+         * @description Compute a research-only what-if for one run. 404 if the run is unknown;
+         *     every unsupported knob comes back ``not_available`` with a reason (never
+         *     fabricated). The result is returned and discarded — nothing is persisted.
+         */
+        post: operations["run_simulation_research_simulate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/monitor/strategies": {
         parameters: {
             query?: never;
@@ -2535,6 +2557,47 @@ export interface components {
              */
             observation_kind: string;
         };
+        /**
+         * SimulationRequest
+         * @description What-if parameters for one run. Bounds are enforced at the boundary so an
+         *     out-of-range knob is a clean ``422`` (not a silent clamp). Optional per-trade
+         *     knobs default ``None`` = "don't apply".
+         */
+        SimulationRequest: {
+            /**
+             * Run Id
+             * @description the finished run to simulate over
+             */
+            run_id: string;
+            /**
+             * Cost Multiplier
+             * @description scale the run's transaction cost (1.0 = unchanged)
+             * @default 1
+             */
+            cost_multiplier: number;
+            /**
+             * Slippage Bps
+             * @description additional slippage in basis points per unit turnover
+             * @default 0
+             */
+            slippage_bps: number;
+            /**
+             * Stop Loss Pct
+             * @description per-trade stop-loss (four-layer-type runs only)
+             */
+            stop_loss_pct?: number | null;
+            /**
+             * Take Profit Pct
+             * @description per-trade take-profit (four-layer-type runs only)
+             */
+            take_profit_pct?: number | null;
+            /**
+             * Capacity Scale
+             * @description exposure/leverage multiplier (1.0 = unchanged)
+             * @default 1
+             */
+            capacity_scale: number;
+        };
         /** StrategyRow */
         StrategyRow: {
             /** Strategy Id */
@@ -4055,6 +4118,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_simulation_research_simulate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulationRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

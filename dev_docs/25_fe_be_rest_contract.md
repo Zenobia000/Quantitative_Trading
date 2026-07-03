@@ -260,6 +260,7 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/research/promote/{strategy_id}/audit` | Research |  |  |
 | GET | `/research/saved-views` | Research |  | ⚠️ |
 | POST | `/research/saved-views` | Research |  | ⚠️ |
+| POST | `/research/simulate` | Research |  | ⚠️ |
 | GET | `/research/strategies` | Research | 📄 |  |
 | GET | `/research/strategies/{strategy_id}/versions` | Research |  | ⚠️ |
 | POST | `/research/sweep` | Research |  |  |

@@ -1993,6 +1993,48 @@
         }
       }
     },
+    "/research/simulate": {
+      "post": {
+        "tags": [
+          "research-simulation"
+        ],
+        "summary": "Run Simulation",
+        "description": "Compute a research-only what-if for one run. 404 if the run is unknown;\nevery unsupported knob comes back ``not_available`` with a reason (never\nfabricated). The result is returned and discarded \u2014 nothing is persisted.",
+        "operationId": "run_simulation_research_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/monitor/strategies": {
       "get": {
         "tags": [
@@ -5611,6 +5653,74 @@
         "type": "object",
         "title": "SelectLiveOOSRequest",
         "description": "Select a candidate for live OOS (optionally overriding a not-recommended one)."
+      },
+      "SimulationRequest": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Run Id",
+            "description": "the finished run to simulate over"
+          },
+          "cost_multiplier": {
+            "type": "number",
+            "maximum": 3.0,
+            "minimum": 0.5,
+            "title": "Cost Multiplier",
+            "description": "scale the run's transaction cost (1.0 = unchanged)",
+            "default": 1.0
+          },
+          "slippage_bps": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Slippage Bps",
+            "description": "additional slippage in basis points per unit turnover",
+            "default": 0.0
+          },
+          "stop_loss_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 1.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Loss Pct",
+            "description": "per-trade stop-loss (four-layer-type runs only)"
+          },
+          "take_profit_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 5.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Take Profit Pct",
+            "description": "per-trade take-profit (four-layer-type runs only)"
+          },
+          "capacity_scale": {
+            "type": "number",
+            "maximum": 3.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Capacity Scale",
+            "description": "exposure/leverage multiplier (1.0 = unchanged)",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "SimulationRequest",
+        "description": "What-if parameters for one run. Bounds are enforced at the boundary so an\nout-of-range knob is a clean ``422`` (not a silent clamp). Optional per-trade\nknobs default ``None`` = \"don't apply\"."
       },
       "StrategyRow": {
         "properties": {

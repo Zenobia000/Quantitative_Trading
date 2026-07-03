@@ -28,6 +28,7 @@ contract-drift gate (doc 25 §9) so it can land in parallel with other work.
 | `report_pack_manifest.example.json` | One `ReportPackManifest` (`data` payload of `GET /research/evaluations/{id}/report`). | data payload |
 | `candidate_pool.example.json` | `GET /research/candidates` — full envelope (list + `page_meta`). | full envelope |
 | `live_oos_queue.example.json` | `GET /research/live-oos/queue` — full envelope. | full envelope |
+| `simulation_result.example.json` | One `SimulationResult` (`data` payload of `POST /research/simulate`) — a four-layer run with cost + stop-loss + take-profit applied (Goal 8, §13). | data payload |
 
 The two list fixtures (`candidate_pool`, `live_oos_queue`) are **full envelopes**
 (directly usable as fixtures). The two singleton fixtures (`evaluation_result`,
@@ -430,3 +431,83 @@ PY
 ```
 
 Both pass as of 2026-07-03 (`jsonschema` 4.26.0).
+
+---
+
+## 13. Interactive Simulation (Goal 8)
+
+`POST /research/simulate` → `Envelope[SimulationResult]`. **Research-only what-if**
+over a *finished* run: it re-reads the run's persisted equity/trades sidecar
+(`run_series_store`) and recomputes before/after metrics for a set of knobs, then
+returns a **branch suggestion** (a config-delta *description*). It never re-runs the
+backtest and **never mutates the original config / ledger / report pack** — the
+result is returned and discarded (spec Goal 8 acceptance). Unlike the other Goal 2
+contracts this one **ships with backend code** (`research/simulation.py` +
+`api/routers/research_simulate.py`), so its endpoint *is* in the OpenAPI/drift gate.
+
+### 13.1 SimulationRequest
+
+```jsonc
+{
+  "run_id": "fl_4layer_2015_2020",  // REQUIRED — the finished run to simulate over
+  "cost_multiplier": 1.5,           // 0.5..3.0  (1.0 = unchanged) — scale transaction cost
+  "slippage_bps": 10.0,             // 0..50     (0 = none) — additive slippage per unit turnover
+  "stop_loss_pct": 0.08,            // (0,1) nullable — per-trade stop-loss (four-layer-type only)
+  "take_profit_pct": 0.25,          // (0,5] nullable — per-trade take-profit (four-layer-type only)
+  "capacity_scale": 1.0             // (0,3] (1.0 = unchanged) — exposure/leverage multiplier
+}
+```
+
+Out-of-range values are a `422 VALIDATION_ERROR` (Pydantic field bounds at the
+boundary — no silent clamp). Unknown `run_id` → `404 {resource:"run", id}`.
+
+### 13.2 Two honest metric spaces (data feasibility)
+
+The two knob families act in different spaces because the two data shapes support
+different what-ifs (spec rule #6 — unsupported knobs are `not_available`, not faked):
+
+| Knob | Space | Feasible when | Model |
+| :--- | :--- | :--- | :--- |
+| `cost_multiplier` | `portfolio_equity` | equity sidecar present **and** the run declares a round-trip cost (`cost_round_rate`, or four-layer `fee/tax/slip`) | `extra = (m-1)·base_cost·turnover_units`; uniform per-bar drag on returns reconstructed from equity |
+| `slippage_bps` | `portfolio_equity` | equity sidecar present | `extra = bps·1e-4·turnover_units`; additive, **no baseline needed** |
+| `capacity_scale` | `portfolio_equity` | equity sidecar present | exposure/leverage scale `r' = scale·r` |
+| `stop_loss_pct` | `trade_population` | trades carry per-trade `ret` (**four-layer-type only**) | clamp each trade loss to `-stop_loss_pct` |
+| `take_profit_pct` | `trade_population` | trades carry per-trade `ret` (**four-layer-type only**) | clamp each trade gain to `+take_profit_pct` |
+
+**P1 blocker (contract §11 #6/#8):** panel strategies persist a *rebalance count*,
+no per-trade pnl — so `stop_loss_pct` / `take_profit_pct` degrade to
+`not_available` for them (`trade_metrics.available = false` + a `per_param` reason +
+a `data_gaps[]` entry). Panel runs can still simulate cost / slippage / capacity in
+the portfolio space. A per-trade clamp cannot be propagated onto the daily equity
+curve (it nets overlapping positions), so stop-loss / take-profit move only the
+`trade_population` metrics; the `portfolio_equity` block stays at baseline
+(disclosed, never silently zeroed).
+
+### 13.3 SimulationResult shape
+
+Top-level: `schema_version`, `run_id`, `strategy`, `research_only:true`,
+`applied_params`, `portfolio_metrics{available,reason,space,before,after,deltas}`,
+`trade_metrics{…}`, `affected_trades_count`, `per_param[]`, `branch_suggestion`,
+`data_gaps[]`. See `simulation_result.example.json`.
+
+- **`portfolio_metrics.before/after`** — 8 headline metrics (`total_return`, `cagr`,
+  `sharpe`, `sortino`, `calmar`, `max_drawdown`, `ulcer_index`, `volatility`) from
+  `validation/metrics.py` (same estimators as every real run).
+- **`trade_metrics.before/after`** — `n_trades`, `win_rate`, `avg_trade_return`,
+  `total_trade_return`, `profit_factor`, `avg_hold`.
+- **`affected_trades_count`** — a per-trade clamp names the exact moved trades; an
+  equity-space knob touches every cost-incurring trade/rebalance (the cost-event
+  count).
+- **`branch_suggestion`** — `{label, description, config_delta[], actionable:false,
+  actionable_reason}`. `actionable:false` because branch experiments land in Goal 9;
+  the UI wires the fork button disabled with the honest note. `null` when nothing
+  was applied.
+
+### 13.4 Module mapping (Goal 2 §10 style)
+
+| Field | Produced by |
+| :--- | :--- |
+| `portfolio_metrics.*` | `research/simulation.py` over `run_series_store.read_series().equity` + `validation/metrics.py` |
+| `trade_metrics.*` | `research/simulation.py` over `run_series_store.read_series().trades` (four-layer `{ret,hold}`) |
+| cost-model scalars (`turnover_units`, `base_round_trip_cost`) | `api/routers/research_simulate.py` from the run record `metrics` / `params` |
+| `branch_suggestion` | `research/simulation.py::_branch_suggestion` (description only — no config write) |

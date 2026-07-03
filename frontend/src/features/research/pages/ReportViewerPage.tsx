@@ -18,6 +18,7 @@ import { ScorecardGrid } from '../components/reportviewer/ScorecardGrid'
 import { ScorecardTabs } from '../components/reportviewer/ScorecardTabs'
 import { GateChecksSection } from '../components/reportviewer/GateChecksSection'
 import { LinkedTradeLogSection } from '../components/reportviewer/LinkedTradeLogSection'
+import { SimulationPanel } from '../components/reportviewer/SimulationPanel'
 import { DecisionActionBar } from '../components/reportviewer/DecisionActionBar'
 import { DataSourceBadge } from '../components/reportviewer/DataSourceBadge'
 
@@ -109,6 +110,9 @@ export function ReportViewerPage() {
 
       {/* 4. Linked trade log */}
       <LinkedTradeLogSection runId={result.run_id} partial={tradesPartial} />
+
+      {/* 4.5 What-if 模擬（研究沙盤——唯讀不持久化，不影響正式判決；Goal 8） */}
+      <SimulationPanel runId={result.run_id} source={load.source} />
 
       {/* 6. Decision action bar（api 模式共用 Candidate Pool mutation；決策目標 cand_<strategy>） */}
       <DecisionActionBar
