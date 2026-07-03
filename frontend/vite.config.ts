@@ -7,7 +7,7 @@ import path from 'node:path'
 import type { IncomingMessage } from 'node:http'
 
 // doc 25：後端裸根前綴。dev 期把 API 前綴代理到 FastAPI，前端只打相對路徑。
-const API_PREFIXES = ['/runs', '/research', '/monitor', '/system', '/home', '/health', '/gate', '/presets', '/metrics']
+const API_PREFIXES = ['/runs', '/research', '/monitor', '/system', '/home', '/health', '/gate', '/presets', '/metrics', '/strategies']
 
 // A browser *document* navigation (Accept: text/html) to a SPA route that shares
 // an API prefix (/research/validate, /monitor/...) must boot the SPA, NOT be
