@@ -1,7 +1,7 @@
 """Central runtime settings — one typed place for env-driven config (ADR-027 Stage 2).
 
 Before this, credentials / DB connection / paths were read via scattered
-``os.environ.get(...)`` across ``data/``, ``api/``, ``engines/`` (each with its own
+``os.environ.get(...)`` across ``data/``, ``api/``, ``orchestration/`` (each with its own
 default string). This consolidates them into one ``Settings`` model (the same
 ``pydantic_settings`` convention as ``monitoring.DiscordSettings``) so every knob
 is discoverable + typed + ``.env``-aware.

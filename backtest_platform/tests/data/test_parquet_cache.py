@@ -8,12 +8,12 @@ import pandas as pd
 import pytest
 
 from backtest_platform.data.finmind_etl import write_parquet
-from backtest_platform.data.schemas import ETLBundle
-from backtest_platform.engines.zipline_adapter.bundles.parquet_cache import (
+from backtest_platform.data.parquet_cache import (
     MANIFEST_NAME,
     ParquetCache,
     cached_or_fetch,
 )
+from backtest_platform.data.schemas import ETLBundle
 
 
 def _make_range_bundle(stock_id: str, start: date, end: date) -> ETLBundle:

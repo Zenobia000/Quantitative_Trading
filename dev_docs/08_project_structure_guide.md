@@ -6,13 +6,14 @@
 > **v1.2 變更（2026-06-16, ADR-026）**：抽出 `strategies/common/`（中立回測機制單一真實來源，解策略間 leaky abstraction）；`multi_factor` / spikes（原 `sprint_0_spikes/`）/ 舊驗證 scripts 封存至 `legacy/`（src 外，不打包不進 CI）；刪除空目錄 `engines/zipline_adapter/adapters/`
 > **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
 > **v1.4 變更（2026-06-17, ADR-029）**：研究流程標準化。**刪除** `backtest_platform/scripts/`（7 支 `inst_flow_*` 一次性腳本）；**新增** `research/workflows/`（通用工作流 `config`/`loader`/`doe`/`go_gates`/`truth_gate`/`paper_replay`，全走 ADR-028 dispatch）；**每隻策略加** `strategies/<name>/research_config.py`（宣告 DOE/GO_GATES/TRUTH_GATE/PAPER_REPLAY）；新增 `api/routers/research_workflows.py`（`POST /research/workflows/{workflow}` + `GET /research/workflows/{strategy}`）。新增策略寫一個 `research_config.py` 即參與所有工作流。
+> **v1.5 變更（2026-07-03, ADR-037）**：**刪除** `engines/` 樹（zipline stub 引擎 + `zipline_adapter/`，~2271 LOC）與 `pipeline.py`（legacy M1 CLI）、`dashboard/` 空殼、`monitoring/influx_writer.py`、`validation/full_report.py` + `resampling.py`、`research/momentum_harness.py`（thin shim）。**下放** `engines/.../parquet_cache.py`、`finmind_bundle.py`（僅 ingest 路徑）至 `data/`——它們是資料層而非引擎層。sim 為唯一引擎。
 
 ---
 
 ## 設計原則
 
 - **按功能組織**：每個 sub-package 為一個明確職責
-- **明確職責**：`config/` = 參數、`data/` = IO、`strategies/` = 策略邏輯、`adapters/` = 廠商接口、`engines/` = 引擎 wrapper、`validation/` = 統計檢驗、`orchestration/` = 排程、`monitoring/` = 監控、`dashboard/` = UI
+- **明確職責**：`config/` = 參數、`data/` = IO、`strategies/` = 策略邏輯、`adapters/` = 廠商接口、`validation/` = 統計檢驗、`orchestration/` = 排程、`monitoring/` = 監控（前端見 `frontend/`）
 - **一致命名**：Python `snake_case.py`、測試 `test_*.py`、CLI module 用 `python -m <module>`
 - **配置外部化**：`.env` + Pydantic `BaseSettings`（M2 引入 `config/settings.py`）
 - **根目錄簡潔**：原始碼放 `src/`，根目錄只放 `pyproject.toml`、`README.md`、`docker-compose.yml`
@@ -51,7 +52,6 @@ backtest_platform/
 ```plaintext
 src/backtest_platform/
 ├── __init__.py                   # 版本 + v2.md（legacy）章節對照註記
-├── pipeline.py                   # M1 shim（單檔四層計分 pipeline，保留相容）
 │
 ├── config/                       # 純資料層設定
 │   ├── settings.py               # 集中環境設定（憑證 / Postgres / 路徑）
@@ -60,6 +60,8 @@ src/backtest_platform/
 ├── data/                         # ETL + 血統
 │   ├── finlab_source.py          # FinLab 主資料源（全史 + 下市股；ingest_universe_finlab）
 │   ├── finmind_etl.py            # FinMind fallback ETL（三表 → parquet，原子寫）
+│   ├── parquet_cache.py          # parquet 快取讀取（ADR-037 由 engines/ 下放；EODParquetFeed 用）
+│   ├── finmind_bundle.py         # FinMind universe 批次 ingest（ADR-037 下放；collaborators ingest 路徑）
 │   ├── adjustment.py             # 除權息還原
 │   ├── universe_builder.py       # point-in-time universe 過濾
 │   ├── universe.py               # universe 輔助
@@ -126,22 +128,16 @@ src/backtest_platform/
 │   ├── brokers/paper_broker.py   # 紙上券商（簡化撮合 + heat）；shioaji（M5）
 │   └── data_feed/                # 讀取層 seam（ADR-035）：DataFeed Protocol + EODParquetFeed（realtime 延後）
 │
-├── engines/                      # zipline 整合（研究迴圈主力是離線 sim）
-│   ├── protocol.py               # DEPRECATED（ADR-027 策略契約取代）
-│   └── zipline_adapter/          # cli / bundles（finmind_bundle + parquet_cache + ensure_registered）/ algorithms / controls / validation（對拍）
-│
 ├── api/                          # FastAPI（127.0.0.1，ADR-031）
 │   ├── app.py                    # 15 routers + /health；統一 envelope
 │   ├── routers/                  # runs / gate / metrics / strategies / research_* / monitor / system / home
 │   ├── schemas.py / response_models.py / envelope.py / deps.py
 │
-├── monitoring/                   # Discord 告警 + InfluxDB
-│   ├── alert_rules.py / discord_notifier.py / influx_writer.py
+├── monitoring/                   # Discord 告警 + alert rule engine
+│   ├── alert_rules.py / discord_notifier.py
 │
-├── jobs/                         # 輕量背景 job（JSONL 快照 + daemon thread）
-│   ├── job_runner.py / job_store.py / models.py
-│
-└── dashboard/                    # 空殼保留（React 前端已取代，見 frontend/）
+└── jobs/                         # 輕量背景 job（JSONL 快照 + daemon thread）
+    └── job_runner.py / job_store.py / models.py
 ```
 
 ### 模組現況一覽
@@ -151,9 +147,9 @@ src/backtest_platform/
 | `config/` `data/` `strategies/` `research/` `validation/` `risk/` | ✅ 現行 | 研究迴圈 + 審判庭主體 |
 | `orchestration/` `runtime/` `adapters/brokers/paper_broker` | ✅ 現行 | paper 鏈 + after-close 排程器（cron/systemd 級，`deploy/` 附範例）已落地 |
 | `api/` `monitoring/` `jobs/` | ✅ 現行 | 15 routers；Discord 告警 |
-| `engines/zipline_adapter/` | ✅ 輔助 | 對拍 / bundle ingest；`engines/protocol.py` DEPRECATED |
+| `data/parquet_cache` `data/finmind_bundle` | ✅ 現行 | parquet 快取讀取 + FinMind universe ingest（ADR-037 由 engines/ 下放）|
 | `adapters/data_feed/` | 🟡 seam | 讀取層介面已定義（DataFeed Protocol + EODParquetFeed，ADR-035）；realtime 實作延後、未 rewire 既有 caller |
-| `adapters/data_bundle` `dashboard/` | 空殼 | 保留套件位；React 前端已取代 dashboard |
+| `adapters/data_bundle` | 空殼 | 保留套件位 |
 | `adapters/brokers/shioaji_broker` | M5 | 實盤下單（未實作） |
 
 ---
@@ -254,9 +250,9 @@ dev_docs/                         # 工程文件（架構/規格/ADR/計劃）
         ┌────────────────────┼────────────────────┐
         ▼                    ▼                    ▼
 ┌──────────────┐  ┌──────────────────┐  ┌────────────────┐
-│ engines/     │  │ strategies/      │  │ adapters/      │
-│ vectorbt     │  │ four_layer_*/    │  │ data_bundle    │
-│ (副引擎)     │  │ (Domain 純函式)  │  │ data_feed      │
+│ data/        │  │ strategies/      │  │ adapters/      │
+│ parquet_cache│  │ four_layer_*/    │  │ data_bundle    │
+│ finmind_bundle│ │ (Domain 純函式)  │  │ data_feed      │
 └──────┬───────┘  └────────┬─────────┘  │ brokers        │
        │                   │            └────────┬───────┘
        │                   │                     │
@@ -296,7 +292,7 @@ dev_docs/                         # 工程文件（架構/規格/ADR/計劃）
 | 類別 | 變數 | M | 來源 |
 | :--- | :--- | :---: | :--- |
 | 資料源（主） | `FINLAB_API_TOKEN` | M2 | https://ai.finlab.tw |
-| ~~資料源（TEJ）~~ | ~~`TEJAPI_KEY`~~ | — | ADR-013 已棄用 TEJ 路徑；主路徑（zipline-reloaded + FinLab/FinMind bundle）不依賴 TEJ |
+| ~~資料源（TEJ）~~ | ~~`TEJAPI_KEY`~~ | — | ADR-013 已棄用 TEJ 路徑；主路徑（FinLab/FinMind bundle）不依賴 TEJ |
 | 資料源（fallback） | `FINMIND_TOKEN` | M1 | https://finmindtrade.com |
 | Broker（M4 paper / M5 live） | `SHIOAJI_*` | M4 | 永豐金 API 中心 |
 | 儲存 | `POSTGRES_*` | M1 | docker-compose |

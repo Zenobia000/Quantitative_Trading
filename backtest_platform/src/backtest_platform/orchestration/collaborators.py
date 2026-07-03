@@ -219,7 +219,7 @@ def make_ingest(
 
             result = ingest_universe_finlab(list(symbols), start, end, cache_dir=cache_dir)
         else:
-            from backtest_platform.engines.zipline_adapter.bundles.finmind_bundle import (
+            from backtest_platform.data.finmind_bundle import (
                 ingest_universe,
             )
 

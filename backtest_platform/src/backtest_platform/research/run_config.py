@@ -28,7 +28,7 @@ class RunConfig(BaseModel):
     stocks:     tuple[str, ...] = Field(..., min_length=1)
     is_start:   date
     is_end:     date
-    engine:     str = Field("sim", description="sim | zipline")
+    engine:     str = Field("sim", description="sim (zipline/vectorbt removed 2026-07-03, ADR-037)")
 
     @field_validator("hypothesis")
     @classmethod
@@ -40,6 +40,9 @@ class RunConfig(BaseModel):
     @field_validator("engine")
     @classmethod
     def _engine_known(cls, v: str) -> str:
+        # ``sim`` is the only live engine; ``zipline`` retained solely so historical
+        # run configs (persisted engine='zipline') still validate (ADR-037 removed
+        # the zipline engine, but the runs DDL column keeps the value as metadata).
         if v not in ("sim", "zipline"):
             raise ValueError(f"unknown engine {v!r}")
         return v

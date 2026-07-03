@@ -31,9 +31,9 @@ def _utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 # Back-compat re-exports (ADR-027): the four-layer sim helpers used to be defined
-# in this module; engines.protocol (SimEngine) and research.sweep still import
-# these private names from here. Alias via assignment (not `import ... as`) so the
-# linter cannot strip them as "unused re-exports".
+# in this module; ``research.sweep`` still imports these private names from here.
+# Alias via assignment (not `import ... as`) so the linter cannot strip them as
+# "unused re-exports".
 TRADING_DAYS = _fl_sim.TRADING_DAYS
 _SLIP_STRESS = _fl_sim._SLIP_STRESS
 _signaled_window = _fl_sim.signaled_window

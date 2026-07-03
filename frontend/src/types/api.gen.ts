@@ -2189,7 +2189,7 @@ export interface components {
             is_end: string;
             /**
              * Engine
-             * @description sim | zipline
+             * @description sim (zipline/vectorbt removed 2026-07-03, ADR-037)
              * @default sim
              */
             engine: string;
