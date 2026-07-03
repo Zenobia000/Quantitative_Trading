@@ -90,8 +90,7 @@ uv run python -m backtest_platform.research.cli truth-gate   --strategy inst_flo
 ├── frontend/                # React 19 + TS + Vite 前端（研究/監控/系統三 zone + Cmd-K）
 ├── dev_docs/                # 工程文檔（INDEX + PRD + REST 契約 + 32 份 ADR + 審查報告）
 ├── strategy/archive/        # 四層共振歷史規格（已廢止 ADR-023，僅存 audit trail）
-├── stock_strategy/          # 策略點子筆記（FinLab 參考策略）
-└── tools/scrum_board/       # 零依賴拖拉看板 → 同步 WBS §7
+└── stock_strategy/          # 策略點子筆記（FinLab 參考策略）
 ```
 
 ---

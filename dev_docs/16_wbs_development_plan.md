@@ -459,7 +459,7 @@
 | **v1.0** | 小倉位實盤 + 晉升前端收尾 | M5 | Shioaji 小倉位接通 + 晉升狀態機強制 gate | 7.B（ShioajiBroker + 1/4 倉位）、8.G.8（Promotion stepper + A-E 改 /monitor/* + Panel E 重定位）、8.A.2（Panel D+E React 版）、8.G.7-full（/research/compare + /sweep + Cmd-K）、8.E/8.F（備份 + 災難恢復演練） | Shioaji 小倉位實盤接通 + 1/4 倉位運行；Promotion stepper 強制 gate（每階段綠燈才解鎖 + audit log）；連續觀察不退化即評估全倉 |
 | **v1.x** | Roadmap 層（進階研究 UX / 運維） | post-M5 | 高原視覺化、進階防過擬合 UX、Grafana F-I 等 | sweep/compare 視覺化（heatmap + parallel coordinates）、power gauge UI、四層共振歸因下鑽、trade markers 疊 K 線、Grafana 進階面板 | 依實際使用頻次按需疊加，無硬 exit |
 
-> **📊 交付現況（2026-06-02 初版；2026-06-15 對齊 ADR-025）**：v0.2–v0.6 的**後端/基建已全部建完並合併進 main**（v0.2 validation 統計 pipeline〔metrics/dsr/pbo/wfa/resampling〕、v0.3 research 研究迴圈 + gate machine〔run loop / runs ledger / sweep / compare / OOS sealed vault / trials→DSR〕、v0.5 risk + 監控 + paper broker〔Risk Gate 12 條 / 3 級熔斷 / PaperBroker / Discord 規則引擎 / InfluxDB / 7.D real collaborators〕、v0.6 REST API〔FastAPI 58 端點 + `Envelope[T]` typed responses，8.H.1〕）。這些是**策略無關聯的可重用基建**——策略空間經 DOE 證為結構性 NO-GO（4 結構同 ~0.9 Sharpe 牆，ADR-017/019/023/024）。**🔧 edge-gate 框定已改（[ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md)，2026-06-14）**：binary 絕對門檻拆兩段（真偽閘 hard-fail + 配置閘連續 sizing）→ **前端（v0.4）與研究迭代脫離 binary edge-gate**（研究工具本就該支撐持續找 edge，不被「尚無可部署策略」反鎖）；**paper（v0.5）前移**（過真偽閘 + OOS>0 即可最小倉位收 live OOS）；**唯實盤（v1.0）仍硬 gated** 於 paper 期 live OOS + 配置閘 sign-off。故定調**「平台優先」**：基建 ✅ 就緒，資金流 fixed-config（survivorship-clean WFA OOS 1.30）為首個可進 paper 候選。§7 Sprint 看板（`scrum_board.json` 真相源）的對齊待另跑 `sync_wbs.py`。
+> **📊 交付現況（2026-06-02 初版；2026-06-15 對齊 ADR-025）**：v0.2–v0.6 的**後端/基建已全部建完並合併進 main**（v0.2 validation 統計 pipeline〔metrics/dsr/pbo/wfa/resampling〕、v0.3 research 研究迴圈 + gate machine〔run loop / runs ledger / sweep / compare / OOS sealed vault / trials→DSR〕、v0.5 risk + 監控 + paper broker〔Risk Gate 12 條 / 3 級熔斷 / PaperBroker / Discord 規則引擎 / InfluxDB / 7.D real collaborators〕、v0.6 REST API〔FastAPI 58 端點 + `Envelope[T]` typed responses，8.H.1〕）。這些是**策略無關聯的可重用基建**——策略空間經 DOE 證為結構性 NO-GO（4 結構同 ~0.9 Sharpe 牆，ADR-017/019/023/024）。**🔧 edge-gate 框定已改（[ADR-025](./adrs/ADR-025-two-stage-validation-gate-and-paper-promotion.md)，2026-06-14）**：binary 絕對門檻拆兩段（真偽閘 hard-fail + 配置閘連續 sizing）→ **前端（v0.4）與研究迭代脫離 binary edge-gate**（研究工具本就該支撐持續找 edge，不被「尚無可部署策略」反鎖）；**paper（v0.5）前移**（過真偽閘 + OOS>0 即可最小倉位收 live OOS）；**唯實盤（v1.0）仍硬 gated** 於 paper 期 live OOS + 配置閘 sign-off。故定調**「平台優先」**：基建 ✅ 就緒，資金流 fixed-config（survivorship-clean WFA OOS 1.30）為首個可進 paper 候選。§7 Sprint 表現為手工維護的非權威 roadmap 快照（原 `tools/scrum_board` 自動同步工具已於 2026-07-02 移除，見 §變更歷史 v3.25）。
 
 #### essential MVP（v0.1）邊界說明
 
@@ -501,11 +501,11 @@
 
 ### Sprint 規劃（2 週為一個 sprint）
 
-> **互動看板**：下表的真相源已遷移至 `dev_docs/scrum_board.json`，由 `tools/scrum_board`
-> 拖拉式看板維護。**請勿手改下方 marker 之間的內容** — 在看板拖拉卡片即會自動回寫此區塊與 JSON。
-> 啟動看板：`python tools/scrum_board/server.py` → http://127.0.0.1:8765
-
-<!-- SCRUM_BOARD:START (此區塊由 tools/scrum_board 自動生成，請勿手改) -->
+> **非權威快照（手工維護）**：本 sprint 表為粗粒度 roadmap 歷史紀錄，**非狀態真相源**。
+> 狀態真相源是 §1 banner + §2 工作包統計。sprint 線性排列源自 2026-06-02，早於 ADR-023
+> （四層廢止）/ ADR-025（平台優先 pivot），實際交付為 out-of-order；本表僅保留 audit trail，
+> 切 sprint 時手動更新。（原互動看板工具 `tools/scrum_board` 已於 2026-07-02 移除 —— 自動同步
+> 的 §7 表被標為「非權威」卻仍須人工對照 §1/§2 truth-up，反成第二份漂移狀態表，故拿掉。）
 
 | Sprint | 日期 | 重點 | 對應 WBS |
 |:--|:--|:--|:--|
@@ -527,9 +527,6 @@
 | ✅ Sprint 12 — v0.4 ②：Run Report + Monitor Panel A/B/C/D React 化 | 10/6-10/19 | 研究/監控前端收尾落地：Run Report（複用 Panel 元件渲染 equity/drawdown/rolling/heatmap + Reproduce 卡）+ Monitor zone Panel A/B/C/D React 5 頁 telemetry-backed（10 vitest）。前端三 zone（Research/Monitor/System）+ Cmd-K 全實頁。 | 8.G.7-partial（Run Report）+ 8.A.1/8.A.2（Panel React） |
 | 🚧 Sprint 13-15 — v0.5：Paper trading + 監控接管 | 10/20-11/30（外推） | Paper 監控 infra 已落地：PaperBroker + trade-log DB writers + Risk Gate ex-ante 12 條 + 3 級熔斷 + Prefect daily flow + Discord 規則引擎 + Grafana + InfluxDB + market_reader（live panel）。**3 個月 paper 報告 blocked 於可部署 edge + after-close 排程器（真實日曆時間）** — infra 就緒但 gated。 | 7.A + 7.C + 7.D + 8.C.2 + 8.B + 8.D |
 | Sprint 16+ — v1.0：小倉位實盤 + 晉升前端收尾 | 2027 Q1+（外推） | v1.0：小倉位實盤（Shioaji 1/4 倉）+ 晉升 stepper 強制 gate + Panel D/E React + Compare/Sweep 前端 + 備份/DR。**edge-gated**：待 paper 期 live OOS + 配置閘 sign-off，無可部署 edge 前不啟動。 | 7.B + 8.G.8 + 8.A.2 + 8.G.7-full + 8.E/8.F |
-
-<!-- SCRUM_BOARD:END -->
-
 | ... | ... | 後續 sprint 待近期規劃 | |
 
 ### 早期停止 Gate
@@ -567,6 +564,7 @@
 
 | 版本 | 日期 | 變更 |
 |:--|:--|:--|
+| v3.25 | 2026-07-02 | **移除 scrum_board 互動看板工具（§7 凍結為靜態快照）**：`tools/scrum_board`（拖拉看板 server + sync_wbs 引擎）+ `dev_docs/scrum_board.json` 資料檔移除。理由——其自動同步的 §7 sprint 表被明確標為「非權威」（狀態真相源是 §1 banner + §2 工作包統計），sprint 線性排列源自 2026-06-02 早於 ADR-023/025 pivot、實際交付 out-of-order 從未隨 pivot 重排，且每次用前仍須人工對照 §1/§2 truth-up（2026-07-02 即手動改過一次 column）→ 淪為第二份會漂移的狀態表示，正是 code-doc-sync 規則要消滅的 drift 源。§7 marker 自動同步移除、sprint 表保留為手工維護的非權威 roadmap 歷史快照（含 Sprint -1→16+ audit trail）；根 README 目錄樹引用移除；§6 交付現況註的 sync_wbs.py 待辦指標一併清除。**純工具/文件移除，無 src/ 生產碼影響、無測試變動**。 | Self |
 | v3.24 | 2026-07-02 | **跨日倉位回填（PR #151 已知限制解除）**：after-close 每個 CLI process 起新 `PaperBroker` 導致組合層風控每日從空倉起算（EX-002 單股上限 / EX-004 heat / EX-007 持股數）——Paper-Watch OOS（ADR-033）資料不誠實。新 `data.db_reader.load_broker_state(strategy)` 從 telemetry 還原：**cash** 取該策略 `equity_snapshots` 最新一筆（sink 直寫的實際 cash，最誠實源）、**持倉** 由已落庫 fills（`orders` 表）依時間序摺疊還原（鏡射 `PaperBroker` 加權成本；`positions` 表不由 paper 流程寫入、`open_positions` 僅計數，皆非可用源）。`PaperBroker.from_seed(cash, positions)` 種子啟動（不可變、種子不入 trade_log）。接線於 `after_close._build_broker`（session 建構點，最小侵入）：有 telemetry→回填、首日 None→全新、**DB 錯誤→propagate（fail loud，絕不靜默空倉）**，`--fresh` CLI flag 明示放棄回填。殘留限制：`orders` 無 strategy_id → fills 還原為 portfolio-wide，今日僅 `inst_flow` 接 paper 故精確；接第二策略前須加寫側辨識欄。TDD：+20 測試（reconstruct/load_broker_state/from_seed/_build_broker/風控整合看得到回填部位/CLI --fresh）、全套綠 coverage ~92.6%。doc 14/16 同步。 | Self |
 | v3.23 | 2026-06-16 | **`api.gen.ts` regen（OpenAPI 型別同步，FE 禁手寫形狀收尾）**：dump 後端 FastAPI app openapi（66 paths / 52 schemas，含新 `IngestRequest` + 接真的 monitor 端點）→ `frontend/openapi.json` → `npm run gen:api`（openapi-typescript）重生 `src/types/api.gen.ts`（+204 行）。FE `system/api/ingest.ts` 由手定 `IngestBody` 改用 `components['schemas']['IngestRequest']`（消除前述手寫形狀 follow-up）。typecheck 綠、FE 44 vitest 綠。§2 合計 989→990h、banner v3.22→v3.23。 | Self |
 | v3.22 | 2026-06-16 | **Monitor aggregate producers 接真（8.H.8，續推 buildable-backlog）**：`db_reader.fleet_summary`（`DISTINCT ON (strategy_id) … ORDER BY snapshot_time DESC` → 每策略最新 equity/cash/持倉/heat，telemetry-driven 免 registry import）→ `/monitor/fleet`（live 艦隊）+ `/monitor/portfolio-summary`（總淨值/策略數/持倉 roll-up）；`/monitor/strategies` 投影 ADR-027 策略 registry catalog（best-effort import runners → `list_strategies`）。degraded 路徑沿 #122 慣例 `logger.warning` 不靜默。FE FleetPage 接真（組合摘要 tiles + 艦隊表 + `usePortfolioSummary`）。smoke test `/monitor/fleet` 由 pending-list 移為 `/monitor/correlation`（fleet now real）。§2 8.H.8 詳列、合計 983→989h、banner v3.21→v3.22、test 1003→1007（+4 backend：fleet/portfolio/pending/strategies-catalog）；FE 44 vitest。**Monitor 區 telemetry 端點全接真**（equity/positions/signals/fills/kpi/fleet/portfolio）；剩 correlation（需多策略 returns）+ 即時 WS（M5）。 | Self |
