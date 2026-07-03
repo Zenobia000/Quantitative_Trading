@@ -495,6 +495,90 @@
         }
       }
     },
+    "/runs/{run_id}/report": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Report",
+        "description": "One-shot aggregate for the Run-Report page (verdict / segments / monthly /\ndrawdown events / cost sensitivity). 404 if the run is unknown; every\nunsourceable field is ``null`` (never fabricated).",
+        "operationId": "run_report_runs__run_id__report_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RunReportData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run_id}/notebook": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Notebook",
+        "description": "Download a prefilled ``.ipynb`` for one run (Open-in-notebook). 404 if unknown.\n\nReturns the notebook JSON with a ``Content-Disposition: attachment`` header so a\nbrowser saves ``run_<id>.ipynb``; the template loads the run from the repo stores\n(not the REST API) when the operator runs it in the repo venv Jupyter.",
+        "operationId": "run_notebook_runs__run_id__notebook_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/runs/tag": {
       "post": {
         "tags": [
@@ -3569,6 +3653,51 @@
         ],
         "title": "Envelope[RunRecord]"
       },
+      "Envelope_RunReportData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunReportData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[RunReportData]"
+      },
       "Envelope_SavedView_": {
         "properties": {
           "success": {
@@ -4508,6 +4637,95 @@
         ],
         "title": "RunRecord",
         "description": "A full ledger record (``GET /runs/{id}`` / ``POST /runs``). Shape varies by\nrun; only the identity field is guaranteed, the rest pass through."
+      },
+      "RunReportData": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segments"
+          },
+          "monthly_returns": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Returns"
+          },
+          "monthly_returns_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Returns Note"
+          },
+          "drawdown_events": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drawdown Events"
+          },
+          "cost_sensitivity": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Sensitivity"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunReportData",
+        "description": "``GET /runs/{id}/report`` \u2014 one-shot Run-Report aggregate.\n\nBlocks are loosely typed (dict/list) on purpose: each carries an honest ``null``\nwhen its source is absent (verdict inputs, sidecar-derived charts), so a strict\nnested schema would misrepresent the contract. ``extra='allow'`` keeps every\nsub-field flowing to the frontend."
       },
       "RunSummary": {
         "properties": {

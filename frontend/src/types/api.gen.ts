@@ -232,6 +232,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs/{run_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Report
+         * @description One-shot aggregate for the Run-Report page (verdict / segments / monthly /
+         *     drawdown events / cost sensitivity). 404 if the run is unknown; every
+         *     unsourceable field is ``null`` (never fabricated).
+         */
+        get: operations["run_report_runs__run_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/notebook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Run Notebook
+         * @description Download a prefilled ``.ipynb`` for one run (Open-in-notebook). 404 if unknown.
+         *
+         *     Returns the notebook JSON with a ``Content-Disposition: attachment`` header so a
+         *     browser saves ``run_<id>.ipynb``; the template loads the run from the repo stores
+         *     (not the REST API) when the operator runs it in the repo venv Jupyter.
+         */
+        get: operations["run_notebook_runs__run_id__notebook_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/runs/tag": {
         parameters: {
             query?: never;
@@ -1708,6 +1754,17 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** Envelope[RunReportData] */
+        Envelope_RunReportData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["RunReportData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** Envelope[SavedView] */
         Envelope_SavedView_: {
             /** Success */
@@ -2079,6 +2136,43 @@ export interface components {
         RunRecord: {
             /** Run Id */
             run_id: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * RunReportData
+         * @description ``GET /runs/{id}/report`` — one-shot Run-Report aggregate.
+         *
+         *     Blocks are loosely typed (dict/list) on purpose: each carries an honest ``null``
+         *     when its source is absent (verdict inputs, sidecar-derived charts), so a strict
+         *     nested schema would misrepresent the contract. ``extra='allow'`` keeps every
+         *     sub-field flowing to the frontend.
+         */
+        RunReportData: {
+            /** Run Id */
+            run_id: string;
+            /** Verdict */
+            verdict?: {
+                [key: string]: unknown;
+            } | null;
+            /** Segments */
+            segments?: {
+                [key: string]: unknown;
+            } | null;
+            /** Monthly Returns */
+            monthly_returns?: {
+                [key: string]: unknown;
+            } | null;
+            /** Monthly Returns Note */
+            monthly_returns_note?: string | null;
+            /** Drawdown Events */
+            drawdown_events?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Cost Sensitivity */
+            cost_sensitivity?: {
+                [key: string]: unknown;
+            } | null;
         } & {
             [key: string]: unknown;
         };
@@ -2626,6 +2720,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_report_runs__run_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_RunReportData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_notebook_runs__run_id__notebook_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

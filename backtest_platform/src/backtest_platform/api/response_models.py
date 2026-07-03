@@ -48,6 +48,24 @@ class SweepEstimate(_Data):
     axes: dict[str, int] = Field(default_factory=dict)
 
 
+class RunReportData(_Data):
+    """``GET /runs/{id}/report`` — one-shot Run-Report aggregate.
+
+    Blocks are loosely typed (dict/list) on purpose: each carries an honest ``null``
+    when its source is absent (verdict inputs, sidecar-derived charts), so a strict
+    nested schema would misrepresent the contract. ``extra='allow'`` keeps every
+    sub-field flowing to the frontend.
+    """
+
+    run_id: str
+    verdict: dict[str, Any] | None = None
+    segments: dict[str, Any] | None = None
+    monthly_returns: dict[str, Any] | None = None
+    monthly_returns_note: str | None = None
+    drawdown_events: list[dict[str, Any]] | None = None
+    cost_sensitivity: dict[str, Any] | None = None
+
+
 class RunComparisonRow(_Data):
     """One run's reading in a compare report."""
 

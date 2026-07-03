@@ -196,11 +196,13 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 ---
 
-## §6 端點 registry（全 75）
+## §6 端點 registry（全 77）
 
 > **🔧 2026-07-02 對齊（審查缺陷 #20）**：移除已刪除的 `/presets` + `/presets/{name}`（由 `GET /strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；補 `GET /research/workflows/{strategy}` + `POST /research/workflows/{workflow}`（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md) 研究工作流 dispatch）。淨計數 71→72。
 
 > **🔧 2026-07-02 補（審查缺陷 #17，[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）**：Paper-Watch 觀察艙 GUI 補課——`GET /monitor/watch` + `POST /monitor/watch/{strategy}/pause|resume`（§6.2 觀察艙段）。與其餘 `/monitor/*`（M4 deferred-stub）不同，此三條**已 LIVE**（讀 event-sourced `watch_registry.jsonl` + `after_close_markers.jsonl`，非 daemon telemetry）。淨計數 72→75。
+>
+> **🔧 2026-07-03 補（Run-Report v1 資料面，P0 後端）**：`GET /runs/{run_id}/report`（判決卡＋分段 sealed 邊界＋年×月熱圖＋top-5 回撤事件＋成本敏感 Sharpe 對，一次聚合）+ `GET /runs/{run_id}/notebook`（Open-in-notebook，回 `.ipynb` attachment）。純函式在 `validation/report.py`（`monthly_returns_matrix` / `drawdown_events` / `dsr_band`）與 `research/notebook_export.py`；truth-gate 判決非持久化 → 只帶觀察艙已存 DSR/band，查不到誠實回 `null`（#169 慣例）。淨計數 75→77。
 
 > 圖例 — **Status**：`✅shipped`（v0.6 已實作）/ `🟡partial`（已實作但需擴充）/ `⬜missing` / `🔵deferred-stub`（§5.4）。
 > **就緒度**：`ready`（後端能力已存在、只缺接線）/ `needs-work`（需新後端邏輯）/ `needs-data`（需新資料源）。
@@ -225,6 +227,8 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/runs/{run_id}/log` | ⬜ needs-work | — → `{lines[], status}`（job lifecycle log）| 404 | run_04 | M3.5 |
 | GET | `/runs/{run_id}/traded-symbols` | ⬜ needs-work | — → `[{symbol, trades, pnl_contrib}]`（有交易個股 + 貢獻排序）| 404 | trade_review | M3.2 |
 | GET | `/runs/{run_id}/candles` | 🟡 ready | `?symbol=`（選填，缺省=run 首檔；對齊 sibling `/trades?symbol=`）→ `{run_id, symbol, symbols[], candles:[{time,open,high,low,close,volume}], markers:[{time,kind:entry\|exit,price,ret?}]}`（個股日 K + entry ▲/exit ▼ marker）。K 線讀 parquet OHLC 快取（`daily_bars__<sid>.parquet`）、window 取自 run record；marker 由 run 訊號管線重推（four_layer 有 per-bar 進出場，panel 策略無 → 空 marker）。lightweight-charts v5（[ADR-034](./adrs/ADR-034-trade-review-kline-lightweight-charts.md)，改 Plotly→lightweight-charts）。該股無 parquet → typed-empty `pending`（不假造）| 404（未知 run）| trade_review | ✅ M3.2 |
+| GET | `/runs/{run_id}/report` | ✅ ready | — → `{run_id, verdict{gate_status, gate_summary, criteria[]\|null, validation{validation_status,stage}\|null, truth_gate{verdict_dsr,band:REAL\|PAPER_WATCH\|REJECTED,state,enrolled_on,expiry_date,days_remaining,observed_trading_days,source}\|null}, segments{run_window{is_start,is_end}, truth_gate_window{is_start,oos_start,is_end}\|null}, monthly_returns{years[],matrix[][],annual[],basis}\|null, monthly_returns_note\|null, drawdown_events[{peak_idx,trough_idx,recovery_idx\|null,peak_date,trough_date,recovery_date\|null,depth,duration_bars,recovered}]\|null, cost_sensitivity{sharpe,slippage_sharpe}}`（Run-Report v1 一次聚合：判決卡＋分段 sealed 邊界＋年×月熱圖＋top-5 回撤事件＋成本敏感 Sharpe 對。truth-gate 判決非持久化 → 只帶觀察艙已存 DSR/band；查不到欄位誠實回 `null`。月矩陣 date index 由 run 窗口重建 business-day（sidecar 無日期，`basis` 揭露）。純函式在 `validation/report.py`）| 404（未知 run）| run_04/05 | ✅ M3.2 |
+| GET | `/runs/{run_id}/notebook` | ✅ ready | — → `.ipynb` JSON（`Content-Disposition: attachment; filename=run_<id>.ipynb`）。cells 預填：markdown 標題（run/strategy/hypothesis/窗口/gate）＋ import `backtest_platform` 讀 ledger＋series sidecar（repo venv Jupyter，不繞 REST）＋ equity/drawdown 快速圖＋空白分析格。模板純函式 `research/notebook_export.py` | 404（未知 run）| run_04 | ✅ M3.2 |
 | GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{factors:[{name, score}…], total}`（因子/層級歸因，**維度 N 由策略 `reason_json` 決定，不寫死層數**；four_layer 為 N=4 特例。需 harness 捕捉）| 404 | trade_review | M3.2 |
 | GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{factors:[{name, score}…], total, signal_reason}`（context_drawer 當日因子分數，策略無關 N 維）| 404 | trade_review | M3.2 |
 | GET | `/runs/estimate` | ⬜ ready | `?<grid params>` → `{n_configs, est_minutes}`（`sweep.expand_grid`）| 422 | run_02 | M3.1 |
