@@ -8,7 +8,7 @@ export type Lang = (typeof SUPPORTED)[number]
 export const DEFAULT_LNG: Lang = 'zh-TW'
 export const STORAGE_KEY = 'bt.lang'
 
-export const NAMESPACES = ['common', 'nav', 'home', 'research', 'monitor', 'system', 'status', 'errors', 'sections'] as const
+export const NAMESPACES = ['common', 'nav', 'home', 'research', 'liveOos', 'monitor', 'system', 'status', 'errors', 'sections'] as const
 export const DEFAULT_NS = 'common'
 
 /** i18n 語碼 → <html lang> 屬性值。 */

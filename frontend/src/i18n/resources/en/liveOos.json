@@ -1,0 +1,49 @@
+{
+  "queue": {
+    "title": "Live OOS Queue",
+    "subtitle": "Every human-selected candidate awaiting / undergoing expensive OOS — unselected candidates never auto-run",
+    "resource": "Live OOS queue",
+    "dataSource": {
+      "fixture": "fixture mode — contract example",
+      "fixtureHint": "The backend /research/live-oos/queue is not responding yet; showing the bundled contract example. Selection is consumed on the backend after-close tick.",
+      "live": "Connected"
+    },
+    "empty": {
+      "headline": "No strategies selected for Live OOS yet",
+      "subtitle": "Only human-selected candidates spend expensive paper / live OOS. Select an eligible candidate in the Candidate Pool.",
+      "cta": "Go to Candidate Pool"
+    },
+    "filter": {
+      "all": "All",
+      "noMatch": "No queue items in this state."
+    },
+    "state": {
+      "queued": "Queued",
+      "running": "Running",
+      "paused": "Paused",
+      "completed": "Completed",
+      "expired": "Window Closed",
+      "cancelled": "Cancelled"
+    },
+    "kind": {
+      "paper_watch_berth": "Watch Berth",
+      "paper_replay": "Paper Replay",
+      "after_close": "After-Close Session"
+    },
+    "override": "override selection",
+    "selectedBy": "Selected by {{who}} on {{at}}",
+    "overrideReason": "Override reason: {{reason}}",
+    "observedDays": "Observed trading days",
+    "expiry": "Expires {{date}}",
+    "daysRemaining": "{{days}} days left",
+    "overdue": "{{days}} days overdue",
+    "runResult": "replay verdict",
+    "replayPending": "paper replay pending consumption (fired on the backend after-close tick)",
+    "links": {
+      "report": "Report Viewer",
+      "reportNa": "no report",
+      "candidate": "Candidate Pool",
+      "strategy": "Strategy Asset"
+    }
+  }
+}
