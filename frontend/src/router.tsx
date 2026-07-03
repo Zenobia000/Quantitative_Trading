@@ -77,6 +77,7 @@ const ROUTES: RouteDef[] = [
   { path: 'research/promote/:strategyId', title: 'Promote', spec: 'research_08_promote' },
   // Monitor
   { path: 'monitor', title: '策略艦隊總控', spec: 'monitor_fleet' },
+  { path: 'monitor/board', title: '運行看板', spec: 'monitor_board' },
   { path: 'monitor/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
   { path: 'monitor/performance', title: '績效總覽', spec: 'monitor_a_performance' },
   { path: 'monitor/positions', title: '部位狀態', spec: 'monitor_b_positions' },
