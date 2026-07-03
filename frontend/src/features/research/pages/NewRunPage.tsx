@@ -6,7 +6,7 @@
  */
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { createRun, type RunCreateRequest } from '../api/createRun'
 import { useStrategyRegistry } from '../hooks/useStrategyRegistry'
@@ -21,11 +21,13 @@ export function NewRunPage() {
   const { t } = useTranslation('research')
   const errText = useErrorText()
   const navigate = useNavigate()
+  const [sp] = useSearchParams()
   const registry = useStrategyRegistry()
   const strategies = Array.isArray(registry.data?.data) ? registry.data.data : []
 
   const [hypothesis, setHypothesis] = useState('')
-  const [strategy, setStrategy] = useState('four_layer')
+  // 策略中心「New Run」以 ?strategy= 深連結預填此欄（refresh-safe）；未帶則預設 four_layer。
+  const [strategy, setStrategy] = useState(sp.get('strategy') ?? 'four_layer')
   const [paramsText, setParamsText] = useState('{}')
   const [stocks, setStocks] = useState('2330,2454')
   const [isStart, setIsStart] = useState('2020-01-01')
