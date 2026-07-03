@@ -34,6 +34,11 @@ RUNS_PATH_ENV = "BACKTEST_RUNS_PATH"
 WATCH_REGISTRY_PATH_ENV = "WATCH_REGISTRY_PATH"
 AFTER_CLOSE_MARKER_PATH_ENV = "AFTER_CLOSE_MARKER_PATH"
 
+#: Env var overriding the per-run validation-event log (8.H.7). The Run-Report
+#: verdict block reads its latest folded state; overridable so tests point at a tmp
+#: JSONL and an operator at a non-default ``reports/``.
+VALIDATION_EVENTS_PATH_ENV = "VALIDATION_EVENTS_PATH"
+
 _TWT = timezone(timedelta(hours=8))  # Taiwan is fixed UTC+8 (no DST)
 
 
@@ -100,6 +105,18 @@ def get_after_close_marker_path() -> Path:
 
     raw = os.environ.get(AFTER_CLOSE_MARKER_PATH_ENV)
     return Path(raw) if raw else DEFAULT_MARKER_PATH
+
+
+def get_validation_events_path() -> Path:
+    """Resolve the validation-event log path (``$VALIDATION_EVENTS_PATH`` or default).
+
+    The Run-Report verdict block folds this run's latest ``{validation_status, stage}``
+    from it; injectable so tests point at a tmp JSONL without touching ``reports/``.
+    """
+    from backtest_platform.research.validation_store import DEFAULT_VALIDATION_PATH
+
+    raw = os.environ.get(VALIDATION_EVENTS_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_VALIDATION_PATH
 
 
 def get_watch_today() -> date:

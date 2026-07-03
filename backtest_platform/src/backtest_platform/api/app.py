@@ -31,6 +31,7 @@ from backtest_platform.api.routers import (
     research_validate,
     research_workflows,
     runs,
+    runs_report,
     runs_series,
     runs_tags,
     strategies,
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
 
     app.include_router(runs.router)
     app.include_router(runs_series.router)  # M3 seam: S4 computed series (8.H.3)
+    app.include_router(runs_report.router)  # Run-Report v1 aggregate + Open-in-notebook
     app.include_router(runs_tags.router)  # M3 seam: S5 run tagging (8.H.4)
     app.include_router(gate.router)
     app.include_router(metrics.router)
