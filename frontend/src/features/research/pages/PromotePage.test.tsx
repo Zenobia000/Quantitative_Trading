@@ -39,13 +39,13 @@ function stubFetch(validationStatus = 'is_pass') {
   )
 }
 
-function renderAt(path = '/research/promote/s1') {
+function renderAt(path = '/deploy/promote/s1') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={qc}>
       <MemoryRouter initialEntries={[path]}>
         <Routes>
-          <Route path="/research/promote/:strategyId" element={<PromotePage />} />
+          <Route path="/deploy/promote/:strategyId" element={<PromotePage />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

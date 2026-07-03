@@ -305,6 +305,8 @@ graph LR
 | **新增（移入）** | `item.strictGate` | `/deploy/gate` | 部署嚴格閘 / Strict Gate（承接 validate）|
 | detail（非 nav item）| — | `/deploy/promote/:strategyId` | 晉升，per-strategy 進入 |
 
+> **落地（`refactor/deployment-zone-ia`）**：nav 五 zone 就位、`ValidateGatePage`/`PromotePage` 元件搬 route 不搬檔（`/deploy/gate`、`/deploy/promote/:strategyId`）；舊 `research/validate`(帶 query)、`research/promote/:strategyId`(轉發參數) client 重導；gate 語意零放寬（純位置搬遷）。
+
 ### 5.4 Monitor zone（items 減）
 
 | 動作 | key | to | 說明 |

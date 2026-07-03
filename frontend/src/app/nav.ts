@@ -1,6 +1,6 @@
 /*
  * IA sidebar 導覽配置（真相源 dev_docs/web_design/rebuild_ia_spec_2026-07-03.md §5）。
- * 順序：Research（研究分流主軸）→ Live OOS（人工勾選昂貴驗證）→ Monitor（已配資本 live 子視圖）→ System。首頁為 root。
+ * 順序：Research（研究分流主軸）→ Live OOS（人工勾選昂貴驗證）→ Deployment（部署級嚴格閘）→ Monitor（已配資本 live 子視圖）→ System。首頁為 root。
  * label 已 i18n 化：item 存 `nav` namespace 的 key（見 i18n/resources 各語言 nav.json），
  * 由 AppShell / CommandPalette 以 t() 渲染；zone 顯示由 zone id 推導（t nav:zone.id）。
  */
@@ -12,7 +12,7 @@ export interface NavItem {
   spec: string
 }
 export interface NavZone {
-  zone: 'research' | 'live-oos' | 'monitor' | 'system'
+  zone: 'research' | 'live-oos' | 'deployment' | 'monitor' | 'system'
   items: NavItem[]
 }
 
@@ -28,7 +28,7 @@ export const NAV: NavZone[] = [
       { key: 'item.runs', to: '/research/runs', spec: 'research_03_runs_table' },
       { key: 'item.compare', to: '/research/compare', spec: 'research_05_compare' },
       { key: 'item.sweep', to: '/research/sweep', spec: 'research_06_sweep' },
-      { key: 'item.validate', to: '/research/validate', spec: 'research_07_validate_gate' },
+      // validate 已移出 Research → Deployment zone（嚴格閘不再是研究第一體驗，rebuild IA §5.1/§5.3）。
     ],
   },
   {
@@ -38,6 +38,14 @@ export const NAV: NavZone[] = [
       { key: 'item.liveOosQueue', to: '/live-oos/queue', spec: 'live_oos_queue' },
       // 觀察艙由 monitor 移入（Paper-Watch 是零資本 OOS 觀察，語義屬 Live OOS 非 live 艦隊）。
       { key: 'item.watch', to: '/live-oos/watch', spec: 'monitor_watch' },
+    ],
+  },
+  {
+    // Deployment zone（rebuild IA §1.3）：部署級嚴格閘的旅程三。晉升（promote）為 per-strategy
+    // detail route（/deploy/promote/:strategyId），由嚴格閘/策略詳情進入，不進主 nav（§5.3）。
+    zone: 'deployment',
+    items: [
+      { key: 'item.strictGate', to: '/deploy/gate', spec: 'research_07_validate_gate' },
     ],
   },
   {

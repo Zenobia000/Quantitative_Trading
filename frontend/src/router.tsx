@@ -20,6 +20,7 @@ import { PromotePage } from '@/features/research/pages/PromotePage'
 import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
 import { LiveOosQueuePage } from '@/features/liveOos/pages/LiveOosQueuePage'
+import { GateRedirect, PromoteRedirect } from '@/app/redirects'
 import { HomePage } from '@/features/home/pages/HomePage'
 import { FleetPage } from '@/features/monitor/pages/FleetPage'
 import { BoardPage } from '@/features/monitor/pages/BoardPage'
@@ -42,12 +43,16 @@ const REAL: Record<string, ReactElement> = {
   'research/reports/:runId': <ReportViewerPage />,
   'research/runs/:id/trades': <TradeReviewPage />,
   'research/compare': <ComparePage />,
-  'research/validate': <ValidateGatePage />,
   'research/sweep': <SweepPage />,
-  'research/promote/:strategyId': <PromotePage />,
+  // validate/promote migrated to Deployment zone → keep old paths as client redirects (rebuild IA §5.6)
+  'research/validate': <GateRedirect />,
+  'research/promote/:strategyId': <PromoteRedirect />,
   // Live OOS zone — human-selected expensive OOS journey (rebuild IA §1.2)
   'live-oos/queue': <LiveOosQueuePage />,
   'live-oos/watch': <WatchPage />, // Paper-Watch 觀察艙 migrated from monitor (元件搬 route 不搬檔)
+  // Deployment zone — strict gate + capital promotion, journey 3 (rebuild IA §1.3)
+  'deploy/gate': <ValidateGatePage />, // 承接 validate；元件搬 route 不搬檔
+  'deploy/promote/:strategyId': <PromotePage />,
   // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
   monitor: <FleetPage />,
   'monitor/board': <BoardPage />,
@@ -84,11 +89,15 @@ const ROUTES: RouteDef[] = [
   { path: 'research/runs/:id/trades', title: '逐筆覆盤', spec: 'research_trade_review' },
   { path: 'research/compare', title: 'Compare', spec: 'research_05_compare' },
   { path: 'research/sweep', title: 'Sweep', spec: 'research_06_sweep' },
-  { path: 'research/validate', title: 'Validate gate', spec: 'research_07_validate_gate' },
-  { path: 'research/promote/:strategyId', title: 'Promote', spec: 'research_08_promote' },
+  // validate/promote 已移 Deployment zone；舊 path 保留為 client 重導（→ /deploy/*）
+  { path: 'research/validate', title: 'Validate gate（→ Deployment）', spec: 'research_07_validate_gate' },
+  { path: 'research/promote/:strategyId', title: 'Promote（→ Deployment）', spec: 'research_08_promote' },
   // Live OOS
   { path: 'live-oos/queue', title: 'OOS 佇列', spec: 'live_oos_queue' },
   { path: 'live-oos/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
+  // Deployment
+  { path: 'deploy/gate', title: '部署嚴格閘', spec: 'research_07_validate_gate' },
+  { path: 'deploy/promote/:strategyId', title: '晉升', spec: 'research_08_promote' },
   // Monitor
   { path: 'monitor', title: '策略艦隊總控', spec: 'monitor_fleet' },
   { path: 'monitor/board', title: '運行看板', spec: 'monitor_board' },

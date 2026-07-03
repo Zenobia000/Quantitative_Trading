@@ -3,6 +3,7 @@
   "zone": {
     "research": "RESEARCH",
     "live-oos": "LIVE OOS",
+    "deployment": "DEPLOYMENT",
     "monitor": "MONITOR",
     "system": "SYSTEM"
   },
@@ -13,8 +14,8 @@
     "runs": "Runs",
     "compare": "Compare",
     "sweep": "Parameter Sweep",
-    "validate": "Validation Gate",
     "liveOosQueue": "Live OOS Queue",
+    "strictGate": "Strict Gate",
     "fleet": "Strategy Fleet",
     "board": "Operations Board",
     "watch": "Watch Deck",
