@@ -25,7 +25,7 @@ class RunCreateRequest(BaseModel):
     stocks: list[str] = Field(..., min_length=1, description="Stock ids to run")
     is_start: date
     is_end: date
-    engine: str = Field("sim", description="sim | zipline")
+    engine: str = Field("sim", description="sim (zipline/vectorbt removed 2026-07-03, ADR-037)")
 
 
 class GateEvaluateRequest(BaseModel):

@@ -39,8 +39,13 @@ def test_promote_advance_and_audit(client, isolate_stores):
     assert audit[0]["stage"] == "paper" and audit[0]["note"] == "ok"
 
 
-def test_promote_illegal_skip_422(client, isolate_stores):
-    assert client.post("/research/promote/s2", json={"to_stage": "live"}).status_code == 422
+def test_promote_illegal_skip_400(client, isolate_stores):
+    # A4: a domain ValueError (illegal skip draft→live) is 400 BAD_REQUEST, not 422
+    # (422 is reserved for schema validation). promote is a pure stage machine, so
+    # every ValueError it raises is an illegal transition → 400.
+    resp = client.post("/research/promote/s2", json={"to_stage": "live"})
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "BAD_REQUEST"
 
 
 def test_validate_wfa_redline_still_pending(client, isolate_stores):

@@ -13,11 +13,11 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
 from backtest_platform.api.deps import get_data_root
-from backtest_platform.api.envelope import Envelope, ok, pending
+from backtest_platform.api.envelope import DataSource, Envelope, ok, page_meta
 from backtest_platform.api.response_models import AlertRuleRow, RiskSpecData
 from backtest_platform.jobs import job_store, submit
 from backtest_platform.monitoring.alert_rules import rules_spec as _alert_rules_spec
@@ -88,15 +88,34 @@ class BundleQuality(BaseModel):
     n_ingested_failed: int | None = None
 
 
+class DatasetCard(BaseModel):
+    """One ``GET /system/datasets`` card — a strategy author's data-dictionary row.
+
+    Answers the three authoring-first questions: *what is this data* (key / name /
+    category / freq / history / description), *is it local* (``local`` binary), and
+    *which of my strategies use it* (``used_by``). No freshness / coverage — that is
+    a runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."""
+
+    key: str
+    name_zh: str
+    category: str
+    freq: str
+    history_start: str
+    description: str
+    local: str  # "cached" | "not_cached"
+    used_by: list[str]
+
+
 router = APIRouter(prefix="/system", tags=["system"])
 
-_PENDING = "pending"
 
-
-def _stub(data: Any, ttl: int = 300, *, total: int | None = None) -> Envelope:
-    meta: dict[str, Any] = {"data_source": _PENDING, "ttl": ttl}
+def _stub(
+    data: Any, ttl: int = 300, *, total: int | None = None, page: int = 1, limit: int = 50
+) -> Envelope:
+    """Typed-empty stub (``DataSource.PENDING``); paginated stubs echo real page/limit."""
+    meta: dict[str, Any] = {"data_source": DataSource.PENDING, "ttl": ttl}
     if total is not None:
-        meta |= {"total": total, "page": 1, "limit": 50}
+        meta |= page_meta(total, page, limit)
     return ok(data, meta=meta)
 
 
@@ -150,8 +169,10 @@ def alert_rules_put() -> Envelope:
 
 
 @router.get("/alerts/history", response_model=Envelope)
-def alert_history(page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=200)) -> Envelope:
-    return _stub([], total=0)
+def alert_history(page: int = Query(1, ge=1), limit: int = Query(50, ge=1, le=500)) -> Envelope:
+    """Alert history — offset-paginated (A3). No producer yet, so the slice is empty,
+    but ``page``/``limit`` are echoed honestly rather than hard-coded."""
+    return _stub([], total=0, page=page, limit=limit)
 
 
 @router.post("/alerts/history/{event_id}/ack", response_model=Envelope)
@@ -163,7 +184,7 @@ def alert_ack(event_id: str) -> Envelope:
 @router.get("/bundles", response_model=Envelope[list[BundleRow]])
 def bundles(
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(50, ge=1, le=500),
     data_root: Path = Depends(get_data_root),
 ) -> Envelope:
     """Real bundle manifest scan (ADR-021 §5.4 → live). Discovers the default parquet
@@ -182,15 +203,16 @@ def bundles(
     window = rows[start : start + limit]
     return ok(
         window,
-        meta={"data_source": "parquet_scan", "total": total, "page": page, "limit": limit, "ttl": 300},
+        meta={"data_source": DataSource.PARQUET_SCAN, **page_meta(total, page, limit), "ttl": 300},
     )
 
 
 @router.get("/bundles/{bundle_id}/quality", response_model=Envelope[BundleQuality])
 def bundle_quality(bundle_id: str, data_root: Path = Depends(get_data_root)) -> Envelope:
     """Cheap manifest-derived quality for one bundle (row stats / alive-delisted /
-    ingest tallies). Unknown id → typed-empty (``data_source="not_found"``). The
-    heavier per-column freshness/gap audit is left to a future producer."""
+    ingest tallies). Unknown id → **404 NOT_FOUND** (A4 — an unknown resource is an
+    error, not a 200 with ``data:null``). The heavier per-column freshness/gap audit
+    is left to a future producer."""
     from backtest_platform.data.bundle_registry import compute_bundle_quality
 
     try:
@@ -198,8 +220,65 @@ def bundle_quality(bundle_id: str, data_root: Path = Depends(get_data_root)) -> 
     except Exception:  # degrade, never 500
         info = None
     if info is None:
-        return ok(None, meta={"data_source": "not_found", "id": bundle_id, "ttl": 300})
-    return ok(BundleQuality(**asdict(info)), meta={"data_source": "parquet_scan", "ttl": 300})
+        raise HTTPException(status_code=404, detail={"resource": "bundle", "id": bundle_id})
+    return ok(BundleQuality(**asdict(info)), meta={"data_source": DataSource.PARQUET_SCAN, "ttl": 300})
+
+
+# ---- dataset catalog (sys_data) — authoring-first data dictionary --------
+@router.get("/datasets", response_model=Envelope[list[DatasetCard]])
+def datasets(
+    category: str | None = Query(None, description="filter by category slug (exact)"),
+    q: str | None = Query(None, description="case-insensitive substring on key / name_zh"),
+    data_root: Path = Depends(get_data_root),
+) -> Envelope:
+    """The FinLab dataset catalog as authoring-first cards (:mod:`data.finlab_catalog`).
+
+    Each card layers three request-time facts onto the curated snapshot: local
+    presence (``data.dataset_presence`` — the honest three-table bundle binary),
+    the strategy reverse-index (``data.strategy_data_index``), and the two author
+    filters (``?category`` exact, ``?q`` substring on key/name). Deliberately no
+    manifest read / staleness — the catalog is a data *dictionary*, not a cache
+    monitor."""
+    from backtest_platform.data.dataset_presence import presence_for_category
+    from backtest_platform.data.finlab_catalog import CATALOG_VERSION, load_catalog
+    from backtest_platform.data.strategy_data_index import (
+        build_strategy_data_index,
+        default_strategies_root,
+    )
+
+    specs = load_catalog()
+    if category:
+        specs = tuple(s for s in specs if s.category == category)
+    if q:
+        needle = q.casefold()
+        specs = tuple(
+            s for s in specs
+            if needle in s.key.casefold() or needle in s.name_zh.casefold()
+        )
+
+    index = build_strategy_data_index(default_strategies_root())
+    cards = [
+        DatasetCard(
+            key=s.key,
+            name_zh=s.name_zh,
+            category=s.category,
+            freq=s.freq,
+            history_start=s.history_start,
+            description=s.description,
+            local=presence_for_category(s.category, data_root),
+            used_by=index.get(s.key, []),
+        )
+        for s in specs
+    ]
+    return ok(
+        cards,
+        meta={
+            "catalog_version": CATALOG_VERSION,
+            "data_source": DataSource.CATALOG,
+            "total": len(cards),
+            "ttl": 300,
+        },
+    )
 
 
 @router.post("/ingest", response_model=Envelope, status_code=202)
@@ -225,16 +304,18 @@ def ingest(req: IngestRequest) -> Envelope:
 
 
 def _job_status(job_id: str) -> Envelope:
-    """Shared async-job poll: real state, or typed-empty ``pending`` if unknown."""
+    """Shared async-job poll: real state, or **404 NOT_FOUND** if the id is unknown
+    (A4 / doc 25 §5.2 — an unknown or expired job is an error, so pollers surface an
+    error state instead of an infinite ``pending``)."""
     job = job_store.read_job(job_id)
     if job is None:
-        return pending({"job_id": job_id, "status": None, "progress": None})
+        raise HTTPException(status_code=404, detail={"resource": "job", "id": job_id})
     return ok(job.to_dict())
 
 
 @router.get("/ingest/{job_id}/status", response_model=Envelope)
 def ingest_status(job_id: str) -> Envelope:
-    """Poll an ingest job's status/result; typed-empty ``pending`` if unknown."""
+    """Poll an ingest job's status/result; 404 if the id is unknown."""
     return _job_status(job_id)
 
 
@@ -278,5 +359,5 @@ def universe_build(req: UniverseBuildRequest) -> Envelope:
 
 @router.get("/universe/build/{job_id}/status", response_model=Envelope)
 def universe_build_status(job_id: str) -> Envelope:
-    """Poll a universe-build job's status/result; typed-empty ``pending`` if unknown."""
+    """Poll a universe-build job's status/result; 404 if the id is unknown."""
     return _job_status(job_id)

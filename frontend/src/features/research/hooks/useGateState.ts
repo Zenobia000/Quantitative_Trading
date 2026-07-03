@@ -8,6 +8,6 @@ export function useGateState(runId: string | undefined) {
     queryKey: ['gate-state', runId],
     queryFn: () => getGateState(runId as string),
     enabled: !!runId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

@@ -33,11 +33,9 @@ from backtest_platform.api.deps import (
     get_watch_today,
     get_watch_trading_day_fn,
 )
-from backtest_platform.api.envelope import Envelope, ok
+from backtest_platform.api.envelope import DataSource, Envelope, ok
 
 router = APIRouter(prefix="/monitor/watch", tags=["monitor-watch"])
-
-_SOURCE = "watch_registry"
 
 
 def _status_dict(st: Any) -> dict[str, Any]:
@@ -90,7 +88,7 @@ def watch_overview(
             ],
         }
         rows.append(row)
-    return ok(rows, meta={"data_source": _SOURCE, "ttl": 60, "total": len(rows)})
+    return ok(rows, meta={"data_source": DataSource.WATCH_REGISTRY, "ttl": 60, "total": len(rows)})
 
 
 def _toggle(strategy: str, reg_path: Path, is_trading_day: Callable[[date], bool], *, resume: bool) -> Envelope:
@@ -103,7 +101,7 @@ def _toggle(strategy: str, reg_path: Path, is_trading_day: Callable[[date], bool
     except WatchRegistryError as exc:
         # A missing / terminal berth is a caller mistake, not a server fault → 400.
         raise HTTPException(status_code=400, detail={"message": str(exc), "strategy": strategy}) from None
-    return ok(_status_dict(st), meta={"data_source": _SOURCE})
+    return ok(_status_dict(st), meta={"data_source": DataSource.WATCH_REGISTRY})
 
 
 @router.post("/{strategy}/pause", response_model=Envelope)

@@ -144,6 +144,7 @@
     "submit": "Submit Sweep",
     "submitting": "Submitting…",
     "submitError": "Submission failed: {{detail}}",
+    "jobError": "Job status query failed: {{detail}} (job {{jobId}} may have expired or no longer exists)",
     "expanded": "Expanded {{n}} configs",
     "pending": {
       "heatmap": "Optimization heatmap stable region (per-config backtest results, needs parquet)",
@@ -190,6 +191,7 @@
       "button": "Promote to {{stage}} →",
       "advancing": "Promoting…",
       "disabledHint": "Requires gate-pass evidence to promote",
+      "gateBlocked": "Promotion blocked by the validation gate: {{detail}}",
       "gateWarning": "This strategy has no run passing the IS gate yet — promotion blocked (frontend guard; must pass the Validation Gate first).",
       "finalStage": "Already at the final stage (Live) — nothing to promote."
     },

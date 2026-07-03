@@ -1,10 +1,10 @@
 """Default backtest universe — the platform-wide stock-list constant.
 
-Extracted from ``engines.zipline_adapter.bundles.finmind_bundle`` (dependency
--untangle refactor) so strategy-layer ``research_config`` modules can declare
-their universe WITHOUT importing the zipline bundle. Before this, a strategy's
-``research_config`` reached down into the zipline bundle just for this constant,
-which dragged in the heavy zipline engine and triggered its process-global
+Extracted from ``data.finmind_bundle`` (dependency-untangle refactor) so
+strategy-layer ``research_config`` modules can declare their universe WITHOUT
+importing the ingest module. Before this, a strategy's ``research_config``
+reached down into the bundle module just for this constant, which (pre-ADR-037)
+dragged in the heavy zipline engine and triggered its process-global
 bundle-registry side-effect on any import path that touched a research_config.
 
 This module has ZERO heavy dependencies. ``finmind_bundle`` re-exports

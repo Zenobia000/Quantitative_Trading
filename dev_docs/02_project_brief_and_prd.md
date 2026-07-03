@@ -202,8 +202,9 @@
 **依賴**：
 - FinLab API（主資料源，付費）+ FinMind API（fallback）— ADR-006
 - TimescaleDB（telemetry / bundle cache）
-- zipline-reloaded（回測引擎主骨架）— ADR-013 / ADR-014
-- vectorbt 1.0+（回測引擎副，參數網格）— ADR-007 / ADR-014
+- 離線 close-to-close **sim**（唯一回測引擎，`strategies/.../sim.py` + `research.is_harness`）— ADR-037（zipline-reloaded 引擎殘骸已移除，supersedes ADR-013/014）
+- exchange-calendars（精確 XTAI 交易日曆，`calendar` extra；排程假日閘門）— ADR-037
+- vectorbt（`engines` optional extra，engines/ 移除後暫無 live 呼叫；保留待未來向量網格）— ADR-007
 - FastAPI + React（後端 API + 前端）— ADR-021 / ADR-015
 - Discord（告警主通道）+ Grafana（系統面板輔）— ADR-009 / ADR-010
 - uv（套件管理）— ADR-012

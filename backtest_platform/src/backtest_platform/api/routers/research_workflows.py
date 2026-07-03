@@ -73,7 +73,11 @@ def submit_workflow(workflow: str, req: _WorkflowRequest) -> Envelope:
     if workflow not in _WORKFLOWS:
         raise HTTPException(
             status_code=404,
-            detail=f"unknown workflow {workflow!r}; choose from {sorted(_WORKFLOWS)}",
+            detail={
+                "resource": "workflow",
+                "id": workflow,
+                "message": f"unknown workflow {workflow!r}; choose from {sorted(_WORKFLOWS)}",
+            },
         )
     getter, run_ref = _WORKFLOWS[workflow]
     try:

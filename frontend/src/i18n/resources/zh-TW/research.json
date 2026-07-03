@@ -144,6 +144,7 @@
     "submit": "提交掃描",
     "submitting": "提交中…",
     "submitError": "提交失敗：{{detail}}",
+    "jobError": "任務狀態查詢失敗：{{detail}}（job {{jobId}} 可能已過期或不存在）",
     "expanded": "展開 {{n}} 組 config",
     "pending": {
       "heatmap": "Optimization heatmap 穩定區（每 config 回測結果，需 parquet）",
@@ -190,6 +191,7 @@
       "button": "晉升至 {{stage}} →",
       "advancing": "晉升中…",
       "disabledHint": "需守門通過證據方可晉升",
+      "gateBlocked": "晉升被驗證守門阻擋：{{detail}}",
       "gateWarning": "此策略尚無 IS gate PASS 的 run，暫不可晉升（前端防線；晉升前須先通過驗證守門）。",
       "finalStage": "已達最終階段（實盤），無可晉升。"
     },

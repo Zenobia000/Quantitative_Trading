@@ -93,6 +93,9 @@ export function SweepPage() {
         <section className="mb-3 rounded-lg border border-border bg-surface p-4 text-sm">
           {submit.isError ? (
             <span className="text-error">{t('sweep.submitError', { detail: errText(submit.error) })}</span>
+          ) : job.isError ? (
+            // A4：未知/過期 job → 後端 404，顯示錯誤訊息而非無盡 queued。
+            <span className="text-error">{t('sweep.jobError', { detail: errText(job.error), jobId })}</span>
           ) : (
             <div className="flex flex-wrap items-center gap-3">
               <EnumBadge family="job" value={jobData?.status ?? 'queued'} />

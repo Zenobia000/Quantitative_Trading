@@ -8,7 +8,7 @@ export function useRunEquity(runId: string | undefined) {
     queryKey: ['run-equity', runId],
     queryFn: () => getRunEquity(runId as string),
     enabled: !!runId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }
 
@@ -17,6 +17,6 @@ export function useRunTrades(runId: string | undefined) {
     queryKey: ['run-trades', runId],
     queryFn: () => getRunTrades(runId as string),
     enabled: !!runId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

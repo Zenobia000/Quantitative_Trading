@@ -43,6 +43,8 @@ def test_pending_endpoints_tagged(client, path):
     ``tests/api/test_system.py`` and no longer belongs on the pending list.
     """
     body = client.get(path).json()
-    # home/research-status 為真聚合（無 data_source）；其餘 pending
-    if path != "/home/research-status":
+    # home/research-status 為真 ledger 聚合（data_source=ledger，A1）；其餘 pending
+    if path == "/home/research-status":
+        assert body["meta"]["data_source"] == "ledger"
+    else:
         assert body.get("meta", {}).get("data_source", "").startswith("pending")

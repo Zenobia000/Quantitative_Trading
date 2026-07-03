@@ -65,7 +65,7 @@ def test_perf_equity_serves_real_telemetry():
 def test_perf_equity_falls_back_to_pending_without_db():
     body = _client(_FakeReader(fail=True)).get("/monitor/performance/equity").json()
     assert body["data"] == []
-    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["meta"]["data_source"] == "pending"
 
 
 def test_pos_snapshot_serves_open_positions():
@@ -82,7 +82,7 @@ def test_pos_snapshot_serves_open_positions():
 def test_pos_snapshot_falls_back_to_pending_without_db():
     body = _client(_FakeReader(fail=True)).get("/monitor/positions/snapshot").json()
     assert body["data"] == []
-    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["meta"]["data_source"] == "pending"
 
 
 def test_signals_serves_real_telemetry():
@@ -110,7 +110,7 @@ def test_fills_serves_real_telemetry():
 def test_signals_fills_fall_back_to_pending_without_db(path):
     body = _client(_FakeReader(fail=True)).get(path).json()
     assert body["data"] == []
-    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["meta"]["data_source"] == "pending"
 
 
 @pytest.mark.parametrize(
@@ -147,7 +147,7 @@ def test_perf_kpi_short_series_returns_zeros():
 
 def test_perf_kpi_pending_without_db():
     body = _client(_FakeReader(fail=True)).get("/monitor/performance/kpi").json()
-    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["meta"]["data_source"] == "pending"
     assert body["data"] == {}
 
 
@@ -176,7 +176,7 @@ def test_portfolio_summary_rolls_up_fleet():
 def test_fleet_pending_without_db():
     body = _client(_FakeReader(fail=True)).get("/monitor/fleet").json()
     assert body["data"] == []
-    assert body["meta"]["data_source"] == "pending_m4"
+    assert body["meta"]["data_source"] == "pending"
 
 
 def test_strategies_lists_registry_catalog():
@@ -238,3 +238,42 @@ def test_board_passes_limit_and_validates() -> None:
     assert client.get("/monitor/board?limit=7").status_code == 200
     assert reader.seen_limit == 7
     assert client.get("/monitor/board?limit=0").status_code == 422
+
+
+def test_board_limit_cap_is_500() -> None:
+    # A3: every list cap is le=500 (was le=200 / uncapped).
+    client = _board_client(_BoardReader(rows=[]))
+    assert client.get("/monitor/board?limit=500").status_code == 200
+    assert client.get("/monitor/board?limit=501").status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# A3 — pagination unification: signals offset-slices (page was ACCEPTED BUT
+# IGNORED) + every stub echoes the caller's real page/limit (was {1,50}).
+# ---------------------------------------------------------------------------
+def test_signals_pagination_offset_slices_and_echoes_page() -> None:
+    rows = [{"stock_id": f"{i:04d}"} for i in range(5)]
+    body = _client(_FakeReader(signals=rows)).get(
+        "/monitor/signals", params={"page": 2, "limit": 2}
+    ).json()
+    assert [r["stock_id"] for r in body["data"]] == ["0002", "0003"]  # offset slice
+    assert body["meta"]["page"] == 2 and body["meta"]["limit"] == 2  # real values echoed
+    assert body["meta"]["total"] == 5
+
+
+def test_signals_pending_fallback_echoes_page() -> None:
+    body = _client(_FakeReader(fail=True)).get(
+        "/monitor/signals", params={"page": 3, "limit": 10}
+    ).json()
+    assert body["meta"]["data_source"] == "pending"
+    assert body["meta"]["page"] == 3 and body["meta"]["limit"] == 10
+
+
+def test_risk_events_echoes_real_page_limit() -> None:
+    body = _client(_FakeReader()).get(
+        "/monitor/risk/events", params={"page": 4, "limit": 25}
+    ).json()
+    # no producer yet → empty slice, but the query is echoed honestly (not {1,50}).
+    assert body["data"] == []
+    assert body["meta"]["page"] == 4 and body["meta"]["limit"] == 25
+    assert body["meta"]["data_source"] == "pending"

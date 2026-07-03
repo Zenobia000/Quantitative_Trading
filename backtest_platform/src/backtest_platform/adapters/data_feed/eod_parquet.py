@@ -1,7 +1,7 @@
 """EOD parquet feed — the only concrete :class:`DataFeed` today (ADR-035).
 
 A thin adapter over the existing parquet cache reader
-(``engines.zipline_adapter.bundles.parquet_cache.ParquetCache``): it delegates all
+(``data.parquet_cache.ParquetCache``): it delegates all
 IO to that reader and just reshapes the per-symbol bundles into the DataFeed's
 window/latest views. It rewires nothing — it exists so future realtime feeds land
 behind a stable interface. ``supports_realtime`` is ``False``: EOD after-close batch
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from backtest_platform.engines.zipline_adapter.bundles.parquet_cache import ParquetCache
+from backtest_platform.data.parquet_cache import ParquetCache
 
 
 class EODParquetFeed:

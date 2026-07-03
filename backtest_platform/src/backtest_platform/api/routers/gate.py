@@ -28,7 +28,8 @@ def _resolve_gate(strategy: str | None):
     """The strategy's declared gate, or the four-layer DEFAULT_GATE when omitted.
 
     Unknown strategy / a strategy without a declared gate raise ValueError, which
-    the callers map to HTTP 400 (bad request, not a server fault).
+    the callers map to **HTTP 404** (an unknown *named resource*, standardized with
+    ``/research/workflows/{workflow}`` — A4).
     """
     if not strategy:
         return DEFAULT_GATE
@@ -38,16 +39,24 @@ def _resolve_gate(strategy: str | None):
     return get_strategy_gate(strategy)
 
 
+def _gate_or_404(strategy: str | None):
+    """Resolve the gate or raise a structured 404 for an unknown strategy."""
+    try:
+        return _resolve_gate(strategy)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=404,
+            detail={"resource": "strategy", "id": strategy, "message": str(exc)},
+        ) from None
+
+
 @router.get("/spec", response_model=Envelope[GateSpecData])
 def gate_spec(strategy: str | None = Query(None)) -> Envelope:
     """Return a gate's criteria (key / op / threshold / kind / label).
 
     ``strategy`` → that strategy's declared gate; omitted → four-layer DEFAULT_GATE.
     """
-    try:
-        gate = _resolve_gate(strategy)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
+    gate = _gate_or_404(strategy)
     criteria = [
         {
             "key": c.key,
@@ -67,10 +76,7 @@ def gate_evaluate(req: GateEvaluateRequest) -> Envelope:
 
     ``req.strategy`` → that strategy's declared gate; omitted → four-layer default.
     """
-    try:
-        gate = _resolve_gate(req.strategy)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from None
+    gate = _gate_or_404(req.strategy)
     result = evaluate_gate(req.metrics, gate)
     payload = {
         "status": result.status.value,

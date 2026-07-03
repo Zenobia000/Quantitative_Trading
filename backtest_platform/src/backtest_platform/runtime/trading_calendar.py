@@ -5,13 +5,12 @@ or a public / lunar holiday). Accuracy comes on a ladder so the platform degrade
 gracefully instead of hard-failing when an optional dependency is absent:
 
 1. **Injected ``calendar``** (tests / callers) — authoritative; used verbatim.
-2. **``exchange_calendars`` XTAI** (the ``mainframe`` extra, already the TWSE
-   session source for the zipline bundle) — full holiday accuracy including the
-   shifting lunar-new-year / tomb-sweeping dates.
+2. **``exchange_calendars`` XTAI** (the ``calendar`` extra) — full holiday
+   accuracy including the shifting lunar-new-year / tomb-sweeping dates.
 3. **Weekday fallback** (Mon–Fri) — an APPROXIMATION used only when the extra is
    not installed. LIMITATION: it treats Taiwan public / lunar holidays that fall
    on a weekday as trading days, so it can over-fire on ~10–15 days/year. Install
-   the extra (``uv sync --extra mainframe``) for exact sessions; the scheduler's
+   the extra (``uv sync --extra calendar``) for exact sessions; the scheduler's
    idempotency + risk gate still bound the blast radius of a false positive.
 
 The XTAI import is lazy and defensively wrapped so importing this module never
@@ -63,7 +62,7 @@ def _log_calendar_mode_once(xtai_available: bool) -> None:
     else:
         logger.warning(
             "trading calendar: 近似日曆 (週一至五) — 平日國定/農曆假期會被誤判為交易日"
-            "（年約 10–15 天，assumed-open 假告警來源）；裝 `uv sync --extra mainframe` "
+            "（年約 10–15 天，assumed-open 假告警來源）；裝 `uv sync --extra calendar` "
             "取得精確 XTAI sessions"
         )
 

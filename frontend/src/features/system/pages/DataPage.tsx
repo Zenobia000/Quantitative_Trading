@@ -74,10 +74,17 @@ function IngestCard() {
       )}
       {jobId && (
         <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
-          {t('data.job.label')} <span className="text-text">{jobId}</span> · {t('data.job.statusLabel')}{' '}
-          <EnumBadge family="job" value={job?.status} />
-          {job?.result && (
-            <span> · {t('data.ingest.result', { ok: job.result.ok?.length ?? 0, failed: job.result.failed?.length ?? 0 })}</span>
+          {status.isError ? (
+            // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」（契約側語意，i18n 本地化）。
+            <span className="text-error">{t('data.job.error', { jobId, detail: errText(status.error) })}</span>
+          ) : (
+            <>
+              {t('data.job.label')} <span className="text-text">{jobId}</span> · {t('data.job.statusLabel')}{' '}
+              <EnumBadge family="job" value={job?.status} />
+              {job?.result && (
+                <span> · {t('data.ingest.result', { ok: job.result.ok?.length ?? 0, failed: job.result.failed?.length ?? 0 })}</span>
+              )}
+            </>
           )}
         </div>
       )}
@@ -150,17 +157,24 @@ function UniverseBuildCard() {
       )}
       {jobId && (
         <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
-          {t('data.job.label')} <span className="text-text">{jobId}</span> · {t('data.job.statusLabel')}{' '}
-          <EnumBadge family="job" value={job?.status} />
-          {job?.result && (
-            <span>
-              {' '}
-              · {t('data.universe.result', {
-                n: job.result.n_symbols ?? 0,
-                alive: job.result.n_alive ?? 0,
-                delisted: job.result.n_delisted ?? 0,
-              })}
-            </span>
+          {status.isError ? (
+            // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」（契約側語意，i18n 本地化）。
+            <span className="text-error">{t('data.job.error', { jobId, detail: errText(status.error) })}</span>
+          ) : (
+            <>
+              {t('data.job.label')} <span className="text-text">{jobId}</span> · {t('data.job.statusLabel')}{' '}
+              <EnumBadge family="job" value={job?.status} />
+              {job?.result && (
+                <span>
+                  {' '}
+                  · {t('data.universe.result', {
+                    n: job.result.n_symbols ?? 0,
+                    alive: job.result.n_alive ?? 0,
+                    delisted: job.result.n_delisted ?? 0,
+                  })}
+                </span>
+              )}
+            </>
           )}
         </div>
       )}

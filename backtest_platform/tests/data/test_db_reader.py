@@ -10,10 +10,10 @@ Data-source contract pinned here (schema-driven, see docstring in db_reader):
   * **cash** — the latest ``equity_snapshots.cash`` for the strategy (mode=paper).
     That column is written straight from ``broker.portfolio_snapshot()['cash']``,
     so it is the exact, per-strategy, most-honest cash at last session close.
-  * **positions** — folded from the persisted fills (``orders`` rows, the fill
-    log) chronologically, mirroring ``PaperBroker`` averaging, because the
-    ``positions`` table is never written by the paper/live flow (only tests call
-    ``upsert_positions``) and ``equity_snapshots.open_positions`` is a count only.
+  * **positions** — folded from the persisted ``fills`` (the single execution
+    store, ADR-038) chronologically, mirroring ``PaperBroker`` averaging, scoped
+    to the strategy via ``fills.strategy_id``; ``equity_snapshots.open_positions``
+    is a count only, too coarse for the per-name portfolio risk gates.
 
 DB access is patched (no live DB); a real-DB round-trip lives behind
 ``POSTGRES_INTEGRATION`` (skipped by default), mirroring test_db_writer.
@@ -66,6 +66,76 @@ def test_reconstruct_partial_sell_keeps_basis_drops_when_flat() -> None:
 
 def test_reconstruct_empty_is_empty() -> None:
     assert reconstruct_positions([]) == {}
+
+
+# --------------------------------------------------------------------------- #
+# open_positions / recent_fills — read the fills store (ADR-038; positions and   #
+# orders tables are gone). GET /monitor/positions was permanently empty because  #
+# the positions table was never written in prod — folding fills fixes that.      #
+# --------------------------------------------------------------------------- #
+def _reader_with_rows(rows):
+    from backtest_platform.data.db_reader import TelemetryReader
+
+    cur = MagicMock()
+    cur.fetchall.return_value = rows
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value = cur
+    return TelemetryReader(cfg=MagicMock()), cur, conn
+
+
+def test_open_positions_folds_fills_into_position_rows() -> None:
+    from datetime import datetime, timezone
+
+    opened = datetime(2026, 1, 2, 1, tzinfo=timezone.utc)
+    reader, cur, conn = _reader_with_rows([
+        # (strategy_id, stock_id, side, fill_quantity, fill_price, fill_time)
+        ("inst_flow", "2330", "Buy", 1000, 100.0, opened),
+        ("inst_flow", "2330", "Buy", 1000, 110.0, datetime(2026, 1, 3, 1, tzinfo=timezone.utc)),
+        ("inst_flow", "2317", "Buy", 500, 50.0, datetime(2026, 1, 4, 1, tzinfo=timezone.utc)),
+        ("inst_flow", "2317", "Sell", 500, 60.0, datetime(2026, 1, 5, 1, tzinfo=timezone.utc)),
+    ])
+    with patch("backtest_platform.data.db_reader._connection") as ctx:
+        ctx.return_value.__enter__.return_value = conn
+        rows = reader.open_positions()
+
+    # 2317 fully closed → dropped; 2330 nets 2000 @ weighted 105, opened_at = first buy
+    assert rows == [{
+        "stock_id": "2330", "quantity": 2000, "entry_price": 105.0,
+        "stop_loss": None, "opened_at": opened.isoformat(), "strategy_id": "inst_flow",
+    }]
+    sql = cur.execute.call_args.args[0]
+    assert "FROM fills" in sql and "positions" not in sql.lower()
+
+
+def test_open_positions_scopes_by_strategy_when_given() -> None:
+    reader, cur, conn = _reader_with_rows([])
+    with patch("backtest_platform.data.db_reader._connection") as ctx:
+        ctx.return_value.__enter__.return_value = conn
+        reader.open_positions(strategy_id="inst_flow")
+    sql, params = cur.execute.call_args.args
+    assert "strategy_id = %s" in sql
+    assert "inst_flow" in params
+
+
+def test_recent_fills_maps_fills_to_fillrow_shape() -> None:
+    from datetime import datetime, timezone
+
+    ft = datetime(2026, 1, 2, 1, tzinfo=timezone.utc)
+    reader, cur, conn = _reader_with_rows([
+        # (fill_time, stock_id, side, fill_quantity, fill_price)
+        (ft, "2330", "Buy", 1000, 542.0),
+    ])
+    with patch("backtest_platform.data.db_reader._connection") as ctx:
+        ctx.return_value.__enter__.return_value = conn
+        rows = reader.recent_fills(limit=10)
+
+    # fills has no status column → constant 'filled' keeps the FE FillRow shape
+    assert rows == [{
+        "created_at": ft.isoformat(), "stock_id": "2330", "side": "Buy",
+        "quantity": 1000, "price": 542.0, "status": "filled",
+    }]
+    sql = cur.execute.call_args.args[0]
+    assert "FROM fills" in sql and "orders" not in sql.lower()
 
 
 # --------------------------------------------------------------------------- #
@@ -130,7 +200,8 @@ def test_load_broker_state_cash_only_when_no_fills() -> None:
 
 
 def test_load_broker_state_queries_are_scoped() -> None:
-    """The equity query filters by strategy + paper mode; fills filter paper fills."""
+    """The equity query filters by strategy + paper mode; fills scope by broker
+    AND strategy_id (ADR-038 — fills now carries a strategy discriminator)."""
     conn, cur = _fake_conn(equity_row=(1.0,), fill_rows=[])
     with patch("backtest_platform.data.db_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
@@ -142,8 +213,9 @@ def test_load_broker_state_queries_are_scoped() -> None:
     assert "mode" in equity_sql and "strategy_id" in equity_sql
     assert "inst_flow" in equity_params and "paper" in equity_params
     fills_sql, fills_params = calls[1]
-    assert "orders" in fills_sql and "filled" in fills_sql.lower()
-    assert "paper" in fills_params
+    assert "fills" in fills_sql and "strategy_id" in fills_sql
+    assert "orders" not in fills_sql  # ADR-038 dropped the orders table
+    assert "paper" in fills_params and "inst_flow" in fills_params
 
 
 # --------------------------------------------------------------------------- #
@@ -162,7 +234,8 @@ def test_load_broker_state_real_db() -> None:
     strat = "restore_it_test"
     now = datetime.now(timezone.utc)
     dbw.upsert_fills([
-        {"stock_id": "TEST", "side": "buy", "qty": 1000, "price": 100.0, "filled_at": now},
+        {"stock_id": "TEST", "side": "buy", "qty": 1000, "price": 100.0,
+         "strategy_id": strat, "filled_at": now},
     ])
     dbw.upsert_equity_snapshots([
         {

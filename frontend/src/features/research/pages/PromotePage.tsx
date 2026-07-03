@@ -16,6 +16,7 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { EnumBadge } from '@/components/EnumBadge'
 import { useEnumLabel } from '@/i18n/useEnumLabel'
 import { useErrorText } from '@/i18n/useErrorText'
+import { ApiError } from '@/services/http'
 
 const STAGES = ['draft', 'paper', 'live'] as const
 
@@ -107,7 +108,16 @@ export function PromotePage() {
               >
                 {advance.isPending ? t('promote.advance.advancing') : t('promote.advance.button', { stage: nextStageLabel })}
               </button>
-              {advance.isError && <span className="text-error">{errText(advance.error)}</span>}
+              {advance.isError && (
+                // A4：後端把非法轉移映成 400 BAD_REQUEST；gate-blocked advance 則映成
+                // 409 IS_GATE_NOT_PASSED（backstop——前端已用 validation_status 先行 gate）。
+                // 契約側的 gate-blocked 專用語意保留，並以 i18n 本地化；其餘錯誤走中央化 errText。
+                <span className="text-error">
+                  {advance.error instanceof ApiError && advance.error.code === 'IS_GATE_NOT_PASSED'
+                    ? t('promote.advance.gateBlocked', { detail: advance.error.message })
+                    : errText(advance.error)}
+                </span>
+              )}
             </div>
             {!gatePassed && <p className="text-xs text-warning">{t('promote.advance.gateWarning')}</p>}
           </div>

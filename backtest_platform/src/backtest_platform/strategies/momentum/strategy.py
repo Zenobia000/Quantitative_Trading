@@ -9,7 +9,7 @@ go long the top ``top_fraction`` equal-weight, hold to the next rebalance, and
 charge ``cost_round_rate`` on the rebalance turnover.
 
 Pure functions over a price panel (date × symbol); no IO, so unit-testable with
-synthetic prices. The IS harness (`research.momentum_harness`) wires it to a
+synthetic prices. The runner (`research.runners.MomentumRunner`) wires it to a
 loader + the gate審判庭 so momentum is judged by the same objective criteria as
 any strategy. This is the platform's proof that it is strategy-agnostic: a second,
 structurally different strategy plugs into the same metrics/gate/ledger.

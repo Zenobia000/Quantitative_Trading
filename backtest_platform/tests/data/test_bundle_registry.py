@@ -1,7 +1,7 @@
 """Tests for ``data.bundle_registry`` — scan parquet caches → bundle entries.
 
 Uses ``tmp_path`` with synthetic manifests written in the exact schemas produced by
-``engines.zipline_adapter.bundles.parquet_cache.write_manifest`` (default cache) and
+``data.parquet_cache.write_manifest`` (default cache) and
 ``research.workflows.universe._write_manifest`` (survivorship universe build). No real
 data, no network.
 """

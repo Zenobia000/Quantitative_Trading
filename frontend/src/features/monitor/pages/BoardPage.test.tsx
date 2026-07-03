@@ -48,7 +48,7 @@ describe('BoardPage', () => {
     expect(screen.getByText('執行中')).toBeInTheDocument()
   })
   it('pending → PendingNote', async () => {
-    mock([], { data_source: 'pending_m4' })
+    mock([], { data_source: 'pending' })
     renderPage()
     await waitFor(() => expect(screen.getByText(/待 TimescaleDB runs 表/)).toBeInTheDocument())
   })

@@ -106,6 +106,24 @@
 
 > ✅ **已實作（8.H.1）**：handler 依 status 對映上表 `code`（`_STATUS_TO_CODE`），422 填 `detail=[{loc,msg}]` 陣列（保留人類可讀 `message`），dict `HTTPException.detail` 透傳為結構化 `detail`，未映 status 落 `INTERNAL`。
 
+> **🔧 錯誤語意統一（2026-07-03，contract-standardization WP／A4）**：
+>
+> - **未知資源 → 404 everywhere**：`GET /system/bundles/{id}/quality`（先前 `200+data:null`）、job 輪詢 `GET /system/ingest/{job_id}/status`、`GET /research/sweep/{id}/status`、`GET /runs/{job_id}/log`、`GET /system/universe/build/{job_id}/status`（先前 `200+pending`——§5.2 早已要求 404）皆改回 **404**。前端 job pollers 於 error 態停止輪詢並顯示錯誤，不再無限 pending。
+> - **未知具名資源 → 404**：`/gate/spec?strategy=`、`POST /gate/evaluate`（未知 strategy，先前 400）與 `POST /research/workflows/{workflow}`（未知 workflow）統一為 **404**。
+> - **domain `ValueError` → 400**：`POST /research/promote/{id}`（非法 skip/regress/未知 stage，先前 422）改為 **400 BAD_REQUEST**（422 專留 schema 驗證）。`promote` 為純 ordered stage machine，所有 `ValueError` 皆屬非法轉移。**409 `IS_GATE_NOT_PASSED`** 為 gate-blocked advance 之保留 backstop（目前 stage machine 不做 IS-gate 檢查故未觸發；前端已用 `validation_status` 先行 gate）。
+> - **結構化 404 `detail`**：主要 404 raiser（runs / runs candles / workflows / gate / bundles quality / job polls）一律回 `detail={"resource": "...", "id": ...}`（§2 承諾落地）。
+
+### §2.1 domain 狀態詞彙（非 HTTP 錯誤碼）
+
+回應 `data` 內的 domain 狀態字串（前端 switch/badge 用），與 §2 的 HTTP `error.code` 正交：
+
+| 詞彙 | 值 | 出現處 |
+| :--- | :--- | :--- |
+| **GateStatus**（審判庭 verdict）| `PASS` / `FAIL` / `INCOMPLETE` | `POST /gate/evaluate`、run record `gate_status` |
+| **validation_status**（IS 驗證）| `draft` / `is_pass` / `is_fail` | `/research/strategies`、`/research/validate/{id}/gate-state` |
+| **promotion stage**（晉升階）| `draft` / `paper` / `live` | `/research/promote/{id}` |
+| **TruthVerdict**（真相閘 band，A5）| `REAL` / `PAPER_WATCH` / `REJECTED` / `INCOMPLETE` | `/runs/{id}/report` 的 `verdict.truth_gate.band`（觀察艙 DSR band；非新端點）|
+
 ---
 
 ## §3 分頁（offset，單一）
@@ -117,7 +135,9 @@
 - Meta：`meta = {"total": <int>, "page": <int>, "limit": <int>}`。
 - **不提供 cursor/keyset**；若日後 telemetry 大表證明 offset 痛，**per-endpoint** 再加 keyset，**不全站雙軌**（ADR-021）。
 
-需分頁的端點（§6 標 `📄`）：`GET /runs`、`GET /research/strategies`、`GET /monitor/signals`、`GET /monitor/risk/events`、`GET /system/alerts/history`、`GET /system/bundles`。其餘為固定/小集合，不分頁。
+需分頁的端點（§6 標 `📄`，共 8 條）：`GET /runs`、`GET /research/strategies`、`GET /monitor/board`、`GET /monitor/signals`、`GET /monitor/fills`、`GET /monitor/risk/events`、`GET /system/alerts/history`、`GET /system/bundles`。其餘為固定/小集合，不分頁。
+
+> **統一標準（2026-07-03，contract-standardization WP／A3）**：所有 list 端點簽章一律 `page: int = Query(1, ge=1)` + `limit: int = Query(50, ge=1, le=500)`，回 `envelope.page_meta()`（`{total, page, limit}` 回填**呼叫端實際值**，不再硬編 `{1,50}`）。`GET /monitor/signals` 與 `GET /monitor/risk/events` 先前「接受 `page` 但忽略」的 bug 已改為真正 offset 切片；`GET /monitor/board`、`GET /monitor/fills` 補上 `page`。所有 `le=200` 上限升為 `le=500`。
 
 ---
 
@@ -153,7 +173,7 @@
 | 訊號（今日）| 30 | `/monitor/signals`、`/monitor/signals/funnel` | monitor_c |
 | 訊號（歷史）| 300 | `/monitor/signals/timeline`、`/monitor/fills` | monitor_c |
 | 風控遙測 | 30/60 | `/monitor/risk/metrics`(30)、`/monitor/risk/mdd-trend`(60) | monitor_d |
-| 運行看板 | 10 | `/monitor/board`（runs 表，10s 輪詢）| monitor_board |
+| 運行看板 | 5 | `/monitor/board`（runs 表；`meta.ttl=5` 驅動 staleTime，FE 另以 10s `refetchInterval` 輪詢）| monitor_board |
 | 績效面板（Monitor A）| 300 | `/monitor/performance/*` | monitor_a |
 | 艦隊板（live + 健康 + 退化）| 60 | `/monitor/fleet`、`/monitor/portfolio-summary` | monitor_fleet |
 | 艦隊相關性（低頻）| 300 | `/monitor/correlation` | monitor_fleet |
@@ -180,151 +200,138 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 整個契約**只有一個 WS**：`/ws/positions/live`（monitor_b 即時部位）。M5 才實作；M4 前 monitor_b 走 §5.1 的 60s 輪詢。訊息 schema（M5 定）：`{type:"snapshot|delta", positions:[…], ts}`。**其餘一切皆 HTTP polling**。
 
-### §5.4 stub 慣例（Monitor 區 pending_m4）
+### §5.4 stub 慣例 + `data_source` 詞彙（單一 enum）
 
 **決策（ADR-021）**：Monitor B/C/D 無 live 資料源（無 daemon 託管 PaperBroker/CircuitBreaker；`upsert_signals/orders/fills` 是 M4 `NotImplementedError`）。在 M4 producer 完成前，`/monitor/*` 端點以 **typed 空 envelope** 上線（讓前端對著穩定 shape 建頁）：
 
 ```jsonc
 { "success": true, "data": [], "error": null,
-  "meta": { "data_source": "pending_m4", "ttl": 60 } }
+  "meta": { "data_source": "pending", "ttl": 300 } }
 ```
 
 - **絕不回假數據/fixture 數字**（違反 `21 §8.8` single-truth）。
-- §6 將這些端點標 `status=deferred-stub`。
-- 前端據 `meta.data_source==="pending_m4"` 渲染明確空狀態「live 資料 M4 上線」，**非 0 值**。
+- 前端據 `meta.data_source==="pending"` 渲染明確空狀態，**非 0 值**（`isPending` 精確比對）。
 - M4 swap-in 真 producer，**契約 shape 不變**。
+
+**`data_source` 詞彙表（2026-07-03，contract-standardization WP／A1）**：後端把先前散落的 7 個 uncoordinated 字面量（含已淘汰的 `pending_m4`）收斂成 `api/envelope.py::DataSource` 單一 enum；drift-gate Check D（§9）static-scan 每個 `data_source` 賦值必為 enum 成員。
+
+| token | 語意 | FE `isPending`/`isPartial` |
+| :--- | :--- | :--- |
+| `pending` | 端點尚無 producer（typed 空 envelope；**取代舊 `pending_m4`**，一個概念一個 token）| `isPending` |
+| `partial` | 真實資料帶已揭露缺口（如 WFA folds 已出、per-fold scatter 仍 parquet-gated）| `isPartial`（照常渲染 live，另標缺口）|
+| `timescaledb` | live paper/live 遙測（TimescaleDB）| live |
+| `watch_registry` | event-sourced 觀察艙 berth（JSONL registry）| live |
+| `parquet_scan` | bundle manifest 掃描（parquet 快取）| live |
+| `ledger` | runs 帳本投影（`/home/research-status`、`/home/recent`）| live |
+| `catalog` | curated FinLab dataset 字典（`/system/datasets`）| live |
+
+- **pending 預設 ttl 統一為 300**（`envelope.pending()` 與 monitor/system `_stub` 同一預設；A2）——一個概念一個預設值。
+- **已移除的 `not_found` token**：`GET /system/bundles/{id}/quality` 未知 id 先前回 `200 + data:null + data_source="not_found"`，A4 改為 **404**（§2）。
 
 ---
 
-## §6 端點 registry（全 75）
+## §6 端點 registry（machine-checkable，全 83 operations / 77 paths）
 
-> **🔧 2026-07-02 對齊（審查缺陷 #20）**：移除已刪除的 `/presets` + `/presets/{name}`（由 `GET /strategies` 取代，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；補 `GET /research/workflows/{strategy}` + `POST /research/workflows/{workflow}`（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md) 研究工作流 dispatch）。淨計數 71→72。
+> **🔧 2026-07-03 全面 reconcile（contract-standardization WP／A6）**：§6 重寫為**機讀 inventory**——下表由 live OpenAPI 逐條列出，drift-gate **Check C**（§9）以 `<!-- drift:endpoint-inventory -->` sentinel 解析本表並與 live spec 逐 `{method, path}` 比對，不一致即紅燈。修正歷史 rot：`preset`→`strategy` 欄位、phantom 端點（validate is/oos/signoff、promote advance/demote/retire/observation、sweep heatmap、traded-symbols/attribution/day-context、runs/trials、`POST /research/strategies`）已移除；補上真實存在但先前漏列者（`/runs/async`、`/runs/{id}/log`、`/runs/{id}/report`、`/runs/{id}/notebook`、`/system/datasets`、`/system/universe/build*` 等）。**逐端點 request/response shape 一律以 OpenAPI 為機器真相（§7）**，本表只釘死「哪些 operation 存在」——移除先前 drift 成災的 per-endpoint req→resp 欄。
 
-> **🔧 2026-07-02 補（審查缺陷 #17，[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）**：Paper-Watch 觀察艙 GUI 補課——`GET /monitor/watch` + `POST /monitor/watch/{strategy}/pause|resume`（§6.2 觀察艙段）。與其餘 `/monitor/*`（M4 deferred-stub）不同，此三條**已 LIVE**（讀 event-sourced `watch_registry.jsonl` + `after_close_markers.jsonl`，非 daemon telemetry）。淨計數 72→75。
+> **歷史決策（保留脈絡）**：`/presets`→`/strategies`（[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）；研究工作流 dispatch（[ADR-029](./adrs/ADR-029-research-workflow-standardization.md)）；Paper-Watch 觀察艙 GUI（[ADR-033](./adrs/ADR-033-paper-watch-tier.md)，已 LIVE，讀 event-sourced JSONL 非 daemon telemetry）；Run-Report v1 一次聚合（`/runs/{id}/report`＋`/notebook`，純函式 `validation/report.py`／`research/notebook_export.py`）。
 
-> 圖例 — **Status**：`✅shipped`（v0.6 已實作）/ `🟡partial`（已實作但需擴充）/ `⬜missing` / `🔵deferred-stub`（§5.4）。
-> **就緒度**：`ready`（後端能力已存在、只缺接線）/ `needs-work`（需新後端邏輯）/ `needs-data`（需新資料源）。
-> `📄`=分頁（§3）。**消費頁**回指 `web_design/pages/`。**里程碑**見 §8。
+> **圖例**：`📄` = 分頁（§3 標準）。`⚠️` no-FE = 後端已上線但目前**尚無前端消費者**——這些是**功能**（如 `/metrics/*`、`/gate/evaluate`、editable alerts、`/runs/{id}/report`），**不刪**，只誠實標記等待接線。共 43 條已接前端、40 條 no-FE。逐頁 `[DATA & API]` 需求見 `web_design/pages/*`；里程碑見 §8 → 16 WBS。
 
-### §6.0 全域
+<!-- drift:endpoint-inventory:begin -->
+| Method | Path | Zone | 📄 | no-FE |
+| :--- | :--- | :--- | :---: | :---: |
+| GET | `/health` | Global |  | ⚠️ |
+| POST | `/gate/evaluate` | Research |  | ⚠️ |
+| GET | `/gate/spec` | Research |  |  |
+| POST | `/metrics/summary` | Research |  | ⚠️ |
+| POST | `/metrics/trades` | Research |  | ⚠️ |
+| GET | `/research/promote/{strategy_id}` | Research |  |  |
+| POST | `/research/promote/{strategy_id}` | Research |  |  |
+| GET | `/research/promote/{strategy_id}/audit` | Research |  |  |
+| GET | `/research/saved-views` | Research |  | ⚠️ |
+| POST | `/research/saved-views` | Research |  | ⚠️ |
+| GET | `/research/strategies` | Research | 📄 |  |
+| GET | `/research/strategies/{strategy_id}/versions` | Research |  | ⚠️ |
+| POST | `/research/sweep` | Research |  |  |
+| GET | `/research/sweep/{job_id}/status` | Research |  |  |
+| POST | `/research/trials/increment` | Research |  | ⚠️ |
+| GET | `/research/universe-filters` | Research |  | ⚠️ |
+| GET | `/research/validate/{run_id}/gate-state` | Research |  |  |
+| GET | `/research/validate/{run_id}/health` | Research |  | ⚠️ |
+| GET | `/research/validate/{run_id}/redline` | Research |  | ⚠️ |
+| GET | `/research/validate/{run_id}/wfa` | Research |  |  |
+| GET | `/research/workflows/{strategy}` | Research |  | ⚠️ |
+| POST | `/research/workflows/{workflow}` | Research |  | ⚠️ |
+| GET | `/runs` | Research | 📄 |  |
+| POST | `/runs` | Research |  |  |
+| POST | `/runs/async` | Research |  | ⚠️ |
+| GET | `/runs/compare` | Research |  |  |
+| GET | `/runs/estimate` | Research |  |  |
+| POST | `/runs/tag` | Research |  | ⚠️ |
+| GET | `/runs/{job_id}/log` | Research |  | ⚠️ |
+| GET | `/runs/{run_id}` | Research |  |  |
+| GET | `/runs/{run_id}/candles` | Research |  |  |
+| GET | `/runs/{run_id}/equity` | Research |  |  |
+| GET | `/runs/{run_id}/notebook` | Research |  | ⚠️ |
+| GET | `/runs/{run_id}/report` | Research |  | ⚠️ |
+| GET | `/runs/{run_id}/trades` | Research |  |  |
+| GET | `/strategies` | Research |  |  |
+| GET | `/monitor/board` | Monitor | 📄 |  |
+| GET | `/monitor/correlation` | Monitor |  | ⚠️ |
+| GET | `/monitor/fills` | Monitor | 📄 |  |
+| GET | `/monitor/fleet` | Monitor |  |  |
+| POST | `/monitor/fleet/{strategy_id}/action` | Monitor |  | ⚠️ |
+| GET | `/monitor/performance/benchmark` | Monitor |  | ⚠️ |
+| GET | `/monitor/performance/equity` | Monitor |  |  |
+| GET | `/monitor/performance/kpi` | Monitor |  |  |
+| GET | `/monitor/performance/monthly` | Monitor |  | ⚠️ |
+| GET | `/monitor/portfolio-summary` | Monitor |  |  |
+| GET | `/monitor/positions/concentration` | Monitor |  | ⚠️ |
+| GET | `/monitor/positions/industry-allocation` | Monitor |  | ⚠️ |
+| GET | `/monitor/positions/kpi` | Monitor |  | ⚠️ |
+| GET | `/monitor/positions/prices` | Monitor |  | ⚠️ |
+| GET | `/monitor/positions/snapshot` | Monitor |  |  |
+| GET | `/monitor/risk/events` | Monitor | 📄 | ⚠️ |
+| GET | `/monitor/risk/events/{event_id}` | Monitor |  | ⚠️ |
+| GET | `/monitor/risk/mdd-trend` | Monitor |  | ⚠️ |
+| GET | `/monitor/risk/metrics` | Monitor |  |  |
+| GET | `/monitor/signals` | Monitor | 📄 |  |
+| GET | `/monitor/signals/funnel` | Monitor |  | ⚠️ |
+| GET | `/monitor/signals/timeline` | Monitor |  | ⚠️ |
+| GET | `/monitor/strategies` | Monitor |  |  |
+| GET | `/monitor/watch` | Monitor |  |  |
+| POST | `/monitor/watch/{strategy}/pause` | Monitor |  |  |
+| POST | `/monitor/watch/{strategy}/resume` | Monitor |  |  |
+| GET | `/system/alerts/channels` | System |  |  |
+| PUT | `/system/alerts/channels` | System |  | ⚠️ |
+| GET | `/system/alerts/history` | System | 📄 | ⚠️ |
+| POST | `/system/alerts/history/{event_id}/ack` | System |  | ⚠️ |
+| GET | `/system/alerts/rules` | System |  |  |
+| POST | `/system/alerts/rules` | System |  | ⚠️ |
+| PUT | `/system/alerts/rules` | System |  | ⚠️ |
+| POST | `/system/alerts/test` | System |  | ⚠️ |
+| GET | `/system/bundles` | System | 📄 |  |
+| GET | `/system/bundles/{bundle_id}/quality` | System |  | ⚠️ |
+| GET | `/system/datasets` | System |  | ⚠️ |
+| POST | `/system/ingest` | System |  |  |
+| GET | `/system/ingest/{job_id}/status` | System |  |  |
+| POST | `/system/risk/evaluate` | System |  | ⚠️ |
+| GET | `/system/risk/spec` | System |  |  |
+| POST | `/system/universe/build` | System |  |  |
+| GET | `/system/universe/build/{job_id}/status` | System |  |  |
+| GET | `/home/fleet` | Home |  |  |
+| GET | `/home/recent` | Home |  |  |
+| GET | `/home/research-status` | Home |  |  |
+| GET | `/home/system-health` | Home |  |  |
+<!-- drift:endpoint-inventory:end -->
 
-| Method | Path | Status | Req → Resp（`data`）| 錯誤 | 里程碑 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/health` | ✅ | — → `{status:"ok", version}` | — | — |
+### §6 zone 摘要（prose，shape 見 OpenAPI）
 
-### §6.1 Research zone
-
-| Method | Path | Status / 就緒 | Req → Resp（`data`）| 錯誤 | 消費頁 | 里程碑 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/runs` 📄 | ✅ ready | `?page&limit&sort=&strategy_id=&version=&status=&engine=`（filter/sort 選填，runs table 用）→ `[{run_id, preset, gate_status, hypothesis, metrics, is_start, is_end}]`，`meta{total,page,limit}` | — | run_03/04 | M3.0（修 `is_start/is_end` window null bug）|
-| GET | `/runs/compare` | 🟡 ready | `?baseline=&run_ids=a,b,c&metric_keys=…` → `{baseline_id, metric_keys, sign_consistent, rankings, comparisons[]}` | 404 NOT_FOUND | run_05 | M3.2（加 `run_ids` 子集 + equity）|
-| GET | `/runs/{run_id}` | ✅ ready | — → 完整 ledger record dict | 404 | run_04 | — |
-| POST | `/runs` | 🟡 needs-work | `RunCreateRequest{hypothesis,preset,stocks[],is_start,is_end,engine="sim"}` → record（同步）→ **async** `{run_id,status:"queued"}` | 422 | run_02 | M3.5（轉 async，§5.2）|
-| GET | `/runs/{run_id}/equity` | ⬜ needs-work | — → `{returns[], equity[], drawdown[], monthly[], distribution[]}`（`run_is_returns` 持久化）| 404（舊 record 無 series）| run_04/05、mon_a(回測半) | M3.2 |
-| GET | `/runs/{run_id}/trades` | ⬜ needs-work | `?symbol=`（選填，Trade review 逐股）→ `[{symbol,entry,exit,pnl,hold_days,reason,…}]`（`is_harness._trades` 持久化）| 404 | run_04、trade_review | M3.2 |
-| GET | `/runs/{run_id}/log` | ⬜ needs-work | — → `{lines[], status}`（job lifecycle log）| 404 | run_04 | M3.5 |
-| GET | `/runs/{run_id}/traded-symbols` | ⬜ needs-work | — → `[{symbol, trades, pnl_contrib}]`（有交易個股 + 貢獻排序）| 404 | trade_review | M3.2 |
-| GET | `/runs/{run_id}/candles` | 🟡 ready | `?symbol=`（選填，缺省=run 首檔；對齊 sibling `/trades?symbol=`）→ `{run_id, symbol, symbols[], candles:[{time,open,high,low,close,volume}], markers:[{time,kind:entry\|exit,price,ret?}]}`（個股日 K + entry ▲/exit ▼ marker）。K 線讀 parquet OHLC 快取（`daily_bars__<sid>.parquet`）、window 取自 run record；marker 由 run 訊號管線重推（four_layer 有 per-bar 進出場，panel 策略無 → 空 marker）。lightweight-charts v5（[ADR-034](./adrs/ADR-034-trade-review-kline-lightweight-charts.md)，改 Plotly→lightweight-charts）。該股無 parquet → typed-empty `pending`（不假造）| 404（未知 run）| trade_review | ✅ M3.2 |
-| GET | `/runs/{run_id}/attribution` | ⬜ needs-work | `?symbol=` → `{factors:[{name, score}…], total}`（因子/層級歸因，**維度 N 由策略 `reason_json` 決定，不寫死層數**；four_layer 為 N=4 特例。需 harness 捕捉）| 404 | trade_review | M3.2 |
-| GET | `/runs/{run_id}/day-context` | ⬜ needs-work | `?symbol=&date=` → `{factors:[{name, score}…], total, signal_reason}`（context_drawer 當日因子分數，策略無關 N 維）| 404 | trade_review | M3.2 |
-| GET | `/runs/estimate` | ⬜ ready | `?<grid params>` → `{n_configs, est_minutes}`（`sweep.expand_grid`）| 422 | run_02 | M3.1 |
-| POST | `/runs/tag` | ⬜ needs-work | `{run_ids[], tag, pin?}` → `{updated[]}` | **409 IS_GATE_NOT_PASSED**（pin 未過 IS）| run_03 | M3.3 |
-| GET | `/runs/trials` | ⬜ needs-work | `?param_space=<hash>` → `{cumulative_trials, dsr, deflated, power}`（`dsr.py`+`trials.py` 持久化）| — | run_03/05/06 | M3.4 |
-| POST | `/research/trials/increment` | ⬜ needs-work | `{param_space, n}` → `{cumulative_trials}` | — | run_05 | M3.4 |
-| GET | `/research/universe-filters` | ⬜ ready | — → `{industries[], cap_buckets[], liquidity[]}`（`data/universe.py`）| — | run_02 | M3.1 |
-| GET | `/research/strategies` 📄 | ⬜ needs-work | `?page&limit` → `[{strategy_id, version, best_kpi, validation_status, stage, runs_count}]`（projection over ledger）| — | run_01、mon_a(selector) | M3.3 |
-| POST | `/research/strategies` | ⬜ needs-work | `{name, base_preset, …}` → `{strategy_id}` | 422 | run_01 | M3.3 |
-| GET | `/research/strategies/{id}/versions` | ⬜ needs-work | — → `[{version, hypothesis, gate_status, created}]`（version timeline + hypothesis diff）| 404 | run_01 | M3.3 |
-| GET | `/research/saved-views` | ⬜ needs-work | — → `[{id, name, columns[], filters}]` | — | run_03 | M3.3 |
-| POST | `/research/saved-views` | ⬜ needs-work | `{name, columns[], filters}` → `{id}` | 422 | run_03 | M3.3 |
-| POST | `/research/sweep` | ⬜ needs-work | `{param_space, …}` → `{job_id, status:"queued"}`（§5.2）| 422 | run_06 | M3.5 |
-| GET | `/research/sweep/{id}/status` | ⬜ needs-work | — → `{status, progress}` | 404 | run_06 | M3.5 |
-| GET | `/research/sweep/{id}/heatmap` | ⬜ needs-work | — → `{axes, z[][]}`（`to_heatmap` np→JSON, nan→null）| 409(running)/404 | run_06 | M3.5 |
-| GET | `/research/workflows/{strategy}` | ✅ ready | — → `{strategy, workflows[]}`（列該策略宣告的工作流 doe/go_gates/truth_gate/paper_replay；[ADR-029](./adrs/ADR-029-research-workflow-standardization.md)）| 400（未知 strategy）| run_01 | — |
-| POST | `/research/workflows/{workflow}` | ✅ ready | `{strategy, overrides?}` → **202** `{job_id, status}`（非同步 job，§5.2；workflow ∈ doe/go_gates/truth_gate/paper_replay，[ADR-029](./adrs/ADR-029-research-workflow-standardization.md)）| 404（未知 workflow）/ 400（未知 strategy）| run_01 | — |
-| GET | `/gate/spec` | ✅ ready | — → `{criteria:[{key,op,threshold,kind,label}]}` | — | run_07 | — |
-| POST | `/gate/evaluate` | ✅ ready | `GateEvaluateRequest{metrics:dict}` → `{status, passed, summary, results[]}` | 422 | run_07 | — |
-| GET | `/research/validate/{run_id}/gate-state` | ⬜ needs-work | — → `{validation_status, stage, is, wfa, oos}`（stateful，持久化）| 404 | run_07 | M3.6 |
-| POST | `/research/validate/{run_id}/is` | 🟡 needs-work | — → `{validation_status:"IS_PASS"}`（持久化 transition）| 409/422 | run_07 | M3.6 |
-| POST | `/research/validate/{run_id}/oos` | ⬜ needs-work | — → `{oos_result}`（sealed unseal + access counter）| **423 OOS_VAULT_LOCKED** | run_07 | M3.6 |
-| GET | `/research/validate/{run_id}/wfa` | ⬜ needs-work | — → `{folds[], scatter[]}`（per-fold via job layer）| 404 | run_07 | M3.6 |
-| GET | `/research/validate/{run_id}/redline` | ⬜ needs-work | — → `{pbo, dsr_matrix[]}` | 404 | run_07 | M3.6 |
-| POST | `/research/validate/{run_id}/signoff` | ⬜ needs-work | — → `{status:"APPROVED"}`（不可逆 + promotion_audit）| 409 | run_07 | M3.6 |
-| GET | `/research/promote/{strategy_id}` | ⬜ needs-work | — → `{stage, history[], gates[]}`（persisted stage machine）| 404 | run_08 | M3.6 |
-| POST | `/research/promote/{strategy_id}/advance` | ⬜ needs-work | — → `{stage}` | **409**（未滿足 gate）| run_08 | M3.6 |
-| POST | `/research/promote/{strategy_id}/demote` | ⬜ needs-work | — → `{stage}` | 409 | run_08 | M3.6 |
-| POST | `/research/promote/{strategy_id}/retire` | ⬜ needs-work | — → `{stage:"retired"}` | 409 | run_08 | M3.6 |
-| GET | `/research/promote/{strategy_id}/audit` | ⬜ needs-work | — → `[{ts, from, to, actor}]`（immutable）| 404 | run_08 | M3.6 |
-| GET | `/research/promote/{strategy_id}/observation` | 🔵 needs-data | — → paper equity（hosted daemon）| 🔵 stub | run_08 | M4 |
-
-### §6.2 Monitor zone（多數 `🔵 deferred-stub` 至 M4，§5.4）
-
-> 多數端點 M3 期間以 typed 空 envelope（`meta.data_source:"pending_m4"`）上線，前端可建頁；M4 swap 真 producer，shape 不變。**例外**：指標計算機 `/metrics/*`（已實作）與 `/monitor/watch*`（[ADR-033](./adrs/ADR-033-paper-watch-tier.md) 觀察艙，已 LIVE，讀 registry/marker JSONL 而非 daemon telemetry）。
-
-| Method | Path | Status / 就緒 | Resp（`data`，M4 後）| 消費頁 | 里程碑 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| POST | `/metrics/summary` | ✅ ready | `MetricsSummaryRequest{daily_returns[],risk_free}` → `{total_return,cagr,max_drawdown,ulcer_index,downside_deviation,sharpe,sortino,calmar}` | run_04、mon_a | — |
-| POST | `/metrics/trades` | ✅ ready | `TradeMetricsRequest{trades[]}` → `{win_rate,profit_factor,avg_hold,kelly_fraction}` | run_04、mon_c | — |
-| GET | `/monitor/watch` | ✅ ready | **LIVE**（[ADR-033](./adrs/ADR-033-paper-watch-tier.md)）→ `[{strategy, status:active\|paused\|expired\|exited, enrolled_on, verdict_dsr, observed_trading_days, nominal_trading_days, expiry_date, days_remaining, timer_health:ok\|stale\|never_ran, last_session_date, last_session_at, last_trading_day, sessions:[{date,status}]}]`，`meta.data_source="watch_registry"`；每列附 after-close timer 健康度（讀 done-markers vs 交易日曆）+ 最近 10 筆 session 時間線 | — | monitor_watch | — |
-| POST | `/monitor/watch/{strategy}/pause` | ✅ ready | **LIVE** → `{…WatchStatus, status:"paused"}`；app 層暫停（after-close 略過此艙但保留到期鐘），冪等；只有 active 艙位可暫停 | **400**（未進艙 / 非 active）| monitor_watch | — |
-| POST | `/monitor/watch/{strategy}/resume` | ✅ ready | **LIVE** → `{…WatchStatus, status:"active"}`；恢復暫停艙位，冪等；只有 paused 艙位可恢復 | **400**（未進艙 / 非 paused）| monitor_watch | — |
-| GET | `/monitor/strategies` | 🔵 needs-work | strategy selector（live）| mon_a | M4 |
-| GET | `/monitor/fleet` | 🔵 needs-data | 各策略 stage / 健康評分 / live KPI / 退化旗標（艦隊板）| monitor_fleet | M4 |
-| GET | `/monitor/portfolio-summary` | 🔵 needs-data | 組合 equity / 曝險 / Heat / 計數 | monitor_fleet | M4 |
-| GET | `/monitor/correlation` | 🔵 needs-data | 策略間報酬相關性矩陣（需多 live 策略）| monitor_fleet | M4 |
-| POST | `/monitor/fleet/{strategy_id}/action` | 🔵 needs-data | `{action:demote\|retire\|replace}` → 寫 `promotion_audit`（依 M3.6 service；409/423 on gate 違反）| monitor_fleet | M4 |
-| GET | `/monitor/performance/equity` | 🔵 needs-data | live 策略 equity series | mon_a | M4 |
-| GET | `/monitor/performance/benchmark` | 🔵 needs-data | 0050 benchmark series（`market_reader` over daily_bars）| mon_a | M4 |
-| GET | `/monitor/performance/monthly` | 🔵 needs-data | 月報酬 | mon_a | M4 |
-| GET | `/monitor/performance/kpi` | 🟡 needs-data | live KPI（計算機已備，缺 live series）| mon_a | M4 |
-| GET | `/monitor/positions/snapshot` | 🔵 needs-data | `PaperBroker.portfolio_snapshot`（需 daemon）| mon_b | M4 |
-| GET | `/monitor/positions/prices` | 🔵 needs-data | current prices（quote/daily_bars read）| mon_b | M4 |
-| GET | `/monitor/positions/kpi` | 🔵 needs-data | 部位 KPI | mon_b | M4 |
-| GET | `/monitor/positions/industry-allocation` | 🔵 needs-data | 產業分布（需 universe metadata）| mon_b | M4 |
-| GET | `/monitor/positions/concentration` | 🔵 needs-data | 集中度 | mon_b | M4 |
-| GET | `/monitor/signals` 📄 | 🔵 needs-data | 訊號列表（`upsert_signals` M4 stub）| mon_c | M4 |
-| GET | `/monitor/signals/timeline` | 🔵 needs-data | 訊號時間軸 | mon_c | M4 |
-| GET | `/monitor/signals/funnel` | 🔵 needs-data | 訊號漏斗 | mon_c | M4 |
-| GET | `/monitor/fills` | 🔵 needs-data | 成交（`upsert_fills` M4 stub）| mon_c | M4 |
-| GET | `/monitor/risk/metrics` | 🔵 needs-data | `CircuitBreaker` RiskMetrics（需 daemon）| mon_d | M4 |
-| GET | `/monitor/risk/mdd-trend` | 🔵 needs-data | MDD 趨勢 | mon_d | M4 |
-| GET | `/monitor/risk/events` 📄 | 🔵 needs-data | 風控事件 | mon_d | M4 |
-| GET | `/monitor/risk/events/{id}` | 🔵 needs-data | 單一事件 | mon_d | M4 |
-
-### §6.3 System zone
-
-| Method | Path | Status / 就緒 | Req → Resp（`data`）| 錯誤 | 消費頁 | 里程碑 |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/strategies` | ✅ ready | — → `[{name, title, description, config_schema}]`（已註冊策略 catalog + config JSON-schema；**取代已刪除的 `/presets`**，[ADR-028](./adrs/ADR-028-strategy-dispatch-contract.md)）| — | run_02、run_01、sys_data | — |
-| GET | `/system/risk/spec` | ⬜ ready | — → `{rules:[EX-001..012]}`（mirror gate.py）| — | mon_d(config)、sys_alerts | M3.1 |
-| POST | `/system/risk/evaluate` | ⬜ ready | `{metrics}` → `{results[]}`（on-demand check）| 422 | mon_d(config) | M3.1 |
-| GET | `/system/alerts/rules` | ⬜ ready | — → `[{rule}]`（static RULES catalog, read-only）| — | sys_alerts | M3.1 |
-| GET | `/system/alerts/channels` | ⬜ ready | — → `{discord:{…, bot_token:"***"}}`（**遮罩**, §4）| — | sys_alerts | M3.1 |
-| POST | `/system/alerts/test` | ⬜ ready | — → `{delivered:bool}`（discord_notifier test-push）| 500 | sys_alerts | M3.1 |
-| PUT | `/system/alerts/channels` | ⬜ needs-work | `{discord:{…}}` → `{ok}`（secret-managed write）| 422 | sys_alerts | M4 |
-| POST | `/system/alerts/rules` | ⬜ needs-work | `{rule}` → `{id}`（data-driven rule store）| 422 | sys_alerts | M4 |
-| PUT | `/system/alerts/rules` | ⬜ needs-work | `{id, rule}` → `{ok}` | 404/422 | sys_alerts | M4 |
-| GET | `/system/alerts/history` 📄 | 🔵 needs-data | `?page&limit` → `[{ts, rule, severity, acked}]`（alert_history store）| — | sys_alerts | M4 |
-| POST | `/system/alerts/history/{id}/ack` | ⬜ needs-work | — → `{acked:true}` | 404 | sys_alerts | M4 |
-| GET | `/system/bundles` 📄 | ⬜ needs-data | `?page&limit` → `[{id, range, universe, count, quality, created}]`（bundle_manifest）| — | sys_data、run_02 | M3.5 |
-| GET | `/system/bundles/{id}/quality` | ⬜ needs-data | — → `{coverage, missing_days, delist_bias, look_ahead}`（DQ store）| 404 | sys_data | M3.5 |
-| POST | `/system/ingest` | ⬜ needs-work | `{source, range, …}` → `{job_id, status:"queued"}`（§5.2）| 422 | sys_data | M3.5 |
-| GET | `/system/ingest/{job_id}/status` | ⬜ needs-work | — → `{status, progress}` | 404 | sys_data | M3.5 |
-
-> **Bundle 命名 reconcile**：per-page 規格曾寫 `/api/research/bundles`；契約統一為 `/system/bundles`（bundle 屬資料系統面，非研究面）。
-
-### §6.4 Home / Cockpit zone（landing `/` 聚合，BFF 風格）
-
-> Home（`home_overview`，route `/`）是每日進場入口，**跨三區聚合**——非新資料源，而是把 Research/Monitor/System 既有端點彙整成單畫面 cockpit。因此各端點就緒度 = 其聚合來源中最重者：研究面（research-status/recent）M3.x 可上，含 live 艦隊/系統健康者 gated 於 M4。前端可先 partial 渲染（研究半），live 半走 §5.4 stub。
-
-| Method | Path | Status / 就緒 | Resp（`data`）聚合來源 | 消費頁 | 里程碑 |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| GET | `/home/research-status` | ⬜ needs-work | active runs + IS gate blocker + power gauge + trials/DSR（聚合 `/runs`、`/gate`、`/runs/trials`）| home_overview | M3.4 |
-| GET | `/home/recent` | ⬜ needs-work | 最近 run / 晉升 / saved views（聚合 `/runs`、`/research/promote`、`/research/saved-views`）| home_overview | M3.3 |
-| GET | `/home/fleet` | 🔵 needs-data | live/paper 策略 + stage + 健康 + 今日 KPI + 退化旗標（聚合 `/monitor/fleet`）| home_overview | M4 |
-| GET | `/home/system-health` | 🔵 needs-data | bundle 新鮮度 + 告警計數 + FinLab quota（聚合 `/system/bundles`、`/system/alerts`、Grafana quota）| home_overview | M4 |
-
-> **聚合 vs 直連決策**：`/home/*` 採 BFF 聚合（後端一次組裝）而非前端多打——cockpit 首屏延遲敏感，且聚合邏輯（退化判定、blocker 彙整）屬後端職責。各來源端點仍獨立存在（§6.1–§6.3），`/home/*` 不取代它們。
+- **Research（`/runs`、`/gate`、`/metrics`、`/strategies`、`/research/*`）**：run 帳本（list/get/compare/trigger/async）、run 子資源（equity/trades/candles/report/notebook/log）、審判庭（gate spec/evaluate）、指標計算機、策略 catalog/roster、saved-views/trials、sweep（async job）、validate（gate-state/health/wfa/redline）、promote（stage machine + audit）、workflows（doe/go_gates/truth_gate/paper_replay/build_universe dispatch）。**canonical id = `stock_id`**（`/runs/{id}/candles?stock_id=`，A5；`?symbol=` 已淘汰）。
+- **Monitor（`/monitor/*`）**：多數 M4 deferred-stub（`data_source="pending"`，§5.4）；**例外已 LIVE**：`/monitor/board`（runs 表看板）、`/monitor/watch*`（觀察艙）、`/monitor/performance/{equity,kpi}` + `/monitor/{fleet,portfolio-summary,positions/snapshot,signals,fills}`（有 telemetry 時走 `timescaledb`，否則 pending fallback）。
+- **System（`/system/*`）**：risk spec/evaluate、alerts（rules/channels/history/test，含 secret 遮罩 §4）、bundles（真實 manifest 掃描）+ bundle quality（未知 id → 404，A4）、datasets（FinLab 資料字典）、ingest / universe build（async job + status poll，未知 job → 404，A4）。
+- **Home（`/home/*`）**：BFF 跨區聚合（cockpit 首屏）。`research-status`／`recent` = 真實 ledger 投影（`data_source="ledger"`）；`fleet`／`system-health` = M4 pending stub。各來源端點仍獨立存在，`/home/*` 不取代它們。
 
 ---
 
@@ -359,8 +366,13 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 
 > 本專案有 doc-drift 慣性病史（曾需 5 個 sweep commit、39 commits ahead）。契約**必須**靠機器檢查鎖住。
 
-- **新增/改 API endpoint** → 同一 commit 改本檔 §6 registry + 重生 OpenAPI + 更新 `16 WBS`（**建議**在 [`code-doc-sync.md`](../.claude/rules/code-doc-sync.md) 觸發表把「新 API endpoint」列指向「25 §6 + OpenAPI」；該規則檔屬 agent 設定，需使用者自行套用）。
-- **CI drift check**：比對 FastAPI `/docs` 生成的 OpenAPI 端點清單 vs 本檔 §6 宣告；不一致 → 紅燈。
+- **新增/改 API endpoint** → 同一 commit 改本檔 §6 registry（sentinel 表）+ 重生 OpenAPI + 更新 `16 WBS`（**建議**在 [`code-doc-sync.md`](../.claude/rules/code-doc-sync.md) 觸發表把「新 API endpoint」列指向「25 §6 + OpenAPI」；該規則檔屬 agent 設定，需使用者自行套用）。
+- **CI drift check（`scripts/check_openapi_drift.py`，四檢查）**：
+  - **Check A** — live FastAPI OpenAPI vs committed `frontend/openapi.json`（形狀真相）。
+  - **Check B** — runs DDL vs `db_writer._RUNS_COLS`（欄位對齊）。
+  - **Check C** — 本檔 §6 sentinel inventory 表 vs live OpenAPI 的 `{method, path}` 集合（**新，2026-07-03**；防 §6 宣告漂離機器真相——本專案的復發病灶）。
+  - **Check D** — `api/routers/*.py` + `envelope.py` 每個 `data_source` 賦值必為 `DataSource` enum 成員（**新**；防 §5.4 的 uncoordinated 字面量重新滋生）。
+  - 任一不一致 → exit 1 紅燈。
 - **envelope/分頁/auth/base-path** 任一變更 → 必走 ADR（如 ADR-021）+ 本檔 §1–§4 同步。
 - **per-page `[DATA & API]` 路徑** 一律 by reference 指向本檔，**不再各自宣告**（附錄 A 為歷史對照，新頁不得發明路徑）。
 

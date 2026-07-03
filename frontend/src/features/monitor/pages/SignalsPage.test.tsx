@@ -29,7 +29,7 @@ describe('SignalsPage', () => {
     await waitFor(() => expect(screen.getAllByText('2454').length).toBeGreaterThan(0))
   })
   it('pending → PendingNote', async () => {
-    mock([], { data_source: 'pending_m4' })
+    mock([], { data_source: 'pending' })
     renderPage()
     await waitFor(() => expect(screen.getAllByText(/待紙上交易遙測/).length).toBeGreaterThan(0))
   })

@@ -20,6 +20,22 @@ Check B — runs DDL / db_writer column alignment
     NOT NULL column without a DEFAULT must be supplied by db_writer. Either
     violation means an ``INSERT INTO runs`` would fail at runtime.
 
+Check C — doc 25 §6 endpoint inventory vs live OpenAPI
+    Parses the machine-checkable endpoint-inventory table in
+    ``dev_docs/25_fe_be_rest_contract.md`` (the rows between the
+    ``<!-- drift:endpoint-inventory:begin/end -->`` sentinels) and compares its
+    {method, path} set against the live OpenAPI paths. Any endpoint present in
+    code but missing from the doc (or vice-versa) means the human-readable
+    contract (doc 25) has drifted from the machine truth — the exact recurrence
+    this WP exists to prevent.
+
+Check D — data_source literals vs the DataSource enum
+    Static-scans ``api/routers/*.py`` + ``api/envelope.py`` (via ``ast`` — no
+    import) for every ``{"data_source": ...}`` dict assignment; each value must be
+    a ``DataSource`` enum member reference or a string equal to a member value.
+    An unknown literal (a re-introduced uncoordinated token / a typo) fails —
+    keeping the seven-literal sprawl from creeping back (A1).
+
 Exit codes
     0  no drift
     1  drift detected (contract mismatch — the actionable failure)
@@ -44,6 +60,19 @@ BACKEND_DIR = REPO_ROOT / "backtest_platform"
 OPENAPI_SNAPSHOT = REPO_ROOT / "frontend" / "openapi.json"
 INIT_SQL = BACKEND_DIR / "docker" / "timescaledb" / "init.sql"
 DB_WRITER = BACKEND_DIR / "src" / "backtest_platform" / "data" / "db_writer.py"
+DOC_25 = REPO_ROOT / "dev_docs" / "25_fe_be_rest_contract.md"
+API_DIR = BACKEND_DIR / "src" / "backtest_platform" / "api"
+ENVELOPE_PY = API_DIR / "envelope.py"
+ROUTERS_DIR = API_DIR / "routers"
+
+#: HTTP verbs recognised as operations in the OpenAPI ``paths`` map and the doc table.
+_HTTP_METHODS = frozenset({"GET", "POST", "PUT", "DELETE", "PATCH"})
+#: Sentinels bracketing the machine-checkable inventory table in doc 25 §6.
+_INV_BEGIN = "<!-- drift:endpoint-inventory:begin -->"
+_INV_END = "<!-- drift:endpoint-inventory:end -->"
+
+#: Cache the (expensive) live-spec dump so Check A and Check C dump once, not twice.
+_LIVE_SPEC_CACHE: dict | None = None
 
 
 class DriftError(Exception):
@@ -64,6 +93,9 @@ def dump_live_openapi() -> dict:
     corrupts the JSON payload. ``--extra api`` self-provisions fastapi so the
     caller need not pre-sync the full dev environment.
     """
+    global _LIVE_SPEC_CACHE
+    if _LIVE_SPEC_CACHE is not None:
+        return _LIVE_SPEC_CACHE
     fd, tmp_path = tempfile.mkstemp(suffix=".openapi.json")
     os.close(fd)
     dump_code = (
@@ -84,7 +116,8 @@ def dump_live_openapi() -> dict:
                 f"{proc.stderr.strip() or proc.stdout.strip()}"
             )
         with open(tmp_path) as fh:
-            return json.load(fh)
+            _LIVE_SPEC_CACHE = json.load(fh)
+        return _LIVE_SPEC_CACHE
     except FileNotFoundError as exc:  # uv not on PATH
         raise CheckInfraError(f"`uv` not found on PATH: {exc}") from exc
     finally:
@@ -284,12 +317,168 @@ def check_ddl_column_alignment() -> None:
 
 
 # ===========================================================================
+# Check C — doc 25 §6 endpoint inventory vs live OpenAPI
+# ===========================================================================
+def live_operations(spec: dict) -> set[tuple[str, str]]:
+    """The set of ``(METHOD, path)`` operations declared in an OpenAPI spec."""
+    ops: set[tuple[str, str]] = set()
+    for path, methods in spec.get("paths", {}).items():
+        for method in methods:
+            if method.upper() in _HTTP_METHODS:
+                ops.add((method.upper(), path))
+    return ops
+
+
+def parse_inventory_table(md_text: str) -> set[tuple[str, str]]:
+    """Parse the sentinel-bracketed §6 inventory table into ``(METHOD, path)`` rows.
+
+    Only the block between the ``drift:endpoint-inventory`` sentinels is read; the
+    header / separator rows are skipped naturally (their first cell is not a verb).
+    Paths are taken verbatim from the second column with surrounding backticks stripped.
+    """
+    if _INV_BEGIN not in md_text or _INV_END not in md_text:
+        raise CheckInfraError(
+            "doc 25 §6 inventory sentinels not found "
+            f"({_INV_BEGIN!r} / {_INV_END!r}) — did the table move or lose its markers?"
+        )
+    block = md_text.split(_INV_BEGIN, 1)[1].split(_INV_END, 1)[0]
+    ops: set[tuple[str, str]] = set()
+    for line in block.splitlines():
+        line = line.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        method = cells[0].upper()
+        if method not in _HTTP_METHODS:  # header ("Method") / separator (":---") rows
+            continue
+        path = cells[1].strip().strip("`").strip()
+        ops.add((method, path))
+    if not ops:
+        raise CheckInfraError("parsed zero rows from doc 25 §6 inventory table")
+    return ops
+
+
+def _summarize_inventory_diff(
+    doc_ops: set[tuple[str, str]], live_ops: set[tuple[str, str]]
+) -> list[str]:
+    lines: list[str] = []
+    for m, p in sorted(live_ops - doc_ops):
+        lines.append(f"  + in LIVE code but MISSING from doc 25 §6: {m} {p}")
+    for m, p in sorted(doc_ops - live_ops):
+        lines.append(f"  - in doc 25 §6 but NOT in live code (phantom): {m} {p}")
+    return lines
+
+
+def check_doc_inventory() -> None:
+    """Assert doc 25 §6 inventory == live OpenAPI operations; raise on drift."""
+    if not DOC_25.exists():
+        raise CheckInfraError(f"doc 25 not found: {DOC_25}")
+    doc_ops = parse_inventory_table(DOC_25.read_text(encoding="utf-8"))
+    live_ops = live_operations(dump_live_openapi())
+    if doc_ops == live_ops:
+        print(f"[OK] doc 25 §6: endpoint inventory matches live OpenAPI ({len(live_ops)} ops)")
+        return
+    raise DriftError(
+        "doc 25 §6 inventory drift: table != live FastAPI operations\n"
+        + "\n".join(_summarize_inventory_diff(doc_ops, live_ops))
+        + "\n  fix: update the §6 table between the drift:endpoint-inventory sentinels"
+    )
+
+
+# ===========================================================================
+# Check D — data_source literals vs the DataSource enum
+# ===========================================================================
+def datasource_members(envelope_src: str) -> dict[str, str]:
+    """Extract the ``DataSource`` enum's ``{MEMBER_NAME: "value"}`` map via ``ast``."""
+    tree = ast.parse(envelope_src)
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == "DataSource":
+            members: dict[str, str] = {}
+            for stmt in node.body:
+                if (
+                    isinstance(stmt, ast.Assign)
+                    and len(stmt.targets) == 1
+                    and isinstance(stmt.targets[0], ast.Name)
+                    and isinstance(stmt.value, ast.Constant)
+                    and isinstance(stmt.value.value, str)
+                ):
+                    members[stmt.targets[0].id] = stmt.value.value
+            if not members:
+                raise CheckInfraError("DataSource enum has no string members")
+            return members
+    raise CheckInfraError("could not find the `DataSource` enum in envelope.py")
+
+
+def scan_data_source_literals(py_src: str, members: dict[str, str]) -> list[str]:
+    """Return problems for every ``{"data_source": <value>}`` in one module.
+
+    Legal values: a ``DataSource.<MEMBER>`` reference, or a string equal to a member
+    value. Anything else (a bare unknown string, a re-introduced private constant
+    Name) is drift.
+    """
+    tree = ast.parse(py_src)
+    names = set(members)
+    values = set(members.values())
+    problems: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Dict):
+            continue
+        for key, value in zip(node.keys, node.values):
+            if not (isinstance(key, ast.Constant) and key.value == "data_source"):
+                continue
+            if (
+                isinstance(value, ast.Attribute)
+                and isinstance(value.value, ast.Name)
+                and value.value.id == "DataSource"
+            ):
+                if value.attr not in names:
+                    problems.append(f"line {value.lineno}: DataSource.{value.attr} is not a member")
+            elif isinstance(value, ast.Constant) and isinstance(value.value, str):
+                if value.value not in values:
+                    problems.append(
+                        f'line {value.lineno}: "{value.value}" is not a DataSource value '
+                        f"(use one of {sorted(values)})"
+                    )
+            else:
+                problems.append(
+                    f"line {getattr(value, 'lineno', '?')}: non-canonical data_source value — "
+                    "must be a DataSource member (kills the uncoordinated-literal sprawl, A1)"
+                )
+    return problems
+
+
+def check_data_source_literals() -> None:
+    """Assert every ``data_source`` assignment is a DataSource member; raise on drift."""
+    if not ENVELOPE_PY.exists():
+        raise CheckInfraError(f"envelope.py not found: {ENVELOPE_PY}")
+    if not ROUTERS_DIR.exists():
+        raise CheckInfraError(f"routers dir not found: {ROUTERS_DIR}")
+    members = datasource_members(ENVELOPE_PY.read_text(encoding="utf-8"))
+    files = [ENVELOPE_PY, *sorted(ROUTERS_DIR.glob("*.py"))]
+    problems: list[str] = []
+    for path in files:
+        for msg in scan_data_source_literals(path.read_text(encoding="utf-8"), members):
+            problems.append(f"  {path.relative_to(BACKEND_DIR)}: {msg}")
+    if problems:
+        raise DriftError(
+            "data_source literal drift: a value is not a DataSource enum member\n"
+            + "\n".join(problems)
+            + "\n  fix: add the token to `api/envelope.py::DataSource` or use an existing member"
+        )
+    print(f"[OK] data_source: every literal is a DataSource member ({len(members)} tokens)")
+
+
+# ===========================================================================
 # Driver
 # ===========================================================================
 def main() -> int:
     checks = (
         ("OpenAPI drift", check_openapi_drift),
         ("runs DDL alignment", check_ddl_column_alignment),
+        ("doc 25 §6 inventory", check_doc_inventory),
+        ("data_source literals", check_data_source_literals),
     )
     drift_found = False
     infra_error = False

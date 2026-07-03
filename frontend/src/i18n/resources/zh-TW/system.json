@@ -13,7 +13,8 @@
     },
     "job": {
       "label": "任務",
-      "statusLabel": "狀態"
+      "statusLabel": "狀態",
+      "error": "job {{jobId}} 狀態查詢失敗：{{detail}}（可能已過期或不存在）"
     },
     "ingest": {
       "heading": "資料匯入",

@@ -13,7 +13,8 @@
     },
     "job": {
       "label": "Job",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "error": "job {{jobId}} status query failed: {{detail}} (may have expired or no longer exists)"
     },
     "ingest": {
       "heading": "Data Ingestion",

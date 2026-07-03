@@ -311,7 +311,7 @@
           "runs"
         ],
         "summary": "Run Log",
-        "description": "Async-run job log (8.H.6): lifecycle (status/progress) + terminal\nresult/error. A typed-empty ``pending`` envelope when the id is unknown\n(mirrors the sweep status route).",
+        "description": "Async-run job log (8.H.6): lifecycle (status/progress) + terminal\nresult/error. **404 NOT_FOUND** when the id is unknown (A4 / doc 25 \u00a75.2 \u2014\nan unknown/expired job surfaces as an error, not an infinite pending).",
         "operationId": "run_log_runs__job_id__log_get",
         "parameters": [
           {
@@ -440,7 +440,7 @@
           "runs"
         ],
         "summary": "Run Candles Endpoint",
-        "description": "Daily OHLC candles + entry \u25b2 / exit \u25bc markers for one symbol of a run.\n\n``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nsymbols, or a symbol absent from the parquet cache, returns a typed-empty\n``pending`` envelope \u2014 never a 500 or fabricated data (frontend/GOAL.md #8).",
+        "description": "Daily OHLC candles + entry \u25b2 / exit \u25bc markers for one ``stock_id`` of a run.\n\n``?stock_id=`` is the canonical id (doc 25 \u00a71.3 \u2014 ``TEXT`` with leading zeros).\nReads the run's ``stocks`` + IS window from the ledger (404 if the run is\nunknown), then loads OHLC from the parquet cache and overlays markers derived\nfrom the run's own signal pipeline (``research.run_candles``). A run with no\nstock_ids, or a stock_id absent from the parquet cache, returns a typed-empty\n``pending`` envelope \u2014 never a 500 or fabricated data (frontend/GOAL.md #8).",
         "operationId": "run_candles_endpoint_runs__run_id__candles_get",
         "parameters": [
           {
@@ -453,7 +453,7 @@
             }
           },
           {
-            "name": "symbol",
+            "name": "stock_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -465,10 +465,10 @@
                   "type": "null"
                 }
               ],
-              "description": "symbol to chart; default = the run's first traded symbol",
-              "title": "Symbol"
+              "description": "stock_id to chart; default = the run's first traded stock_id",
+              "title": "Stock Id"
             },
-            "description": "symbol to chart; default = the run's first traded symbol"
+            "description": "stock_id to chart; default = the run's first traded stock_id"
           }
         ],
         "responses": {
@@ -479,6 +479,90 @@
                 "schema": {
                   "$ref": "#/components/schemas/Envelope"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run_id}/report": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Report",
+        "description": "One-shot aggregate for the Run-Report page (verdict / segments / monthly /\ndrawdown events / cost sensitivity). 404 if the run is unknown; every\nunsourceable field is ``null`` (never fabricated).",
+        "operationId": "run_report_runs__run_id__report_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_RunReportData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/runs/{run_id}/notebook": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Run Notebook",
+        "description": "Download a prefilled ``.ipynb`` for one run (Open-in-notebook). 404 if unknown.\n\nReturns the notebook JSON with a ``Content-Disposition: attachment`` header so a\nbrowser saves ``run_<id>.ipynb``; the template loads the run from the repo stores\n(not the REST API) when the operator runs it in the repo venv Jupyter.",
+        "operationId": "run_notebook_runs__run_id__notebook_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -761,7 +845,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -1075,7 +1159,7 @@
           "research"
         ],
         "summary": "Promote Advance",
-        "description": "Advance one stage forward; 422 on an illegal skip / regress / unknown stage.",
+        "description": "Advance one stage forward.\n\nA domain ``ValueError`` (illegal skip / regress / unknown stage) maps to **400\nBAD_REQUEST** (A4 \u2014 domain errors are 400 uniformly, not 422 which is reserved\nfor schema validation). ``promote`` is a pure ordered stage machine: every\n``ValueError`` it raises is an *illegal transition*, so 400 is the whole story.\nThe **409 IS_GATE_NOT_PASSED** code (``_STATUS_TO_CODE`` in ``app.py``) is the\nreserved backstop for a future gate-blocked advance; the current stage machine\nperforms no IS-gate check (see ``test_promote_advance_and_audit``), so it is not\nraised here \u2014 the FE already gates by ``validation_status`` client-side.",
         "operationId": "promote_advance_research_promote__strategy_id__post",
         "parameters": [
           {
@@ -1314,7 +1398,7 @@
           "research"
         ],
         "summary": "Sweep Status",
-        "description": "Poll a sweep job's status; typed-empty pending if the id is unknown.",
+        "description": "Poll a sweep job's status; **404 NOT_FOUND** if the id is unknown (A4 / doc 25\n\u00a75.2 \u2014 an unknown/expired job surfaces as an error, not an infinite pending).",
         "operationId": "sweep_status_research_sweep__job_id__status_get",
         "parameters": [
           {
@@ -1519,9 +1603,20 @@
           "monitor"
         ],
         "summary": "Board",
-        "description": "Run board (A2) \u2014 latest research runs from the runs table: lifecycle\nstatus (running|done|failed, mirrored by run_persist / run-batch) + \u5be9\u5224\u5ead\nverdict + metrics. Typed-empty pending fallback when no DB.",
+        "description": "Run board (A2) \u2014 latest research runs from the runs table: lifecycle\nstatus (running|done|failed, mirrored by run_persist / run-batch) + \u5be9\u5224\u5ead\nverdict + metrics. Offset-paginated (A3); typed-empty pending fallback when no DB.",
         "operationId": "board_monitor_board_get",
         "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
           {
             "name": "limit",
             "in": "query",
@@ -1820,7 +1915,7 @@
           "monitor"
         ],
         "summary": "Signals",
-        "description": "Recent signals from real telemetry (8.H.8); pending fallback when no DB.",
+        "description": "Recent signals from real telemetry (8.H.8); offset-paginated (A3 \u2014 ``page``\nwas accepted but ignored); pending fallback when no DB.",
         "operationId": "signals_monitor_signals_get",
         "parameters": [
           {
@@ -1840,7 +1935,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -1919,16 +2014,27 @@
           "monitor"
         ],
         "summary": "Fills",
-        "description": "Recent order executions from real telemetry (8.H.8); pending fallback.",
+        "description": "Recent order executions from real telemetry (8.H.8); offset-paginated (A3);\npending fallback.",
         "operationId": "fills_monitor_fills_get",
         "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
           {
             "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -2007,6 +2113,7 @@
           "monitor"
         ],
         "summary": "Risk Events",
+        "description": "Risk events \u2014 offset-paginated (A3 \u2014 ``page`` was accepted but ignored). No\nproducer yet, so the slice is empty, but ``page``/``limit`` are echoed honestly.",
         "operationId": "risk_events_monitor_risk_events_get",
         "parameters": [
           {
@@ -2026,7 +2133,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -2377,6 +2484,7 @@
           "system"
         ],
         "summary": "Alert History",
+        "description": "Alert history \u2014 offset-paginated (A3). No producer yet, so the slice is empty,\nbut ``page``/``limit`` are echoed honestly rather than hard-coded.",
         "operationId": "alert_history_system_alerts_history_get",
         "parameters": [
           {
@@ -2396,7 +2504,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -2495,7 +2603,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
+              "maximum": 500,
               "minimum": 1,
               "default": 50,
               "title": "Limit"
@@ -2532,7 +2640,7 @@
           "system"
         ],
         "summary": "Bundle Quality",
-        "description": "Cheap manifest-derived quality for one bundle (row stats / alive-delisted /\ningest tallies). Unknown id \u2192 typed-empty (``data_source=\"not_found\"``). The\nheavier per-column freshness/gap audit is left to a future producer.",
+        "description": "Cheap manifest-derived quality for one bundle (row stats / alive-delisted /\ningest tallies). Unknown id \u2192 **404 NOT_FOUND** (A4 \u2014 an unknown resource is an\nerror, not a 200 with ``data:null``). The heavier per-column freshness/gap audit\nis left to a future producer.",
         "operationId": "bundle_quality_system_bundles__bundle_id__quality_get",
         "parameters": [
           {
@@ -2552,6 +2660,76 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Envelope_BundleQuality_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/system/datasets": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Datasets",
+        "description": "The FinLab dataset catalog as authoring-first cards (:mod:`data.finlab_catalog`).\n\nEach card layers three request-time facts onto the curated snapshot: local\npresence (``data.dataset_presence`` \u2014 the honest three-table bundle binary),\nthe strategy reverse-index (``data.strategy_data_index``), and the two author\nfilters (``?category`` exact, ``?q`` substring on key/name). Deliberately no\nmanifest read / staleness \u2014 the catalog is a data *dictionary*, not a cache\nmonitor.",
+        "operationId": "datasets_system_datasets_get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "filter by category slug (exact)",
+              "title": "Category"
+            },
+            "description": "filter by category slug (exact)"
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "case-insensitive substring on key / name_zh",
+              "title": "Q"
+            },
+            "description": "case-insensitive substring on key / name_zh"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_DatasetCard__"
                 }
               }
             }
@@ -2617,7 +2795,7 @@
           "system"
         ],
         "summary": "Ingest Status",
-        "description": "Poll an ingest job's status/result; typed-empty ``pending`` if unknown.",
+        "description": "Poll an ingest job's status/result; 404 if the id is unknown.",
         "operationId": "ingest_status_system_ingest__job_id__status_get",
         "parameters": [
           {
@@ -2702,7 +2880,7 @@
           "system"
         ],
         "summary": "Universe Build Status",
-        "description": "Poll a universe-build job's status/result; typed-empty ``pending`` if unknown.",
+        "description": "Poll a universe-build job's status/result; 404 if the id is unknown.",
         "operationId": "universe_build_status_system_universe_build__job_id__status_get",
         "parameters": [
           {
@@ -3164,6 +3342,58 @@
         "title": "CompareReportData",
         "description": "``GET /runs/compare`` \u2014 per-metric delta vs baseline + ranks + sign."
       },
+      "DatasetCard": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name_zh": {
+            "type": "string",
+            "title": "Name Zh"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "freq": {
+            "type": "string",
+            "title": "Freq"
+          },
+          "history_start": {
+            "type": "string",
+            "title": "History Start"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "local": {
+            "type": "string",
+            "title": "Local"
+          },
+          "used_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Used By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name_zh",
+          "category",
+          "freq",
+          "history_start",
+          "description",
+          "local",
+          "used_by"
+        ],
+        "title": "DatasetCard",
+        "description": "One ``GET /system/datasets`` card \u2014 a strategy author's data-dictionary row.\n\nAnswers the three authoring-first questions: *what is this data* (key / name /\ncategory / freq / history / description), *is it local* (``local`` binary), and\n*which of my strategies use it* (``used_by``). No freshness / coverage \u2014 that is\na runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."
+      },
       "Envelope": {
         "properties": {
           "success": {
@@ -3569,6 +3799,51 @@
         ],
         "title": "Envelope[RunRecord]"
       },
+      "Envelope_RunReportData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunReportData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[RunReportData]"
+      },
       "Envelope_SavedView_": {
         "properties": {
           "success": {
@@ -3846,6 +4121,55 @@
           "success"
         ],
         "title": "Envelope[list[BundleRow]]"
+      },
+      "Envelope_list_DatasetCard__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/DatasetCard"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[DatasetCard]]"
       },
       "Envelope_list_PromotionEvent__": {
         "properties": {
@@ -4478,7 +4802,7 @@
           "engine": {
             "type": "string",
             "title": "Engine",
-            "description": "sim | zipline",
+            "description": "sim (zipline/vectorbt removed 2026-07-03, ADR-037)",
             "default": "sim"
           }
         },
@@ -4508,6 +4832,95 @@
         ],
         "title": "RunRecord",
         "description": "A full ledger record (``GET /runs/{id}`` / ``POST /runs``). Shape varies by\nrun; only the identity field is guaranteed, the rest pass through."
+      },
+      "RunReportData": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "segments": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segments"
+          },
+          "monthly_returns": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Returns"
+          },
+          "monthly_returns_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Monthly Returns Note"
+          },
+          "drawdown_events": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Drawdown Events"
+          },
+          "cost_sensitivity": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Sensitivity"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunReportData",
+        "description": "``GET /runs/{id}/report`` \u2014 one-shot Run-Report aggregate.\n\nBlocks are loosely typed (dict/list) on purpose: each carries an honest ``null``\nwhen its source is absent (verdict inputs, sidecar-derived charts), so a strict\nnested schema would misrepresent the contract. ``extra='allow'`` keeps every\nsub-field flowing to the frontend."
       },
       "RunSummary": {
         "properties": {
