@@ -374,7 +374,7 @@ sequenceDiagram
     F->>R: risk_gate: check(order, AccountState from broker snapshot)
     R-->>F: allowed / rejected（拒 → halt）
     F->>B: orders: submit_order → Fill
-    F->>DB: log: upsert signals/orders/fills/equity
+    F->>DB: log: upsert signals/fills/equity（ADR-038：fills 單一成交真相源）
     F-->>D: FlowRun (fail-fast 審計軌)
     D-->>Sched: Discord 成敗通知
 ```
@@ -395,10 +395,10 @@ GET /research/workflows/{strategy}     → 列該策略宣告的工作流
 
 完整 schema（TimescaleDB DDL + 三層資料流 + DQ rules + 跨源 ACL）以 [21_data_contract.md](./21_data_contract.md) 為真相源。核心：
 
-- **三層儲存**：FinLab/FinMind 拉取 → Parquet cache（不可變 + `*_manifest.json` 血統）→ TimescaleDB（telemetry + universe + runs 血統）。
+- **三層儲存**：FinLab/FinMind 拉取 → Parquet cache（不可變 + `*_manifest.json` 血統）→ TimescaleDB（telemetry + runs 血統；universe 來自 parquet/config，ADR-038 已砍 universe 表）。
 - **runs 血統**：`runs` 表以 `strategy + params`（非舊 preset）記錄，每 run 可稽核；`test_init_sql_schema.py` 守 DDL↔`db_writer` 欄位不漂移。
-- **一致性**：telemetry（signals/orders/fills/equity）強一致 ACID；市場資料 `ON CONFLICT DO UPDATE` idempotent。
-- **資料分類**：公開市場資料（不加密）／秘密（`FINLAB_API_TOKEN`/`DISCORD_*` 後端獨佔）／audit（runs / trades 永久保留）。
+- **一致性**：telemetry（signals/fills/equity）強一致 ACID；市場資料 `ON CONFLICT DO UPDATE` idempotent。
+- **資料分類**：公開市場資料（不加密）／秘密（`FINLAB_API_TOKEN`/`DISCORD_*` 後端獨佔）／audit（runs / fills 永久保留；ADR-038 後 fills 為成交 audit 真相源）。
 
 ---
 

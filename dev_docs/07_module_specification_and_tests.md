@@ -224,7 +224,7 @@ backtest_platform 是 **個人量化 edge 驗證工廠 + 晉升管線**。核心
 | 類型 | 條件 |
 | :--- | :--- |
 | **前置** | `broker` 為 `PaperBroker`；side 詞彙需轉換（`add→buy`、`reduce/exit/stoploss→sell`，`_broker_side`）|
-| **後置** | `make_risk_check` 從 `broker.portfolio_snapshot` 建 `AccountState`（真實部位、非空倉）、批次內遞減現金；`make_place` 撮合並回 `Fill`；`make_db_sink` upsert signals/orders/fills/equity |
+| **後置** | `make_risk_check` 從 `broker.portfolio_snapshot` 建 `AccountState`（真實部位、非空倉）、批次內遞減現金；`make_place` 撮合並回 `Fill`；`make_db_sink` upsert signals/fills/equity（fills 串 strategy_id，ADR-038）|
 
 **對應測試**：`tests/orchestration/test_collaborators.py`、`test_chain_integration.py`
 
