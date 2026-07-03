@@ -23,6 +23,7 @@ export const NAV: NavZone[] = [
     zone: 'research',
     items: [
       { key: 'item.strategies', to: '/research/strategies', spec: 'research_01_strategy_library' },
+      { key: 'item.candidates', to: '/research/candidates', spec: 'research_candidate_pool' },
       { key: 'item.runsNew', to: '/research/runs/new', spec: 'research_02_run_new' },
       { key: 'item.runs', to: '/research/runs', spec: 'research_03_runs_table' },
       { key: 'item.compare', to: '/research/compare', spec: 'research_05_compare' },
