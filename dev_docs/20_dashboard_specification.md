@@ -93,11 +93,13 @@ Monitor 面板無 live 資料源前（無 daemon 託管 PaperBroker / CircuitBre
 
 ### 3.3 部位狀態 `/monitor/positions`（monitor_b）
 
-| 元件 | 表 | 計算 |
+> **來源改 fills 摺疊（[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）**：`positions` 表已砍（讀而不寫致此頁**永遠空白**）。部位改由 `db_reader.open_positions` 對 `fills` 依 (strategy_id, stock_id) 時序摺疊即時重建（qty / entry_price / opened_at / strategy_id；stop_loss 成交日誌無故為 null）。此頁自此顯示真實資料。
+
+| 元件 | 來源 | 計算 |
 | :--- | :--- | :--- |
-| Positions table（qty / entry / current / pnl% / days / stop）| `positions` + `daily_bars`(current) | `pnl_pct=(current-entry)/entry` |
-| 產業分布 / 集中度 | `positions` + `universe`(industry) | HHI = Σ(mv_i/total)² |
-| Heat / Cash / Open KPIs | `positions` + `equity_snapshots` | — |
+| Positions table（qty / entry / current / pnl% / days / stop）| `fills` 摺疊 + `daily_bars`(current) | `pnl_pct=(current-entry)/entry` |
+| 產業分布 / 集中度 | `fills` 摺疊 + `universe`(industry) | HHI = Σ(mv_i/total)² |
+| Heat / Cash / Open KPIs | `fills` 摺疊 + `equity_snapshots` | — |
 
 > live 即時部位為唯一 WebSocket `/ws/positions/live`（M5）；M4 前走 60s 輪詢（25 §5.3）。
 

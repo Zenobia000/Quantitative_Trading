@@ -125,36 +125,6 @@ def test_equity_snapshots_has_retention_policy(init_sql: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 3.D.4.2 — positions (regular table, UUID PK)
-# ---------------------------------------------------------------------------
-def test_positions_table_uses_uuid_pk(init_sql: str) -> None:
-    body = _table_block(init_sql, "positions")
-    assert body, "positions CREATE TABLE missing"
-    # position_id UUID PRIMARY KEY DEFAULT gen_random_uuid()
-    assert re.search(
-        r"position_id\s+UUID\s+PRIMARY\s+KEY", body, re.IGNORECASE
-    ), "positions must have UUID PRIMARY KEY"
-    assert "gen_random_uuid" in body, "positions should default UUID via gen_random_uuid()"
-
-
-def test_positions_has_unique_constraint(init_sql: str) -> None:
-    body = _table_block(init_sql, "positions")
-    # UNIQUE (strategy_id, run_id, stock_id, opened_at) per 21 §4.4
-    assert re.search(
-        r"UNIQUE\s*\(\s*strategy_id\s*,\s*run_id\s*,\s*stock_id\s*,\s*opened_at\s*\)",
-        body,
-        re.IGNORECASE,
-    ), "positions missing UNIQUE (strategy_id, run_id, stock_id, opened_at)"
-
-
-def test_positions_is_regular_table_not_hypertable(init_sql: str) -> None:
-    # 21 §4.1 row 6 — positions = regular (not hypertable)
-    assert not _has_hypertable(init_sql, "positions"), (
-        "positions must remain a regular table (not hypertable)"
-    )
-
-
-# ---------------------------------------------------------------------------
 # 3.D.4.3 — signals hypertable + JSONB reason + GIN index
 # ---------------------------------------------------------------------------
 def test_signals_has_required_columns(init_sql: str) -> None:
@@ -190,48 +160,8 @@ def test_signals_has_gin_index_on_reason_json(init_sql: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 3.D.4.4 — orders + fills hypertables (orders.signal_id FK → signals)
+# ADR-038 §4.7 — fills : the single execution store (no separate orders table)
 # ---------------------------------------------------------------------------
-def test_orders_table_has_required_columns(init_sql: str) -> None:
-    body = _table_block(init_sql, "orders")
-    assert body, "orders CREATE TABLE missing"
-    for col in (
-        "order_id",
-        "created_at",
-        "signal_id",
-        "broker",
-        "stock_id",
-        "side",
-        "order_type",
-        "quantity",
-        "limit_price",
-        "status",
-        "broker_order_id",
-        "submitted_at",
-        "completed_at",
-        "error_msg",
-    ):
-        assert col in body, f"orders missing column {col}"
-
-
-def test_orders_signal_id_is_plain_column_not_fk_to_hypertable(init_sql: str) -> None:
-    body = _table_block(init_sql, "orders")
-    # orders.signal_id links to signals by value but must NOT be a SQL foreign key:
-    # TimescaleDB 2.x rejects "foreign keys to hypertables", which aborts init.sql
-    # and drops every table declared after orders. The link is enforced in app code.
-    assert re.search(r"signal_id\s+UUID", body, re.IGNORECASE), \
-        "orders must keep a signal_id UUID column"
-    assert not re.search(
-        r"signal_id\s+UUID[^,]*REFERENCES\s+signals",
-        body,
-        re.IGNORECASE,
-    ), "orders.signal_id must NOT be a FK to the signals hypertable (TimescaleDB rejects it)"
-
-
-def test_orders_is_hypertable(init_sql: str) -> None:
-    assert _has_hypertable(init_sql, "orders")
-
-
 def test_fills_table_has_required_columns(init_sql: str) -> None:
     body = _table_block(init_sql, "fills")
     assert body, "fills CREATE TABLE missing"
@@ -240,6 +170,7 @@ def test_fills_table_has_required_columns(init_sql: str) -> None:
         "fill_time",
         "order_id",
         "signal_id",
+        "strategy_id",  # ADR-038 — per-sleeve P&L attribution
         "stock_id",
         "side",
         "fill_price",
@@ -253,137 +184,63 @@ def test_fills_table_has_required_columns(init_sql: str) -> None:
         assert col in body, f"fills missing column {col}"
 
 
+def test_fills_strategy_id_is_not_null(init_sql: str) -> None:
+    # ADR-038 — strategy_id must be NOT NULL so every fill is sleeve-attributable.
+    body = _table_block(init_sql, "fills")
+    assert re.search(
+        r"strategy_id\s+TEXT\s+NOT\s+NULL", body, re.IGNORECASE
+    ), "fills.strategy_id must be TEXT NOT NULL"
+
+
+def test_fills_signal_id_is_plain_column_not_fk_to_hypertable(init_sql: str) -> None:
+    body = _table_block(init_sql, "fills")
+    # fills.signal_id links to signals by value but must NOT be a SQL foreign key:
+    # TimescaleDB 2.x rejects "foreign keys to hypertables", which aborts init.sql.
+    assert re.search(r"signal_id\s+UUID", body, re.IGNORECASE), \
+        "fills must keep a signal_id UUID column"
+    assert not re.search(
+        r"signal_id\s+UUID[^,]*REFERENCES\s+signals",
+        body,
+        re.IGNORECASE,
+    ), "fills.signal_id must NOT be a FK to the signals hypertable (TimescaleDB rejects it)"
+
+
 def test_fills_is_hypertable(init_sql: str) -> None:
     assert _has_hypertable(init_sql, "fills")
 
 
-def test_signals_defined_before_orders_in_file(init_sql: str) -> None:
-    """FK targets must be declared before referencing tables."""
-    sig_pos = init_sql.lower().find("create table") if False else 0
-    sig_match = re.search(r"create\s+table[^;]*signals\s*\(", init_sql, re.IGNORECASE)
-    ord_match = re.search(r"create\s+table[^;]*orders\s*\(", init_sql, re.IGNORECASE)
-    assert sig_match is not None and ord_match is not None
-    assert sig_match.start() < ord_match.start(), (
-        "signals CREATE TABLE must precede orders (orders has FK to signals)"
-    )
-    _ = sig_pos  # silence unused
-
-
-# ---------------------------------------------------------------------------
-# 3.D.4.5 — risk_metrics + validation_runs
-# ---------------------------------------------------------------------------
-def test_risk_metrics_has_required_columns(init_sql: str) -> None:
-    body = _table_block(init_sql, "risk_metrics")
-    assert body, "risk_metrics CREATE TABLE missing"
-    for col in (
-        "metric_time",
-        "strategy_id",
-        "run_id",
-        "current_dd",
-        "var_95",
-        "cvar_95",
-        "portfolio_heat",
-        "concentration_top1",
-        "concentration_top3",
-        "hhi",
-        "sharpe_30d",
-        "sortino_30d",
-        "event_type",
-        "event_context",
-    ):
-        assert col in body, f"risk_metrics missing column {col}"
-
-
-def test_risk_metrics_is_hypertable(init_sql: str) -> None:
-    assert _has_hypertable(init_sql, "risk_metrics")
-
-
-def test_validation_runs_has_required_columns(init_sql: str) -> None:
-    body = _table_block(init_sql, "validation_runs")
-    assert body, "validation_runs CREATE TABLE missing"
-    for col in (
-        "run_id",
-        "run_time",
-        "method",
-        "strategy_id",
-        "params_json",
-        "result_json",
-        "summary_metric",
-        "pass_threshold",
-    ):
-        assert col in body, f"validation_runs missing column {col}"
+def test_fills_has_strategy_index(init_sql: str) -> None:
+    # ADR-038 — index (strategy_id, fill_time DESC) unblocks per-sleeve P&L reads.
     assert re.search(
-        r"run_id\s+UUID\s+PRIMARY\s+KEY", body, re.IGNORECASE
-    ), "validation_runs must have UUID PRIMARY KEY"
+        r"CREATE\s+INDEX[^;]*ON\s+fills\s*\(\s*strategy_id\s*,\s*fill_time\s+DESC",
+        init_sql,
+        re.IGNORECASE,
+    ), "fills missing index on (strategy_id, fill_time DESC)"
 
 
-def test_validation_runs_is_regular_table(init_sql: str) -> None:
-    # 21 §4.1 row 11 — validation_runs = regular
-    assert not _has_hypertable(init_sql, "validation_runs")
-
-
-# ---------------------------------------------------------------------------
-# 3.D.4.6 — alerts hypertable + data_quality_log enhancement
-# ---------------------------------------------------------------------------
-def test_alerts_has_required_columns(init_sql: str) -> None:
-    body = _table_block(init_sql, "alerts")
-    assert body, "alerts CREATE TABLE missing"
-    for col in (
-        "alert_id",
-        "alert_time",
-        "rule_id",
-        "level",
-        "title",
-        "message",
-        "context_json",
-        "sent_to_discord",
-        "sent_at",
-    ):
-        assert col in body, f"alerts missing column {col}"
-
-
-def test_alerts_is_hypertable(init_sql: str) -> None:
-    assert _has_hypertable(init_sql, "alerts")
-
-
-def test_data_quality_log_has_enhanced_columns(init_sql: str) -> None:
-    """21 §4.10 upgrades data_quality_log with source/check_type/severity/resolved."""
-    body = _table_block(init_sql, "data_quality_log")
-    assert body, "data_quality_log CREATE TABLE missing"
-    for col in (
-        "check_id",
-        "check_time",
-        "source",
-        "check_type",
-        "stock_id",
-        "trade_date",
-        "severity",
-        "detail_json",
-        "resolved",
-        "resolved_at",
-    ):
-        assert col in body, f"data_quality_log missing column {col}"
+def test_signals_defined_before_fills_in_file(init_sql: str) -> None:
+    """signals must be declared before fills (fills.signal_id links to signals)."""
+    sig_match = re.search(r"create\s+table[^;]*signals\s*\(", init_sql, re.IGNORECASE)
+    fill_match = re.search(r"create\s+table[^;]*fills\s*\(", init_sql, re.IGNORECASE)
+    assert sig_match is not None and fill_match is not None
+    assert sig_match.start() < fill_match.start(), (
+        "signals CREATE TABLE must precede fills (fills.signal_id links to signals)"
+    )
 
 
 # ---------------------------------------------------------------------------
-# Total table count guard — 13 tables per spec
+# ADR-038 schema convergence — table inventory guard
 # ---------------------------------------------------------------------------
-def test_all_thirteen_tables_present(init_sql: str) -> None:
+def test_surviving_tables_present(init_sql: str) -> None:
+    """Post ADR-038: exactly 7 tables survive (8 zero-IO tables dropped)."""
     expected = {
         "daily_bars",
         "institutional_flows",
         "broker_chips",
-        "universe",
-        "trades",
+        "runs",
         "equity_snapshots",
-        "positions",
         "signals",
-        "orders",
         "fills",
-        "risk_metrics",
-        "validation_runs",
-        "alerts",
-        "data_quality_log",
     }
     found = set(
         m.group(1).lower()
@@ -393,8 +250,35 @@ def test_all_thirteen_tables_present(init_sql: str) -> None:
             re.IGNORECASE,
         )
     )
-    missing = expected - found
-    assert not missing, f"missing tables in init.sql: {missing}"
+    assert found == expected, (
+        f"init.sql table set drifted from the ADR-038 target.\n"
+        f"  unexpected: {found - expected}\n"
+        f"  missing: {expected - found}"
+    )
+
+
+def test_dropped_tables_absent(init_sql: str) -> None:
+    """ADR-038 dropped these 8 zero-IO / inverted tables — they must not return.
+
+    `orders` + `positions` come back when a real producer lands (M5 broker order
+    lifecycle); the other six had zero prod IO and are re-added only on demand.
+    """
+    for table in (
+        "trades",
+        "universe",
+        "orders",
+        "positions",
+        "risk_metrics",
+        "validation_runs",
+        "data_quality_log",
+        "alerts",
+    ):
+        assert not _table_block(init_sql, table), (
+            f"{table} was dropped by ADR-038 but reappeared in init.sql"
+        )
+        assert not _has_hypertable(init_sql, table), (
+            f"{table} hypertable statement lingered after ADR-038 drop"
+        )
 
 
 # ---------------------------------------------------------------------------

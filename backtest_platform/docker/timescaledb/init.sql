@@ -1,6 +1,12 @@
 -- Schema for four-layer resonance backtest platform.
 -- Runs once on first container startup (Postgres docker-entrypoint convention).
--- Source of truth: dev_docs/21_data_contract.md §4 (13 tables: M1 4 + M2-5 new 9).
+-- Source of truth: dev_docs/21_data_contract.md §4 (7 tables after ADR-038
+-- schema convergence: 3 M1 market-data + runs + equity_snapshots + signals + fills).
+--
+-- Dev-mode schema policy (ADR-038): init.sql is the SINGLE source of truth.
+-- Data is disposable — a schema change means edit this file + recreate the DB
+-- with `docker compose down -v && docker compose up`. There is no migration
+-- runner; migrations return only when there is production data to preserve.
 
 CREATE EXTENSION IF NOT EXISTS timescaledb;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
@@ -55,47 +61,13 @@ CREATE TABLE IF NOT EXISTS broker_chips (
 SELECT create_hypertable('broker_chips', 'trade_date', if_not_exists => TRUE);
 
 -- ============================================================
--- M1 — universe : tracked stock pool (versioned per quarter).
--- v2.md 2.2 Universe definition.
--- ============================================================
-CREATE TABLE IF NOT EXISTS universe (
-    stock_id      TEXT NOT NULL,
-    snapshot_date DATE NOT NULL,
-    market_cap    NUMERIC(20, 0),
-    industry      TEXT,
-    listed_date   DATE,
-    is_active     BOOLEAN NOT NULL DEFAULT TRUE,
-    excluded_reason TEXT,
-    PRIMARY KEY (stock_id, snapshot_date)
-);
-
--- ============================================================
--- M1 legacy — trades : audit trail per v2.md 5.6.
--- Superseded by signals / orders / fills triple (M2/M4) but kept
--- for back-compat with existing dashboards until M4 cutover.
--- ============================================================
-CREATE TABLE IF NOT EXISTS trades (
-    trade_id        TEXT PRIMARY KEY,
-    stock_id        TEXT NOT NULL,
-    signal_type     TEXT NOT NULL,
-    signal_time     TIMESTAMPTZ NOT NULL,
-    execution_time  TIMESTAMPTZ,
-    scores          JSONB NOT NULL,
-    prices          JSONB NOT NULL,
-    position        JSONB NOT NULL,
-    strategy_version TEXT NOT NULL,
-    notes           TEXT
-);
-CREATE INDEX IF NOT EXISTS idx_trades_stock_time ON trades (stock_id, signal_time DESC);
-CREATE INDEX IF NOT EXISTS idx_trades_signal_type ON trades (signal_type, signal_time DESC);
-
--- ============================================================
 -- M3 §4.x — runs : the Run as a first-class object (single source of truth).
 -- Collects what used to be scattered reports/perf__/summary__ orphan files and
 -- the orphan run_id columns on the time-series tables into one lineage-bearing
 -- table. run_id = deterministic 12-char RunConfig hash (research/run_config.py).
--- v0.1-min scope (8.G.1): table only; retroactive FK from equity_snapshots /
--- positions / signals / risk_metrics is the v0.2-full migration.
+-- A plain table (not a hypertable), so app-level linkage from the telemetry
+-- tables (run_id column) could become a real FK once every paper-chain run_id
+-- has a runs parent row (21 §4.2b) — deferred, not done.
 -- ============================================================
 CREATE TABLE IF NOT EXISTS runs (
     run_id            TEXT PRIMARY KEY,        -- deterministic RunConfig hash
@@ -110,7 +82,7 @@ CREATE TABLE IF NOT EXISTS runs (
     cost_assumptions  JSONB,                   -- fee / tax / slippage
     params            JSONB,                   -- entry / exit params
     metrics           JSONB,                   -- result summary (cagr / sharpe / ...)
-    gate_status       TEXT,                    -- 審判庭 verdict (PASS|FAIL|INCOMPLETE|...; enum evolves, unconstrained — migration 004)
+    gate_status       TEXT,                    -- 審判庭 verdict (PASS|FAIL|INCOMPLETE|...; enum evolves, unconstrained)
     gate_summary      TEXT,                    -- human-readable gate check summary
     status            TEXT NOT NULL DEFAULT 'created',  -- created|running|done|failed
     trials_count      INTEGER NOT NULL DEFAULT 0,
@@ -153,34 +125,7 @@ SELECT add_retention_policy('equity_snapshots',
     if_not_exists => TRUE);
 
 -- ============================================================
--- M2 §4.4 — positions : current open + historical closed positions.
--- Regular table (not hypertable): row count bounded by Universe × time;
--- UPDATE-on-close pattern conflicts with hypertable's append optimisation.
--- ============================================================
-CREATE TABLE IF NOT EXISTS positions (
-    position_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    strategy_id      TEXT NOT NULL,
-    run_id           TEXT NOT NULL,
-    stock_id         TEXT NOT NULL,
-    opened_at        TIMESTAMPTZ NOT NULL,
-    closed_at        TIMESTAMPTZ,  -- NULL = open
-    entry_price      NUMERIC(12, 4) NOT NULL,
-    exit_price       NUMERIC(12, 4),
-    quantity         INTEGER NOT NULL,
-    stop_loss        NUMERIC(12, 4),
-    take_profit      NUMERIC(12, 4),
-    realized_pnl     NUMERIC(18, 4),
-    unrealized_pnl   NUMERIC(18, 4),
-    status           TEXT NOT NULL DEFAULT 'OPEN',  -- OPEN | CLOSED | LIQUIDATED
-    UNIQUE (strategy_id, run_id, stock_id, opened_at)
-);
-CREATE INDEX IF NOT EXISTS idx_positions_open
-    ON positions (strategy_id, status) WHERE status = 'OPEN';
-CREATE INDEX IF NOT EXISTS idx_positions_stock
-    ON positions (stock_id, opened_at DESC);
-
--- ============================================================
--- M2 §4.5 — signals : decision log (must precede orders/fills FK).
+-- M2 §4.5 — signals : decision log (must precede fills that reference it).
 -- reason_json holds {scores, prices, context, gates} for replay
 -- and post-mortem; GIN index enables JSONB containment queries.
 -- ============================================================
@@ -208,46 +153,22 @@ CREATE INDEX IF NOT EXISTS idx_signals_reason_gin
     ON signals USING GIN (reason_json);
 
 -- ============================================================
--- M4 §4.6 — orders : broker order records. Links to signals by signal_id.
--- NOTE: signal_id is a plain column, NOT a SQL foreign key. TimescaleDB 2.x
--- raises "foreign keys to hypertables are not supported" (signals is a
--- hypertable), which aborts init.sql and drops every table after it. The link
--- is enforced in application code (db_writer) instead. Portable to plain
--- managed Postgres (Neon/Supabase) where the same column works unchanged.
--- ============================================================
-CREATE TABLE IF NOT EXISTS orders (
-    order_id         UUID NOT NULL DEFAULT gen_random_uuid(),
-    created_at       TIMESTAMPTZ NOT NULL,
-    signal_id        UUID,
-    broker           TEXT NOT NULL,  -- paper | shioaji
-    stock_id         TEXT NOT NULL,
-    side             TEXT NOT NULL,  -- Buy | Sell
-    order_type       TEXT NOT NULL,  -- Market | Limit | MOC | LOC
-    quantity         INTEGER NOT NULL,
-    limit_price      NUMERIC(12, 4),  -- NULL for Market
-    status           TEXT NOT NULL,
-    broker_order_id  TEXT,
-    submitted_at     TIMESTAMPTZ,
-    completed_at     TIMESTAMPTZ,
-    error_msg        TEXT,
-    PRIMARY KEY (created_at, order_id)
-);
-SELECT create_hypertable('orders', 'created_at',
-    chunk_time_interval => INTERVAL '7 days',
-    if_not_exists => TRUE);
-CREATE INDEX IF NOT EXISTS idx_orders_active
-    ON orders (status) WHERE status IN ('PENDING', 'SUBMITTED', 'PARTIAL');
-CREATE INDEX IF NOT EXISTS idx_orders_signal ON orders (signal_id);
-
--- ============================================================
--- M4 §4.7 — fills : execution reports.
--- slippage_bps = (fill_price - expected) / expected * 10000.
+-- M4 §4.7 — fills : the single execution store (ADR-038).
+-- A fill IS the execution record and owns its own table — there is no separate
+-- `orders` table until a real broker order lifecycle lands (returns at M5).
+-- order_id stays as a client-minted (uuid4) logical event id linking a fill to
+-- the order intent that produced it; signal_id links to signals by value (plain
+-- column, NOT a SQL FK — TimescaleDB 2.x rejects FKs to a hypertable, and both
+-- fills and signals are hypertables; the link is enforced in app code and stays
+-- portable to plain managed Postgres). strategy_id enables per-sleeve P&L
+-- attribution (ADR-036 §3.4). slippage_bps = (fill_price - expected)/expected * 10000.
 -- ============================================================
 CREATE TABLE IF NOT EXISTS fills (
     fill_id          UUID NOT NULL DEFAULT gen_random_uuid(),
     fill_time        TIMESTAMPTZ NOT NULL,
-    order_id         UUID NOT NULL,
+    order_id         UUID NOT NULL,              -- client-minted logical event id
     signal_id        UUID,
+    strategy_id      TEXT NOT NULL,              -- per-sleeve P&L (ADR-036 §3.4)
     stock_id         TEXT NOT NULL,
     side             TEXT NOT NULL,
     fill_price       NUMERIC(12, 4) NOT NULL,
@@ -264,97 +185,4 @@ SELECT create_hypertable('fills', 'fill_time',
     if_not_exists => TRUE);
 CREATE INDEX IF NOT EXISTS idx_fills_order ON fills (order_id);
 CREATE INDEX IF NOT EXISTS idx_fills_stock ON fills (stock_id, fill_time DESC);
-
--- ============================================================
--- M3 §4.8 — risk_metrics : per-tick portfolio risk snapshot.
--- event_type NULL = normal; otherwise circuit-breaker level.
--- ============================================================
-CREATE TABLE IF NOT EXISTS risk_metrics (
-    metric_time        TIMESTAMPTZ NOT NULL,
-    strategy_id        TEXT NOT NULL,
-    run_id             TEXT NOT NULL,
-    current_dd         NUMERIC(6, 4),
-    var_95             NUMERIC(8, 4),
-    cvar_95            NUMERIC(8, 4),
-    portfolio_heat     NUMERIC(6, 4),
-    concentration_top1 NUMERIC(5, 4),
-    concentration_top3 NUMERIC(5, 4),
-    hhi                NUMERIC(6, 5),
-    sharpe_30d         NUMERIC(6, 3),
-    sortino_30d        NUMERIC(6, 3),
-    event_type         TEXT,  -- NULL | HEAT_WARN | CONCENT | L1_PAUSE | L2_CUT | L3_HALT
-    event_context      JSONB,
-    PRIMARY KEY (metric_time, strategy_id, run_id)
-);
-SELECT create_hypertable('risk_metrics', 'metric_time',
-    chunk_time_interval => INTERVAL '1 month',
-    if_not_exists => TRUE);
-CREATE INDEX IF NOT EXISTS idx_risk_metrics_strategy
-    ON risk_metrics (strategy_id, metric_time DESC);
-CREATE INDEX IF NOT EXISTS idx_risk_metrics_events
-    ON risk_metrics (event_type, metric_time DESC) WHERE event_type IS NOT NULL;
-
--- ============================================================
--- M3 §4.9 — validation_runs : PBO / DSR / WFA / CPCV / MC results.
--- Regular table: append-only at low rate, no hypertable benefit.
--- ============================================================
-CREATE TABLE IF NOT EXISTS validation_runs (
-    run_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_time         TIMESTAMPTZ NOT NULL,
-    method           TEXT NOT NULL,  -- PBO | DSR | WFA | CPCV | MC
-    strategy_id      TEXT NOT NULL,
-    params_json      JSONB NOT NULL,
-    result_json      JSONB NOT NULL,
-    summary_metric   NUMERIC(10, 6),
-    pass_threshold   BOOLEAN
-);
-CREATE INDEX IF NOT EXISTS idx_validation_runs_strategy_method
-    ON validation_runs (strategy_id, method, run_time DESC);
-CREATE INDEX IF NOT EXISTS idx_validation_runs_result_gin
-    ON validation_runs USING GIN (result_json);
-
--- ============================================================
--- §4.10 — data_quality_log : DQ check trail (enhanced from M1).
--- Migration note: if M1 deployment exists with old (check_time,
--- check_name) PK, run a migration script — fresh installs use this.
--- ============================================================
-CREATE TABLE IF NOT EXISTS data_quality_log (
-    check_id         BIGSERIAL PRIMARY KEY,
-    check_time       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    source           TEXT NOT NULL,
-    check_type       TEXT NOT NULL,
-    stock_id         TEXT,
-    trade_date       DATE,
-    severity         TEXT NOT NULL,
-    detail_json      JSONB NOT NULL,
-    resolved         BOOLEAN DEFAULT FALSE,
-    resolved_at      TIMESTAMPTZ
-);
-CREATE INDEX IF NOT EXISTS idx_dq_log_time
-    ON data_quality_log (check_time DESC);
-CREATE INDEX IF NOT EXISTS idx_dq_log_unresolved
-    ON data_quality_log (resolved, severity) WHERE resolved = FALSE;
-
--- ============================================================
--- M4 §4.11 — alerts : Discord-bound alert queue.
--- sent_to_discord=FALSE rows are pending dispatch (drained by worker).
--- ============================================================
-CREATE TABLE IF NOT EXISTS alerts (
-    alert_id         UUID NOT NULL DEFAULT gen_random_uuid(),
-    alert_time       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    rule_id          TEXT NOT NULL,
-    level            TEXT NOT NULL,  -- critical | high | info
-    title            TEXT NOT NULL,
-    message          TEXT NOT NULL,
-    context_json     JSONB,
-    sent_to_discord  BOOLEAN DEFAULT FALSE,
-    sent_at          TIMESTAMPTZ,
-    PRIMARY KEY (alert_time, alert_id)
-);
-SELECT create_hypertable('alerts', 'alert_time',
-    chunk_time_interval => INTERVAL '7 days',
-    if_not_exists => TRUE);
-CREATE INDEX IF NOT EXISTS idx_alerts_pending
-    ON alerts (sent_to_discord, alert_time DESC) WHERE sent_to_discord = FALSE;
-CREATE INDEX IF NOT EXISTS idx_alerts_rule
-    ON alerts (rule_id, alert_time DESC);
+CREATE INDEX IF NOT EXISTS idx_fills_strategy ON fills (strategy_id, fill_time DESC);

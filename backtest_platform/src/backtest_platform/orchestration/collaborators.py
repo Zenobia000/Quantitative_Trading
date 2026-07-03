@@ -247,13 +247,14 @@ def _signal_row(s: Mapping[str, Any], run_id: str, strategy_id: str, now: dateti
     }
 
 
-def _fill_row(f: Fill, now: datetime) -> dict[str, Any]:
+def _fill_row(f: Fill, strategy_id: str, now: datetime) -> dict[str, Any]:
     return {
         "stock_id": f.stock_id,
         "side": _SIDE_DB.get(f.side, str(f.side)),
         "qty": f.qty,
         "price": f.price,
         "filled_at": now,
+        "strategy_id": strategy_id,
     }
 
 
@@ -293,7 +294,7 @@ def make_db_sink(
         signals = ctx.outputs.get("signals", []) or []
         fills = ctx.outputs.get("orders", []) or []
         n_sig = w.upsert_signals([_signal_row(s, run_id, strategy_id, now) for s in signals])
-        n_fill = w.upsert_fills([_fill_row(f, now) for f in fills])
+        n_fill = w.upsert_fills([_fill_row(f, strategy_id, now) for f in fills])
         n_eq = w.upsert_equity_snapshots([_equity_row(broker, run_id, strategy_id, mode, now)]) if broker else 0
         return f"persisted run={run_id}: signals={n_sig} fills={n_fill} equity={n_eq}"
 

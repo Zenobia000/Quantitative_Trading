@@ -347,24 +347,23 @@ FinLab（`data/finlab_source.py`）除了 batch ingest（`ingest_universe_finlab
 
 ## 4. TimescaleDB Schema（完整 DDL，真相源 `docker/timescaledb/init.sql`）
 
-### 4.1 Schema 總表
+### 4.1 Schema 總表（ADR-038 schema 收斂後 = 7 表）
 
-| # | 表 | M1 | M2 | M3 | M4 | M5 | 類型 | 對應功能 |
-| :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| 1 | `daily_bars` | ✅ | | | | | hypertable | OHLCV cache |
-| 2 | `institutional_flows` | ✅ | | | | | hypertable | 三大法人 |
-| 3 | `broker_chips` | ✅ | | | | | hypertable | 籌碼 |
-| 4 | `universe` | ✅ | | | | | regular | 篩選結果 |
-| 5 | `equity_snapshots` | | ✅ | | | | hypertable | 帳戶權益曲線 |
-| 6 | `positions` | | ✅ | | | | regular | 當前部位 |
-| 7 | `signals` | | ✅ | | | | hypertable | 訊號日誌 |
-| 8 | `fills` | | | | ✅ | | hypertable | 成交回報 |
-| 9 | `orders` | | | | ✅ | | hypertable | 訂單記錄 |
-| 10 | `risk_metrics` | | | ✅ | | | hypertable | 風控指標 |
-| 11 | `validation_runs` | | | ✅ | | | regular | PBO/DSR/WFA |
-| 12 | `data_quality_log` | ✅ | | | | | regular | DQ 異常 |
-| 13 | `alerts` | | | | ✅ | | hypertable | 告警記錄 |
-| 14 | `runs` | | | ✅ | | | regular | Run 主表（single source of truth）|
+> **[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)（2026-07-03）—— schema 收斂**：一次 IO 稽核揭露 15 表中大量零 IO 死表與一組寫讀反轉（`orders` 唯一寫入者是 `fills` 雙寫、`fills` 零讀取者、`positions` 讀而不寫致 `/monitor/positions` 永遠空白）。dev 模式（資料可拋、無 backfill）下砍 8 張表，`fills` 成為**單一成交真相源**。存活 7 張如下；被砍 8 張見 §4.6 / §4.4 tombstone 與 §4.8–4.11 註記。
+
+| # | 表 | 里程碑 | 類型 | 對應功能 |
+| :---: | :--- | :---: | :--- | :--- |
+| 1 | `daily_bars` | M1 | hypertable | OHLCV cache |
+| 2 | `institutional_flows` | M1 | hypertable | 三大法人 |
+| 3 | `broker_chips` | M1 | hypertable | 籌碼 |
+| 4 | `runs` | M3 | regular | Run 主表（single source of truth）|
+| 5 | `equity_snapshots` | M2 | hypertable | 帳戶權益曲線 |
+| 6 | `signals` | M2 | hypertable | 訊號日誌 |
+| 7 | `fills` | M4 | hypertable | **單一成交真相源**（含 strategy_id，per-sleeve P&L）|
+
+> **被砍 8 張（ADR-038，待真實 producer 落地再回歸）**：`orders`（M5 真實 broker 訂單生命週期回歸）、`positions`（讀而不寫；真相在 fills 摺疊）、`trades`（M1 legacy）、`validation_runs`（結果實存 JSONL validation_store）、`risk_metrics`（circuit_breaker 純記憶體）、`data_quality_log`、`alerts`（discord_notifier 直接發送不入庫）、`universe`（來自 parquet/config）。
+>
+> **dev-mode schema 政策（ADR-038 §3.4）**：`init.sql` 是 schema 的**唯一真相源**；schema 變更＝改 `init.sql` + `docker compose down -v` 重建 DB（**無 migration runner**）。`docker/timescaledb/migrations/`（002/003/004，無 runner、end-state 已併入 init.sql）已刪。migrations 只在有需保留的**生產資料**時回歸。
 
 ### 4.2 M1 既有四表（簡化引用，完整 DDL 見 `docker/timescaledb/init.sql`）
 
@@ -419,7 +418,9 @@ CREATE INDEX ON runs (status, created_at DESC);
 
 > 欄位順序與 `data/db_writer.py:_RUNS_COLS`（+ DB 預設的 `created_at`）逐欄對齊；`tests/data/test_init_sql_schema.py::test_runs_table_columns_match_db_writer_cols` 為防漂移守門，任何一邊改欄位另一邊未跟上即紅燈。`params` 只出現一次（於 `cost_assumptions` 之後），承載策略／進出場參數快照。
 
-> **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。四張時序表（equity_snapshots / positions / signals / risk_metrics）回補 `run_id → runs(run_id)` FK 屬 v0.2-full（需先 backfill 每個孤兒 run_id 對應的 `runs` 列），排入日後的 migration。寫入器見 `data/db_writer.py:upsert_runs`；建表 migration 見 `docker/timescaledb/migrations/002_add_runs_table.sql`，`preset → strategy` 欄位改名（ADR-028 對齊既有 DB）見 `003_rename_runs_preset_to_strategy.sql`。
+> **v0.1-min 範圍（8.G.1）**：僅建表 + `db_writer.upsert_runs()`。寫入器見 `data/db_writer.py:upsert_runs`。建表 / `preset → strategy` 改名 / gate 欄新增原以 `docker/timescaledb/migrations/002-004` 承載，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md) 後 migrations 目錄已刪、end-state 全在 `init.sql`（dev-mode 單一真相政策）。
+>
+> **§4.2b runs FK backfill — 明確不做（ADR-038 §3.5）**：telemetry hypertables（equity_snapshots / signals / fills）→ `runs(run_id)` 的 SQL FK 技術上可行（`runs` 是 plain 表，非 hypertable），但 paper-chain 產生的 run_id 沒有 `runs` 父列——`make_db_sink` 從不 upsert `runs`（研究流才寫 runs），加 FK 會讓每筆 paper telemetry INSERT 因缺父列而失敗。故 run_id → runs 的連結**維持 app-level**，待 paper chain 開始 upsert 一筆 `runs` stub 時再議。
 >
 > **A0（2026-07-02）— `upsert_runs` 接上生產呼叫者**：`research/run_persist.py::persist_run` = JSONL ledger append（真相源不變）+ best-effort DB 鏡射（DB 掛掉降級為 ledger-only，只 warning 不擋 run）。三個寫入點（`POST /runs`、`POST /runs/async`、CLI `run-is`）全數改走 `persist_run`；`run_record_to_db_row` 負責 `window → is_start/is_end` 拆欄與 NOT NULL 預設（`status='done'`、`trials_count=1`）。審判庭判決以 `gate_status`/`gate_summary` 兩個 nullable TEXT 欄隨行（migration `004_add_runs_gate_columns.sql`），供 run board 直接用 SQL badge。
 
@@ -451,29 +452,9 @@ SELECT add_retention_policy('equity_snapshots',
 );
 ```
 
-### 4.4 新增表 — positions（M2）
+### 4.4 ~~positions~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-```sql
-CREATE TABLE positions (
-    position_id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    strategy_id      TEXT NOT NULL,
-    run_id           TEXT NOT NULL,
-    stock_id         TEXT NOT NULL,
-    opened_at        TIMESTAMPTZ NOT NULL,
-    closed_at        TIMESTAMPTZ,  -- NULL = open
-    entry_price      NUMERIC(12,4) NOT NULL,
-    exit_price       NUMERIC(12,4),
-    quantity         INT NOT NULL,
-    stop_loss        NUMERIC(12,4),
-    take_profit      NUMERIC(12,4),
-    realized_pnl     NUMERIC(18,4),
-    unrealized_pnl   NUMERIC(18,4),
-    status           TEXT NOT NULL DEFAULT 'OPEN',  -- OPEN | CLOSED | LIQUIDATED
-    UNIQUE (strategy_id, run_id, stock_id, opened_at)
-);
-CREATE INDEX ON positions (strategy_id, status) WHERE status = 'OPEN';
-CREATE INDEX ON positions (stock_id, opened_at DESC);
-```
+> **已於 ADR-038 移除。** `positions` 表**讀而不寫**：生產流程從不 INSERT（只有測試呼叫過 `upsert_positions`），卻是 `open_positions`（餵 `GET /monitor/positions`）的讀取來源——致該 GUI 頁**永遠空白**。部位的真相在成交日誌：`open_positions` 與 `load_broker_state` 現改為對 `fills` 依 (strategy_id, stock_id) 時序摺疊（重用 `db_reader.reconstruct_positions` 加權平均），回應 shape 不變。`upsert_positions` 一併刪除。有真實部位 producer（或需歷史平倉 audit）時再回歸。
 
 ### 4.5 新增表 — signals（M2）
 
@@ -497,39 +478,19 @@ CREATE INDEX ON signals (stock_id, signal_time DESC);
 CREATE INDEX ON signals USING GIN (reason_json);
 ```
 
-### 4.6 新增表 — orders（M4）
+### 4.6 ~~orders~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-```sql
-CREATE TABLE orders (
-    order_id         UUID NOT NULL DEFAULT gen_random_uuid(),
-    created_at       TIMESTAMPTZ NOT NULL,
-    signal_id        UUID REFERENCES signals(signal_id),
-    broker           TEXT NOT NULL,  -- paper | shioaji
-    stock_id         TEXT NOT NULL,
-    side             TEXT NOT NULL,  -- Buy | Sell
-    order_type       TEXT NOT NULL,  -- Market | Limit | MOC | LOC
-    quantity         INT NOT NULL,
-    limit_price      NUMERIC(12,4),  -- NULL for Market
-    status           TEXT NOT NULL,  -- PENDING | SUBMITTED | FILLED | PARTIAL | CANCELLED | REJECTED
-    broker_order_id  TEXT,
-    submitted_at     TIMESTAMPTZ,
-    completed_at     TIMESTAMPTZ,
-    error_msg        TEXT,
-    PRIMARY KEY (created_at, order_id)
-);
-SELECT create_hypertable('orders', 'created_at', chunk_time_interval => INTERVAL '7 days');
-CREATE INDEX ON orders (status) WHERE status IN ('PENDING', 'SUBMITTED', 'PARTIAL');
-CREATE INDEX ON orders (signal_id);
-```
+> **已於 ADR-038 移除。** `orders` 表**唯一寫入者是 `upsert_fills` 的雙寫**（`upsert_orders` 除該雙寫外零生產呼叫者），語意錯置——成交真相被寫進本該記訂單生命週期的表，而 `fills` 反而零讀取。ADR-038 把成交真相歸位到 `fills`（§4.7），`upsert_orders` 刪除。**`orders` 於 M5 回歸**：屆時承載真實 broker 的訂單生命週期（PENDING/SUBMITTED/FILLED/PARTIAL/CANCELLED/REJECTED 狀態機 + broker_order_id 回填），成交（fills）再以 `order_id` FK 回指其訂單。
 
-### 4.7 新增表 — fills（M4）
+### 4.7 新增表 — fills（M4）— **單一成交真相源**（ADR-038）
 
 ```sql
 CREATE TABLE fills (
     fill_id          UUID NOT NULL DEFAULT gen_random_uuid(),
     fill_time        TIMESTAMPTZ NOT NULL,
-    order_id         UUID NOT NULL,
-    signal_id        UUID,
+    order_id         UUID NOT NULL,              -- client 端 uuid4 邏輯事件 id（非 orders 表 FK）
+    signal_id        UUID,                        -- plain 欄，非 FK（TimescaleDB 拒 hypertable FK）
+    strategy_id      TEXT NOT NULL,              -- ADR-038 — per-sleeve P&L 歸因（ADR-036 §3.4）
     stock_id         TEXT NOT NULL,
     side             TEXT NOT NULL,
     fill_price       NUMERIC(12,4) NOT NULL,
@@ -544,92 +505,26 @@ CREATE TABLE fills (
 SELECT create_hypertable('fills', 'fill_time', chunk_time_interval => INTERVAL '7 days');
 CREATE INDEX ON fills (order_id);
 CREATE INDEX ON fills (stock_id, fill_time DESC);
+CREATE INDEX ON fills (strategy_id, fill_time DESC);  -- ADR-038 per-sleeve 讀取
 ```
 
-> **A0（2026-07-02）— fills 表開始有寫入者**：`db_writer.upsert_fills` 由「fill 只映射為 `orders` 的 `status='filled'` 列」改為**雙寫**：(1) `orders` filled 列（Monitor `/fills` 讀取路徑不變）+ (2) `fills` 列（承載 orders 沒有的成交經濟學欄位 commission / tax / slippage_bps）。兩列以 client 端 `uuid4` 產生的 `order_id` 互聯（`fills.order_id` NOT NULL，DB 端 `gen_random_uuid()` 無法跨兩個 INSERT 共享），同一 connection/commit 完成。
+> **ADR-038（2026-07-03）— fills = 單一成交真相源**：`db_writer.upsert_fills` 由「雙寫 orders + fills」改為**單一 append-only INSERT into `fills`**。`order_id` 保留為 client 端 `uuid4` 產生的**邏輯事件 id**（連結成交到產生它的訂單意圖，欄位仍 NOT NULL），不再代表一張 `orders` 表的列。新增 `strategy_id`（NOT NULL）解鎖 per-sleeve P&L。讀取端：`recent_fills`（`/monitor/fills`）SELECT fills，因 fills 無 `status` 欄故恆發常數 `'filled'` 保 FE `FillRow` shape；`open_positions`（`/monitor/positions`）與 `load_broker_state` 對 fills 依 (strategy_id, stock_id) 摺疊重建部位。
 
-### 4.8 新增表 — risk_metrics（M3）
+### 4.8 ~~risk_metrics~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-```sql
-CREATE TABLE risk_metrics (
-    metric_time      TIMESTAMPTZ NOT NULL,
-    strategy_id      TEXT NOT NULL,
-    run_id           TEXT NOT NULL,
-    current_dd       NUMERIC(6,4),
-    var_95           NUMERIC(8,4),
-    cvar_95          NUMERIC(8,4),
-    portfolio_heat   NUMERIC(6,4),
-    concentration_top1 NUMERIC(5,4),
-    concentration_top3 NUMERIC(5,4),
-    hhi              NUMERIC(6,5),
-    sharpe_30d       NUMERIC(6,3),
-    sortino_30d      NUMERIC(6,3),
-    event_type       TEXT,  -- NULL | HEAT_WARN | CONCENT | L1_PAUSE | L2_CUT | L3_HALT
-    event_context    JSONB,
-    PRIMARY KEY (metric_time, strategy_id, run_id)
-);
-SELECT create_hypertable('risk_metrics', 'metric_time', chunk_time_interval => INTERVAL '1 month');
-CREATE INDEX ON risk_metrics (strategy_id, metric_time DESC);
-CREATE INDEX ON risk_metrics (event_type, metric_time DESC) WHERE event_type IS NOT NULL;
-```
+> **已於 ADR-038 移除。** 生產零 IO——熔斷器（circuit_breaker）在**記憶體**運算即時風控水位，不落庫。有真實逐 tick 風控快照需求（如歷史風控 audit / 儀表板回放）時再回歸。
 
-### 4.9 新增表 — validation_runs（M3）
+### 4.9 ~~validation_runs~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-```sql
-CREATE TABLE validation_runs (
-    run_id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    run_time         TIMESTAMPTZ NOT NULL,
-    method           TEXT NOT NULL,  -- PBO | DSR | WFA | CPCV | MC
-    strategy_id      TEXT NOT NULL,
-    params_json      JSONB NOT NULL,
-    result_json      JSONB NOT NULL,
-    summary_metric   NUMERIC(10,6),
-    pass_threshold   BOOLEAN
-);
-CREATE INDEX ON validation_runs (strategy_id, method, run_time DESC);
-CREATE INDEX ON validation_runs USING GIN (result_json);
-```
+> **已於 ADR-038 移除。** PBO/DSR/WFA/CPCV/MC 結果的真相源是 JSONL（`validation_store`），此表零 IO。有需 SQL 查詢驗證結果時再回歸。
 
-### 4.10 新增表 — data_quality_log（M1 既有結構增強）
+### 4.10 ~~data_quality_log~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-> **遷移注意**：M1 原 schema 為 `PRIMARY KEY (check_time, check_name)` + `(check_name, target_date, passed, detail)`。M2 改為 `BIGSERIAL` PK + 新增 `source / check_type / stock_id / trade_date / severity / resolved / resolved_at` 欄位。fresh install（含 `init.sql` 改寫）直接套新 schema；既有 M1 部署需執行 migration（建議新表 + backfill + rename，保留 audit）。
+> **已於 ADR-038 移除。** 生產零 IO。有 DQ 異常入庫 + 儀表板查詢需求時再回歸。
 
-```sql
-CREATE TABLE data_quality_log (
-    check_id         BIGSERIAL PRIMARY KEY,
-    check_time       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    source           TEXT NOT NULL,  -- finlab | finmind | shioaji
-    check_type       TEXT NOT NULL,  -- missing | outlier | mismatch | stale
-    stock_id         TEXT,
-    trade_date       DATE,
-    severity         TEXT NOT NULL,  -- info | warn | error
-    detail_json      JSONB NOT NULL,
-    resolved         BOOLEAN DEFAULT FALSE,
-    resolved_at      TIMESTAMPTZ
-);
-CREATE INDEX ON data_quality_log (check_time DESC);
-CREATE INDEX ON data_quality_log (resolved, severity) WHERE resolved = FALSE;
-```
+### 4.11 ~~alerts~~ — 已砍（tombstone，[ADR-038](./adrs/ADR-038-fills-single-truth-and-disposable-db-policy.md)）
 
-### 4.11 新增表 — alerts（M4）
-
-```sql
-CREATE TABLE alerts (
-    alert_id         UUID NOT NULL DEFAULT gen_random_uuid(),
-    alert_time       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    rule_id          TEXT NOT NULL,
-    level            TEXT NOT NULL,  -- critical | high | info
-    title            TEXT NOT NULL,
-    message          TEXT NOT NULL,
-    context_json     JSONB,
-    sent_to_discord BOOLEAN DEFAULT FALSE,
-    sent_at          TIMESTAMPTZ,
-    PRIMARY KEY (alert_time, alert_id)
-);
-SELECT create_hypertable('alerts', 'alert_time', chunk_time_interval => INTERVAL '7 days');
-CREATE INDEX ON alerts (sent_to_discord, alert_time DESC) WHERE sent_to_discord = FALSE;
-CREATE INDEX ON alerts (rule_id, alert_time DESC);
-```
+> **已於 ADR-038 移除。** `discord_notifier` **直接發送** Discord，不經 DB 佇列，故此表零 IO。有需持久化告警佇列（drain-by-worker）時再回歸。
 
 ---
 
@@ -640,19 +535,19 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | ACL | 位置 | 職責 | 失敗處置 |
 | :--- | :--- | :--- | :--- |
 | **FinLab → Zipline bundle** | `finlab_bundle.py` `_normalize_*()` | 寬表轉長表、欄位 rename、補 timezone | log + skip bad rows，總 skip > 1% → fail bundle |
-| **Live feed → TimescaleDB** | `data_feed/finlab_live.py` `_validate_tick()` | Pydantic schema 驗證、reject out-of-hours | drop + write data_quality_log |
+| **Live feed → TimescaleDB** | `data_feed/finlab_live.py` `_validate_tick()` | Pydantic schema 驗證、reject out-of-hours | drop + loguru（`data_quality_log` 表 M5 回歸前先記 log，ADR-038）|
 | **Shioaji → fills** | `brokers/shioaji_broker.py` `_normalize_fill()` | 統一 trade_id、translate status enum | 拒寫 fills 表、Discord CRITICAL |
 
 ### 5.2 強一致 vs 最終一致
 
 | 表 | 一致性 | 理由 | 機制 |
 | :--- | :--- | :--- | :--- |
-| `orders` / `fills` | 強一致 | audit trail，不能丟 | Postgres ACID transaction |
-| `positions` | 強一致 | 即時狀態 | row-level lock + version |
+| `fills` | 強一致 | audit trail + 單一成交真相源，不能丟 | Postgres ACID transaction（append-only）|
 | `signals` | 強一致 | 行為證據 | 直寫 |
 | `daily_bars` | 最終一致 | ETL 重跑會修正 | `INSERT ... ON CONFLICT DO UPDATE` |
 | `equity_snapshots` | 最終一致 | 可從 fills 重算 | append-only |
-| `risk_metrics` | 最終一致 | 派生 | append-only |
+
+> 部位（positions）非獨立表——由 `fills` 依 (strategy_id, stock_id) 時序摺疊即時重建（ADR-038 §4.4 tombstone）；`orders` / `risk_metrics` 已砍（M5 / 記憶體），回歸時再補其一致性策略。
 
 ### 5.3 跨源 cross-check
 
@@ -661,7 +556,7 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | OHLCV 對拍 | FinLab | FinMind | < 1% | log + warn |
 | 法人金額 | FinLab | FinMind aggregated | < 5% | log（資料來源差異） |
 | Live close vs daily close | Shioaji 收盤 tick | FinLab daily close | < 0.5% | data_quality_log |
-| 持倉 reconciliation | TimescaleDB `positions` | Shioaji `list_positions()` | 0（精確） | Discord CRITICAL + 暫停下單 |
+| 持倉 reconciliation | TimescaleDB `fills` 摺疊部位（ADR-038） | Shioaji `list_positions()` | 0（精確） | Discord CRITICAL + 暫停下單 |
 
 ---
 
@@ -697,19 +592,17 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 
 ### 7.1 Retention Policy
 
+> ADR-038 收斂後僅 7 表；被砍表的保留策略待其回歸時再定。
+
 | 表 | 保留 | 機制 | 啟用 |
 | :--- | :--- | :--- | :--- |
 | `daily_bars` | 永久 | — | M1 |
 | `institutional_flows` | 永久 | — | M1 |
 | `broker_chips` | 永久 | — | M1 |
+| `runs` | 永久 | — | M3 |
 | `equity_snapshots` | live 永久 / backtest 90 天 | TimescaleDB retention policy | M2 |
-| `positions` | closed 後 1 年 | scheduled job | M4 |
 | `signals` | 永久 | — | M2 |
-| `orders` / `fills` | 永久（audit） | — | M4 |
-| `risk_metrics` | 1 年 | retention policy | M3 |
-| `validation_runs` | 永久 | — | M3 |
-| `data_quality_log` | 1 年 | retention policy | M1 |
-| `alerts` | 90 天 | retention policy | M4 |
+| `fills` | 永久（audit，單一成交真相源） | — | M4 |
 
 ### 7.2 備份策略（單機，詳見 [14 §4](./14_deployment_and_operations_guide.md)）
 
@@ -746,3 +639,4 @@ CREATE INDEX ON alerts (rule_id, alert_time DESC);
 | :--- | :--- | :--- |
 | v1.x | 2026-05~06 | 初版 + 13 表 DDL + §8 Dashboard REST API 契約（ADR-015）|
 | v2.0 | 2026-07-02 | 消費端對齊 React/FastAPI；§2.1 FinLab schema 對齊 `finlab_source.py`（`etl:adj_*` / 三桶加總）；§3 釐清 FinLab 主源不另建 zipline bundle（共用 parquet cache）；新增 §3.7 survivorship-clean universe + `universe_manifest.json`（ADR-032）；§7 備份改單機（pg_dump + rsync）；**§8 整節降為指引，REST 契約以 doc 25 為準** |
+| v3.0 | 2026-07-03 | **ADR-038 schema 收斂（15→7 表）**：`fills` 成單一成交真相源（+`strategy_id` NOT NULL + index，解鎖 per-sleeve P&L）；`upsert_fills` 雙寫改單寫、刪 `upsert_orders`/`upsert_positions`；`open_positions`/`load_broker_state`/`recent_fills` 改讀/摺疊 fills（修 `/monitor/positions` 永遠空白 bug）；砍 `orders`/`positions`/`trades`/`validation_runs`/`risk_metrics`/`data_quality_log`/`alerts`/`universe`（§4.4/4.6/4.8–4.11 tombstone）；刪 `migrations/`（無 runner）+ 立 init.sql 單一真相 dev 政策；§4.2b runs FK 明確不做；§5/§7 一致性・保留表對齊 |

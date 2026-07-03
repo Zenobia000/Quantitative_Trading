@@ -97,66 +97,6 @@ def test_upsert_frame_calls_execute_values_with_on_conflict() -> None:
 
 
 # ---------------------------------------------------------------------------
-# M2 additions — positions upsert (real impl) + signals/orders/fills stubs
-# ---------------------------------------------------------------------------
-
-
-def test_upsert_positions_calls_execute_values_with_unique_constraint() -> None:
-    """positions uses ON CONFLICT against UNIQUE(strategy_id, run_id, stock_id, opened_at)."""
-    from backtest_platform.data.db_writer import upsert_positions
-
-    cur = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value.__enter__.return_value = cur
-
-    rows = [
-        {
-            "strategy_id": "four_layer_resonance",
-            "run_id": "run-001",
-            "stock_id": "2330",
-            "opened_at": "2026-05-30T09:01:23+08:00",
-            "entry_price": 542.0,
-            "quantity": 1000,
-            "stop_loss": 520.0,
-            "take_profit": 600.0,
-            "status": "OPEN",
-        }
-    ]
-
-    with patch(
-        "backtest_platform.data.db_writer._connection"
-    ) as mock_conn_ctx, patch(
-        "psycopg2.extras.execute_values"
-    ) as mock_exec:
-        mock_conn_ctx.return_value.__enter__.return_value = conn
-        n = upsert_positions(rows)
-
-    assert n == 1
-    assert mock_exec.call_count == 1
-    sql = mock_exec.call_args.args[1]
-    assert sql.startswith("INSERT INTO positions")
-    assert (
-        "ON CONFLICT (strategy_id, run_id, stock_id, opened_at) DO UPDATE SET" in sql
-    ), "positions upsert must target UNIQUE constraint"
-    # PK / unique columns must not be in SET clause
-    for forbidden in ("strategy_id = EXCLUDED.strategy_id",
-                      "opened_at = EXCLUDED.opened_at"):
-        assert forbidden not in sql, f"forbidden SET clause: {forbidden}"
-    # Mutable columns must be in SET clause
-    for required in ("status = EXCLUDED.status", "exit_price = EXCLUDED.exit_price"):
-        assert required in sql, f"missing SET clause: {required}"
-
-
-def test_upsert_positions_empty_returns_zero() -> None:
-    from backtest_platform.data.db_writer import upsert_positions
-
-    with patch("backtest_platform.data.db_writer._connection") as mock_conn_ctx:
-        n = upsert_positions([])
-    assert n == 0
-    mock_conn_ctx.assert_not_called()
-
-
-# ---------------------------------------------------------------------------
 # 8.G.1 — runs main table upsert (Run single-source-of-truth)
 # ---------------------------------------------------------------------------
 
@@ -296,14 +236,14 @@ def test_real_upsert_idempotent() -> None:
 
 @pytest.mark.integration
 def test_real_trade_log_writers_round_trip() -> None:
-    """signals / orders / equity / fills / positions / runs land in the LIVE schema.
+    """signals / equity / fills / runs land in the LIVE schema (ADR-038 shape).
 
     7.A.2 was 🟡 because these writers only had mock coverage. Running them against
-    a real TimescaleDB surfaced a schema bug mocks cannot: init.sql declared
-    ``orders.signal_id REFERENCES signals(signal_id)``, but TimescaleDB 2.x rejects
-    FKs to a hypertable, aborting init.sql so orders/fills/risk_metrics/… never
-    created. This test now exercises those very tables, so the regression cannot
-    silently return.
+    a real TimescaleDB is what surfaces schema bugs mocks cannot (e.g. a NOT NULL
+    ``fills.strategy_id`` that a fill dict forgets to supply, or a plain-column
+    ``signal_id`` that must never be a FK to the signals hypertable). Post ADR-038,
+    ``fills`` is the single execution store — there is no ``orders``/``positions``
+    table — so this test exercises the surviving telemetry tables end-to-end.
     """
     import os
 
@@ -318,8 +258,6 @@ def test_real_trade_log_writers_round_trip() -> None:
         DBConfig,
         upsert_equity_snapshots,
         upsert_fills,
-        upsert_orders,
-        upsert_positions,
         upsert_runs,
         upsert_signals,
     )
@@ -331,9 +269,9 @@ def test_real_trade_log_writers_round_trip() -> None:
 
     # isolate: clear any prior run of this test so counts are deterministic
     with psycopg2.connect(cfg.dsn()) as conn, conn.cursor() as cur:
-        for t in ("signals", "equity_snapshots", "positions", "runs"):
+        for t in ("signals", "equity_snapshots", "runs"):
             cur.execute(f"DELETE FROM {t} WHERE run_id = %s", (rid,))
-        cur.execute("DELETE FROM orders WHERE stock_id = %s", (sid,))
+        cur.execute("DELETE FROM fills WHERE stock_id = %s", (sid,))
         conn.commit()
 
     assert upsert_signals([{
@@ -343,12 +281,6 @@ def test_real_trade_log_writers_round_trip() -> None:
         "submitted": True, "submitted_at": ts,
     }]) == 1
 
-    # orders — the table that did NOT exist before the init.sql fix
-    assert upsert_orders([{
-        "created_at": ts, "broker": "paper", "stock_id": sid, "side": "Buy",
-        "order_type": "Market", "quantity": 1000, "status": "filled",
-    }]) == 1
-
     # equity snapshot upserts on PK(snapshot_time, strategy_id, run_id)
     eq = {"snapshot_time": ts, "strategy_id": "inst_flow", "mode": "paper",
           "run_id": rid, "equity": 1_000_000.0, "cash": 500_000.0,
@@ -356,14 +288,10 @@ def test_real_trade_log_writers_round_trip() -> None:
     assert upsert_equity_snapshots([eq]) == 1
     assert upsert_equity_snapshots([{**eq, "equity": 1_010_000.0}]) == 1  # upsert
 
-    # fills map to a filled order row
+    # fills = the single execution store; strategy_id (NOT NULL) rides along
     assert upsert_fills([{
-        "filled_at": ts, "stock_id": sid, "side": "Buy", "qty": 1000, "price": 800.0,
-    }]) == 1
-
-    assert upsert_positions([{
-        "strategy_id": "inst_flow", "run_id": rid, "stock_id": sid,
-        "opened_at": ts, "entry_price": 800.0, "quantity": 1000, "status": "open",
+        "filled_at": ts, "strategy_id": "inst_flow", "stock_id": sid,
+        "side": "Buy", "qty": 1000, "price": 800.0,
     }]) == 1
 
     assert upsert_runs([{
@@ -379,12 +307,15 @@ def test_real_trade_log_writers_round_trip() -> None:
         cur.execute("SELECT equity FROM equity_snapshots WHERE run_id = %s", (rid,))
         eq_rows = cur.fetchall()
         assert len(eq_rows) == 1 and float(eq_rows[0][0]) == 1_010_000.0
-        cur.execute("SELECT count(*) FROM orders WHERE stock_id = %s", (sid,))
-        assert cur.fetchone()[0] == 2  # explicit order + fill-mapped order (append-only)
+        cur.execute(
+            "SELECT count(*), max(strategy_id) FROM fills WHERE stock_id = %s", (sid,)
+        )
+        n_fills, fill_strat = cur.fetchone()
+        assert n_fills == 1 and fill_strat == "inst_flow"  # append-only single store
 
 
 # ---------------------------------------------------------------------------
-# paper/live trade-log writers (7.A.2) — signals / orders / equity / fills
+# paper/live trade-log writers (7.A.2, ADR-038) — signals / equity / fills
 # ---------------------------------------------------------------------------
 def _capture_sql(fn, rows):
     """Run a writer with _connection + execute_values mocked; return (n, sql, tuples)."""
@@ -405,11 +336,10 @@ def test_trade_log_writers_empty_returns_zero_without_connection() -> None:
     from backtest_platform.data.db_writer import (
         upsert_equity_snapshots,
         upsert_fills,
-        upsert_orders,
         upsert_signals,
     )
 
-    for fn in (upsert_signals, upsert_orders, upsert_equity_snapshots, upsert_fills):
+    for fn in (upsert_signals, upsert_equity_snapshots, upsert_fills):
         with patch("backtest_platform.data.db_writer._connection") as mock_ctx:
             assert fn([]) == 0
             mock_ctx.assert_not_called()
@@ -429,20 +359,6 @@ def test_upsert_signals_inserts_with_jsonb_reason() -> None:
     assert "ON CONFLICT" not in sql  # append-only event log
     # reason_json JSONB-serialized to a string
     assert any(isinstance(v, str) and "score" in v for v in tuples[0])
-
-
-def test_upsert_orders_appends() -> None:
-    from backtest_platform.data.db_writer import upsert_orders
-
-    n, sql, _ = _capture_sql(
-        upsert_orders,
-        [{"created_at": "2026-06-11T09:00:00+08:00", "broker": "paper",
-          "stock_id": "2330", "side": "Buy", "order_type": "Market",
-          "quantity": 1000, "status": "filled"}],
-    )
-    assert n == 1
-    assert sql.startswith("INSERT INTO orders")
-    assert "ON CONFLICT" not in sql
 
 
 def test_upsert_equity_snapshots_upserts_on_pk() -> None:
@@ -474,45 +390,39 @@ def _capture_all_sql(fn, rows):
     return n, calls
 
 
-def test_upsert_fills_dual_writes_orders_and_fills() -> None:
-    """A0: a fill persists as (1) a filled `orders` row (Monitor /fills reader
-    compatibility) AND (2) a `fills` row carrying execution economics, linked by
-    a client-generated order_id (fills.order_id is NOT NULL, so the id must be
-    minted before the orders INSERT — DB-side gen_random_uuid can't be shared)."""
+def test_upsert_fills_single_store_with_strategy_id() -> None:
+    """ADR-038: a fill persists as ONE append-only row in the `fills` execution
+    store (no separate `orders` table). order_id is a client-minted (uuid4)
+    logical event id; strategy_id (NOT NULL) rides along for per-sleeve P&L; the
+    economics (commission / tax / slippage_bps) live on the same row."""
     from backtest_platform.data.db_writer import upsert_fills
 
     n, calls = _capture_all_sql(
         upsert_fills,
         [{"stock_id": "2330", "side": "Buy", "qty": 1000, "price": 542.0,
-          "filled_at": "2026-06-11T09:01:00+08:00",
+          "strategy_id": "inst_flow", "filled_at": "2026-06-11T09:01:00+08:00",
           "commission": 77.2, "tax": 162.6, "slippage_bps": 4.5}],
     )
     assert n == 1
-    assert len(calls) == 2, "must write both orders and fills"
-    (orders_sql, orders_rows), (fills_sql, fills_rows) = calls
-
-    assert orders_sql.startswith("INSERT INTO orders")
-    assert "order_id" in orders_sql  # explicit id, not DB-generated
-    assert "filled" in orders_rows[0]  # status
-    assert 542.0 in orders_rows[0]  # limit_price = fill price
+    assert len(calls) == 1, "a fill is a single INSERT into fills only"
+    fills_sql, fills_rows = calls[0]
 
     assert fills_sql.startswith("INSERT INTO fills")
     assert "ON CONFLICT" not in fills_sql  # append-only execution log
-    fill_row = fills_rows[0]
-    assert 542.0 in fill_row  # fill_price
-    assert 1000 in fill_row  # fill_quantity
-    assert 77.2 in fill_row and 162.6 in fill_row and 4.5 in fill_row
-
-    # the SAME order_id links both rows
-    o_cols = orders_sql[orders_sql.index("(") + 1 : orders_sql.index(")")].split(", ")
     f_cols = fills_sql[fills_sql.index("(") + 1 : fills_sql.index(")")].split(", ")
-    oid = dict(zip(o_cols, orders_rows[0]))["order_id"]
-    assert oid is not None
-    assert dict(zip(f_cols, fill_row))["order_id"] == oid
+    by_col = dict(zip(f_cols, fills_rows[0]))
+    assert by_col["fill_price"] == 542.0
+    assert by_col["fill_quantity"] == 1000
+    assert by_col["strategy_id"] == "inst_flow"
+    assert by_col["commission"] == 77.2 and by_col["tax"] == 162.6
+    assert by_col["slippage_bps"] == 4.5
+    # order_id kept as a client-minted logical event id (not DB-generated)
+    assert "order_id" in f_cols
+    assert by_col["order_id"] is not None
 
 
-def test_upsert_fills_single_connection_for_both_tables() -> None:
-    """Both INSERTs share one connection/commit — a fill is one logical event."""
+def test_upsert_fills_single_connection() -> None:
+    """A fill is one logical event → exactly one connection/commit."""
     from backtest_platform.data.db_writer import upsert_fills
 
     cur = MagicMock()
@@ -523,6 +433,7 @@ def test_upsert_fills_single_connection_for_both_tables() -> None:
     ):
         mock_ctx.return_value.__enter__.return_value = conn
         upsert_fills([{"stock_id": "2330", "side": "Buy", "qty": 1, "price": 1.0,
+                       "strategy_id": "inst_flow",
                        "filled_at": "2026-06-11T09:01:00+08:00"}])
     assert mock_ctx.call_count == 1
 
@@ -533,10 +444,10 @@ def test_upsert_fills_defaults_broker_paper_and_optional_costs_null() -> None:
     n, calls = _capture_all_sql(
         upsert_fills,
         [{"stock_id": "2330", "side": "Sell", "qty": 500, "price": 600.0,
-          "filled_at": "2026-06-11T13:30:00+08:00"}],
+          "strategy_id": "inst_flow", "filled_at": "2026-06-11T13:30:00+08:00"}],
     )
     assert n == 1
-    fills_sql, fills_rows = calls[1]
+    fills_sql, fills_rows = calls[0]
     f_cols = fills_sql[fills_sql.index("(") + 1 : fills_sql.index(")")].split(", ")
     by_col = dict(zip(f_cols, fills_rows[0]))
     assert by_col["broker"] == "paper"

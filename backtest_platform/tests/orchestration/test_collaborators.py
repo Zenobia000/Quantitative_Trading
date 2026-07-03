@@ -183,9 +183,11 @@ def test_make_db_sink_persists_signals_fills_and_equity() -> None:
     # signals carry strategy/run + the fixed clock
     sig_rows = writer.upsert_signals.call_args.args[0]
     assert sig_rows[0]["strategy_id"] == "momentum" and sig_rows[0]["submitted_at"] == _FIXED_NOW
-    # fills mapped to filled-order shape (side normalized Buy/Sell)
+    # fills carry normalized side (Buy/Sell), the fixed clock, and strategy_id
+    # threaded in for per-sleeve P&L (ADR-038 fills.strategy_id is NOT NULL)
     fill_rows = writer.upsert_fills.call_args.args[0]
     assert fill_rows[0]["side"] == "Buy" and fill_rows[0]["filled_at"] == _FIXED_NOW
+    assert fill_rows[0]["strategy_id"] == "momentum"
     # one equity snapshot for the run
     eq_rows = writer.upsert_equity_snapshots.call_args.args[0]
     assert eq_rows[0]["run_id"] == "run-1" and eq_rows[0]["mode"] == "paper"

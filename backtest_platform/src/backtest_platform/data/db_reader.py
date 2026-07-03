@@ -101,30 +101,29 @@ class TelemetryReader:
         ]
 
     def open_positions(self, *, strategy_id: str | None = None) -> list[dict[str, Any]]:
-        """Currently-open positions (``closed_at IS NULL``)."""
+        """Currently-open positions, folded from the `fills` execution store (ADR-038).
+
+        The `positions` table was dropped: the paper/live flow never wrote it, so
+        this endpoint (GET /monitor/positions) was permanently empty. It is now a
+        chronological fold over `fills` per (strategy_id, stock_id) — the same
+        weighted-average book-keeping :func:`reconstruct_positions` performs — so
+        the page shows the real book. Response row shape (FE ``PositionRow``):
+        stock_id/quantity/entry_price/stop_loss(None — no per-name stop in the
+        fill log)/opened_at/strategy_id.
+        """
         sql = [
-            "SELECT stock_id, quantity, entry_price, stop_loss, opened_at, strategy_id "
-            "FROM positions WHERE closed_at IS NULL"
+            "SELECT strategy_id, stock_id, side, fill_quantity, fill_price, fill_time "
+            "FROM fills"
         ]
         params: list[Any] = []
         if strategy_id:
-            sql.append("AND strategy_id = %s")
+            sql.append("WHERE strategy_id = %s")
             params.append(strategy_id)
-        sql.append("ORDER BY opened_at")
+        sql.append("ORDER BY fill_time ASC")
         with _connection(self._cfg) as conn, conn.cursor() as cur:
             cur.execute(" ".join(sql), params)
             rows = cur.fetchall()
-        return [
-            {
-                "stock_id": r[0],
-                "quantity": int(r[1]),
-                "entry_price": float(r[2]),
-                "stop_loss": float(r[3]) if r[3] is not None else None,
-                "opened_at": r[4].isoformat(),
-                "strategy_id": r[5],
-            }
-            for r in rows
-        ]
+        return _fold_open_positions(rows)
 
     def recent_signals(self, *, limit: int = 50, strategy_id: str | None = None) -> list[dict[str, Any]]:
         """Most-recent signals (newest first)."""
@@ -151,14 +150,18 @@ class TelemetryReader:
         ]
 
     def recent_fills(self, *, limit: int = 50) -> list[dict[str, Any]]:
-        """Most-recent order executions (newest first). The paper daemon records
-        fills as ``orders`` rows (7.A.2), so this reads ``orders``."""
-        sql = [
-            "SELECT created_at, stock_id, side, quantity, limit_price, status FROM orders"
-        ]
-        sql.append("ORDER BY created_at DESC LIMIT %s")
+        """Most-recent executions (newest first) from the `fills` store (ADR-038).
+
+        `fills` is the single execution store; it has no ``status`` column (a
+        persisted fill is by definition filled), so the reader emits a constant
+        ``'filled'`` to keep the Monitor ``/fills`` row shape (FE ``FillRow``:
+        created_at/stock_id/side/quantity/price/status) unchanged."""
+        sql = (
+            "SELECT fill_time, stock_id, side, fill_quantity, fill_price FROM fills "
+            "ORDER BY fill_time DESC LIMIT %s"
+        )
         with _connection(self._cfg) as conn, conn.cursor() as cur:
-            cur.execute(" ".join(sql), [limit])
+            cur.execute(sql, [limit])
             rows = cur.fetchall()
         return [
             {
@@ -167,7 +170,7 @@ class TelemetryReader:
                 "side": r[2],
                 "quantity": int(r[3]),
                 "price": float(r[4]) if r[4] is not None else None,
-                "status": r[5],
+                "status": "filled",
             }
             for r in rows
         ]
@@ -187,19 +190,17 @@ class TelemetryReader:
 #                 That column is written straight from the broker's
 #                 ``portfolio_snapshot()['cash']`` at each session close, so it is
 #                 the exact, per-strategy cash — the most honest source available.
-#   * positions — folded from the persisted *fills* (``orders`` rows, the fill
-#                 log the sink writes), NOT the ``positions`` table: the paper/live
-#                 flow never writes ``positions`` (only tests call
-#                 ``upsert_positions``), and ``equity_snapshots.open_positions`` is
-#                 a count only — too coarse for EX-002 / EX-004 which need per-name
-#                 qty + cost basis. Folding the fill log mirrors PaperBroker's own
-#                 weighted-average book-keeping, so the reconstruction is exact.
+#   * positions — folded from the persisted ``fills`` (the single execution store,
+#                 ADR-038), NOT a ``positions`` table (dropped): the paper/live flow
+#                 never wrote ``positions``, and ``equity_snapshots.open_positions``
+#                 is a count only — too coarse for EX-002 / EX-004 which need
+#                 per-name qty + cost basis. Folding the fill log mirrors
+#                 PaperBroker's own weighted-average book-keeping, so the
+#                 reconstruction is exact.
 #
-# LIMITATION (documented, not hidden): ``orders`` has no strategy_id column, so
-# fills are folded portfolio-wide. Today only ``inst_flow`` is wired for paper
-# (``after_close.build_session_runner`` rejects any other), so portfolio == the
-# strategy and the reconstruction is exact. Wiring a second paper strategy first
-# needs a strategy discriminator on ``orders`` (a write-side migration).
+# ``fills`` now carries a ``strategy_id`` column (ADR-038), so the fold is scoped
+# to the requested strategy — the old portfolio-wide-only limitation (``orders``
+# had no strategy discriminator) is resolved, unblocking a second paper strategy.
 # =========================================================================== #
 @dataclass(frozen=True, slots=True)
 class PositionState:
@@ -269,13 +270,63 @@ def _fold_sell(held: PositionState | None, qty: int) -> PositionState | None:
     return PositionState(qty=remaining, cost_basis=held.cost_basis)
 
 
+def _fold_open_positions(
+    fill_rows: Iterable[tuple[Any, ...]],
+) -> list[dict[str, Any]]:
+    """Fold chronological fill rows into currently-open positions for the Monitor
+    ``/positions`` page (ADR-038 — folds ``fills``, not the dropped ``positions``).
+
+    ``fill_rows`` are ``(strategy_id, stock_id, side, fill_quantity, fill_price,
+    fill_time)`` tuples, oldest-first. The book is keyed per (strategy_id, stock_id)
+    and folded with the same averaging as :func:`reconstruct_positions` (buy →
+    weighted-average cost, sell → reduce qty at unchanged basis, drop when flat).
+    ``opened_at`` tracks when the *current* open lot began — set when the name goes
+    from flat to open, reset when it goes flat again. ``stop_loss`` is None: the
+    fill log carries no per-name stop. Rows are returned oldest-open-first.
+    """
+    book: dict[tuple[str, str], PositionState] = {}
+    opened_at: dict[tuple[str, str], Any] = {}
+    for strat, stock, side, qty, price, ftime in fill_rows:
+        key = (str(strat), str(stock))
+        norm = str(side).strip().lower()
+        held = book.get(key)
+        if norm in _BUY_SIDES:
+            if held is None:  # flat → open: this fill starts the current lot
+                opened_at[key] = ftime
+            book[key] = _fold_buy(held, int(qty), float(price))
+        elif norm in _SELL_SIDES:
+            new = _fold_sell(held, int(qty))
+            if new is None:
+                book.pop(key, None)
+                opened_at.pop(key, None)
+            else:
+                book[key] = new
+        else:  # never guess — an unknown side must surface, not be swallowed
+            raise ValueError(f"unknown fill side {side!r} for {stock}")
+    rows = [
+        {
+            "stock_id": stock,
+            "quantity": pos.qty,
+            "entry_price": pos.cost_basis,
+            "stop_loss": None,
+            "opened_at": opened_at[(strat, stock)].isoformat(),
+            "strategy_id": strat,
+        }
+        for (strat, stock), pos in book.items()
+    ]
+    return sorted(rows, key=lambda r: r["opened_at"])
+
+
 _LATEST_CASH_SQL = (
     "SELECT cash FROM equity_snapshots WHERE strategy_id = %s AND mode = %s "
     "ORDER BY snapshot_time DESC LIMIT 1"
 )
+# Positions restore folds the `fills` execution store (ADR-038), scoped to the
+# strategy now that fills carries strategy_id (replaces the old orders-by-broker
+# query which had no strategy discriminator).
 _PAPER_FILLS_SQL = (
-    "SELECT stock_id, side, quantity, limit_price FROM orders "
-    "WHERE broker = %s AND status = 'filled' ORDER BY created_at ASC"
+    "SELECT stock_id, side, fill_quantity, fill_price FROM fills "
+    "WHERE broker = %s AND strategy_id = %s ORDER BY fill_time ASC"
 )
 
 
@@ -300,13 +351,13 @@ def load_broker_state(
         cash_row = cur.fetchone()
         if cash_row is None:
             return None  # first session for this strategy — nothing persisted yet
-        cur.execute(_PAPER_FILLS_SQL, [broker])
+        cur.execute(_PAPER_FILLS_SQL, [broker, strategy])
         fill_rows = cur.fetchall()
 
     fills = [
         {"stock_id": r[0], "side": r[1], "quantity": r[2], "price": r[3]}
         for r in fill_rows
-        if r[3] is not None  # a filled paper order always carries its fill price
+        if r[3] is not None  # fills.fill_price is NOT NULL, but guard defensively
     ]
     positions = reconstruct_positions(fills)
     logger.info(
