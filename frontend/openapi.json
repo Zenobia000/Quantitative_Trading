@@ -1531,6 +1531,157 @@
         }
       }
     },
+    "/research/profiles": {
+      "get": {
+        "tags": [
+          "research-evaluation"
+        ],
+        "summary": "List Evaluation Profiles",
+        "description": "The built-in evaluation profiles (triage \u2192 deployment order).",
+        "operationId": "list_evaluation_profiles_research_profiles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/profiles/{name}": {
+      "get": {
+        "tags": [
+          "research-evaluation"
+        ],
+        "summary": "Get Evaluation Profile",
+        "description": "One evaluation profile by name.",
+        "operationId": "get_evaluation_profile_research_profiles__name__get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/evaluations/{evaluation_id}": {
+      "get": {
+        "tags": [
+          "research-evaluation"
+        ],
+        "summary": "Get Evaluation Result",
+        "description": "One persisted ``EvaluationResult`` (verdict + scorecards + checks + lineage).",
+        "operationId": "get_evaluation_result_research_evaluations__evaluation_id__get",
+        "parameters": [
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evaluation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/evaluations/{evaluation_id}/report": {
+      "get": {
+        "tags": [
+          "research-evaluation"
+        ],
+        "summary": "Get Evaluation Report",
+        "description": "The ``ReportPackManifest`` for an evaluation (files + lineage on disk).",
+        "operationId": "get_evaluation_report_research_evaluations__evaluation_id__report_get",
+        "parameters": [
+          {
+            "name": "evaluation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Evaluation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/monitor/strategies": {
       "get": {
         "tags": [

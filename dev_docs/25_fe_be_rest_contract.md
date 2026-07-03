@@ -246,6 +246,10 @@ GET  <…>/{id}/<result>   → 200      終態 done 才回結果；running 回 4
 | GET | `/gate/spec` | Research |  |  |
 | POST | `/metrics/summary` | Research |  | ⚠️ |
 | POST | `/metrics/trades` | Research |  | ⚠️ |
+| GET | `/research/evaluations/{evaluation_id}` | Research |  | ⚠️ |
+| GET | `/research/evaluations/{evaluation_id}/report` | Research |  | ⚠️ |
+| GET | `/research/profiles` | Research |  | ⚠️ |
+| GET | `/research/profiles/{name}` | Research |  | ⚠️ |
 | GET | `/research/promote/{strategy_id}` | Research |  |  |
 | POST | `/research/promote/{strategy_id}` | Research |  |  |
 | GET | `/research/promote/{strategy_id}/audit` | Research |  |  |

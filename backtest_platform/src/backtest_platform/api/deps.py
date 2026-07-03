@@ -39,6 +39,11 @@ AFTER_CLOSE_MARKER_PATH_ENV = "AFTER_CLOSE_MARKER_PATH"
 #: JSONL and an operator at a non-default ``reports/``.
 VALIDATION_EVENTS_PATH_ENV = "VALIDATION_EVENTS_PATH"
 
+#: Env var overriding the rebuild Goal 3 evaluation ledger store. The
+#: research-evaluation router reads it; overridable so tests point at a tmp
+#: ``reports/`` and an operator at a non-default location.
+EVALUATIONS_PATH_ENV = "EVALUATIONS_PATH"
+
 _TWT = timezone(timedelta(hours=8))  # Taiwan is fixed UTC+8 (no DST)
 
 
@@ -117,6 +122,14 @@ def get_validation_events_path() -> Path:
 
     raw = os.environ.get(VALIDATION_EVENTS_PATH_ENV)
     return Path(raw) if raw else DEFAULT_VALIDATION_PATH
+
+
+def get_evaluations_path() -> Path:
+    """Resolve the evaluation ledger path (``$EVALUATIONS_PATH`` or the default)."""
+    from backtest_platform.research.evaluation.store import DEFAULT_EVALUATIONS_PATH
+
+    raw = os.environ.get(EVALUATIONS_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_EVALUATIONS_PATH
 
 
 def get_watch_today() -> date:

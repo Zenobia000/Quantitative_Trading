@@ -595,5 +595,40 @@ def paper_replay_cmd(strategy, dry_run) -> None:
                f"sharpe={result.metrics.get('sharpe', float('nan')):.3f}")
 
 
+# ── Evaluation orchestrator (rebuild Goal 3, ADR-039) ────────────────────────
+# `evaluate` runs a high-level profile above the ADR-029 primitives and writes a
+# report pack + persists the result to the append-only evaluation ledger.
+
+
+@cli.command("evaluate")
+@click.option("--strategy", required=True, help="Registered strategy name")
+@click.option("--profile", required=True, help="quick_triage | fixed_hypothesis_oos | grid_search_selection | deployment_strict")
+@click.option("--data-dir", default=None, help="Parquet cache dir for the loader (default data/parquet)")
+@click.option("--symbols", default=None, help="Comma-separated symbols override (default: research_config universe)")
+@click.option("--start", default=None, help="Override IS start (YYYY-MM-DD)")
+@click.option("--end", default=None, help="Override IS end (YYYY-MM-DD)")
+@click.option("--hypothesis", default=None, help="Pre-registered hypothesis for the run_id lineage")
+def evaluate_cmd(strategy, profile, data_dir, symbols, start, end, hypothesis) -> None:
+    """Evaluate a strategy under an evaluation profile → report pack + persisted result."""
+    from backtest_platform.research.evaluation import evaluate
+
+    syms = [s.strip() for s in symbols.split(",") if s.strip()] if symbols else None
+    try:
+        result = evaluate(
+            strategy, profile, data_dir=data_dir, symbols=syms,
+            is_start=start, is_end=end, hypothesis=hypothesis,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from None
+
+    v = result["verdict"]
+    click.echo(f"\nevaluation_id={result['evaluation_id']}  run_id={result['run_id']}")
+    click.echo(f"  profile={result['profile']}  verdict={v['label']}  "
+               f"truth={v['truth_verdict']}  live_oos={v['live_oos_recommendation']}")
+    click.echo("  scorecards: " + "  ".join(f"{s['category']}={s['status']}" for s in result["scorecards"]))
+    click.echo("  checks: " + ("  ".join(f"{c['metric']}={c['status']}" for c in result["checks"]) or "(none)"))
+    click.echo(f"  → report pack: {result['report_pack_ref']}")
+
+
 if __name__ == "__main__":
     cli()
