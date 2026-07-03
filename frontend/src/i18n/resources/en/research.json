@@ -152,7 +152,8 @@
       "compare": "Compare Runs",
       "tradeReview": "Trade Review",
       "validate": "Send to Validation Gate",
-      "validateHint": "Requires IS gate pass before validation"
+      "validateHint": "Requires IS gate pass before validation",
+      "fullReport": "Open Full Report"
     }
   },
   "trades": {
@@ -266,6 +267,95 @@
       "title": "Promotion Audit Trail",
       "source": "(immutable audit · append-only)",
       "empty": "No promotion records yet."
+    }
+  },
+  "reportViewer": {
+    "title": "Strategy Report",
+    "resource": "evaluation report",
+    "notFound": "Evaluation not found",
+    "back": "Runs",
+    "dataSource": {
+      "api": "Live API",
+      "fixture": "Fixture mode · backend not wired yet"
+    },
+    "banner": {
+      "whatTitle": "What is this",
+      "performanceTitle": "How did it perform",
+      "nextTitle": "Recommended next step",
+      "profile": "Profile",
+      "run": "Run",
+      "window": "Window",
+      "universe": "Universe",
+      "symbols": "{{n}} symbols",
+      "survivorship": "survivorship-clean",
+      "truthVerdict": "Truth verdict",
+      "confidence": "confidence: {{level}}"
+    },
+    "metrics": {
+      "cagr": "CAGR",
+      "sharpe": "Sharpe",
+      "maxDrawdown": "Max drawdown",
+      "dsr": "DSR",
+      "oosHoldoutSharpe": "OOS holdout Sharpe",
+      "trades": "Trades"
+    },
+    "scorecard": {
+      "title": "Five Scorecards",
+      "category": {
+        "profitability": "Profitability",
+        "risk": "Risk",
+        "risk_adjusted": "Risk-Adjusted",
+        "win_rate": "Win Rate",
+        "liquidity": "Liquidity"
+      },
+      "statusCol": "Status",
+      "metricCol": "Metric",
+      "valueCol": "Value",
+      "thresholdCol": "Threshold",
+      "reasonCol": "Source / reason",
+      "notAvailableCard": "This scorecard can't be produced yet"
+    },
+    "status": {
+      "pass": "Pass",
+      "warn": "Warn",
+      "fail": "Fail",
+      "missing": "Missing",
+      "not_applicable": "N/A",
+      "not_available": "Not available"
+    },
+    "sheets": {
+      "title": "Sheets",
+      "equityTitle": "Segmented Equity Curve",
+      "seriesNote": "Period-stability / equity series aren't carried in this evaluation payload; they light up once a real run is wired."
+    },
+    "checks": {
+      "title": "Evidence & Gate Checks",
+      "subtitle": "deployment_strict hard-fail lights",
+      "metricCol": "Check",
+      "severityCol": "Severity",
+      "severity": {
+        "info": "Info",
+        "warn": "Warn",
+        "block_live_oos": "Block Live OOS",
+        "block_deploy": "Block deploy"
+      }
+    },
+    "trades": {
+      "title": "Linked Trade Log",
+      "link": "Open per-trade review",
+      "partial": "Partial",
+      "partialNote": "Panel rebalance rows only, no per-trade pnl — Win-Rate / Liquidity trade metrics stay not_available.",
+      "notAvailable": "No linked trade log for this evaluation."
+    },
+    "decision": {
+      "title": "Decision",
+      "fixtureBadge": "fixture mode — not wired to backend",
+      "keep": "Keep",
+      "archive": "Archive",
+      "rerun": "Rerun",
+      "selectLiveOos": "Select Live OOS",
+      "marked": "Marked {{action}} (local only)",
+      "reasonRequired": "Requires a reason (override)"
     }
   }
 }

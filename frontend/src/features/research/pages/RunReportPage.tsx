@@ -160,9 +160,16 @@ export function RunReportPage() {
         </div>
       </section>
 
-      {/* Open-in-notebook */}
-      <div className="mb-3">
+      {/* Open-in-notebook + 完整報告（Goal 5 Report Viewer） */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <NotebookButton runId={run.run_id} />
+        <button
+          onClick={() => navigate(`/research/reports/${encodeURIComponent(run.run_id)}`)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-text-secondary hover:text-text"
+        >
+          <span aria-hidden>↗</span>
+          {t('report.action.fullReport')}
+        </button>
       </div>
 
       {/* next_step_bar */}

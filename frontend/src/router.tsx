@@ -9,6 +9,7 @@ import { WiredPage } from '@/components/WiredPage'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
+import { ReportViewerPage } from '@/features/research/pages/ReportViewerPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
 import { NewRunPage } from '@/features/research/pages/NewRunPage'
 import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
@@ -35,6 +36,7 @@ const REAL: Record<string, ReactElement> = {
   'research/runs/new': <NewRunPage />,
   'research/runs': <RunsTablePage />,
   'research/runs/:id': <RunReportPage />,
+  'research/reports/:runId': <ReportViewerPage />,
   'research/runs/:id/trades': <TradeReviewPage />,
   'research/compare': <ComparePage />,
   'research/validate': <ValidateGatePage />,
@@ -70,6 +72,7 @@ const ROUTES: RouteDef[] = [
   { path: 'research/runs/new', title: 'New Run 設定', spec: 'research_02_run_new' },
   { path: 'research/runs', title: 'Runs Table', spec: 'research_03_runs_table' },
   { path: 'research/runs/:id', title: 'Run Report', spec: 'research_04_run_report' },
+  { path: 'research/reports/:runId', title: 'Report Viewer', spec: 'research_04_run_report' },
   { path: 'research/runs/:id/trades', title: '逐筆覆盤', spec: 'research_trade_review' },
   { path: 'research/compare', title: 'Compare', spec: 'research_05_compare' },
   { path: 'research/sweep', title: 'Sweep', spec: 'research_06_sweep' },
