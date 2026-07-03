@@ -11,6 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "audit:endpoints": "playwright test --config e2e/audit/playwright.config.ts",
+    "audit:screens": "playwright test --config e2e/audit/screenshot.config.ts",
     "gen:api": "openapi-typescript ./openapi.json -o ./src/types/api.gen.ts"
   },
   "dependencies": {
