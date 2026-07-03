@@ -1,4 +1,120 @@
 {
+  "candidates": {
+    "title": "Candidate Pool",
+    "subtitle": "Every evaluation is kept — promising, weak, negative, data-issue all stay traceable; decide keep vs Live OOS here",
+    "resource": "candidate pool",
+    "dataSource": {
+      "fixture": "Fixture mode — backend not wired yet",
+      "fixtureHint": "Data comes from the bundled contract example (Goal 4 backend in parallel). Decisions apply optimistically in the browser only and are not persisted.",
+      "live": "Backend connected"
+    },
+    "localBadge": "Local (unsynced)",
+    "filter": {
+      "all": "All",
+      "searchPlaceholder": "Search strategy or hypothesis…",
+      "showArchived": "Show archived ({{n}})",
+      "noMatch": "No candidates match the current filter"
+    },
+    "state": {
+      "draft": "Draft",
+      "triaged": "Triaged",
+      "promising": "Promising",
+      "weak": "Weak",
+      "negative": "Negative",
+      "data_issue": "Data Issue",
+      "live_oos_selected": "Live OOS Selected",
+      "live_oos_running": "Live OOS Running",
+      "live_oos_done": "Live OOS Done",
+      "deploy_blocked": "Deploy Blocked",
+      "deployable": "Deployable",
+      "archived": "Archived"
+    },
+    "scorecard": {
+      "legend": "Five-scorecard summary (Profitability / Risk / Risk-Adjusted / Win Rate / Liquidity)",
+      "full": {
+        "profitability": "Profitability",
+        "risk": "Risk",
+        "risk_adjusted": "Risk-Adjusted",
+        "win_rate": "Win Rate",
+        "liquidity": "Liquidity"
+      },
+      "short": {
+        "profitability": "Profit",
+        "risk": "Risk",
+        "risk_adjusted": "R-Adj",
+        "win_rate": "Win",
+        "liquidity": "Liq"
+      },
+      "status": {
+        "pass": "Pass",
+        "warn": "Warn",
+        "fail": "Fail",
+        "not_available": "N/A",
+        "missing": "Missing",
+        "not_applicable": "Not applicable"
+      }
+    },
+    "recommendation": {
+      "label": "Live OOS recommendation",
+      "eligible": "Eligible",
+      "not_recommended": "Not recommended",
+      "blocked": "Blocked"
+    },
+    "truthVerdict": {
+      "label": "Deployment verdict",
+      "REAL": "REAL",
+      "PAPER_WATCH": "PAPER_WATCH",
+      "REJECTED": "REJECTED",
+      "INCOMPLETE": "INCOMPLETE"
+    },
+    "headline": {
+      "sharpe": "Sharpe",
+      "dsr": "DSR",
+      "maxdd": "MaxDD"
+    },
+    "nextAction": "Next",
+    "card": {
+      "latestProfile": "Profile",
+      "viewReport": "View report",
+      "noReport": "No report yet",
+      "viewStrategy": "Strategy asset",
+      "decisions": "Decision trail ({{n}})"
+    },
+    "decisionAction": {
+      "auto_label": "Auto-label",
+      "keep": "Keep",
+      "archive": "Archive",
+      "rerun": "Rerun",
+      "select_live_oos": "Select Live OOS",
+      "override_select": "Override select",
+      "mark_data_issue": "Mark data issue",
+      "unarchive": "Unarchive"
+    },
+    "action": {
+      "keep": "Keep",
+      "archive": "Archive",
+      "rerun": "Rerun",
+      "select_live_oos": "Select Live OOS"
+    },
+    "reason": {
+      "title": "Provide a reason",
+      "keep": "Keep {{strategy}} as a research asset.",
+      "archive": "Archiving {{strategy}} requires a reason (append-only, auditable).",
+      "rerun": "Rerun the evaluation for {{strategy}}.",
+      "select_live_oos": "Select {{strategy}} for Live OOS observation.",
+      "override": "This candidate is currently \"{{reco}}\" — override selection requires a reason.",
+      "label": "Reason (required)",
+      "placeholder": "Explain why you override / archive…",
+      "required": "A reason is required to submit this action",
+      "cancel": "Cancel",
+      "submit": "Submit"
+    },
+    "empty": {
+      "headline": "The candidate pool is empty",
+      "subtitle": "Run an evaluation first — results become candidates automatically, good or bad",
+      "cta": "Run your first evaluation"
+    }
+  },
   "strategyHub": {
     "list": {
       "title": "Strategy Hub",
