@@ -24,11 +24,12 @@ backtest_platform 是 **個人量化 edge 驗證工廠 + 晉升管線**（single
 ```mermaid
 graph TD
     subgraph Interface["Interface 層"]
-        Api["api/<br/>FastAPI 15 router"]
+        Api["api/<br/>FastAPI 19 router"]
     end
     subgraph App["Application / Use-case 層"]
+        Eval["research/evaluation/ (ADR-039)<br/>profiles·orchestrator·scorecards·report_pack — 之上編排 primitives"]
         ResWf["research/workflows/<br/>doe·go_gates·truth_gate·paper_replay·universe"]
-        Research["research/<br/>is_harness·runs_store·sweep·promotion"]
+        Research["research/<br/>is_harness·runs_store·sweep·promotion·candidate_store·live_oos_queue"]
         Orch["orchestration/<br/>daily_flow·collaborators"]
         Runtime["runtime/<br/>paper_daemon·market_reader"]
         Jobs["jobs/<br/>async job store"]
@@ -61,6 +62,11 @@ graph TD
     ResWf --> Proto
     ResWf --> Validation
     ResWf --> Data
+    Api --> Eval
+    Eval --> ResWf
+    Eval --> Research
+    Eval --> Validation
+    Eval --> Proto
     Research --> Proto
     Research --> Validation
     Research --> StratImpl

@@ -19,7 +19,7 @@
 
 | # | 檔名 | 用途 |
 | :---: | :--- | :--- |
-| 04 | [adrs/](./adrs/) | 架構決策記錄（ADR-001~038） |
+| 04 | [adrs/](./adrs/) | 架構決策記錄（ADR-001~039） |
 | 05 | [architecture_and_design_document.md](./05_architecture_and_design_document.md) | 架構設計（C4 嚴格版 / DDD） |
 | 06 | [api_design_specification.md](./06_api_design_specification.md) | CLI + Python API 規範 |
 | 07 | [module_specification_and_tests.md](./07_module_specification_and_tests.md) | 模組規格（DbC） |
@@ -62,7 +62,7 @@
 
 ## 架構決策（ADR）
 
-[adrs/](./adrs/) — ADR-001~038。近期主軸：023 動能 NO-GO / 024 資金流 FAIL / 025 驗證閘兩段化 / 027 策略契約 + registry / 028 dispatch + preset 移除 / 029 研究工作流標準化 / 030 truth gate 判決修正 / 031 standalone auth / 032 survivorship universe 工作流 / 033 Paper-Watch 零資本觀察艙 / 034 逐筆覆盤 K 線改 lightweight-charts / 035 DataFeed 讀取層 seam（EOD 現行、realtime XQ/Q 延後） / 036 pod/sleeve 多策略架構（組合級審判庭證據軸 + 規則式資本配置） / 037 移除 zipline 引擎殘骸（sim 為唯一引擎，engines/ 整樹刪除、parquet_cache/finmind_bundle 遷至 data/） / 038 fills 單一成交真相源 + 可拋式 DB schema 政策（schema 收斂 15→7 表、修 /monitor/positions 空白 bug、解鎖 per-sleeve P&L）。
+[adrs/](./adrs/) — ADR-001~039。近期主軸：023 動能 NO-GO / 024 資金流 FAIL / 025 驗證閘兩段化 / 027 策略契約 + registry / 028 dispatch + preset 移除 / 029 研究工作流標準化 / 030 truth gate 判決修正 / 031 standalone auth / 032 survivorship universe 工作流 / 033 Paper-Watch 零資本觀察艙 / 034 逐筆覆盤 K 線改 lightweight-charts / 035 DataFeed 讀取層 seam（EOD 現行、realtime XQ/Q 延後） / 036 pod/sleeve 多策略架構（組合級審判庭證據軸 + 規則式資本配置） / 037 移除 zipline 引擎殘骸（sim 為唯一引擎，engines/ 整樹刪除、parquet_cache/finmind_bundle 遷至 data/） / 038 fills 單一成交真相源 + 可拋式 DB schema 政策（schema 收斂 15→7 表、修 /monitor/positions 空白 bug、解鎖 per-sleeve P&L） / 039 evaluation profile 編排層（在 ADR-029 primitives 之上新增 quick_triage/fixed_hypothesis_oos/grid_search_selection/deployment_strict 四 profile + 五維 scorecard + 候選池狀態機 + live-OOS 人為選取 queue，primitives 行為零改動）。
 
 ---
 

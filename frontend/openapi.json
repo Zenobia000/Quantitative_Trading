@@ -1682,6 +1682,317 @@
         }
       }
     },
+    "/research/candidates": {
+      "get": {
+        "tags": [
+          "research-candidates"
+        ],
+        "summary": "List Candidates",
+        "description": "Paginated candidate pool (newest-created first), filterable by state / strategy.",
+        "operationId": "list_candidates_research_candidates_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "strategy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/candidates/{candidate_id}": {
+      "get": {
+        "tags": [
+          "research-candidates"
+        ],
+        "summary": "Get Candidate",
+        "description": "One candidate with its full append-only ``decisions[]`` trail.",
+        "operationId": "get_candidate_research_candidates__candidate_id__get",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/candidates/{candidate_id}/decision": {
+      "post": {
+        "tags": [
+          "research-candidates"
+        ],
+        "summary": "Post Decision",
+        "description": "Append a candidate decision (state-machine validated); returns the event.",
+        "operationId": "post_decision_research_candidates__candidate_id__decision_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/candidates/{candidate_id}/select-live-oos": {
+      "post": {
+        "tags": [
+          "research-candidates"
+        ],
+        "summary": "Post Select Live Oos",
+        "description": "Select a candidate for live OOS: enqueue a queue item + append the decision.",
+        "operationId": "post_select_live_oos_research_candidates__candidate_id__select_live_oos_post",
+        "parameters": [
+          {
+            "name": "candidate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectLiveOOSRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/research/live-oos/queue": {
+      "get": {
+        "tags": [
+          "research-candidates"
+        ],
+        "summary": "List Live Oos Queue",
+        "description": "Paginated live-OOS queue (human-selected candidates awaiting/undergoing OOS).",
+        "operationId": "list_live_oos_queue_research_live_oos_queue_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/monitor/strategies": {
       "get": {
         "tags": [
@@ -3545,6 +3856,42 @@
         "title": "DatasetCard",
         "description": "One ``GET /system/datasets`` card \u2014 a strategy author's data-dictionary row.\n\nAnswers the three authoring-first questions: *what is this data* (key / name /\ncategory / freq / history / description), *is it local* (``local`` binary), and\n*which of my strategies use it* (``used_by``). No freshness / coverage \u2014 that is\na runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."
       },
+      "DecisionRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "DecisionRequest",
+        "description": "A candidate decision (keep / archive / rerun / mark_data_issue / unarchive)."
+      },
       "Envelope": {
         "properties": {
           "success": {
@@ -5236,6 +5583,34 @@
         ],
         "title": "SavedViewCreate",
         "description": "A named Runs-Table view (columns + filters), mirroring the FE URL state."
+      },
+      "SelectLiveOOSRequest": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "override": {
+            "type": "boolean",
+            "title": "Override",
+            "default": false
+          },
+          "observation_kind": {
+            "type": "string",
+            "title": "Observation Kind",
+            "default": "paper_replay"
+          }
+        },
+        "type": "object",
+        "title": "SelectLiveOOSRequest",
+        "description": "Select a candidate for live OOS (optionally overriding a not-recommended one)."
       },
       "StrategyRow": {
         "properties": {
