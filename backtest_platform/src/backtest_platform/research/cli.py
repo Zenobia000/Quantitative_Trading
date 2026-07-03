@@ -711,5 +711,108 @@ def candidates_select_cmd(candidate, reason, override, kind) -> None:
     click.echo(f"  → queued {item['queue_id']} (kind={item['observation']['kind']}, state={item['state']})")
 
 
+# ── Branch experiments (rebuild Goal 9, ADR-041) ────────────────────────────
+# Fork a branch from a parent evaluation with an explicit config delta, run it, and
+# compare it against the parent — explicit lineage, never a silent in-place edit.
+
+
+@cli.group("branches")
+def branches_group() -> None:
+    """Branch experiments: create / list / evaluate / compare (rebuild Goal 9)."""
+
+
+def _parse_delta(pairs: tuple[str, ...]) -> list[dict]:
+    """``--set key=value`` pairs → ``[{key, to}]`` (value coerced via ``_coerce``)."""
+    delta: list[dict] = []
+    for p in pairs:
+        if "=" not in p:
+            raise click.ClickException(f"--set expects key=value, got {p!r}")
+        k, v = p.split("=", 1)
+        delta.append({"key": k.strip(), "to": _coerce(v.strip())})
+    return delta
+
+
+@branches_group.command("create")
+@click.option("--parent", "parent_evaluation_id", required=True, help="parent evaluation_id to fork from")
+@click.option("--set", "sets", multiple=True, help="config delta key=value (repeatable)")
+@click.option("--origin", default="manual", help="simulation | manual | report_finding")
+@click.option("--profile", default="quick_triage", help="profile to evaluate the branch under")
+@click.option("--note", default=None, help="why this branch")
+def branches_create_cmd(parent_evaluation_id, sets, origin, profile, note) -> None:
+    """Fork a branch from a parent evaluation (validates delta keys vs config_schema)."""
+    from backtest_platform.research import branch_store
+
+    try:
+        branch = branch_store.create_branch(
+            parent_evaluation_id, _parse_delta(sets), origin=origin, profile=profile, note=note,
+        )
+    except (branch_store.ParentNotFoundError, branch_store.IllegalDeltaError) as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(f"{branch['branch_id']}  parent={branch['parent_run_id']}  status={branch['status']}")
+    for d in branch["config_delta"]:
+        click.echo(f"  {d['key']}: {d['from']} → {d['to']}")
+    click.echo(f"  applies_to_rerun={branch['applies_to_rerun']}")
+
+
+@branches_group.command("list")
+@click.option("--strategy", default=None, help="Filter by strategy")
+@click.option("--parent", "parent_evaluation_id", default=None, help="Filter by parent evaluation_id")
+def branches_list_cmd(strategy, parent_evaluation_id) -> None:
+    """List branch experiments (folded, newest-first)."""
+    from backtest_platform.research.branch_store import list_branches
+
+    branches = list_branches(strategy=strategy, parent_evaluation_id=parent_evaluation_id)
+    if not branches:
+        click.echo("no branches")
+        return
+    for b in branches:
+        keys = ",".join(d["key"] for d in b["config_delta"])
+        click.echo(
+            f"{b['branch_id']:32} {b['strategy']:14} [{b['status']:9}] origin={b['origin']:14} Δ{keys}"
+        )
+
+
+@branches_group.command("evaluate")
+@click.option("--branch", "branch_id", required=True, help="branch_id to evaluate")
+@click.option("--data-dir", default=None, help="Parquet cache dir for the loader")
+def branches_evaluate_cmd(branch_id, data_dir) -> None:
+    """Run the branch config through the orchestrator; backfill its evaluation id."""
+    from backtest_platform.research import branch_store
+
+    try:
+        out = branch_store.evaluate_branch(branch_id, data_dir=data_dir)
+    except branch_store.BranchNotFoundError as exc:
+        raise click.ClickException(str(exc)) from None
+    except branch_store.BranchNotEvaluableError as exc:
+        raise click.ClickException(str(exc)) from None
+    b, ev = out["branch"], out["evaluation"]
+    click.echo(f"{b['branch_id']}  status={b['status']}  evaluation_id={ev['evaluation_id']}")
+    click.echo(f"  verdict={ev['verdict']['label']}  run_id={ev['run_id']}")
+
+
+@branches_group.command("compare")
+@click.option("--branch", "branch_id", required=True, help="branch_id to compare vs its parent")
+def branches_compare_cmd(branch_id) -> None:
+    """Show the branch-vs-parent headline delta table + decision."""
+    from backtest_platform.research import branch_store
+
+    try:
+        cmp = branch_store.compare_branch(branch_id)
+    except branch_store.BranchNotFoundError as exc:
+        raise click.ClickException(str(exc)) from None
+    if not cmp["branch_evaluated"]:
+        click.echo(f"{branch_id}: branch not yet evaluated — run `branches evaluate` first")
+        return
+    click.echo(f"{branch_id}  ({cmp['strategy']})  parent={cmp['parent_run_id']} branch={cmp['branch_run_id']}")
+    click.echo(f"  {'metric':<20}{'parent':>12}{'branch':>12}{'Δ':>12}  change")
+    for r in cmp["metrics"]:
+        p = "—" if r["parent"] is None else f"{r['parent']:.4f}"
+        b = "—" if r["branch"] is None else f"{r['branch']:.4f}"
+        d = "—" if r["delta"] is None else f"{r['delta']:+.4f}"
+        click.echo(f"  {r['metric']:<20}{p:>12}{b:>12}{d:>12}  {r['change']}")
+    dec = cmp["decision"]
+    click.echo(f"  → decision: {dec['verdict']} (parent={dec['parent_label']} branch={dec['branch_label']})")
+
+
 if __name__ == "__main__":
     cli()

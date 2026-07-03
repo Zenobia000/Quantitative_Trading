@@ -922,6 +922,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Branches
+         * @description Paginated branch list (newest-created first), filterable by strategy / parent.
+         */
+        get: operations["list_branches_research_branches_get"];
+        put?: never;
+        /**
+         * Create Branch
+         * @description Fork a branch from a parent evaluation. 404 unknown parent; 422 illegal delta.
+         */
+        post: operations["create_branch_research_branches_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/branches/{branch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Branch
+         * @description One branch (latest folded record).
+         */
+        get: operations["get_branch_research_branches__branch_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/branches/{branch_id}/evaluate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate Branch
+         * @description Run the branch config (quick_triage, synchronous) → backfill its evaluation id.
+         *
+         *     404 unknown branch; 409 for an overlay-only branch the runner cannot re-run
+         *     (would reproduce the parent). Returns the evaluated branch record.
+         */
+        post: operations["evaluate_branch_research_branches__branch_id__evaluate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research/branches/{branch_id}/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare Branch
+         * @description Branch-vs-parent headline delta table + a deterministic decision. 404 unknown.
+         */
+        get: operations["compare_branch_research_branches__branch_id__compare_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/monitor/strategies": {
         parameters: {
             query?: never;
@@ -1894,6 +1981,41 @@ export interface components {
             comparisons?: components["schemas"]["RunComparisonRow"][];
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * ConfigDeltaEntry
+         * @description One config change ``{key, to, from?}`` — ``from`` is advisory (server resolves
+         *     the authoritative value from the parent config).
+         */
+        ConfigDeltaEntry: {
+            /** Key */
+            key: string;
+            /** To */
+            to?: unknown;
+            /** From */
+            from?: unknown;
+        };
+        /**
+         * CreateBranchRequest
+         * @description Fork a branch from a parent evaluation with an explicit config delta.
+         */
+        CreateBranchRequest: {
+            /** Parent Evaluation Id */
+            parent_evaluation_id: string;
+            /** Config Delta */
+            config_delta: components["schemas"]["ConfigDeltaEntry"][];
+            /**
+             * Origin
+             * @default manual
+             */
+            origin: string;
+            /** Note */
+            note?: string | null;
+            /**
+             * Profile
+             * @default quick_triage
+             */
+            profile: string;
         };
         /**
          * DatasetCard
@@ -4151,6 +4273,167 @@ export interface operations {
                 "application/json": components["schemas"]["SimulationRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_branches_research_branches_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                limit?: number;
+                strategy?: string | null;
+                parent_evaluation_id?: string | null;
+                parent_run_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_branch_research_branches_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBranchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_branch_research_branches__branch_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_branch_research_branches__branch_id__evaluate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_branch_research_branches__branch_id__compare_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

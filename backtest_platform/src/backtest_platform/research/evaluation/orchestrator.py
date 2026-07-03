@@ -58,14 +58,26 @@ def _resolve_loader(loader: Loader | None, data_dir: str | None) -> Loader:
     return load_merged_parquet
 
 
+def _merge_overrides(params: dict[str, Any], overrides: dict[str, Any] | None) -> dict[str, Any]:
+    """A NEW params dict with ``overrides`` applied on top (branch config re-run).
+
+    Immutability: never mutates the resolved config in place — a branch evaluation
+    threads its config-delta through here without disturbing the declared config.
+    """
+    return {**params, **(overrides or {})}
+
+
 def _single_run_spec(
     strategy: str, symbols: list[str] | None, is_start: date | None, is_end: date | None,
+    param_overrides: dict[str, Any] | None = None,
 ) -> tuple[list[str], date, date, dict[str, Any]]:
     """Resolve (symbols, is_start, is_end, params) for a single-config run.
 
     Prefers the strategy's declared GO_GATES config (fixed_config + wide universe +
     window), else TRUTH_GATE (IS window), else DOE (default config). Explicit
-    overrides win. Raises ``ValueError`` if the strategy declares no usable config.
+    overrides win. ``param_overrides`` (a branch config delta) are applied last, on
+    top of the resolved params. Raises ``ValueError`` if the strategy declares no
+    usable config.
     """
     params: dict[str, Any] = {}
     cfg_symbols: list[str] | None = None
@@ -95,7 +107,7 @@ def _single_run_spec(
             f"cannot resolve a run spec for {strategy!r}: declare GO_GATES/TRUTH_GATE/DOE "
             f"in its research_config.py, or pass --symbols/--start/--end explicitly"
         )
-    return symbols, is_start, is_end, params
+    return symbols, is_start, is_end, _merge_overrides(params, param_overrides)
 
 
 def _run_single(runner: Any, symbols: list[str], start: date, end: date, params: dict[str, Any], loader: Loader):
@@ -104,8 +116,8 @@ def _run_single(runner: Any, symbols: list[str], start: date, end: date, params:
     return run.metrics, run.returns, run.trades
 
 
-def _bundle_quick_triage(strategy, runner, loader, symbols, is_start, is_end) -> RunBundle:
-    symbols, is_start, is_end, params = _single_run_spec(strategy, symbols, is_start, is_end)
+def _bundle_quick_triage(strategy, runner, loader, symbols, is_start, is_end, param_overrides=None) -> RunBundle:
+    symbols, is_start, is_end, params = _single_run_spec(strategy, symbols, is_start, is_end, param_overrides)
     metrics, returns, trades = _run_single(runner, symbols, is_start, is_end, params, loader)
     return RunBundle(
         metrics=metrics, returns=returns, trades=trades, params=params, symbols=symbols,
@@ -114,9 +126,9 @@ def _bundle_quick_triage(strategy, runner, loader, symbols, is_start, is_end) ->
     )
 
 
-def _bundle_fixed_hypothesis(strategy, runner, loader, symbols, is_start, is_end) -> RunBundle:
+def _bundle_fixed_hypothesis(strategy, runner, loader, symbols, is_start, is_end, param_overrides=None) -> RunBundle:
     from backtest_platform.research.workflows.go_gates import run_go_gates
-    symbols, is_start, is_end, params = _single_run_spec(strategy, symbols, is_start, is_end)
+    symbols, is_start, is_end, params = _single_run_spec(strategy, symbols, is_start, is_end, param_overrides)
     metrics, returns, trades = _run_single(runner, symbols, is_start, is_end, params, loader)
     extras: dict[str, Any] = {"slippage_sharpe": metrics.get("slippage_sharpe")}
     try:
@@ -133,14 +145,14 @@ def _bundle_fixed_hypothesis(strategy, runner, loader, symbols, is_start, is_end
     )
 
 
-def _bundle_grid_search(strategy, runner, loader, symbols, is_start, is_end) -> RunBundle:
+def _bundle_grid_search(strategy, runner, loader, symbols, is_start, is_end, param_overrides=None) -> RunBundle:
     from backtest_platform.research.workflows.doe import run_doe
     from backtest_platform.research.workflows.go_gates import run_go_gates
     doe_cfg = get_doe_config(strategy)
     doe_res = run_doe(doe_cfg, loader=loader)
     best = doe_res.best("sharpe")
     grid_keys = set(doe_cfg.grid)
-    best_params = {k: v for k, v in best.items() if k in grid_keys}
+    best_params = _merge_overrides({k: v for k, v in best.items() if k in grid_keys}, param_overrides)
     gg_cfg = get_go_gates_config(strategy)
     metrics, returns, trades = _run_single(
         runner, list(gg_cfg.symbols), gg_cfg.is_start, gg_cfg.is_end, best_params, loader
@@ -161,13 +173,14 @@ def _bundle_grid_search(strategy, runner, loader, symbols, is_start, is_end) -> 
     )
 
 
-def _bundle_deployment_strict(strategy, runner, loader) -> RunBundle:
+def _bundle_deployment_strict(strategy, runner, loader, param_overrides=None) -> RunBundle:
     from backtest_platform.research.workflows.truth_gate import run_truth_gate
     cfg = get_truth_gate_config(strategy)
     # Wrap the truth gate UNCHANGED for the verdict + gate extras (ADR-025/030).
     tg = run_truth_gate(cfg, loader=loader)
+    params = _merge_overrides(cfg.fixed_config.model_dump(), param_overrides)
     # One extra IS run (the same window truth_gate uses internally) for scorecards.
-    metrics, returns, trades = _run_single(runner, list(cfg.symbols), cfg.is_start, cfg.oos_start, cfg.fixed_config.model_dump(), loader)
+    metrics, returns, trades = _run_single(runner, list(cfg.symbols), cfg.is_start, cfg.oos_start, params, loader)
     extras = {
         "oos_holdout_sharpe": tg.oos_holdout_sharpe,
         "dsr": tg.dsr,
@@ -175,7 +188,7 @@ def _bundle_deployment_strict(strategy, runner, loader) -> RunBundle:
         "slippage_sharpe": tg.slippage_sharpe,
     }
     return RunBundle(
-        metrics=metrics, returns=returns, trades=trades, params=cfg.fixed_config.model_dump(),
+        metrics=metrics, returns=returns, trades=trades, params=params,
         symbols=list(cfg.symbols),
         window={"is_start": cfg.is_start.isoformat(), "oos_start": cfg.oos_start.isoformat(), "is_end": cfg.is_end.isoformat()},
         n_trials=cfg.n_trials, survivorship_clean=cfg.survivorship_clean, bundle_ref=cfg.parquet_dir,
@@ -184,10 +197,10 @@ def _bundle_deployment_strict(strategy, runner, loader) -> RunBundle:
 
 
 _BUNDLERS = {
-    "quick_triage": lambda s, r, ld, sym, st, en: _bundle_quick_triage(s, r, ld, sym, st, en),
-    "fixed_hypothesis_oos": lambda s, r, ld, sym, st, en: _bundle_fixed_hypothesis(s, r, ld, sym, st, en),
-    "grid_search_selection": lambda s, r, ld, sym, st, en: _bundle_grid_search(s, r, ld, sym, st, en),
-    "deployment_strict": lambda s, r, ld, sym, st, en: _bundle_deployment_strict(s, r, ld),
+    "quick_triage": lambda s, r, ld, sym, st, en, ov: _bundle_quick_triage(s, r, ld, sym, st, en, ov),
+    "fixed_hypothesis_oos": lambda s, r, ld, sym, st, en, ov: _bundle_fixed_hypothesis(s, r, ld, sym, st, en, ov),
+    "grid_search_selection": lambda s, r, ld, sym, st, en, ov: _bundle_grid_search(s, r, ld, sym, st, en, ov),
+    "deployment_strict": lambda s, r, ld, sym, st, en, ov: _bundle_deployment_strict(s, r, ld, ov),
 }
 
 
@@ -209,6 +222,8 @@ def evaluate(
     is_start: date | str | None = None,
     is_end: date | str | None = None,
     hypothesis: str | None = None,
+    param_overrides: dict[str, Any] | None = None,
+    branch_lineage: dict[str, Any] | None = None,
     clock: Any = _now,
     persist: bool = True,
     evaluations_path: Any = DEFAULT_EVALUATIONS_PATH,
@@ -220,13 +235,20 @@ def evaluate(
     CLI error), runs the wrapped primitive(s), assembles the result, writes the report
     pack, and (``persist``) appends to the ledger. A run that yields no bars is
     persisted as a ``data_issue`` result — never dropped (global acceptance #5).
+
+    ``param_overrides`` layers a config delta on top of the resolved params (the
+    branch-experiment re-run, Goal 9): a changed config value shifts the ``run_id``
+    config hash, so a branch always gets a distinct ``evaluation_id`` and can never
+    fold over its parent. ``branch_lineage`` (when set) tags the result's ``branch``
+    key so the candidate pool / report can badge the branch origin.
     """
     prof: EvaluationProfile = get_profile(profile)          # ValueError → unknown profile
     runner = get_strategy(strategy)                          # ValueError → unknown strategy
     resolved_loader = _resolve_loader(loader, data_dir)
 
     bundle = _BUNDLERS[prof.name](
-        strategy, runner, resolved_loader, symbols, _coerce_date(is_start), _coerce_date(is_end)
+        strategy, runner, resolved_loader, symbols, _coerce_date(is_start), _coerce_date(is_end),
+        param_overrides,
     )
 
     win = bundle.window
@@ -243,6 +265,8 @@ def evaluate(
         prof, bundle, strategy=strategy, run_id=run_id,
         evaluation_id=evaluation_id, created_at=created_at,
     )
+    if branch_lineage:
+        result["branch"] = dict(branch_lineage)
 
     equity, drawdown = _equity_drawdown(bundle.returns)
     write_report_pack(result, {"equity": equity, "drawdown": drawdown, "trades": bundle.trades}, root=pack_root)
