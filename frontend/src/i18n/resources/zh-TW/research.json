@@ -117,22 +117,48 @@
   },
   "strategyHub": {
     "list": {
-      "title": "策略中心",
-      "subtitle": "以策略為軸 · 型錄 × 判決帳本 × 觀察艙聚合",
+      "title": "策略資產",
+      "subtitle": "以策略為軸的研究資產 · 假設 × 評測候選 × 五維計分 × 下一步",
       "resource": "策略",
       "newRun": "新建回測",
+      "evaluate": "評估",
       "count": "{{n}} 個策略",
       "card": {
         "latestGate": "最近判決",
         "noRuns": "尚無 run",
-        "runs": "{{n}} runs"
+        "runs": "{{n}} runs",
+        "profile": "評測 profile",
+        "notEvaluated": "尚未評估"
       }
     },
     "detail": {
-      "back": "策略中心",
+      "back": "策略資產",
       "resource": "判決時間線",
       "configFields": "參數欄位（config_schema）",
       "notInRegistry": "策略 {{name}} 不在型錄中（僅帳本有紀錄）",
+      "premise": {
+        "title": "研究命題",
+        "hypothesis": "假設",
+        "mechanism": "機制",
+        "noHypothesis": "尚未登記假設（評測後回填）",
+        "noMechanism": "型錄未提供機制描述"
+      },
+      "candidate": {
+        "title": "候選生命週期",
+        "unavailable": "候選資料暫時無法取得",
+        "latestProfile": "評測 profile",
+        "label": "標記",
+        "nextAction": "下一步",
+        "viewReport": "查看研究報表",
+        "noReport": "尚無報表",
+        "viewPool": "候選池",
+        "trail": "決策軌跡（{{n}}）",
+        "empty": {
+          "headline": "尚未評估",
+          "subtitle": "此策略尚未進入候選池 —— 跑一次評測後，狀態、五維計分與決策軌跡會出現在這裡",
+          "cta": "立即評估"
+        }
+      },
       "watch": {
         "title": "觀察艙"
       },
@@ -141,6 +167,7 @@
         "empty": "此策略尚無 run —— 從新建回測開始"
       },
       "actions": {
+        "evaluate": "評估此策略",
         "newRun": "新建回測（預填此策略）",
         "tradeReview": "K 線覆盤",
         "needRun": "需先有 run 方可覆盤",

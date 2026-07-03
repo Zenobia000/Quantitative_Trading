@@ -258,6 +258,8 @@ graph LR
 | **逐筆覆盤**（`TradeReviewPage` + candles）| K 線證據 drilldown（ADR-034 lightweight-charts）| Report Viewer 底下 Trade Review | 移到 `reports/:runId/trades`，作報表證據層（per-trade MAE/MFE 待 trades schema 補欄）|
 | **Paper-Watch 觀察艙**（`WatchPage` + `watch_registry`）| ADR-033 零資本觀察艙 | Live OOS/觀察艙 | 移 zone 到 `/live-oos/watch`，作 Live OOS 佇列的 berth enforcement 層（契約 §7）|
 
+> **Goal 7 落地實作註記（策略資產「Evaluate」CTA 過渡路由）**：策略資產清單/詳情的主要動作「Evaluate」目前**導向既有 `/research/runs/new?strategy=<name>`**——因 evaluate 後端目前僅 CLI（Goal 3 orchestrator），`/research/evaluate` UI 尚未落地（§1.1 標「契約 待 Goal」、§5.6 列為新增 route）。此路由與 §2 migration mapping #4「`runs/new` 併入/重導 → `/research/evaluate`」一致：New Run 表單即 evaluate 的過渡承載。待 `/research/evaluate`（加 profile 層）落地後，本 CTA 改導該新 path。候選生命週期 section 的資料源為 `GET /research/candidates`（#188 已上線真後端，非 fixture）。
+
 ### 4.2 過時規格假設修正記錄（來自 Goal 0 audit）
 
 上游 spec §2.2 / §3.3 早於 F 波 merge，以下假設須修正：

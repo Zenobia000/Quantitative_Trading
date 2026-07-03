@@ -1,14 +1,24 @@
 /*
- * 策略中心 · 詳情（/research/strategies/:name）—— hub 的策略軸聚合視圖（深連結、refresh-safe）。
- *  - 頁首：策略名 / title / config_model 摘要（型錄 config_schema 欄位）
- *  - 觀察艙卡：在艙才顯示（複用 useWatchOverview 資料 hook）——觀察日 N/~60、到期倒數、DSR
- *  - 判決時間線：該策略的 runs 依帳本序（gate badge + 關鍵 metrics + 連 RunReport）
- *  - 快速入口：New Run（帶 strategy 預填）、K 線覆盤、Compare、最近 run 的 Open-in-notebook
- * 資料聚合全用既有端點（/strategies + /runs + /monitor/watch），不需新後端。
+ * 策略資產 · 詳情（/research/strategies/:name）—— 單策略研究資產聚合視圖（深連結、refresh-safe，Goal 7）。
+ *  - 頁首：策略名 / title
+ *  - 研究命題：假設（候選 → 最近 run fallback）+ 機制（型錄 description）
+ *  - config_model 摘要：型錄 config_schema 欄位（authoring 資訊）
+ *  - 候選生命週期（IA 裁決 B 落地）：候選 state + 最新評測（profile / label / 五維燈 / next_action）
+ *    + 決策軌跡（折疊）+ 連 Report Viewer /research/reports/:runId 與候選池；無候選 → 「尚未評估」引導
+ *  - 觀察艙卡：在艙才顯示（複用 useWatchOverview 資料 hook）
+ *  - 快速入口：Evaluate（主要動作，預填此策略）、K 線覆盤、Compare、Open-in-notebook
+ *  - 判決時間線：該策略的 runs（gate badge + 關鍵 metrics + 連 RunReport）——降為次要證據
+ * 資料聚合全用既有端點（/strategies + /runs + /monitor/watch + /research/candidates），不需新後端。
  */
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { UseQueryResult } from '@tanstack/react-query'
 import { useStrategyHubDetail } from '../hooks/useStrategyHub'
+import { CandidateStateBadge } from '../components/candidates/CandidateStateBadge'
+import { ScorecardLights } from '../components/candidates/ScorecardLights'
+import { runIdFromReportRef } from '../components/candidates/candidateDisplay'
+import type { Candidate } from '../api/candidates'
 import type { WatchRow } from '@/features/monitor/hooks/useWatch'
 import { PageHeader } from '@/components/PageHeader'
 import { Skeleton, SkeletonRows } from '@/components/Skeleton'
@@ -29,12 +39,17 @@ function configFields(schema: Record<string, unknown> | undefined): string[] {
   return props && typeof props === 'object' ? Object.keys(props as object) : []
 }
 
+/** Evaluate 入口：evaluate 後端目前僅 CLI，前端先導既有 New Run 表單（IA §2：runs/new 併入 evaluate）。 */
+function evaluateHref(name: string): string {
+  return `/research/runs/new?strategy=${encodeURIComponent(name)}`
+}
+
 export function StrategyHubDetailPage() {
   const { t } = useTranslation(['research', 'monitor'])
   const errText = useErrorText()
   const navigate = useNavigate()
   const { name } = useParams<{ name: string }>()
-  const { registry, runsQ, detail } = useStrategyHubDetail(name)
+  const { registry, runsQ, candidatesQ, detail } = useStrategyHubDetail(name)
 
   const back = { label: t('strategyHub.detail.back'), to: '/research/strategies' }
   const route = `/research/strategies/${encodeURIComponent(name ?? '')}`
@@ -56,7 +71,32 @@ export function StrategyHubDetailPage() {
 
   return (
     <div>
-      <PageHeader title={detail.title} route={route} subtitle={detail.info?.description} back={back} />
+      <PageHeader title={detail.title} route={route} back={back} />
+
+      {/* 研究命題：假設 + 機制 */}
+      <section className="mb-3 rounded-lg border border-border bg-surface p-4">
+        <div className="mb-2 text-xs uppercase tracking-wide text-text-muted">
+          {t('strategyHub.detail.premise.title')}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <div className="mb-0.5 text-[11px] text-text-muted">{t('strategyHub.detail.premise.hypothesis')}</div>
+            <p className="text-sm text-text-secondary">
+              {detail.hypothesis ?? (
+                <span className="italic text-text-muted">{t('strategyHub.detail.premise.noHypothesis')}</span>
+              )}
+            </p>
+          </div>
+          <div>
+            <div className="mb-0.5 text-[11px] text-text-muted">{t('strategyHub.detail.premise.mechanism')}</div>
+            <p className="text-sm text-text-secondary">
+              {detail.mechanism ?? (
+                <span className="italic text-text-muted">{t('strategyHub.detail.premise.noMechanism')}</span>
+              )}
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* config_model 摘要 / 型錄外策略提示 */}
       {detail.info ? (
@@ -81,16 +121,23 @@ export function StrategyHubDetailPage() {
         </div>
       )}
 
+      {/* 候選生命週期（IA 裁決 B） */}
+      <CandidateLifecycle
+        candidate={detail.candidate}
+        query={candidatesQ}
+        onEvaluate={() => navigate(evaluateHref(detail.name))}
+      />
+
       {/* 觀察艙卡（在艙才顯示） */}
       {detail.watch && <WatchPodCard row={detail.watch} />}
 
-      {/* 快速入口列 */}
+      {/* 快速入口列 —— Evaluate 為主要動作 */}
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm">
         <button
-          onClick={() => navigate(`/research/runs/new?strategy=${encodeURIComponent(detail.name)}`)}
-          className="rounded-md border border-border px-3 py-1 text-text-secondary hover:text-text"
+          onClick={() => navigate(evaluateHref(detail.name))}
+          className="rounded-md border border-text/40 px-3 py-1 font-medium text-text hover:bg-input"
         >
-          {t('strategyHub.detail.actions.newRun')}
+          {t('strategyHub.detail.actions.evaluate')}
         </button>
         <button
           onClick={() => detail.latestRun && navigate(`/research/runs/${encodeURIComponent(detail.latestRun.run_id)}/trades`)}
@@ -122,7 +169,7 @@ export function StrategyHubDetailPage() {
         )}
       </div>
 
-      {/* 判決時間線 */}
+      {/* 判決時間線（次要證據） */}
       <section className="rounded-lg border border-border bg-surface">
         <div className="border-b border-border px-4 py-2 text-xs uppercase tracking-wide text-text-muted">
           {t('strategyHub.detail.timeline.title')}
@@ -172,6 +219,137 @@ export function StrategyHubDetailPage() {
         )}
       </section>
     </div>
+  )
+}
+
+/**
+ * 候選生命週期 section（IA 裁決 B：候選詳情折入策略資產詳情）。
+ * 四態：loading → skeleton；error → 誠實降級（非紅 banner）+ 重試；無候選 → 「尚未評估」引導；
+ * 有候選 → state + profile/label + 五維燈 + next_action + 連結 + 決策軌跡（折疊，複用候選池慣例）。
+ */
+function CandidateLifecycle({
+  candidate,
+  query,
+  onEvaluate,
+}: {
+  candidate: Candidate | null
+  query: UseQueryResult<Candidate[]>
+  onEvaluate: () => void
+}) {
+  const { t } = useTranslation('research')
+  const navigate = useNavigate()
+  const [showTrail, setShowTrail] = useState(false)
+  const runId = candidate ? runIdFromReportRef(candidate.report_pack_ref) : null
+
+  return (
+    <section className="mb-3 rounded-lg border border-border bg-surface">
+      <div className="border-b border-border px-4 py-2 text-xs uppercase tracking-wide text-text-muted">
+        {t('strategyHub.detail.candidate.title')}
+      </div>
+
+      {query.isLoading ? (
+        <div className="p-4">
+          <SkeletonRows rows={2} cols={3} />
+        </div>
+      ) : query.isError ? (
+        <div className="flex flex-wrap items-center gap-3 p-4 text-xs text-text-muted">
+          <span>{t('strategyHub.detail.candidate.unavailable')}</span>
+          <button
+            onClick={() => query.refetch()}
+            className="rounded-md border border-border px-3 py-1 text-text-secondary hover:text-text"
+          >
+            {t('common:action.retry')}
+          </button>
+        </div>
+      ) : !candidate ? (
+        <div className="p-6 text-sm">
+          <p className="font-medium text-text">{t('strategyHub.detail.candidate.empty.headline')}</p>
+          <p className="mt-1 text-xs text-text-secondary">{t('strategyHub.detail.candidate.empty.subtitle')}</p>
+          <button
+            onClick={onEvaluate}
+            className="mt-3 rounded-md border border-text/40 px-3 py-1.5 text-xs font-medium text-text hover:bg-input"
+          >
+            {t('strategyHub.detail.candidate.empty.cta')}
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 p-4">
+          {/* state + profile + label */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <CandidateStateBadge state={candidate.state} />
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <span className="text-text-muted">{t('strategyHub.detail.candidate.latestProfile')}</span>
+              <span className="font-mono text-text-secondary">{candidate.latest_profile}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-xs">
+              <span className="text-text-muted">{t('strategyHub.detail.candidate.label')}</span>
+              <span className="text-text-secondary">{candidate.latest_label}</span>
+            </span>
+          </div>
+
+          {/* 五維 scorecard 燈 */}
+          <ScorecardLights summary={candidate.scorecard_summary} />
+
+          {/* next action */}
+          <p className="text-xs text-text-secondary">
+            <span className="text-text-muted">{t('strategyHub.detail.candidate.nextAction')}: </span>
+            {candidate.next_action}
+          </p>
+
+          {/* 連結：Report Viewer + 候選池 + 決策軌跡切換 */}
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            {runId ? (
+              <button
+                onClick={() => navigate(`/research/reports/${runId}`)}
+                className="text-text-secondary underline-offset-2 hover:text-text hover:underline"
+              >
+                {t('strategyHub.detail.candidate.viewReport')}
+              </button>
+            ) : (
+              <span className="text-text-muted">{t('strategyHub.detail.candidate.noReport')}</span>
+            )}
+            <span className="text-text-muted" aria-hidden>·</span>
+            <button
+              onClick={() => navigate('/research/candidates')}
+              className="text-text-secondary underline-offset-2 hover:text-text hover:underline"
+            >
+              {t('strategyHub.detail.candidate.viewPool')}
+            </button>
+            {candidate.decisions.length > 0 && (
+              <>
+                <span className="text-text-muted" aria-hidden>·</span>
+                <button
+                  onClick={() => setShowTrail((v) => !v)}
+                  aria-expanded={showTrail}
+                  className="text-text-secondary underline-offset-2 hover:text-text hover:underline"
+                >
+                  {t('strategyHub.detail.candidate.trail', { n: candidate.decisions.length })}
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* 決策軌跡（折疊，複用候選池 decisionAction i18n） */}
+          {showTrail && candidate.decisions.length > 0 && (
+            <ul className="flex flex-col gap-1 border-t border-border/50 pt-2 text-[11px] text-text-muted">
+              {candidate.decisions.map((d) => (
+                <li key={d.decision_id} className="flex flex-wrap items-baseline gap-1.5">
+                  <span className="font-mono tabular">{d.at.slice(0, 10)}</span>
+                  <span className="text-text-secondary">
+                    {t(`candidates.decisionAction.${d.action}`, { defaultValue: d.action })}
+                  </span>
+                  <span aria-hidden>·</span>
+                  <span className="font-mono">
+                    {d.from_state}→{d.to_state}
+                  </span>
+                  {d.reason && <span className="italic">「{d.reason}」</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </section>
   )
 }
 
