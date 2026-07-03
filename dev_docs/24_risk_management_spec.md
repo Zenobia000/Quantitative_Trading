@@ -426,6 +426,19 @@ size = max_weight × conviction × diversification × capacity
 
 paper 期 live OOS 回饋配置閘：實際摩擦吃掉 edge → conviction 下修或退回真偽閘重判。
 
+
+### 8.5 外圈資本配置政策 — pod/sleeve 制（[ADR-036](./adrs/ADR-036-pod-sleeve-portfolio-gate.md)）
+
+配置閘（§8.4）算出**單一艙位**的目標倉位；跨艙位的**資本再配置（季度）**由 `validation/portfolio_gate.py` 的三個純函式治理：
+
+| 函式 | 規則 | 為什麼 |
+| :--- | :--- | :--- |
+| `sleeve_weights` | 權重 = `compute_position_size`（§8.4 同款公式），**hysteresis**：相對變化 < 20% 不動作 | 資本在策略層搬動必須慢——追近期 Sharpe 換倉 = 高買低賣 |
+| `apply_stop_outs` | live 回撤 **超過** 15%（預設）→ 配額歸零、退回審判庭重驗 | pod 式離散停損：殘酷、規則式、可審計 |
+| `portfolio_gate_report` | 候選 + 艦隊合成組合走同一條 DSR（`deflated_sharpe_from_returns`）→ 分散紅利 Δ 記錄進 metrics | 0.9 牆是單策略的；組合級正交紅利是**證據軸**，v1 不改寫 standalone verdict |
+
+權重總和不歸一：餘額即現金（pod 語意）。跨艙 heat 聚合（EX-002/004/007 的跨策略版）為第二艙位前置項，見 ADR-036 §3.4。
+
 ---
 
 ## 9. 緊急應變 SOP
@@ -605,3 +618,4 @@ class RiskConfig(BaseModel, frozen=True):
 | v1.0 | 2026-05-31 | 初版（對應 plan §1 L5；擴充 13/14 風控細節） |
 | v1.1 | 2026-06-14 | 新增 §8.4 配置閘（真偽閘 + sizing 目標倉位，ADR-025 / `two_stage_gate.py`）；與 §8.1 升倉閘銜接 |
 | v1.2 | 2026-07-02 | §8.4 新增「真偽閘判決三態 → 倉位對映」表：`PAPER_WATCH` 零資本觀察艙（DSR ∈ [0.90, 0.95)，ADR-033 / `TruthVerdict`）|
+| v1.3 | 2026-07-03 | 新增 §8.5 外圈資本配置政策（ADR-036 / `portfolio_gate.py`：sleeve_weights hysteresis + pod 式停損 + 組合級 DSR 證據軸）|

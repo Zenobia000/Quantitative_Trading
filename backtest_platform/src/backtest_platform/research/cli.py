@@ -160,6 +160,59 @@ def run_batch_cmd(strategy, params, hypothesis, stock_groups, start, end, max_wo
         raise SystemExit(1)
 
 
+@cli.command("portfolio-check")
+@click.option("--candidate", required=True, help="候選 run_id（sidecar 需存在）")
+@click.option("--fleet", default="", help="逗號分隔的艦隊 run_id（空 = 首艙位，組合==standalone）")
+@click.option("--n-trials", default=1, show_default=True, help="候選的試驗數（DSR 通縮用）")
+@click.option("--oos-sharpe", default=None, type=float, help="候選 OOS Sharpe（給定則附 ADR-025 sizing 建議權重）")
+@click.option("--series-dir", default=None, help="run sidecar 目錄（預設 reports/series）")
+def portfolio_check_cmd(candidate, fleet, n_trials, oos_sharpe, series_dir) -> None:
+    """組合級證據軸（ADR-036）：候選 + 艦隊合成組合的 DSR vs standalone DSR。
+
+    v1 限制：sidecar 無日期索引，跨 run 以「同窗口位置對齊」合成——
+    長度不一致即拒絕（ADR-036 §3.4）。輸出是證據，不改寫 standalone verdict。
+    """
+    import pandas as pd
+
+    from backtest_platform.research.run_series_store import read_series
+    from backtest_platform.validation.portfolio_gate import portfolio_gate_report
+
+    kwargs = {} if series_dir is None else {"series_dir": series_dir}
+
+    def _returns(run_id: str) -> pd.Series:
+        payload = read_series(run_id, **kwargs)
+        equity = payload.get("equity") or []
+        if len(equity) < 2:
+            raise click.ClickException(f"run {run_id!r}: sidecar equity < 2 points")
+        eq = pd.Series([1.0, *equity], dtype=float)  # equity[i] = prod(1+r[:i+1])
+        return eq.pct_change().dropna().reset_index(drop=True)
+
+    try:
+        cand = _returns(candidate)
+        fleet_ids = [f.strip() for f in fleet.split(",") if f.strip()]
+        fleet_map = {fid: _returns(fid) for fid in fleet_ids}
+    except FileNotFoundError as exc:
+        raise click.ClickException(f"sidecar not found: {exc}") from None
+
+    bad = [fid for fid, r in fleet_map.items() if len(r) != len(cand)]
+    if bad:
+        raise click.ClickException(
+            f"positional alignment needs equal-length windows; mismatched vs candidate: {bad}"
+        )
+
+    rep = portfolio_gate_report(
+        candidate, cand, fleet_map, n_trials=n_trials, candidate_oos_sharpe=oos_sharpe
+    )
+    click.echo(f"portfolio-check  candidate={candidate}  fleet={fleet_ids or '(empty)'}")
+    click.echo(f"  standalone DSR      = {rep.standalone_dsr:.6f}")
+    click.echo(f"  portfolio  DSR      = {rep.portfolio_dsr:.6f}")
+    click.echo(f"  diversification Δ   = {rep.diversification_premium:+.6f}")
+    click.echo(f"  corr to fleet       = {rep.correlation_to_fleet:+.4f}")
+    if rep.suggested_weight is not None:
+        click.echo(f"  suggested weight    = {rep.suggested_weight:.4f}  (ADR-025 sizing)")
+    click.echo("  註：組合級 DSR 為證據軸（艦隊固定的條件性統計），不改寫 standalone verdict（ADR-036 §3.2）")
+
+
 @cli.command("validate-strategy")
 @click.argument("name", required=False)
 @click.option("--list", "list_all", is_flag=True, default=False, help="List all registered strategies")

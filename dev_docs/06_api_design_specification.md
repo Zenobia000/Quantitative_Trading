@@ -8,7 +8,7 @@
 
 提供三種介面：
 
-1. **CLI（Click）** — 端到端操作：ETL（`finmind_etl`）、zipline 回測（`zipline_adapter`：`ingest` / `backtest-run` / `list-bundles`）、每日管線（`orchestration.cli`）、**研究迴圈與工作流 `research.cli`**（§3.5：`run-is` / `runs` / `sweep` / `compare` / `validate` / `promote-check` / `validate-strategy` / `doe` / `go-gates` / `truth-gate` / `build-universe` / `paper-replay`）
+1. **CLI（Click）** — 端到端操作：ETL（`finmind_etl`）、zipline 回測（`zipline_adapter`：`ingest` / `backtest-run` / `list-bundles`）、每日管線（`orchestration.cli`）、**研究迴圈與工作流 `research.cli`**（§3.5：`run-is` / `run-batch` / `runs` / `sweep` / `compare` / `validate` / `promote-check` / `portfolio-check` / `validate-strategy` / `doe` / `go-gates` / `truth-gate` / `build-universe` / `paper-replay`）
 2. **Python API** — 程式內呼叫（pure functions + Pydantic models）
 3. **HTTP API（FastAPI）** — 研究迴圈 + 驗證後端的 HTTP 投影（runs ledger / gate 審判庭 / metrics / strategies / research workflows），已實作端點見 §9。
 
@@ -132,6 +132,7 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | `sweep` | 參數網格展開 → 跑每個 → 輸出**全網格** CSV（防 cherry-pick） | `sweep.run_sweep` |
 | `compare` | 多 run baseline delta + 排名 + 同號一致性 | `compare.compare_runs` |
 | `validate` | 把 ledger 內某 run 推進 IS→WFA→OOS **工作流 gate**（IS 階段）：PASS→IS_PASS 解鎖 WFA，並回報 OOS sealed-vault 狀態（IS+WFA 通過前 OOS 封存，防 look-ahead leak） | `validation.gate_machine.ValidationGate` |
+| `portfolio-check` | **組合級證據軸（ADR-036）**：候選 + 艦隊 sidecar returns 合成組合走同一條 DSR（`deflated_sharpe_from_returns`）→ 印 standalone vs portfolio DSR、分散紅利 Δ、對艦隊相關性、ADR-025 sizing 建議權重。證據記錄，不改寫 standalone verdict | `validation.portfolio_gate` |
 | `promote-check` | **唯讀晉升閘**：讀某 run 的 `validation_status`（顯式欄優先，否則由 metrics 推導 IS 狀態）→ 僅 `APPROVED`（IS→WFA→OOS→approve 全通過）才 ELIGIBLE，否則列出待完成階段。防未驗證策略上線 | `validation.gate_machine.GateState` + `ValidationGate` |
 | `validate-strategy` | conformance gate：驗任一已註冊策略 runner 是否符合契約（`--list` 列全部，ADR-028）| `strategies.conformance.check_strategy` |
 | `doe` | DOE 參數網格掃描（讀 `research_config.DOE`）；`--dry-run`/`--is-start`/`--is-end`/`--out-csv`（ADR-029）| `research.workflows.doe.run_doe` |
