@@ -11,6 +11,7 @@ import { PageHeader } from '@/components/PageHeader'
 import { EnumBadge } from '@/components/EnumBadge'
 import { useErrorText } from '@/i18n/useErrorText'
 import { QueryState, SimpleTable } from '@/features/monitor/components'
+import { DatasetCatalog } from '../components/DatasetCatalog'
 import {
   useBundles,
   useIngestStatus,
@@ -190,27 +191,44 @@ export function DataPage() {
     <div>
       <PageHeader title={t('data.title')} route="/system/data" subtitle={t('data.subtitle')} />
 
-      <IngestCard />
-      <UniverseBuildCard />
+      {/* 上半部（頁面主體）：資料字典卡片牆 —— 策略作者搜 key→複製→寫策略 */}
+      <section className="mb-8">
+        <div className="mb-3">
+          <h2 className="text-base font-semibold">{t('data.catalog.heading')}</h2>
+          <p className="text-sm text-text-secondary">{t('data.catalog.subheading')}</p>
+        </div>
+        <DatasetCatalog />
+      </section>
 
-      {/* bundle manifest — 真實掃描 data/parquet* 的 manifest（無資料 → typed-empty） */}
-      <section className="mb-3">
-        <div className="mb-1 text-xs text-text-muted">{t('data.bundles.heading')}</div>
-        <QueryState q={bundles} pendingLabel={t('data.bundles.pending')} emptyLabel={t('data.bundles.empty')}>
-          {(rows: BundleRow[]) => (
-            <SimpleTable
-              rows={rows}
-              cols={[
-                { key: 'id', label: t('data.bundles.col.id') },
-                { key: 'kind', label: t('data.bundles.col.kind') },
-                { key: 'stock_count', label: t('data.bundles.col.stockCount') },
-                { key: 'coverage_start', label: t('data.field.start') },
-                { key: 'coverage_end', label: t('data.field.end') },
-                { key: 'strategy', label: t('data.field.strategy') },
-              ]}
-            />
-          )}
-        </QueryState>
+      {/* 下半部（進階）：資料運維 —— 匯入 / 股票池建置 / bundle 清單 */}
+      <section className="border-t border-border pt-6">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold">{t('data.ops.heading')}</h2>
+          <p className="text-sm text-text-secondary">{t('data.ops.subheading')}</p>
+        </div>
+
+        <IngestCard />
+        <UniverseBuildCard />
+
+        {/* bundle manifest — 真實掃描 data/parquet* 的 manifest（無資料 → typed-empty） */}
+        <div className="mb-3">
+          <div className="mb-1 text-xs text-text-muted">{t('data.bundles.heading')}</div>
+          <QueryState q={bundles} pendingLabel={t('data.bundles.pending')} emptyLabel={t('data.bundles.empty')}>
+            {(rows: BundleRow[]) => (
+              <SimpleTable
+                rows={rows}
+                cols={[
+                  { key: 'id', label: t('data.bundles.col.id') },
+                  { key: 'kind', label: t('data.bundles.col.kind') },
+                  { key: 'stock_count', label: t('data.bundles.col.stockCount') },
+                  { key: 'coverage_start', label: t('data.field.start') },
+                  { key: 'coverage_end', label: t('data.field.end') },
+                  { key: 'strategy', label: t('data.field.strategy') },
+                ]}
+              />
+            )}
+          </QueryState>
+        </div>
       </section>
     </div>
   )

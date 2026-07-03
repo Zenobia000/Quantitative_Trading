@@ -1,7 +1,41 @@
 {
   "data": {
     "title": "Data Management",
-    "subtitle": "Data ingestion · Universe build · Data bundles",
+    "subtitle": "Data dictionary · Ingestion · Universe build",
+    "catalog": {
+      "heading": "Data Dictionary",
+      "subheading": "Search data available for strategies; copy a key to author with it",
+      "search": "Search by key, name, or description…",
+      "resource": "data dictionary",
+      "pending": "Data dictionary (awaiting backend catalog)",
+      "empty": "Catalog is empty",
+      "noMatch": "No datasets match “{{q}}”",
+      "noMatchHint": "Try another keyword or switch category",
+      "copyKey": "Copy key",
+      "usedByLabel": "Strategies using this",
+      "since": "since {{year}}",
+      "category": {
+        "all": "All",
+        "price_volume": "Price/Volume",
+        "institutional": "Institutional",
+        "financials": "Financials",
+        "monthly_revenue": "Monthly Revenue",
+        "margin_short": "Margin/Short"
+      },
+      "freq": {
+        "daily": "Daily",
+        "monthly": "Monthly",
+        "quarterly": "Quarterly"
+      },
+      "local": {
+        "cached": "Local",
+        "notCached": "Not downloaded"
+      }
+    },
+    "ops": {
+      "heading": "Data Operations",
+      "subheading": "Ingest data · Build universe · Inspect bundles (advanced)"
+    },
     "field": {
       "start": "Start",
       "end": "End",

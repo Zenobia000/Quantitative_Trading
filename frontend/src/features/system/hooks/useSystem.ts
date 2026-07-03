@@ -23,8 +23,18 @@ export interface AlertChannels {
 /** GET /system/bundles row — 形狀由 OpenAPI 生成（禁手寫，doc 25）。 */
 export type BundleRow = components['schemas']['BundleRow']
 
+/** GET /system/datasets card — 策略作者的資料字典列（形狀由 OpenAPI 生成，禁手寫）。 */
+export type DatasetCard = components['schemas']['DatasetCard']
+
 /** GET /system/bundles — 真實 manifest 掃描（無 manifest → typed-empty，非假造）。 */
 export const useBundles = () => useEndpoint<BundleRow[]>('/system/bundles', 300)
+
+/**
+ * GET /system/datasets — FinLab 目錄「全量」拉一次（catalog 約 30 列、ttl 300s）。
+ * 分類 / 搜尋一律在前端做（authoring UX 要即時、無 flicker），且搜尋需比對
+ * key + name_zh + **description**（後端 `?q` 只比對 key/name，涵蓋不足），故不帶 query。
+ */
+export const useDatasets = () => useEndpoint<DatasetCard[]>('/system/datasets', 300)
 export const useAlertRules = () => useEndpoint<AlertRuleRow[]>('/system/alerts/rules', 300)
 export const useAlertChannels = () => useEndpoint<AlertChannels>('/system/alerts/channels', 300)
 export const useRiskSpec = () => useEndpoint<{ rules?: unknown[] }>('/system/risk/spec', 300)
