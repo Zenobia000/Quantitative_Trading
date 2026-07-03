@@ -107,7 +107,12 @@
       "placeholder": "說明為何 override / 封存…",
       "required": "此操作需填寫理由才能送出",
       "cancel": "取消",
-      "submit": "送出"
+      "submit": "送出",
+      "submitting": "送出中…",
+      "submitError": "操作失敗：{{detail}}"
+    },
+    "error": {
+      "actionFailed": "{{strategy}} —— 操作失敗：{{detail}}"
     },
     "empty": {
       "headline": "候選池還是空的",
