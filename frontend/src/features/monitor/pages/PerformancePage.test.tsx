@@ -44,6 +44,6 @@ describe('PerformancePage', () => {
   it('pending telemetry → PendingNote (no fabricated data)', async () => {
     mockByPath({}) // all pending
     renderPage()
-    await waitFor(() => expect(screen.getAllByText(/待 paper telemetry/).length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText(/待紙上交易遙測/).length).toBeGreaterThan(0))
   })
 })

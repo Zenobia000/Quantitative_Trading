@@ -23,8 +23,9 @@ describe('SweepPage', () => {
         </MemoryRouter>
       </QueryClientProvider>,
     )
-    await waitFor(() => expect(screen.getByText('6')).toBeInTheDocument())
-    expect(screen.getByText('3')).toBeInTheDocument()
+    // n_configs / est_minutes are now interpolated into one localized estimate string
+    await waitFor(() => expect(screen.getByText(/6 組參數/)).toBeInTheDocument())
+    expect(screen.getByText(/約 3 分鐘/)).toBeInTheDocument()
     expect(screen.getAllByText('待後端').length).toBeGreaterThan(0) // heatmap/job pending
   })
 })

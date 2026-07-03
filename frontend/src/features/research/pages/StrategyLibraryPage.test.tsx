@@ -33,7 +33,8 @@ describe('StrategyLibraryPage', () => {
       { strategy_id: 'v3', version: 'v3', best_kpi: { sharpe: 0.9 }, validation_status: 'is_fail', stage: 'draft', runs_count: 2 },
     ])
     renderPage()
-    await waitFor(() => expect(screen.getByText('is_fail')).toBeInTheDocument())
+    // validation_status is now localized via EnumBadge (is_fail → 'IS 未通過')
+    await waitFor(() => expect(screen.getByText('IS 未通過')).toBeInTheDocument())
     expect(screen.getAllByText('v3').length).toBeGreaterThan(0)
     expect(screen.getByText('2 runs')).toBeInTheDocument()
   })

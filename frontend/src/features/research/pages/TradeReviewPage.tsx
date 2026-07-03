@@ -7,6 +7,7 @@
  */
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useRunEquity, useRunTrades } from '../hooks/useRunSeries'
 import { useRunCandles } from '../hooks/useRunCandles'
 import { CandlestickChart } from '../components/CandlestickChart'
@@ -21,6 +22,7 @@ function pct(x: number): string {
 }
 
 export function TradeReviewPage() {
+  const { t } = useTranslation('research')
   const { id } = useParams<{ id: string }>()
   const runId = id ?? ''
   const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>(undefined)
@@ -46,18 +48,19 @@ export function TradeReviewPage() {
   return (
     <div>
       <PageHeader
-        title="逐筆覆盤"
+        title={t('trades.title')}
         route={`/research/runs/${runId}/trades`}
-        subtitle="個股 K 線 + 進出場 marker · 逐筆交易 · 權益曲線摘要（GET /runs/{id}/candles · /trades · /equity）"
+        subtitle={t('trades.subtitle')}
+        back={{ label: t('trades.back'), to: `/research/runs/${runId}` }}
       />
 
       {/* candlestick — 個股 K 線 + entry ▲ / exit ▼ marker */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex flex-wrap items-center gap-3">
-          <h2 className="text-[18px] font-semibold">個股 K 線</h2>
+          <h2 className="text-[18px] font-semibold">{t('trades.candles.title')}</h2>
           {symbols.length >= 2 && (
             <label className="flex items-center gap-1.5 text-xs text-text-muted">
-              標的
+              {t('trades.candles.symbolLabel')}
               <select
                 className="rounded-md border border-border bg-code px-2 py-1 font-mono text-text focus:outline-none focus:ring-2 focus:ring-white/80"
                 value={activeSymbol ?? ''}
@@ -73,19 +76,17 @@ export function TradeReviewPage() {
           )}
           {markers.length > 0 && (
             <span className="flex items-center gap-3 text-xs text-text-muted">
-              <span className="text-gain">▲ 進場</span>
-              <span className="text-loss">▼ 出場</span>
+              <span className="text-gain">▲ {t('trades.candles.entry')}</span>
+              <span className="text-loss">▼ {t('trades.candles.exit')}</span>
             </span>
           )}
         </div>
         {candlesQ.isLoading ? (
           <SkeletonRows rows={6} cols={1} />
         ) : candlesQ.isError ? (
-          <p className="text-sm text-loss">K 線載入失敗，請重試。</p>
+          <p className="text-sm text-loss">{t('trades.candles.loadError')}</p>
         ) : candlesPending ? (
-          <p className="text-sm text-text-muted">
-            此個股尚無 K 線資料（parquet 快取未涵蓋該標的或此 run 無交易個股）。
-          </p>
+          <p className="text-sm text-text-muted">{t('trades.candles.empty')}</p>
         ) : (
           <CandlestickChart candles={candles} markers={markers} />
         )}
@@ -93,23 +94,23 @@ export function TradeReviewPage() {
 
       {/* equity summary */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <h2 className="mb-2 text-[18px] font-semibold">權益摘要</h2>
+        <h2 className="mb-2 text-[18px] font-semibold">{t('trades.equity.title')}</h2>
         {equityQ.isLoading ? (
           <SkeletonRows rows={1} cols={3} />
         ) : equity.length === 0 ? (
-          <p className="text-sm text-text-muted">此 run 尚無持久化權益序列（舊 run 或無交易窗）。</p>
+          <p className="text-sm text-text-muted">{t('trades.equity.empty')}</p>
         ) : (
           <div className="flex flex-wrap gap-6 text-sm">
             <div>
-              <div className="text-xs text-text-muted">期末權益（起始 1.0）</div>
+              <div className="text-xs text-text-muted">{t('trades.equity.final')}</div>
               <div className="font-mono tabular text-text">{finalEquity?.toFixed(4)}</div>
             </div>
             <div>
-              <div className="text-xs text-text-muted">最大回撤</div>
+              <div className="text-xs text-text-muted">{t('trades.equity.maxdd')}</div>
               <div className="font-mono tabular text-loss">{maxDrawdown !== null ? pct(maxDrawdown) : '—'}</div>
             </div>
             <div>
-              <div className="text-xs text-text-muted">bar 數</div>
+              <div className="text-xs text-text-muted">{t('trades.equity.bars')}</div>
               <div className="font-mono tabular text-text">{equity.length}</div>
             </div>
           </div>
@@ -119,36 +120,36 @@ export function TradeReviewPage() {
       {/* trades table */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">逐筆交易</h2>
+          <h2 className="text-[18px] font-semibold">{t('trades.trades.title')}</h2>
           {trades.length > 0 && (
             <span className="text-xs text-text-muted">
-              {trades.length} 筆 · 勝率 {pct(wins / trades.length)}
+              {t('trades.trades.summary', { n: trades.length, winRate: pct(wins / trades.length) })}
             </span>
           )}
         </div>
         {tradesQ.isLoading ? (
           <SkeletonRows rows={5} cols={4} />
         ) : trades.length === 0 ? (
-          <p className="text-sm text-text-muted">此 run 尚無逐筆交易紀錄。</p>
+          <p className="text-sm text-text-muted">{t('trades.trades.empty')}</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left text-xs text-text-muted">
                 <th className="py-1.5 pr-3 font-medium">#</th>
-                <th className="py-1.5 pr-3 font-medium">報酬</th>
-                <th className="py-1.5 pr-3 font-medium">持有 (bar)</th>
-                <th className="py-1.5 pr-3 font-medium">進場 structure</th>
+                <th className="py-1.5 pr-3 font-medium">{t('trades.trades.ret')}</th>
+                <th className="py-1.5 pr-3 font-medium">{t('trades.trades.hold')}</th>
+                <th className="py-1.5 pr-3 font-medium">{t('trades.trades.entryStructure')}</th>
               </tr>
             </thead>
             <tbody>
-              {trades.map((t, i) => (
+              {trades.map((tr, i) => (
                 <tr key={i} className="border-b border-border/40">
                   <td className="py-1.5 pr-3 font-mono tabular text-text-muted">{i + 1}</td>
                   <td className="py-1.5 pr-3">
-                    <StatusBadge tone={t.ret > 0 ? 'gain' : 'loss'}>{pct(t.ret)}</StatusBadge>
+                    <StatusBadge tone={tr.ret > 0 ? 'gain' : 'loss'}>{pct(tr.ret)}</StatusBadge>
                   </td>
-                  <td className="py-1.5 pr-3 font-mono tabular text-text">{t.hold}</td>
-                  <td className="py-1.5 pr-3 font-mono tabular text-text-secondary">{t.entry_structure}</td>
+                  <td className="py-1.5 pr-3 font-mono tabular text-text">{tr.hold}</td>
+                  <td className="py-1.5 pr-3 font-mono tabular text-text-secondary">{tr.entry_structure}</td>
                 </tr>
               ))}
             </tbody>
@@ -158,7 +159,7 @@ export function TradeReviewPage() {
 
       {/* still needs-work endpoint */}
       <div className="flex flex-col gap-2">
-        <PendingNote label="因子歸因（/runs/{id}/attribution 待後端）" />
+        <PendingNote label={t('trades.pending.attribution')} />
       </div>
     </div>
   )

@@ -5,8 +5,8 @@
 import type { ReactElement } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
-import { Placeholder } from '@/components/Placeholder'
 import { WiredPage } from '@/components/WiredPage'
+import { NotFoundPage } from '@/components/NotFoundPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
@@ -101,7 +101,7 @@ export const router = createBrowserRouter([
           />
         ),
       })),
-      { path: '*', element: <Placeholder title="找不到頁面" route="404" spec="—" /> },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ])

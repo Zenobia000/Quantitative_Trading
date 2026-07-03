@@ -3,6 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- FOUC 防護：首繪前套用主題 class。'ui-theme' 字面必須與 src/app/theme.tsx 的 THEME_KEY 一致。 -->
+    <script>
+      (function () {
+        try {
+          var m = localStorage.getItem('ui-theme') || 'dark'
+          var sys = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          var r = m === 'system' ? sys : m
+          var e = document.documentElement
+          e.classList.remove('dark', 'light')
+          e.classList.add(r)
+          e.style.colorScheme = r
+        } catch (_) {
+          /* no-JS / private mode → 保留 <html class="dark"> 預設 */
+        }
+      })()
+    </script>
     <title>backtest_platform · 四層共振</title>
   </head>
   <body>

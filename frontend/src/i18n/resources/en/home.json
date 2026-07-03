@@ -1,0 +1,23 @@
+{
+  "title": "Home · Control Tower",
+  "subtitle": "Cross-zone overview — research loop / fleet health / system status",
+  "hero": {
+    "headline": "Start a backtest iteration",
+    "flow": "Hypothesis → Backtest → Compare → Gate → Promote",
+    "cta": "New Backtest"
+  },
+  "researchStatus": "Research Status",
+  "kpi": {
+    "totalRuns": "Total Runs",
+    "latestGate": "Latest Gate",
+    "trials": "Trials",
+    "dsr": "Deflated Sharpe (DSR)"
+  },
+  "recentActivity": "Recent Activity",
+  "noRecent": "No recent activity",
+  "welcome": "Welcome — start with your first strategy",
+  "pending": {
+    "fleet": "Strategy Fleet (paper/live health · today's performance · degradation alerts)",
+    "systemHealth": "System Health (data freshness · alert count · FinLab quota)"
+  }
+}

@@ -5,6 +5,7 @@
  * jsdom 無 canvas → 測試 mock 'lightweight-charts'，不在測試渲染真圖（見 GOAL / testing 規範）。
  */
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   CandlestickSeries,
   ColorType,
@@ -13,6 +14,7 @@ import {
 } from 'lightweight-charts'
 import type { RunCandle, RunMarker } from '../api/candles'
 import { toCandlestickData, toSeriesMarkers } from '../lib/candleTransform'
+import { useTheme } from '@/app/theme'
 
 /** 讀已解析的 CSS token 值（canvas 無法吃 var()）；jsdom 空值時退回品牌 fallback。 */
 function cssVar(name: string, fallback: string): string {
@@ -28,6 +30,9 @@ export interface CandlestickChartProps {
 }
 
 export function CandlestickChart({ candles, markers, height = 420 }: CandlestickChartProps) {
+  const { t } = useTranslation('research')
+  // 主題切換時需重解析 canvas 顏色（canvas 吃的是解析後的值，非 CSS var，不會自動反轉）。
+  const { resolved } = useTheme()
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -73,7 +78,7 @@ export function CandlestickChart({ candles, markers, height = 420 }: Candlestick
       window.removeEventListener('resize', onResize)
       chart.remove()
     }
-  }, [candles, markers, height])
+  }, [candles, markers, height, resolved])
 
   return (
     <div
@@ -81,7 +86,7 @@ export function CandlestickChart({ candles, markers, height = 420 }: Candlestick
       data-testid="candlestick-chart"
       style={{ width: '100%', height }}
       role="img"
-      aria-label="個股 K 線圖，疊進出場 marker"
+      aria-label={t('trades.candles.chartAria')}
     />
   )
 }

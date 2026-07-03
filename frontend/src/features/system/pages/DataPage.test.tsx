@@ -62,18 +62,18 @@ describe('DataPage', () => {
   it('ingest form submits → shows job id + polls status to done', async () => {
     mockApi()
     renderPage()
-    fireEvent.click(screen.getByText('開始 Ingest'))
+    fireEvent.click(screen.getByText('觸發匯入'))
     await waitFor(() => expect(screen.getByText('j1')).toBeInTheDocument())
-    await waitFor(() => expect(screen.getByText('done')).toBeInTheDocument())
-    expect(screen.getByText(/ok 1 \/ failed 1/)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('完成')).toBeInTheDocument())
+    expect(screen.getByText(/成功 1 \/ 失敗 1/)).toBeInTheDocument()
   })
 
   it('universe build form submits → shows job id + polls status to done', async () => {
     mockApi()
     renderPage()
-    fireEvent.click(screen.getByText('開始建置'))
+    fireEvent.click(screen.getByText('觸發建置'))
     await waitFor(() => expect(screen.getByText('u1')).toBeInTheDocument())
-    await waitFor(() => expect(screen.getByText('done')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('完成')).toBeInTheDocument())
     expect(screen.getByText(/423 檔/)).toBeInTheDocument()
   })
 
@@ -88,6 +88,6 @@ describe('DataPage', () => {
   it('empty bundle scan → typed-empty label, no fabricated rows', async () => {
     mockApi([])
     renderPage()
-    await waitFor(() => expect(screen.getByText(/尚無 bundle/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/尚無資料集/)).toBeInTheDocument())
   })
 })

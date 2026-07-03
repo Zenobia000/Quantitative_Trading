@@ -1,0 +1,68 @@
+{
+  "app": {
+    "wordmark": "backtest_platform",
+    "documentTitle": "backtest_platform · 四層共振"
+  },
+  "lang": {
+    "zh": "中",
+    "en": "EN",
+    "switch": "語言"
+  },
+  "theme": {
+    "label": "主題",
+    "light": "淺色",
+    "system": "系統",
+    "dark": "深色"
+  },
+  "action": {
+    "retry": "重試",
+    "copy": "複製",
+    "copied": "已複製",
+    "close": "關閉",
+    "refresh": "重新整理",
+    "refreshing": "更新中…"
+  },
+  "state": {
+    "loading": "載入中…",
+    "noData": "目前無資料",
+    "awaitingBackend": "待後端"
+  },
+  "chrome": {
+    "navOpen": "開啟導覽",
+    "navClose": "關閉導覽",
+    "navLabel": "導覽"
+  },
+  "cmdk": {
+    "trigger": "⌘K 搜尋 / 跳轉",
+    "placeholder": "搜尋頁面 / 跳轉…",
+    "empty": "無相符項目",
+    "dialog": "命令面板",
+    "results": "頁面跳轉結果"
+  },
+  "pending": {
+    "note": "（端點尚未接線，先不顯示數字）"
+  },
+  "placeholder": {
+    "notBuilt": "尚未建置",
+    "ref": "建頁參照",
+    "notFound": "找不到頁面"
+  },
+  "wired": {
+    "subtitle": "端點已接線；資料待後端產出",
+    "wired": "已接線",
+    "pending": "待後端",
+    "mainPending": "主端點 {{endpoint}}",
+    "empty": "{{endpoint}}：目前無資料"
+  },
+  "emptyState": {
+    "headline": "尚無策略，從第一次回測開始",
+    "subtitle": "貼上一行 CLI 或點下方按鈕，開始你的第一個策略迭代",
+    "cta": "建立第一個策略",
+    "copied": "已複製",
+    "runExample": "從空白表單開始",
+    "copyCli": "複製 CLI 指令",
+    "copiedCli": "已複製 CLI",
+    "docs": "看文件",
+    "clickToCopy": "點擊複製"
+  }
+}

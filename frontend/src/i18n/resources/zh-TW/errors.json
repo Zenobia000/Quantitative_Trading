@@ -1,0 +1,12 @@
+{
+  "code": {
+    "NETWORK": "網路連線失敗，請稍後再試",
+    "INTERNAL": "伺服器回應異常（{{status}}）",
+    "NOT_FOUND": "找不到資源（{{status}}）",
+    "BAD_REQUEST": "請求有誤（{{status}}）",
+    "UNAUTHORIZED": "未授權（{{status}}）",
+    "default": "請求失敗（{{status}}）"
+  },
+  "load": { "failed": "{{resource}} 載入失敗：{{detail}}" },
+  "unknown": "未知錯誤"
+}

@@ -4,6 +4,7 @@
  * 真圖渲染留給 Playwright e2e（不在此假造 canvas）。
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { ReactElement } from 'react'
 import { cleanup, render } from '@testing-library/react'
 
 // vi.mock is hoisted above imports, so the fakes must be created via vi.hoisted
@@ -34,6 +35,12 @@ vi.mock('lightweight-charts', () => ({
 const { setData, addSeries, remove, createChart, createSeriesMarkers } = h
 
 import { CandlestickChart } from './CandlestickChart'
+import { ThemeProvider } from '@/app/theme'
+
+// CandlestickChart 透過 useTheme 在主題切換時重繪；測試需 ThemeProvider context。
+function renderChart(el: ReactElement) {
+  return render(<ThemeProvider>{el}</ThemeProvider>)
+}
 
 afterEach(() => {
   cleanup()
@@ -45,7 +52,7 @@ const MARKERS = [{ time: '2020-01-01', kind: 'entry' as const, price: 10 }]
 
 describe('CandlestickChart', () => {
   it('creates a chart, sets candle data, and overlays markers', () => {
-    render(<CandlestickChart candles={CANDLES} markers={MARKERS} />)
+    renderChart(<CandlestickChart candles={CANDLES} markers={MARKERS} />)
     expect(createChart).toHaveBeenCalledOnce()
     expect(addSeries).toHaveBeenCalledOnce()
     expect(setData).toHaveBeenCalledWith([
@@ -57,7 +64,7 @@ describe('CandlestickChart', () => {
   })
 
   it('removes the chart on unmount', () => {
-    const { unmount } = render(<CandlestickChart candles={CANDLES} markers={MARKERS} />)
+    const { unmount } = renderChart(<CandlestickChart candles={CANDLES} markers={MARKERS} />)
     unmount()
     expect(remove).toHaveBeenCalledOnce()
   })

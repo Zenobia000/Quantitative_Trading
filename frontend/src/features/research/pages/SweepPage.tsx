@@ -6,11 +6,13 @@
  */
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { getEstimate } from '../api/estimate'
 import { useSubmitSweep, useSweepStatus } from '../hooks/useSweep'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
-import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
+import { useErrorText } from '@/i18n/useErrorText'
 
 const field = 'w-full rounded-md border border-border bg-input px-3 py-1.5 text-sm font-mono'
 const label = 'mb-1 block text-xs text-text-secondary'
@@ -26,6 +28,8 @@ function toArrayGrid(grid: Record<string, string>): Record<string, string[]> {
 }
 
 export function SweepPage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
   const [grid, setGrid] = useState<Record<string, string>>({
     box_period: '40,60,80',
     entry_confirm_days: '1,2',
@@ -49,13 +53,13 @@ export function SweepPage() {
 
   return (
     <div>
-      <PageHeader title="Sweep 參數掃描" route="/research/sweep" subtitle="range/step 向量化掃描 · 找穩健高原非單點尖峰" />
+      <PageHeader title={t('sweep.title')} route="/research/sweep" subtitle={t('sweep.subtitle')} />
 
       {/* sweep_config */}
       <section className="mb-3 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2">
         {Object.entries(grid).map(([k, v]) => (
           <div key={k}>
-            <label className={label}>{k}（逗號列，每值一格）</label>
+            <label className={label}>{t('sweep.axisLabel', { axis: k })}</label>
             <input className={field} value={v} onChange={(ev) => setAxis(k, ev.target.value)} />
           </div>
         ))}
@@ -64,24 +68,21 @@ export function SweepPage() {
       {/* estimate_guard — 真接 /runs/estimate */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         {est.isLoading ? (
-          <span className="text-sm text-text-muted">估算中…</span>
+          <span className="text-sm text-text-muted">{t('sweep.estimating')}</span>
         ) : est.isError ? (
-          <span className="text-sm text-error">估算失敗：{(est.error as Error)?.message}</span>
+          <span className="text-sm text-error">{t('sweep.estimateError', { detail: errText(est.error) })}</span>
         ) : e ? (
           <div className="flex flex-wrap items-center gap-4">
-            <span className="font-mono text-lg tabular">
-              will run <span className="text-text">{e.n_configs}</span> configs · est{' '}
-              <span className="text-text">{e.est_minutes}</span> min
+            <span className="font-mono text-lg tabular text-text">
+              {t('sweep.estimate', { configs: e.n_configs, minutes: e.est_minutes })}
             </span>
-            {e.n_configs > 200 && (
-              <span className="text-sm text-warning">⚠ config 數過大，建議收窄 range</span>
-            )}
+            {e.n_configs > 200 && <span className="text-sm text-warning">{t('sweep.warnTooMany')}</span>}
             <button
               onClick={onSubmit}
               disabled={submit.isPending}
               className="ml-auto rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-50"
             >
-              {submit.isPending ? '提交中…' : '提交掃描'}
+              {submit.isPending ? t('sweep.submitting') : t('sweep.submit')}
             </button>
           </div>
         ) : null}
@@ -91,16 +92,14 @@ export function SweepPage() {
       {(jobId || submit.isError) && (
         <section className="mb-3 rounded-lg border border-border bg-surface p-4 text-sm">
           {submit.isError ? (
-            <span className="text-error">提交失敗：{(submit.error as Error)?.message}</span>
+            <span className="text-error">{t('sweep.submitError', { detail: errText(submit.error) })}</span>
           ) : (
             <div className="flex flex-wrap items-center gap-3">
-              <StatusBadge tone={jobData?.status === 'done' ? 'gain' : jobData?.status === 'failed' ? 'error' : 'warning'}>
-                {jobData?.status ?? 'queued'}
-              </StatusBadge>
+              <EnumBadge family="job" value={jobData?.status ?? 'queued'} />
               <span className="font-mono text-xs text-text-muted tabular">job {jobId}</span>
               {jobData?.status === 'done' && jobData.result && (
-                <span className="font-mono tabular">
-                  展開 <span className="text-text">{jobData.result.n_configs}</span> configs
+                <span className="font-mono tabular text-text">
+                  {t('sweep.expanded', { n: jobData.result.n_configs })}
                 </span>
               )}
               {jobData?.error && <span className="text-error">{jobData.error}</span>}
@@ -111,8 +110,8 @@ export function SweepPage() {
 
       {/* 結果視覺化（needs per-config 回測，parquet）→ pending */}
       <div className="flex flex-col gap-2">
-        <PendingNote label="Optimization heatmap 穩定區（每 config 回測結果，需 parquet）" />
-        <PendingNote label="Cell drilldown（點 cell → run 摘要）" />
+        <PendingNote label={t('sweep.pending.heatmap')} />
+        <PendingNote label={t('sweep.pending.drilldown')} />
       </div>
     </div>
   )

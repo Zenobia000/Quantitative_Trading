@@ -7,16 +7,19 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { createRun, type RunCreateRequest } from '../api/createRun'
 import { useStrategyRegistry } from '../hooks/useStrategyRegistry'
-import { ApiError } from '@/services/http'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
+import { useErrorText } from '@/i18n/useErrorText'
 
 const field = 'w-full rounded-md border border-border bg-input px-3 py-1.5 text-sm'
 const label = 'mb-1 block text-xs text-text-secondary'
 
 export function NewRunPage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
   const navigate = useNavigate()
   const registry = useStrategyRegistry()
   const strategies = Array.isArray(registry.data?.data) ? registry.data.data : []
@@ -29,6 +32,8 @@ export function NewRunPage() {
   const [isEnd, setIsEnd] = useState('2024-12-31')
   const [engine, setEngine] = useState<'sim' | 'zipline'>('sim')
   const [paramsError, setParamsError] = useState<string | null>(null)
+  // 進階（raw JSON params）預設收合 —— guided 欄位先行，params 為 opt-in 逃生艙（PD-01）。
+  const [advOpen, setAdvOpen] = useState(false)
 
   const mut = useMutation({
     mutationFn: (body: RunCreateRequest) => createRun(body),
@@ -48,12 +53,14 @@ export function NewRunPage() {
       try {
         const parsed = JSON.parse(raw)
         if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
-          setParamsError('params 需為 JSON 物件（如 {"box_period": 60}）')
+          setParamsError(t('newRun.params.errorObject'))
+          setAdvOpen(true)
           return
         }
         params = parsed as Record<string, unknown>
       } catch {
-        setParamsError('params JSON 格式錯誤')
+        setParamsError(t('newRun.params.errorParse'))
+        setAdvOpen(true)
         return
       }
     }
@@ -69,29 +76,27 @@ export function NewRunPage() {
     })
   }
 
-  const err = mut.error instanceof ApiError ? mut.error : null
-
   return (
     <form onSubmit={submit}>
-      <PageHeader title="New Run 設定" route="/research/runs/new" subtitle="預先註冊假設 → 選策略 → 參數化 → 成本與期間" />
+      <PageHeader title={t('newRun.title')} route="/research/runs/new" subtitle={t('newRun.subtitle')} />
 
       {/* hypothesis（預先註冊） */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <label className={label}>Hypothesis · 單一論點（必填，提交後鎖定）</label>
+        <label className={label}>{t('newRun.hypothesis.label')}</label>
         <textarea
           required
           value={hypothesis}
           onChange={(e) => setHypothesis(e.target.value)}
           rows={2}
           className={field}
-          placeholder="例：N-of-4 進場放寬至 3-of-4 能在 IS 達 Sharpe ≥ 1.0 且不過擬合"
+          placeholder={t('newRun.hypothesis.placeholder')}
         />
       </section>
 
       {/* parameters（strategy + params + stocks） */}
       <section className="mb-3 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2">
         <div>
-          <label className={label}>Strategy（已註冊策略名 · GET /strategies）</label>
+          <label className={label}>{t('newRun.strategy.label')}</label>
           <input
             required
             list="strategy-options"
@@ -109,28 +114,36 @@ export function NewRunPage() {
           </datalist>
         </div>
         <div>
-          <label className={label}>Stocks（逗號分隔，至少 1）</label>
+          <label className={label}>{t('newRun.stocks.label')}</label>
           <input required value={stocks} onChange={(e) => setStocks(e.target.value)} className={`${field} font-mono`} />
         </div>
-        <div className="sm:col-span-2">
-          <label className={label}>Params（策略參數 JSON dict，選填；提交時驗證）</label>
-          <textarea
-            value={paramsText}
-            onChange={(e) => setParamsText(e.target.value)}
-            rows={2}
-            className={`${field} font-mono`}
-            placeholder='{"box_period": 60, "entry_confirm_days": 2}'
-          />
-          {paramsError && <p className="mt-1 text-xs text-error">{paramsError}</p>}
-        </div>
+        <details
+          open={advOpen}
+          onToggle={(e) => setAdvOpen((e.currentTarget as HTMLDetailsElement).open)}
+          className="rounded-md border border-border/60 sm:col-span-2"
+        >
+          <summary className="cursor-pointer select-none px-3 py-2 text-xs text-text-secondary marker:text-text-muted">
+            {t('newRun.params.summary')}
+          </summary>
+          <div className="px-3 pb-3">
+            <textarea
+              value={paramsText}
+              onChange={(e) => setParamsText(e.target.value)}
+              rows={2}
+              className={`${field} font-mono`}
+              placeholder='{"box_period": 60, "entry_confirm_days": 2}'
+            />
+            {paramsError && <p className="mt-1 text-xs text-error">{paramsError}</p>}
+          </div>
+        </details>
       </section>
       <div className="mb-3">
-        <PendingNote label="config_schema 驅動的參數表單 / range-step / universe filter（待後端擴充）" />
+        <PendingNote label={t('newRun.pending.paramForm')} />
       </div>
 
       {/* cost_engine */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <label className={label}>Engine</label>
+        <label className={label}>{t('newRun.engine.label')}</label>
         <div className="flex gap-2">
           {(['sim', 'zipline'] as const).map((e) => (
             <button
@@ -146,35 +159,31 @@ export function NewRunPage() {
           ))}
         </div>
         <div className="mt-3">
-          <PendingNote label="成本攤平（手續費/滑點/漲跌停/T+2）（待後端擴充）" />
+          <PendingNote label={t('newRun.pending.cost')} />
         </div>
       </section>
 
       {/* period（IS 區間；OOS 鎖死待後端 sealed vault） */}
       <section className="mb-3 grid gap-3 rounded-lg border border-border bg-surface p-4 sm:grid-cols-2">
         <div>
-          <label className={label}>IS Start</label>
+          <label className={label}>{t('newRun.period.isStart')}</label>
           <input required type="date" value={isStart} onChange={(e) => setIsStart(e.target.value)} className={`${field} font-mono`} />
         </div>
         <div>
-          <label className={label}>IS End</label>
+          <label className={label}>{t('newRun.period.isEnd')}</label>
           <input required type="date" value={isEnd} onChange={(e) => setIsEnd(e.target.value)} className={`${field} font-mono`} />
         </div>
       </section>
 
       {/* submit_bar */}
       <div className="sticky bottom-0 flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
-        {err && (
-          <span className="text-sm text-error">
-            {err.code}：{err.message}
-          </span>
-        )}
+        {mut.isError && <span className="text-sm text-error">{errText(mut.error)}</span>}
         <button
           type="submit"
           disabled={mut.isPending}
           className="ml-auto rounded-pill bg-text px-5 py-2 text-sm font-medium text-base hover:opacity-90 disabled:opacity-50"
         >
-          {mut.isPending ? '提交中…' : '提交回測'}
+          {mut.isPending ? t('newRun.submit.submitting') : t('newRun.submit.label')}
         </button>
       </div>
     </form>

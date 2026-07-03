@@ -7,15 +7,27 @@
  */
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { usePromoteAudit, usePromoteState, useAdvancePromote } from '../hooks/usePromote'
 import { useStrategies } from '../hooks/useStrategies'
 import { PageHeader } from '@/components/PageHeader'
 import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
+import { useEnumLabel } from '@/i18n/useEnumLabel'
+import { useErrorText } from '@/i18n/useErrorText'
 
 const STAGES = ['draft', 'paper', 'live'] as const
 
+/** 本地化階段名（stepper 標籤用純文字，不套 badge）。 */
+function StageName({ value }: { value?: string | null }) {
+  const { label } = useEnumLabel('stage', value)
+  return <>{label}</>
+}
+
 export function PromotePage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
   const { strategyId } = useParams<{ strategyId: string }>()
   const sid = strategyId ?? ''
   const state = usePromoteState(sid)
@@ -28,6 +40,7 @@ export function PromotePage() {
   const gates = state.data?.data?.gates ?? STAGES.map((s, i) => ({ stage: s, reached: i === 0 }))
   const curIdx = STAGES.indexOf(stage as (typeof STAGES)[number])
   const nextStage = curIdx >= 0 && curIdx < STAGES.length - 1 ? STAGES[curIdx + 1] : null
+  const nextStageLabel = useEnumLabel('stage', nextStage).label
 
   // gate PASS 前置：策略須有 IS PASS 的 run（roster validation_status==='is_pass'）方可晉升。
   const rosterRows = roster.data?.data
@@ -38,16 +51,17 @@ export function PromotePage() {
   return (
     <div>
       <PageHeader
-        title="Promotion stepper"
+        title={t('promote.title')}
         route={`/research/promote/${sid}`}
-        subtitle="不可逆晉升狀態機（draft→paper→live）· 每步進 immutable audit"
+        subtitle={t('promote.subtitle')}
+        back={{ label: t('promote.back'), to: '/research/strategies' }}
       />
 
       {/* stepper */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-3 flex items-center gap-2">
           <h2 className="text-[18px] font-semibold">{sid || '—'}</h2>
-          <StatusBadge tone={stage === 'live' ? 'gain' : 'muted'}>{stage}</StatusBadge>
+          <EnumBadge family="stage" value={stage} />
         </div>
         {state.isLoading ? (
           <SkeletonRows rows={3} cols={2} />
@@ -64,7 +78,7 @@ export function PromotePage() {
                   }
                 >
                   <StatusBadge tone={g.reached ? 'gain' : 'muted'}>{g.reached ? '✓' : i + 1}</StatusBadge>
-                  {g.stage}
+                  <StageName value={g.stage} />
                 </span>
                 {i < gates.length - 1 && <span className="text-text-muted">→</span>}
               </li>
@@ -75,47 +89,43 @@ export function PromotePage() {
 
       {/* advance control */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <h2 className="mb-2 text-[18px] font-semibold">晉升</h2>
+        <h2 className="mb-2 text-[18px] font-semibold">{t('promote.advance.title')}</h2>
         {nextStage ? (
           <div className="flex flex-col gap-2 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="晉升理由（記入 audit）"
+                placeholder={t('promote.advance.notePlaceholder')}
                 className="min-w-[240px] flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5"
               />
               <button
                 onClick={() => advance.mutate({ to_stage: nextStage, note }, { onSuccess: () => setNote('') })}
                 disabled={!canAdvance}
-                title={!gatePassed ? '需 gate PASS 證據方可晉升' : undefined}
+                title={!gatePassed ? t('promote.advance.disabledHint') : undefined}
                 className="rounded-md border border-border px-3 py-1.5 hover:text-text disabled:opacity-50"
               >
-                {advance.isPending ? '晉升中…' : `晉升至 ${nextStage} →`}
+                {advance.isPending ? t('promote.advance.advancing') : t('promote.advance.button', { stage: nextStageLabel })}
               </button>
-              {advance.isError && <span className="text-error">{(advance.error as Error)?.message}</span>}
+              {advance.isError && <span className="text-error">{errText(advance.error)}</span>}
             </div>
-            {!gatePassed && (
-              <p className="text-xs text-warning">
-                此策略尚無 IS gate PASS 的 run，暫不可晉升（前端防線；晉升前須先通過驗證閘）。
-              </p>
-            )}
+            {!gatePassed && <p className="text-xs text-warning">{t('promote.advance.gateWarning')}</p>}
           </div>
         ) : (
-          <p className="text-sm text-text-muted">已達最終階段（live），無可晉升。</p>
+          <p className="text-sm text-text-muted">{t('promote.advance.finalStage')}</p>
         )}
       </section>
 
       {/* immutable audit */}
       <section className="rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">晉升軌跡</h2>
-          <span className="text-xs text-text-muted">（immutable audit · append-only）</span>
+          <h2 className="text-[18px] font-semibold">{t('promote.audit.title')}</h2>
+          <span className="text-xs text-text-muted">{t('promote.audit.source')}</span>
         </div>
         {audit.isLoading ? (
           <SkeletonRows rows={2} cols={3} />
         ) : (audit.data?.data ?? []).length === 0 ? (
-          <p className="text-sm text-text-muted">尚無晉升紀錄。</p>
+          <p className="text-sm text-text-muted">{t('promote.audit.empty')}</p>
         ) : (
           <ul className="flex flex-col gap-1.5">
             {(audit.data?.data ?? []).map((ev, i) => (
@@ -123,7 +133,7 @@ export function PromotePage() {
                 key={i}
                 className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm"
               >
-                <StatusBadge tone="muted">{ev.stage}</StatusBadge>
+                <EnumBadge family="stage" value={ev.stage} />
                 <span className="text-text-secondary">{ev.note || '—'}</span>
                 <span className="ml-auto font-mono text-xs text-text-muted tabular">
                   {ev.actor} · {ev.at}

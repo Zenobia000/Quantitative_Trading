@@ -73,7 +73,8 @@ describe('WatchPage', () => {
     expect(screen.getByText('22/~60')).toBeInTheDocument()
     expect(screen.getByText('排程正常')).toBeInTheDocument()
     expect(screen.getByText(/最後成功 session 2026-07-03/)).toBeInTheDocument()
-    expect(screen.getByText('OK')).toBeInTheDocument()
+    // session 'OK' 經 EnumBadge/session family 本地化為「成功」
+    expect(screen.getByText('成功')).toBeInTheDocument()
   })
 
   it('stale timer → warning + copyable systemd command', async () => {

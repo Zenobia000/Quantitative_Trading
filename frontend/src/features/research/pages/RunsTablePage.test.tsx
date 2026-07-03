@@ -36,7 +36,8 @@ describe('RunsTablePage', () => {
     renderPage()
     await waitFor(() => expect(screen.getByText('run_abc')).toBeInTheDocument())
     expect(screen.getByText('1.23')).toBeInTheDocument()
-    expect(screen.getByText('PASS')).toBeInTheDocument()
+    // gate_status is now localized via EnumBadge (PASS → '通過')
+    expect(screen.getByText('通過')).toBeInTheDocument()
     // guardrail 端點未接線 → pending（不假造數字）
     expect(screen.getByText('待後端')).toBeInTheDocument()
   })
@@ -44,7 +45,7 @@ describe('RunsTablePage', () => {
   it('zero run → FirstRunEmptyState', async () => {
     mockRuns([])
     renderPage()
-    await waitFor(() => expect(screen.getByText('尚無策略，從第一次回測開始')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('尚無 run，從第一次回測開始')).toBeInTheDocument())
   })
 
   it('append-only ledger 重複 run_id → 表格去重為一 run 一列（F5）', async () => {

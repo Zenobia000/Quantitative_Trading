@@ -1,0 +1,165 @@
+{
+  "queryState": {
+    "resource": "Data"
+  },
+  "fleet": {
+    "title": "Strategy Fleet",
+    "subtitle": "Multi-strategy allocation & health (ADR-022 fleet)",
+    "summary": {
+      "heading": "Portfolio Summary",
+      "resource": "Portfolio summary",
+      "pending": "Portfolio summary (awaiting paper telemetry)",
+      "empty": "No portfolio data yet",
+      "strategies": "Active Strategies",
+      "totalEquity": "Total Equity",
+      "totalPositions": "Total Holdings"
+    },
+    "board": {
+      "heading": "Fleet (latest per strategy)",
+      "resource": "Strategy fleet",
+      "pending": "Fleet (awaiting multi-strategy live-run telemetry)",
+      "empty": "No active strategies yet",
+      "col": {
+        "strategy": "Strategy",
+        "equity": "Equity",
+        "positions": "Holdings",
+        "heat": "Heat",
+        "updated": "Updated"
+      }
+    },
+    "deferred": "Correlation matrix / fleet actions (correlation endpoint pending producer; actions require live control)"
+  },
+  "board": {
+    "title": "Operations Board",
+    "subtitle": "Research run lifecycle + verdict gate (runs table, 10s poll)",
+    "resource": "Operations board",
+    "pending": "Operations board (awaiting TimescaleDB runs table — run once with run-is / run-batch to light up)",
+    "empty": "No run records yet",
+    "kpi": {
+      "total": "Total runs",
+      "running": "Running",
+      "done": "Completed",
+      "failed": "Failed"
+    },
+    "recent": "Latest runs (newest first)",
+    "col": {
+      "run": "Run",
+      "strategy": "Strategy",
+      "stocks": "Symbols",
+      "window": "Window",
+      "status": "Status",
+      "gate": "Verdict",
+      "sharpe": "Sharpe",
+      "created": "Created"
+    }
+  },
+  "watch": {
+    "title": "Paper-Watch Deck",
+    "subtitle": "Zero-capital 3-month watch window (ADR-033) · scheduling lives in systemd; this view is for visibility & control",
+    "resource": "Watch deck",
+    "pending": "Watch deck (awaiting registry)",
+    "empty": "No watch berths yet (no PAPER_WATCH strategy enrolled)",
+    "observedDays": "Observed days",
+    "expiry": "Expires {{date}}",
+    "daysRemaining": "{{days}} days left",
+    "overdue": "{{days}} days overdue",
+    "recentSessions": "Recent sessions",
+    "noSessions": "No session records yet",
+    "processing": "Processing…",
+    "resume": "Resume watch ▶",
+    "pause": "Pause watch ⏸",
+    "pausedNote": "Paused · after-close skips this berth daily (no alerts)",
+    "terminalHint": "Terminated berths cannot be paused/resumed",
+    "timer": {
+      "okDetail": "Last successful session {{date}}",
+      "neverDetail": "This berth has no after-close session record yet",
+      "staleDetail": "Last successful session {{date}}, but the previous trading day {{day}} should have produced a marker",
+      "neverHint": "If already enrolled, enable the scheduler on the deploy host:",
+      "staleHint": "Confirm the systemd timer is enabled on the deploy host:",
+      "docsHint": "See the after-close.timer install section in <0>{{path}}</0>."
+    }
+  },
+  "performance": {
+    "title": "Performance",
+    "subtitle": "Paper/live telemetry (lights up as the daemon feeds data)",
+    "kpiHeading": "KPIs",
+    "kpiResource": "Performance KPIs",
+    "kpiPending": "Performance KPIs (awaiting paper telemetry)",
+    "kpiEmpty": "No KPIs yet",
+    "equityHeading": "Equity curve (recent)",
+    "equityResource": "Equity series",
+    "equityPending": "Equity series (awaiting paper telemetry)",
+    "equityEmpty": "No equity points yet",
+    "kpi": {
+      "currentEquity": "Equity",
+      "totalReturn": "Total Return",
+      "cagr": "CAGR",
+      "sharpe": "Sharpe",
+      "maxDrawdown": "MaxDD",
+      "calmar": "Calmar"
+    },
+    "col": {
+      "time": "Time",
+      "equity": "Equity",
+      "drawdown": "DD"
+    },
+    "deferred": "Benchmark comparison / monthly-return heatmap (benchmark · monthly endpoints pending producer)"
+  },
+  "positions": {
+    "title": "Positions",
+    "subtitle": "Open positions (paper/live)",
+    "resource": "Positions snapshot",
+    "pending": "Positions snapshot (awaiting paper telemetry)",
+    "empty": "No open positions",
+    "col": {
+      "stock": "Symbol",
+      "shares": "Shares",
+      "entryPrice": "Entry Price",
+      "stopLoss": "Stop-Loss",
+      "openedAt": "Opened At",
+      "strategy": "Strategy"
+    },
+    "deferred": "Sector allocation / concentration / live quotes (industry-allocation · concentration · prices endpoints pending producer)"
+  },
+  "signals": {
+    "title": "Signal Log",
+    "subtitle": "Signal → Fill (paper/live)",
+    "signalsHeading": "Recent Signals",
+    "signalsResource": "Signals",
+    "signalsPending": "Signals (awaiting paper telemetry)",
+    "signalsEmpty": "No signals yet",
+    "fillsHeading": "Recent Fills",
+    "fillsResource": "Fills",
+    "fillsPending": "Fills (awaiting paper telemetry)",
+    "fillsEmpty": "No fills yet",
+    "signalCol": {
+      "time": "Time",
+      "stock": "Symbol",
+      "action": "Action",
+      "priority": "Priority",
+      "submitted": "Submitted",
+      "strategy": "Strategy"
+    },
+    "fillCol": {
+      "time": "Time",
+      "stock": "Symbol",
+      "side": "Side",
+      "shares": "Shares",
+      "price": "Price",
+      "status": "Status"
+    },
+    "deferred": "Signal funnel / timeline (signals/funnel · signals/timeline endpoints pending producer)"
+  },
+  "risk": {
+    "title": "Risk Metrics",
+    "subtitle": "Ex-ante risk + circuit-breaker status",
+    "resource": "Risk metrics",
+    "pending": "Risk metrics (awaiting risk telemetry producer)",
+    "empty": "No risk data yet",
+    "portfolioHeat": "Portfolio Heat",
+    "maxDrawdown": "MaxDD",
+    "grossExposure": "Gross Exposure",
+    "openPositions": "Open Positions",
+    "deferred": "MaxDD trend / circuit-breaker events (risk/mdd-trend · risk/events endpoints pending producer)"
+  }
+}

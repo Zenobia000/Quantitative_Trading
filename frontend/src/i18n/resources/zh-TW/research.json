@@ -1,0 +1,202 @@
+{
+  "strategies": {
+    "title": "策略庫",
+    "subtitle": "策略與版本沿革總覽",
+    "resource": "策略",
+    "newStrategy": "新建策略",
+    "count": "{{n}} 個策略",
+    "card": {
+      "runsCount": "{{n}} runs",
+      "viewRuns": "查看 runs →",
+      "promote": "晉升 →",
+      "promoteLocked": "晉升（待驗證守門通過）",
+      "promoteLockedHint": "需先通過 IS 守門方可晉升"
+    },
+    "pending": {
+      "versionTimeline": "版本沿革 + 假設 diff（GET /research/strategies/{id}/versions，待後端）"
+    }
+  },
+  "newRun": {
+    "title": "新建回測",
+    "subtitle": "預先註冊假設 → 選策略 → 參數化 → 成本與期間",
+    "hypothesis": {
+      "label": "假設 · 單一論點（必填，提交後鎖定）",
+      "placeholder": "例：N-of-4 進場放寬至 3-of-4 能在 IS 達 Sharpe ≥ 1.0 且不過擬合"
+    },
+    "strategy": { "label": "策略（已註冊策略名 · GET /strategies）" },
+    "stocks": { "label": "標的（逗號分隔，至少 1）" },
+    "params": {
+      "summary": "進階 · 參數（策略參數 JSON，選填；預設空物件）",
+      "errorObject": "參數需為 JSON 物件（例：{\"box_period\": 60}）",
+      "errorParse": "參數 JSON 格式錯誤"
+    },
+    "engine": { "label": "引擎" },
+    "period": { "isStart": "IS 起始", "isEnd": "IS 結束" },
+    "submit": { "label": "提交回測", "submitting": "提交中…" },
+    "pending": {
+      "paramForm": "由 config_schema 驅動的參數表單 / range-step / 標的篩選（待後端擴充）",
+      "cost": "成本攤平（手續費 / 滑點 / 漲跌停 / T+2）（待後端擴充）"
+    }
+  },
+  "runs": {
+    "title": "回測紀錄",
+    "subtitle": "研究主表 · 單一真相來源",
+    "resource": "回測紀錄",
+    "newRun": "新建回測",
+    "savedView": "已存視圖：M0 候選 · 近 90 天",
+    "filter": { "strategyLabel": "策略：", "clearAria": "清除策略篩選" },
+    "showingCount": "顯示 {{n}} 筆",
+    "pending": { "guardrail": "防過擬合護欄（累計試驗數 / DSR / power gauge）" },
+    "empty": {
+      "headline": "尚無 run，從第一次回測開始",
+      "headlineFiltered": "策略 {{strategyId}} 尚無 run",
+      "subtitle": "提交一次回測，這裡會列出所有 run —— 研究主表，單一真相來源"
+    },
+    "table": {
+      "strategy": "策略",
+      "gate": "守門",
+      "hypothesis": "假設",
+      "selectAria": "選取 {{runId}}"
+    },
+    "selected": {
+      "count": "已選 {{n}} 個 run",
+      "compare": "比較（需 ≥2）",
+      "clear": "清除"
+    }
+  },
+  "report": {
+    "title": "回測報告",
+    "resource": "回測報告",
+    "notFound": "找不到此 run",
+    "back": "回測紀錄",
+    "gateLabel": "IS 守門判定",
+    "kpi": {
+      "cagr": "CAGR",
+      "sharpe": "Sharpe",
+      "maxdd": "MaxDD",
+      "win": "勝率",
+      "trades": "交易數",
+      "slippageSharpe": "滑點 Sharpe"
+    },
+    "reproduce": "重現參數",
+    "pending": { "tearSheet": "Tear sheet（equity / drawdown / rolling Sharpe / heatmap / 分布）" },
+    "action": {
+      "iterate": "再迭代",
+      "compare": "比較多筆回測",
+      "tradeReview": "逐筆覆盤",
+      "validate": "送驗證守門",
+      "validateHint": "需 IS 守門通過方可送驗證"
+    }
+  },
+  "trades": {
+    "title": "逐筆覆盤",
+    "subtitle": "個股 K 線 + 進出場標記 · 逐筆交易 · 權益曲線摘要（GET /runs/{id}/candles · /trades · /equity）",
+    "back": "回測報告",
+    "candles": {
+      "title": "個股 K 線",
+      "symbolLabel": "標的",
+      "entry": "進場",
+      "exit": "出場",
+      "loadError": "K 線載入失敗，請重試。",
+      "empty": "此個股尚無 K 線資料（parquet 快取未涵蓋該標的或此 run 無交易個股）。",
+      "chartAria": "個股 K 線圖，含進出場標記"
+    },
+    "equity": {
+      "title": "權益摘要",
+      "empty": "此 run 尚無持久化權益序列（舊 run 或無交易窗）。",
+      "final": "期末權益（起始 1.0）",
+      "maxdd": "最大回撤",
+      "bars": "bar 數"
+    },
+    "trades": {
+      "title": "逐筆交易",
+      "summary": "{{n}} 筆 · 勝率 {{winRate}}",
+      "empty": "此 run 尚無逐筆交易紀錄。",
+      "ret": "報酬",
+      "hold": "持有 (bar)",
+      "entryStructure": "進場結構"
+    },
+    "pending": { "attribution": "因子歸因（/runs/{id}/attribution 待後端）" }
+  },
+  "compare": {
+    "title": "比較",
+    "resource": "比較",
+    "needTwo": "請至少選 2 個 run 比較。",
+    "backToRuns": "回到回測紀錄",
+    "subtitle": "多筆回測並排 · 找穩健高原而非單點尖峰",
+    "editSweep": "調整掃描參數",
+    "pending": {
+      "guardrail": "防 cherry-pick 護欄（試驗數 / DSR / power gauge）",
+      "equityOverlay": "Equity 疊圖（多筆回測，單色明度階）",
+      "parcoords": "Parallel coordinates（參數 × 指標 brushing，找穩健高原）"
+    },
+    "table": { "run": "回測", "gate": "守門" },
+    "empty": "無可比較的 run（ledger 為空或 run_ids 未命中）。"
+  },
+  "sweep": {
+    "title": "參數掃描",
+    "subtitle": "range/step 向量化掃描 · 找穩健高原而非單點尖峰",
+    "axisLabel": "{{axis}}（逗號分隔，每值一格）",
+    "estimating": "估算中…",
+    "estimateError": "估算失敗：{{detail}}",
+    "estimate": "預估掃描 {{configs}} 組參數 · 約 {{minutes}} 分鐘",
+    "warnTooMany": "⚠ config 數過大，建議收窄 range",
+    "submit": "提交掃描",
+    "submitting": "提交中…",
+    "submitError": "提交失敗：{{detail}}",
+    "expanded": "展開 {{n}} 組 config",
+    "pending": {
+      "heatmap": "Optimization heatmap 穩定區（每 config 回測結果，需 parquet）",
+      "drilldown": "Cell drilldown（點 cell → run 摘要）"
+    }
+  },
+  "validate": {
+    "title": "驗證守門",
+    "subtitle": "不可逆守門狀態機 · 證明 edge 真實而非過擬合",
+    "candidateLabel": "候選 run_id",
+    "candidatePlaceholder": "run_…（送驗證的候選 run）",
+    "load": "載入",
+    "pickFromRuns": "或從回測紀錄挑選候選 →",
+    "pending": {
+      "gateHeader": "守門狀態機（Draft→IS→WFA→OOS）+ 試驗數 / power gauge（請先輸入 candidate run_id）",
+      "scatter": "WFA IS-vs-OOS scatter（per-fold 績效，需 parquet）",
+      "vault": "封存樣本外庫（IS 通過後解封）",
+      "redline": "PBO / DSR 紅線（隨試驗次數 deflate）",
+      "signoff": "事前承諾對照 + 風控簽核（不可逆核准）"
+    },
+    "gateChecklist": {
+      "title": "IS 守門硬門檻",
+      "source": "（GET /gate/spec · 規格）"
+    },
+    "gateSpec": { "resource": "守門規格" },
+    "history": {
+      "title": "驗證狀態轉移",
+      "source": "（gate-state · 持久化紀錄）",
+      "empty": "此 run 尚無驗證轉移紀錄。"
+    },
+    "wfa": {
+      "title": "WFA folds",
+      "window": "（IS 252d + OOS 63d rolling 63d）",
+      "empty": "此 run 無 fold（缺 IS 區間或視窗過短）。"
+    }
+  },
+  "promote": {
+    "title": "晉升流程",
+    "subtitle": "不可逆晉升狀態機（草稿→紙上交易→實盤）· 每步寫入不可變審計",
+    "back": "策略庫",
+    "advance": {
+      "title": "晉升",
+      "notePlaceholder": "晉升理由（記入審計）",
+      "button": "晉升至 {{stage}} →",
+      "advancing": "晉升中…",
+      "disabledHint": "需守門通過證據方可晉升",
+      "gateWarning": "此策略尚無 IS gate PASS 的 run，暫不可晉升（前端防線；晉升前須先通過驗證守門）。",
+      "finalStage": "已達最終階段（實盤），無可晉升。"
+    },
+    "audit": {
+      "title": "晉升軌跡",
+      "source": "（不可變審計 · 僅追加）",
+      "empty": "尚無晉升紀錄。"
+    }
+  }
+}

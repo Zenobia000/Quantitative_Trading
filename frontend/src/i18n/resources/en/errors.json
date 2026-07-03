@@ -1,0 +1,12 @@
+{
+  "code": {
+    "NETWORK": "Network request failed. Please try again.",
+    "INTERNAL": "Server error ({{status}})",
+    "NOT_FOUND": "Resource not found ({{status}})",
+    "BAD_REQUEST": "Bad request ({{status}})",
+    "UNAUTHORIZED": "Unauthorized ({{status}})",
+    "default": "Request failed ({{status}})"
+  },
+  "load": { "failed": "Failed to load {{resource}}: {{detail}}" },
+  "unknown": "Unknown error"
+}

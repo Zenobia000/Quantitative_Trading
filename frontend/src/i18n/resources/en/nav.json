@@ -1,0 +1,25 @@
+{
+  "home": "Home",
+  "zone": {
+    "research": "RESEARCH",
+    "monitor": "MONITOR",
+    "system": "SYSTEM"
+  },
+  "item": {
+    "strategies": "Strategy Library",
+    "runsNew": "New Backtest",
+    "runs": "Runs",
+    "compare": "Compare",
+    "sweep": "Parameter Sweep",
+    "validate": "Validation Gate",
+    "fleet": "Strategy Fleet",
+    "board": "Operations Board",
+    "watch": "Watch Deck",
+    "performance": "Performance",
+    "positions": "Positions",
+    "signals": "Signal Log",
+    "risk": "Risk Metrics",
+    "data": "Data Management",
+    "alerts": "Alerts"
+  }
+}

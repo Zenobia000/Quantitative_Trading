@@ -1,0 +1,202 @@
+{
+  "strategies": {
+    "title": "Strategy Library",
+    "subtitle": "Strategies and version-history overview",
+    "resource": "strategies",
+    "newStrategy": "New Strategy",
+    "count": "{{n}} strategies",
+    "card": {
+      "runsCount": "{{n}} runs",
+      "viewRuns": "View runs →",
+      "promote": "Promote →",
+      "promoteLocked": "Promote (awaiting Validation Gate pass)",
+      "promoteLockedHint": "Requires passing the IS gate before promotion"
+    },
+    "pending": {
+      "versionTimeline": "Version history + hypothesis diff (GET /research/strategies/{id}/versions, pending backend)"
+    }
+  },
+  "newRun": {
+    "title": "New Backtest",
+    "subtitle": "Pre-register hypothesis → select strategy → parameterize → costs & period",
+    "hypothesis": {
+      "label": "Hypothesis · single claim (required, locked after submit)",
+      "placeholder": "e.g. Relaxing entry from N-of-4 to 3-of-4 reaches Sharpe ≥ 1.0 in-sample without overfitting"
+    },
+    "strategy": { "label": "Strategy (registered strategy name · GET /strategies)" },
+    "stocks": { "label": "Stocks (comma-separated, at least 1)" },
+    "params": {
+      "summary": "Advanced · Params (strategy params JSON, optional; defaults to empty object)",
+      "errorObject": "Params must be a JSON object (e.g. {\"box_period\": 60})",
+      "errorParse": "Invalid params JSON"
+    },
+    "engine": { "label": "Engine" },
+    "period": { "isStart": "IS Start", "isEnd": "IS End" },
+    "submit": { "label": "Submit Backtest", "submitting": "Submitting…" },
+    "pending": {
+      "paramForm": "config_schema-driven param form / range-step / universe filter (pending backend)",
+      "cost": "Cost modeling (fees / slippage / price limits / T+2) (pending backend)"
+    }
+  },
+  "runs": {
+    "title": "Runs",
+    "subtitle": "Research master table · single source of truth",
+    "resource": "runs",
+    "newRun": "New Backtest",
+    "savedView": "Saved view: M0 candidates · last 90 days",
+    "filter": { "strategyLabel": "Strategy: ", "clearAria": "Clear strategy filter" },
+    "showingCount": "Showing {{n}}",
+    "pending": { "guardrail": "Overfitting guardrail (cumulative trials / DSR / power gauge)" },
+    "empty": {
+      "headline": "No runs yet — start with your first backtest",
+      "headlineFiltered": "No runs yet for strategy {{strategyId}}",
+      "subtitle": "Submit a backtest and every run appears here — the research master table, single source of truth"
+    },
+    "table": {
+      "strategy": "Strategy",
+      "gate": "Gate",
+      "hypothesis": "Hypothesis",
+      "selectAria": "Select {{runId}}"
+    },
+    "selected": {
+      "count": "{{n}} runs selected",
+      "compare": "Compare (need ≥2)",
+      "clear": "Clear"
+    }
+  },
+  "report": {
+    "title": "Run Report",
+    "resource": "run report",
+    "notFound": "Run not found",
+    "back": "Runs",
+    "gateLabel": "IS gate verdict",
+    "kpi": {
+      "cagr": "CAGR",
+      "sharpe": "Sharpe",
+      "maxdd": "MaxDD",
+      "win": "Win Rate",
+      "trades": "Trades",
+      "slippageSharpe": "Slippage Sharpe"
+    },
+    "reproduce": "Reproduce",
+    "pending": { "tearSheet": "Tear sheet (equity / drawdown / rolling Sharpe / heatmap / distribution)" },
+    "action": {
+      "iterate": "Iterate again",
+      "compare": "Compare Runs",
+      "tradeReview": "Trade Review",
+      "validate": "Send to Validation Gate",
+      "validateHint": "Requires IS gate pass before validation"
+    }
+  },
+  "trades": {
+    "title": "Trade Review",
+    "subtitle": "Per-symbol candlesticks + entry/exit markers · trades · equity-curve summary (GET /runs/{id}/candles · /trades · /equity)",
+    "back": "Run Report",
+    "candles": {
+      "title": "Candlesticks",
+      "symbolLabel": "Symbol",
+      "entry": "Entry",
+      "exit": "Exit",
+      "loadError": "Failed to load candlesticks. Please retry.",
+      "empty": "No candlestick data for this symbol (parquet cache doesn't cover it, or this run traded no symbols).",
+      "chartAria": "Per-symbol candlestick chart with entry/exit markers"
+    },
+    "equity": {
+      "title": "Equity Summary",
+      "empty": "This run has no persisted equity series yet (legacy run or no trading window).",
+      "final": "Final Equity (start 1.0)",
+      "maxdd": "Max Drawdown",
+      "bars": "Bars"
+    },
+    "trades": {
+      "title": "Trades",
+      "summary": "{{n}} trades · win rate {{winRate}}",
+      "empty": "This run has no trade records yet.",
+      "ret": "Return",
+      "hold": "Hold (bars)",
+      "entryStructure": "Entry Structure"
+    },
+    "pending": { "attribution": "Factor attribution (/runs/{id}/attribution pending backend)" }
+  },
+  "compare": {
+    "title": "Compare Runs",
+    "resource": "comparison",
+    "needTwo": "Select at least 2 runs to compare.",
+    "backToRuns": "Back to Runs",
+    "subtitle": "Runs side by side · seek a robust plateau, not a lone peak",
+    "editSweep": "Edit sweep params",
+    "pending": {
+      "guardrail": "Anti-cherry-pick guardrail (trials / DSR / power gauge)",
+      "equityOverlay": "Equity overlay (multiple runs, single-hue lightness steps)",
+      "parcoords": "Parallel coordinates (params × metrics brushing, find the robust plateau)"
+    },
+    "table": { "run": "Run", "gate": "Gate" },
+    "empty": "No comparable runs (ledger empty or run_ids not found)."
+  },
+  "sweep": {
+    "title": "Parameter Sweep",
+    "subtitle": "Vectorized range/step sweep · seek a robust plateau, not a lone peak",
+    "axisLabel": "{{axis}} (comma-separated, one value per cell)",
+    "estimating": "Estimating…",
+    "estimateError": "Estimate failed: {{detail}}",
+    "estimate": "Will run {{configs}} configs · est. {{minutes}} min",
+    "warnTooMany": "⚠ Too many configs — narrow the range",
+    "submit": "Submit Sweep",
+    "submitting": "Submitting…",
+    "submitError": "Submission failed: {{detail}}",
+    "expanded": "Expanded {{n}} configs",
+    "pending": {
+      "heatmap": "Optimization heatmap stable region (per-config backtest results, needs parquet)",
+      "drilldown": "Cell drilldown (click cell → run summary)"
+    }
+  },
+  "validate": {
+    "title": "Validation Gate",
+    "subtitle": "Irreversible gate state machine · prove the edge is real, not overfit",
+    "candidateLabel": "Candidate run_id",
+    "candidatePlaceholder": "run_… (candidate run for validation)",
+    "load": "Load",
+    "pickFromRuns": "Or pick a candidate from Runs →",
+    "pending": {
+      "gateHeader": "Gate state machine (Draft→IS→WFA→OOS) + trials / power gauge (enter a candidate run_id first)",
+      "scatter": "WFA IS-vs-OOS scatter (per-fold performance, needs parquet)",
+      "vault": "Sealed OOS vault (unsealed after IS pass)",
+      "redline": "PBO / DSR redline (deflates with number of trials)",
+      "signoff": "Pre-commitment check + risk sign-off (irreversible approval)"
+    },
+    "gateChecklist": {
+      "title": "IS gate hard thresholds",
+      "source": "(GET /gate/spec · spec)"
+    },
+    "gateSpec": { "resource": "gate spec" },
+    "history": {
+      "title": "Validation state transitions",
+      "source": "(gate-state · persisted history)",
+      "empty": "This run has no validation transitions yet."
+    },
+    "wfa": {
+      "title": "WFA folds",
+      "window": "(IS 252d + OOS 63d rolling 63d)",
+      "empty": "This run has no folds (missing IS window or window too short)."
+    }
+  },
+  "promote": {
+    "title": "Promotion",
+    "subtitle": "Irreversible promotion state machine (Draft→Paper→Live) · every step written to an immutable audit trail",
+    "back": "Strategy Library",
+    "advance": {
+      "title": "Promote",
+      "notePlaceholder": "Promotion reason (recorded in audit)",
+      "button": "Promote to {{stage}} →",
+      "advancing": "Promoting…",
+      "disabledHint": "Requires gate-pass evidence to promote",
+      "gateWarning": "This strategy has no run passing the IS gate yet — promotion blocked (frontend guard; must pass the Validation Gate first).",
+      "finalStage": "Already at the final stage (Live) — nothing to promote."
+    },
+    "audit": {
+      "title": "Promotion Audit Trail",
+      "source": "(immutable audit · append-only)",
+      "empty": "No promotion records yet."
+    }
+  }
+}

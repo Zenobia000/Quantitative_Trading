@@ -4,12 +4,13 @@
  * （running → done|failed）+ 審判庭 verdict + 核心 metrics，10s 輪詢。
  * in-flight run 的 verdict/metrics 為 null → 顯示 —，絕不捏造。
  */
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
+import { EnumBadge } from '@/components/EnumBadge'
 import { KpiCard, QueryState, SimpleTable } from '../components'
 import type { BoardRow } from '../hooks/useMonitor'
 import { useRunsBoard } from '../hooks/useMonitor'
 
-const fmtDash = (v: unknown) => (v == null || v === '' ? '—' : String(v))
 const fmtSharpe = (m: unknown) => {
   const s = (m as Record<string, number> | null)?.sharpe
   return typeof s === 'number' ? s.toFixed(3) : '—'
@@ -18,19 +19,17 @@ const fmtWindow = (r: BoardRow) =>
   r.is_start && r.is_end ? `${r.is_start} ~ ${r.is_end}` : '—'
 
 export function BoardPage() {
+  const { t } = useTranslation('monitor')
   const board = useRunsBoard()
   return (
     <div>
-      <PageHeader
-        title="運行看板"
-        route="/monitor/board"
-        subtitle="研究 run 生命週期 + 審判庭判決（runs 表，10s 輪詢）"
-      />
+      <PageHeader title={t('board.title')} route="/monitor/board" subtitle={t('board.subtitle')} />
 
       <QueryState
         q={board}
-        pendingLabel="運行看板（待 TimescaleDB runs 表——跑一次 run-is / run-batch 即點亮）"
-        emptyLabel="尚無 run 記錄"
+        resource={t('board.resource')}
+        pendingLabel={t('board.pending')}
+        emptyLabel={t('board.empty')}
       >
         {(rows: BoardRow[]) => {
           const byStatus = (s: string) => rows.filter((r) => r.status === s)
@@ -38,34 +37,32 @@ export function BoardPage() {
             <>
               <section className="mb-3">
                 <div className="grid grid-cols-4 gap-2">
-                  <KpiCard label="總 runs" value={rows.length} />
-                  <KpiCard label="進行中" value={byStatus('running').length} />
-                  <KpiCard label="完成" value={byStatus('done').length} />
-                  <KpiCard label="失敗" value={byStatus('failed').length} />
+                  <KpiCard label={t('board.kpi.total')} value={rows.length} />
+                  <KpiCard label={t('board.kpi.running')} value={byStatus('running').length} />
+                  <KpiCard label={t('board.kpi.done')} value={byStatus('done').length} />
+                  <KpiCard label={t('board.kpi.failed')} value={byStatus('failed').length} />
                 </div>
               </section>
 
               <section className="mb-3">
-                <div className="mb-1 text-xs text-text-muted">
-                  最新 runs（新到舊）
-                </div>
+                <div className="mb-1 text-xs text-text-muted">{t('board.recent')}</div>
                 <SimpleTable
                   rows={rows.map((r) => ({ ...r, window: fmtWindow(r) }))}
                   cols={[
-                    { key: 'run_id', label: 'Run' },
-                    { key: 'strategy', label: '策略' },
+                    { key: 'run_id', label: t('board.col.run') },
+                    { key: 'strategy', label: t('board.col.strategy') },
                     {
                       key: 'stocks',
-                      label: '標的',
+                      label: t('board.col.stocks'),
                       fmt: (v) => (Array.isArray(v) ? v.join(', ') : '—'),
                     },
-                    { key: 'window', label: '窗口' },
-                    { key: 'status', label: '狀態', fmt: fmtDash },
-                    { key: 'gate_status', label: '審判庭', fmt: fmtDash },
-                    { key: 'metrics', label: 'Sharpe', fmt: fmtSharpe },
+                    { key: 'window', label: t('board.col.window') },
+                    { key: 'status', label: t('board.col.status'), fmt: (v) => <EnumBadge family="job" value={v as string} /> },
+                    { key: 'gate_status', label: t('board.col.gate'), fmt: (v) => <EnumBadge family="gate" value={v as string | null} /> },
+                    { key: 'metrics', label: t('board.col.sharpe'), fmt: fmtSharpe },
                     {
                       key: 'created_at',
-                      label: '建立',
+                      label: t('board.col.created'),
                       fmt: (v) => (v ? String(v).replace('T', ' ').slice(0, 19) : '—'),
                     },
                   ]}

@@ -12,7 +12,9 @@ export default {
         surface: 'var(--bg-surface)',
         input: 'var(--bg-input)',
         code: 'var(--bg-code)',
+        'surface-raised': 'var(--bg-raised)',
         border: 'var(--border-default)',
+        scrim: 'var(--scrim)',
         text: {
           DEFAULT: 'var(--text-primary)',
           secondary: 'var(--text-secondary)',

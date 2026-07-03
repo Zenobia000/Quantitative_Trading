@@ -7,28 +7,16 @@
  * RWD：runs_table @<1024 橫向捲動「不轉 card」（研究級密集表）。
  */
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useRuns } from '../hooks/useRuns'
 import type { RunRow } from '../api/runs'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
-import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
 import { FirstRunEmptyState } from '@/components/FirstRunEmptyState'
-
-// gate_status ∈ {PASS, FAIL, INCOMPLETE}（後端 GateStatus enum）
-function gateTone(s?: string | null): 'gain' | 'loss' | 'warning' | 'error' | 'muted' {
-  switch (s) {
-    case 'PASS':
-      return 'gain'
-    case 'FAIL':
-      return 'error'
-    case 'INCOMPLETE':
-      return 'warning'
-    default:
-      return 'muted'
-  }
-}
+import { useErrorText } from '@/i18n/useErrorText'
 
 // 後端 sim.metrics 真實鍵（four_layer）：trades/closed/cagr/sharpe/slippage_sharpe/maxdd/win/…
 const METRIC_COLS = ['sharpe', 'cagr', 'maxdd', 'win', 'trades'] as const
@@ -39,7 +27,13 @@ function fmtMetric(v: unknown): string {
 }
 
 export function RunsTablePage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
   const navigate = useNavigate()
+  const [sp, setSp] = useSearchParams()
+  // Strategy Library cards drill in with ?strategy_id=… — honour it as a client-side
+  // filter over the ledger (the card previously dropped this on the floor).
+  const strategyId = sp.get('strategy_id') ?? ''
   const { data, isLoading, isError, error, refetch, isFetching } = useRuns()
   // The ledger is append-only, so the same run_id can appear multiple times
   // (e.g. a DOE re-run). A runs table is one-row-per-run — dedupe by run_id
@@ -54,8 +48,8 @@ export function RunsTablePage() {
       seen.add(r.run_id)
       out.push(r)
     }
-    return out
-  }, [data])
+    return strategyId ? out.filter((r) => r.strategy === strategyId) : out
+  }, [data, strategyId])
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const metricCols = useMemo(() => {
@@ -73,7 +67,7 @@ export function RunsTablePage() {
 
   return (
     <div>
-      <PageHeader title="Runs Table" route="/research/runs" subtitle="研究主表 · single source of truth" />
+      <PageHeader title={t('runs.title')} route="/research/runs" subtitle={t('runs.subtitle')} />
 
       {/* research_toolbar */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -81,28 +75,41 @@ export function RunsTablePage() {
           onClick={() => navigate('/research/runs/new')}
           className="rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90"
         >
-          New Run
+          {t('runs.newRun')}
         </button>
         <span className="rounded-md border border-border px-2 py-1 text-xs text-text-secondary">
-          Saved view：M0 候選 · 近 90 天
+          {t('runs.savedView')}
         </span>
+        {strategyId && (
+          <span className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-input px-2.5 py-1 text-xs text-text">
+            {t('runs.filter.strategyLabel')}
+            <span className="font-mono tabular">{strategyId}</span>
+            <button
+              onClick={() => setSp({})}
+              aria-label={t('runs.filter.clearAria')}
+              className="text-text-muted hover:text-text"
+            >
+              ✕
+            </button>
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-2">
           <span className="text-xs text-text-muted tabular">
-            {rows.length ? `顯示 ${rows.length} 筆` : ''}
+            {rows.length ? t('runs.showingCount', { n: rows.length }) : ''}
           </span>
           <button
             onClick={() => refetch()}
             className="rounded-md border border-border px-2 py-1 text-xs text-text-secondary hover:text-text"
             disabled={isFetching}
           >
-            {isFetching ? '更新中…' : '重新整理'}
+            {isFetching ? t('common:action.refreshing') : t('common:action.refresh')}
           </button>
         </div>
       </div>
 
       {/* guardrail_bar — trials/DSR/power gauge 端點未接線 */}
       <div className="mb-3">
-        <PendingNote label="防過擬合護欄（累計試驗 / DSR / power gauge）" />
+        <PendingNote label={t('runs.pending.guardrail')} />
       </div>
 
       {/* runs_table — 四態 */}
@@ -113,17 +120,23 @@ export function RunsTablePage() {
           </div>
         ) : isError ? (
           <div className="p-6 text-sm">
-            <p className="text-error">runs 載入失敗：{(error as Error)?.message ?? '未知錯誤'}</p>
+            <p className="text-error">
+              {t('errors:load.failed', { resource: t('runs.resource'), detail: errText(error) })}
+            </p>
             <button
               onClick={() => refetch()}
               className="mt-3 rounded-md border border-border px-3 py-1.5 text-text-secondary hover:text-text"
             >
-              重試
+              {t('common:action.retry')}
             </button>
           </div>
         ) : rows.length === 0 ? (
           <div className="p-8">
-            <FirstRunEmptyState onCta={() => navigate('/research/runs/new')} />
+            <FirstRunEmptyState
+              headline={strategyId ? t('runs.empty.headlineFiltered', { strategyId }) : t('runs.empty.headline')}
+              subtitle={t('runs.empty.subtitle')}
+              onCta={() => navigate('/research/runs/new')}
+            />
           </div>
         ) : (
           // @<1024 橫向捲動保欄位密度（不轉 card）
@@ -133,14 +146,14 @@ export function RunsTablePage() {
                 <tr className="border-b border-border text-left text-xs text-text-muted">
                   <th className="w-8 p-2"></th>
                   <th className="p-2 font-medium">run_id</th>
-                  <th className="p-2 font-medium">策略</th>
-                  <th className="p-2 font-medium">Gate</th>
+                  <th className="p-2 font-medium">{t('runs.table.strategy')}</th>
+                  <th className="p-2 font-medium">{t('runs.table.gate')}</th>
                   {metricCols.map((m) => (
                     <th key={m} className="p-2 text-right font-medium">
                       {m}
                     </th>
                   ))}
-                  <th className="p-2 font-medium">假設</th>
+                  <th className="p-2 font-medium">{t('runs.table.hypothesis')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -159,13 +172,13 @@ export function RunsTablePage() {
                         type="checkbox"
                         checked={selected.has(r.run_id)}
                         onChange={() => toggle(r.run_id)}
-                        aria-label={`選取 ${r.run_id}`}
+                        aria-label={t('runs.table.selectAria', { runId: r.run_id })}
                       />
                     </td>
                     <td className="p-2 font-mono text-xs tabular">{r.run_id}</td>
                     <td className="p-2 text-text-secondary">{r.strategy ?? '—'}</td>
                     <td className="p-2">
-                      <StatusBadge tone={gateTone(r.gate_status)}>{r.gate_status ?? '—'}</StatusBadge>
+                      <EnumBadge family="gate" value={r.gate_status} />
                     </td>
                     {metricCols.map((m) => (
                       <td key={m} className="p-2 text-right font-mono tabular">
@@ -186,7 +199,7 @@ export function RunsTablePage() {
       {/* multi_select_actions */}
       {selected.size > 0 && (
         <div className="sticky bottom-0 mt-3 flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-2 text-sm">
-          <span className="text-text-secondary">已選 {selected.size} 個 run</span>
+          <span className="text-text-secondary">{t('runs.selected.count', { n: selected.size })}</span>
           <button
             disabled={selected.size < 2}
             onClick={() =>
@@ -194,13 +207,13 @@ export function RunsTablePage() {
             }
             className="rounded-md border border-border px-3 py-1 text-text-secondary enabled:hover:text-text disabled:opacity-40"
           >
-            比較（需 ≥2）
+            {t('runs.selected.compare')}
           </button>
           <button
             onClick={() => setSelected(new Set())}
             className="ml-auto text-xs text-text-muted hover:text-text"
           >
-            清除
+            {t('runs.selected.clear')}
           </button>
         </div>
       )}

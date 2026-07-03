@@ -1,0 +1,68 @@
+{
+  "data": {
+    "title": "資料管理",
+    "subtitle": "資料匯入 · 股票池建置 · 資料集清單",
+    "field": {
+      "start": "起",
+      "end": "迄",
+      "strategy": "策略"
+    },
+    "action": {
+      "submitting": "送出中…",
+      "submitFailed": "觸發失敗：{{detail}}"
+    },
+    "job": {
+      "label": "任務",
+      "statusLabel": "狀態"
+    },
+    "ingest": {
+      "heading": "資料匯入",
+      "symbols": "股票（逗號分隔）",
+      "source": "來源",
+      "submit": "觸發匯入",
+      "result": "成功 {{ok}} / 失敗 {{failed}}"
+    },
+    "universe": {
+      "heading": "股票池建置",
+      "submit": "觸發建置",
+      "result": "{{n}} 檔（存續 {{alive}} / 已下市 {{delisted}}）"
+    },
+    "bundles": {
+      "heading": "資料集清單",
+      "pending": "資料集清單（待後端產出）",
+      "empty": "尚無資料集（data/parquet* 未掃描到）",
+      "col": {
+        "id": "資料集",
+        "kind": "類型",
+        "stockCount": "檔數"
+      }
+    }
+  },
+  "alerts": {
+    "title": "告警設定",
+    "subtitle": "內建告警規則與風控規格（設定，非遙測）",
+    "level": {
+      "CRITICAL": "嚴重",
+      "HIGH": "高",
+      "INFO": "資訊"
+    },
+    "rules": {
+      "heading": "告警規則（內建）",
+      "riskCount": "風控規格 {{n}} 條",
+      "pending": "告警規則",
+      "empty": "尚無規則",
+      "col": {
+        "ruleId": "規則",
+        "level": "級別",
+        "title": "說明"
+      }
+    },
+    "channels": {
+      "heading": "通知頻道（bot_token 已遮罩）",
+      "enabled": "已啟用",
+      "disabled": "未啟用",
+      "none": "尚未設定通知頻道。"
+    },
+    "pending": "頻道編輯 / 測試送達 / 規則管理（待後端規則儲存）"
+  }
+}

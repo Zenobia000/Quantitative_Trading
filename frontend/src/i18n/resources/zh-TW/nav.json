@@ -1,0 +1,25 @@
+{
+  "home": "首頁",
+  "zone": {
+    "research": "研究",
+    "monitor": "監控",
+    "system": "系統"
+  },
+  "item": {
+    "strategies": "策略庫",
+    "runsNew": "新建回測",
+    "runs": "回測紀錄",
+    "compare": "比較",
+    "sweep": "參數掃描",
+    "validate": "驗證守門",
+    "fleet": "策略艦隊",
+    "board": "運行看板",
+    "watch": "觀察艙",
+    "performance": "績效總覽",
+    "positions": "部位狀態",
+    "signals": "訊號日誌",
+    "risk": "風控指標",
+    "data": "資料管理",
+    "alerts": "告警設定"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "title": "首頁 · 控制塔",
+  "subtitle": "跨三區總覽 —— 研究迴圈 / 艦隊健康 / 系統狀態",
+  "hero": {
+    "headline": "開始一次回測迭代",
+    "flow": "假設 → 回測 → 比較 → 守門 → 晉升",
+    "cta": "新建回測"
+  },
+  "researchStatus": "研究狀態",
+  "kpi": {
+    "totalRuns": "總回測數",
+    "latestGate": "最新守門",
+    "trials": "試驗數",
+    "dsr": "縮減夏普 (DSR)"
+  },
+  "recentActivity": "最近活動",
+  "noRecent": "尚無近期活動",
+  "welcome": "歡迎 —— 從第一個策略開始",
+  "pending": {
+    "fleet": "策略艦隊（模擬/實盤健康度 · 今日績效 · 退化示警）",
+    "systemHealth": "系統健康（資料新鮮度 · 告警計數 · FinLab 額度）"
+  }
+}

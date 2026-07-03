@@ -6,11 +6,13 @@
  * equity_overlay / parcoords / guardrail 端點未接線 → pending（不假造數字）。
  */
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useCompare } from '../hooks/useCompare'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
-import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
+import { useErrorText } from '@/i18n/useErrorText'
 
 function fmt(v: unknown): string {
   if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
@@ -22,14 +24,9 @@ function fmtDelta(v: number): string {
   return v > 0 ? `+${s}` : s
 }
 
-function gateTone(s?: string | null): 'gain' | 'error' | 'warning' | 'muted' {
-  if (s === 'PASS') return 'gain'
-  if (s === 'FAIL') return 'error'
-  if (s === 'INCOMPLETE') return 'warning'
-  return 'muted'
-}
-
 export function ComparePage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
   const navigate = useNavigate()
   const [sp] = useSearchParams()
   const runIds = (sp.get('run_ids') ?? '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -39,14 +36,14 @@ export function ComparePage() {
   if (runIds.length < 2)
     return (
       <div>
-        <PageHeader title="Compare" route="/research/compare" />
+        <PageHeader title={t('compare.title')} route="/research/compare" />
         <div className="rounded-lg border border-border bg-surface p-6 text-sm text-text-secondary">
-          請至少選 2 個 run 比較。
+          {t('compare.needTwo')}
           <button
             onClick={() => navigate('/research/runs')}
             className="ml-2 rounded-md border border-border px-3 py-1 hover:text-text"
           >
-            回 Runs Table
+            {t('compare.backToRuns')}
           </button>
         </div>
       </div>
@@ -59,7 +56,7 @@ export function ComparePage() {
 
   return (
     <div>
-      <PageHeader title="Compare" route="/research/compare" subtitle="多 run 並排 · 找穩健高原非單點尖峰" />
+      <PageHeader title={t('compare.title')} route="/research/compare" subtitle={t('compare.subtitle')} />
 
       {/* compare_toolbar */}
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
@@ -78,18 +75,18 @@ export function ComparePage() {
           onClick={() => navigate('/research/sweep')}
           className="ml-auto rounded-md border border-border px-2 py-1 text-text-secondary hover:text-text"
         >
-          改掃描參數
+          {t('compare.editSweep')}
         </button>
       </div>
 
       {/* guardrail_bar */}
       <div className="mb-3">
-        <PendingNote label="防 cherry-pick 護欄（試驗數 / DSR / power gauge）" />
+        <PendingNote label={t('compare.pending.guardrail')} />
       </div>
 
       {/* equity_overlay */}
       <div className="mb-3">
-        <PendingNote label="Equity 疊圖（多 run，單色明度階）" />
+        <PendingNote label={t('compare.pending.equityOverlay')} />
       </div>
 
       {/* metric_diff_table — 每列一個 run，欄為 metric_keys（非 baseline 顯示 delta） */}
@@ -100,9 +97,11 @@ export function ComparePage() {
           </div>
         ) : isError ? (
           <div className="p-6 text-sm">
-            <p className="text-error">比較載入失敗：{(error as Error)?.message ?? '未知錯誤'}</p>
+            <p className="text-error">
+              {t('errors:load.failed', { resource: t('compare.resource'), detail: errText(error) })}
+            </p>
             <button onClick={() => refetch()} className="mt-3 rounded-md border border-border px-3 py-1.5 hover:text-text">
-              重試
+              {t('common:action.retry')}
             </button>
           </div>
         ) : comparisons.length > 0 ? (
@@ -110,8 +109,8 @@ export function ComparePage() {
             <table className="w-full min-w-[640px] text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs text-text-muted">
-                  <th className="p-2 font-medium">run</th>
-                  <th className="p-2 font-medium">Gate</th>
+                  <th className="p-2 font-medium">{t('compare.table.run')}</th>
+                  <th className="p-2 font-medium">{t('compare.table.gate')}</th>
                   {metricKeys.map((k) => (
                     <th key={k} className="p-2 text-right font-medium">{k}</th>
                   ))}
@@ -128,7 +127,7 @@ export function ComparePage() {
                         {c.run_id}
                       </td>
                       <td className="p-2">
-                        <StatusBadge tone={gateTone(c.gate_status)}>{c.gate_status ?? '—'}</StatusBadge>
+                        <EnumBadge family="gate" value={c.gate_status} />
                       </td>
                       {metricKeys.map((k) => {
                         const d = delta[k]
@@ -148,12 +147,12 @@ export function ComparePage() {
             </table>
           </div>
         ) : (
-          <div className="p-6 text-sm text-text-muted">無可比較的 run（ledger 為空或 run_ids 未命中）。</div>
+          <div className="p-6 text-sm text-text-muted">{t('compare.empty')}</div>
         )}
       </section>
 
       {/* parallel_coordinates */}
-      <PendingNote label="Parallel coordinates（參數×指標 brushing，找穩健高原）" />
+      <PendingNote label={t('compare.pending.parcoords')} />
     </div>
   )
 }
