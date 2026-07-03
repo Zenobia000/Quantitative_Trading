@@ -140,6 +140,10 @@ uv run python -m backtest_platform.research.cli promote-check --run-id <run_id> 
 | `truth-gate` | ADR-025 兩段式真偽閘（讀 `research_config.TRUTH_GATE`）| `research.workflows.truth_gate.run_truth_gate` |
 | `build-universe` | survivorship-clean FinLab universe 建構（讀 `research_config.UNIVERSE`，ADR-032）；`--dry-run` | `research.workflows.universe.run_build_universe` |
 | `paper-replay` | paper 重放 sim（讀 `research_config.PAPER_REPLAY`）| `research.workflows.paper_replay.run_paper_replay_workflow` |
+| `evaluate` | **高階評估 profile（ADR-039）**：`--strategy --profile`（quick_triage / fixed_hypothesis_oos / grid_search_selection / deployment_strict）；wrap primitives → 五維 scorecard + severity checks → 寫 report pack + 落 evaluation ledger + 建/更候選；`--data-dir/--symbols/--start/--end/--hypothesis/--no-ingest` | `research.evaluation.evaluate` + `candidate_store.ingest_evaluation` |
+| `candidates list` | 列候選池（`--state/--strategy` 過濾） | `research.candidate_store.list_candidates` |
+| `candidates decide` | 追加候選決策（狀態機驗證）：`--action keep\|archive\|rerun\|mark_data_issue\|unarchive` `--label` `--reason`（archive/override 強制 reason）| `candidate_store.record_decision` |
+| `candidates select-live-oos` | 勾選候選進 live-OOS queue：`--reason --override --kind`（非 eligible/blocked 需 override + reason）| `candidate_store.select_live_oos` |
 
 > `run-is`／`validate`／`promote-check` 區別：`run-is` 是**唯讀審判庭**（`evaluate_gate` 逐條綠紅）；`validate` 是**有狀態工作流 gate**（`ValidationGate`，強制 IS→WFA→OOS 不可逆推進 + OOS 封存）；`promote-check` 是**唯讀晉升資格查詢**（不推進狀態，只回報距 APPROVED 還缺哪些階段）。
 

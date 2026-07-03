@@ -595,5 +595,121 @@ def paper_replay_cmd(strategy, dry_run) -> None:
                f"sharpe={result.metrics.get('sharpe', float('nan')):.3f}")
 
 
+# ── Evaluation orchestrator + candidate pool (rebuild Goal 3/4, ADR-039) ─────
+# `evaluate` runs a high-level profile above the ADR-029 primitives and writes a
+# report pack + persists the result; `candidates` manages the folded candidate pool.
+
+
+@cli.command("evaluate")
+@click.option("--strategy", required=True, help="Registered strategy name")
+@click.option("--profile", required=True, help="quick_triage | fixed_hypothesis_oos | grid_search_selection | deployment_strict")
+@click.option("--data-dir", default=None, help="Parquet cache dir for the loader (default data/parquet)")
+@click.option("--symbols", default=None, help="Comma-separated symbols override (default: research_config universe)")
+@click.option("--start", default=None, help="Override IS start (YYYY-MM-DD)")
+@click.option("--end", default=None, help="Override IS end (YYYY-MM-DD)")
+@click.option("--hypothesis", default=None, help="Pre-registered hypothesis for the run_id lineage")
+@click.option("--no-ingest", is_flag=True, default=False, help="Do not create/update a candidate")
+def evaluate_cmd(strategy, profile, data_dir, symbols, start, end, hypothesis, no_ingest) -> None:
+    """Evaluate a strategy under an evaluation profile → report pack + persisted result."""
+    from backtest_platform.research import candidate_store
+    from backtest_platform.research.evaluation import evaluate
+
+    syms = [s.strip() for s in symbols.split(",") if s.strip()] if symbols else None
+    try:
+        result = evaluate(
+            strategy, profile, data_dir=data_dir, symbols=syms,
+            is_start=start, is_end=end, hypothesis=hypothesis,
+        )
+    except ValueError as exc:
+        raise click.ClickException(str(exc)) from None
+
+    v = result["verdict"]
+    click.echo(f"\nevaluation_id={result['evaluation_id']}  run_id={result['run_id']}")
+    click.echo(f"  profile={result['profile']}  verdict={v['label']}  "
+               f"truth={v['truth_verdict']}  live_oos={v['live_oos_recommendation']}")
+    click.echo("  scorecards: " + "  ".join(f"{s['category']}={s['status']}" for s in result["scorecards"]))
+    click.echo("  checks: " + ("  ".join(f"{c['metric']}={c['status']}" for c in result["checks"]) or "(none)"))
+    click.echo(f"  → report pack: {result['report_pack_ref']}")
+    if not no_ingest:
+        cand = candidate_store.ingest_evaluation(result, hypothesis=hypothesis)
+        click.echo(f"  → candidate {cand['candidate_id']} state={cand['state']} "
+                   f"(next: {cand['next_action']})")
+
+
+@cli.group("candidates")
+def candidates_group() -> None:
+    """Candidate pool: list / decide / select-live-oos (rebuild Goal 4)."""
+
+
+@candidates_group.command("list")
+@click.option("--state", default=None, help="Filter by candidate state")
+@click.option("--strategy", default=None, help="Filter by strategy")
+def candidates_list_cmd(state, strategy) -> None:
+    """List candidates (folded from the pool + decision log)."""
+    from backtest_platform.research.candidate_store import list_candidates
+
+    cands = list_candidates(state=state, strategy=strategy)
+    if not cands:
+        click.echo("no candidates")
+        return
+    for c in cands:
+        click.echo(
+            f"{c['candidate_id']:26} {c['strategy']:14} [{c['state']:18}] "
+            f"{c.get('latest_label') or '—':10} reco={c.get('live_oos_recommendation')}"
+        )
+
+
+@candidates_group.command("decide")
+@click.option("--candidate", required=True, help="candidate_id (cand_<strategy>)")
+@click.option("--action", required=True, help="keep | archive | rerun | mark_data_issue | unarchive")
+@click.option("--label", default=None, help="keep target: promising | weak | negative")
+@click.option("--reason", default=None, help="Required for archive (and any override)")
+def candidates_decide_cmd(candidate, action, label, reason) -> None:
+    """Append a candidate decision (state-machine validated)."""
+    from backtest_platform.research.candidate_state import IllegalTransitionError
+    from backtest_platform.research.candidate_store import (
+        CandidateNotFoundError,
+        MissingReasonError,
+        record_decision,
+    )
+
+    try:
+        dec = record_decision(candidate, action, target_label=label, reason=reason)
+    except CandidateNotFoundError as exc:
+        raise click.ClickException(str(exc)) from None
+    except IllegalTransitionError as exc:
+        raise click.ClickException(f"illegal transition: {exc}") from None
+    except MissingReasonError as exc:
+        raise click.ClickException(str(exc)) from None
+    click.echo(f"{dec['decision_id']}  {dec['action']}  {dec['from_state']} → {dec['to_state']}")
+
+
+@candidates_group.command("select-live-oos")
+@click.option("--candidate", required=True, help="candidate_id (cand_<strategy>)")
+@click.option("--reason", default=None, help="Required when recommendation != eligible / on override")
+@click.option("--override", is_flag=True, default=False, help="Override a not-recommended / blocked candidate")
+@click.option("--kind", default="paper_replay", help="paper_watch_berth | paper_replay | after_close")
+def candidates_select_cmd(candidate, reason, override, kind) -> None:
+    """Select a candidate for live OOS (enqueues a queue item + appends the decision)."""
+    from backtest_platform.research.candidate_store import (
+        BlockedSelectionError,
+        CandidateNotFoundError,
+        MissingReasonError,
+        select_live_oos,
+    )
+
+    try:
+        out = select_live_oos(candidate, reason=reason, override=override, observation_kind=kind)
+    except CandidateNotFoundError as exc:
+        raise click.ClickException(str(exc)) from None
+    except BlockedSelectionError as exc:
+        raise click.ClickException(str(exc)) from None
+    except (MissingReasonError, ValueError) as exc:
+        raise click.ClickException(str(exc)) from None
+    dec, item = out["decision"], out["queue_item"]
+    click.echo(f"{dec['decision_id']}  {dec['action']}  {dec['from_state']} → {dec['to_state']}")
+    click.echo(f"  → queued {item['queue_id']} (kind={item['observation']['kind']}, state={item['state']})")
+
+
 if __name__ == "__main__":
     cli()

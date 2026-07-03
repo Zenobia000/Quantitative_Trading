@@ -7,6 +7,7 @@
 > **v1.3 變更（2026-06-16, ADR-027）**：策略契約 + registry（`strategies/protocol.py`）；**每隻策略自包含**（config + 純邏輯 + `runner.py` 同夾）；新增可複製骨架 `strategies/_template/`、橫斷面共用 `strategies/common/panel.py`、four_layer 純 sim 下移 `sim.py`；`research/runners.py` 降為 aggregator；平台對 `get_strategy(name)` dispatch，不再硬綁 four_layer
 > **v1.4 變更（2026-06-17, ADR-029）**：研究流程標準化。**刪除** `backtest_platform/scripts/`（7 支 `inst_flow_*` 一次性腳本）；**新增** `research/workflows/`（通用工作流 `config`/`loader`/`doe`/`go_gates`/`truth_gate`/`paper_replay`，全走 ADR-028 dispatch）；**每隻策略加** `strategies/<name>/research_config.py`（宣告 DOE/GO_GATES/TRUTH_GATE/PAPER_REPLAY）；新增 `api/routers/research_workflows.py`（`POST /research/workflows/{workflow}` + `GET /research/workflows/{strategy}`）。新增策略寫一個 `research_config.py` 即參與所有工作流。
 > **v1.5 變更（2026-07-03, ADR-037）**：**刪除** `engines/` 樹（zipline stub 引擎 + `zipline_adapter/`，~2271 LOC）與 `pipeline.py`（legacy M1 CLI）、`dashboard/` 空殼、`monitoring/influx_writer.py`、`validation/full_report.py` + `resampling.py`、`research/momentum_harness.py`（thin shim）。**下放** `engines/.../parquet_cache.py`、`finmind_bundle.py`（僅 ingest 路徑）至 `data/`——它們是資料層而非引擎層。sim 為唯一引擎。
+> **v1.6 變更（2026-07-03, ADR-039）**：**新增** `research/evaluation/` 套件（profile 編排層，primitives 之上不動 primitives）+ `research/candidate_state.py` / `candidate_store.py` / `live_oos_queue.py`（候選池狀態機 + live-OOS 人為選取層）；新增 `api/routers/research_evaluation.py` + `research_candidates.py`（9 端點：profiles×2 / evaluations(+report) / candidates×4 / live-oos queue）。CLI 加 `evaluate` + `candidates` 子命令。所有評估結果（含失敗/弱/負）寫 append-only JSONL。
 
 ---
 
@@ -83,6 +84,16 @@ src/backtest_platform/
 │   ├── workflows/                # ★ 平台工作流（ADR-029/032）：doe / go_gates / truth_gate / paper_replay / universe
 │   │   ├── config.py             # 各工作流 frozen config（含 TruthGateConfig.parquet_dir / UniverseConfig）
 │   │   └── loader.py             # 依策略名載入 research_config 宣告
+│   ├── evaluation/               # ★ 評估編排層（ADR-039）：profile 之上 primitives 不動
+│   │   ├── profiles.py           # 四內建 profile registry（契約真相源 = evaluation_profile.schema.json examples）
+│   │   ├── orchestrator.py       # evaluate(strategy, profile)：wrap doe/go_gates/truth_gate/single_run → RunBundle
+│   │   ├── result_builder.py     # RunBundle + profile → 契約 EvaluationResult（verdict/checks/lineage/data_gaps）
+│   │   ├── scorecards.py         # 五維 scorecard（per-metric pass/warn/fail/not_available，誠實標 gap）
+│   │   ├── report_pack.py        # summary/metrics/scorecards/report.md + manifest（+ sha256）
+│   │   └── store.py              # evaluations.jsonl（append-only，含失敗者）
+│   ├── candidate_state.py        # ★ 候選狀態機（ADR-039，純函式，全轉移可測）
+│   ├── candidate_store.py        # ★ 候選池 + candidate_decisions.jsonl（override 強制 reason）
+│   ├── live_oos_queue.py         # ★ live-OOS 人為選取 queue（Goal 10 才接 paper replay）
 │   ├── is_harness.py             # run_and_judge（gate 隨策略 dispatch）+ load_merged_parquet
 │   ├── run_config.py             # RunConfig（strategy + params，ADR-028）
 │   ├── runs_store.py / run_series_store.py / run_tags_store.py  # runs ledger（JSONL）
@@ -94,7 +105,7 @@ src/backtest_platform/
 │   ├── finlab_universe.py        # survivorship universe 選擇（select_survivorship_universe / cached_universe_symbols）
 │   ├── momentum_harness.py       # 委派 runner 的相容層
 │   ├── runners.py                # registry 聚合 re-export（相容層）
-│   └── cli.py                    # 研究 CLI（run-is / runs / compare / validate / promote-check / sweep / doe / go-gates / truth-gate / build-universe / paper-replay）
+│   └── cli.py                    # 研究 CLI（run-is / runs / compare / validate / promote-check / sweep / doe / go-gates / truth-gate / build-universe / paper-replay / evaluate / candidates）
 │
 ├── validation/                   # ★ 審判庭（純函式）
 │   ├── two_stage_gate.py         # ADR-025 真偽閘 + 配置閘（TruthGateInput / SizingInput / evaluate_two_stage）

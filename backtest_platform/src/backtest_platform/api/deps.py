@@ -39,6 +39,14 @@ AFTER_CLOSE_MARKER_PATH_ENV = "AFTER_CLOSE_MARKER_PATH"
 #: JSONL and an operator at a non-default ``reports/``.
 VALIDATION_EVENTS_PATH_ENV = "VALIDATION_EVENTS_PATH"
 
+#: Env vars overriding the rebuild Goal 3/4 evaluation + candidate + live-OOS stores.
+#: The research-evaluation / research-candidates routers read them; overridable so
+#: tests point at a tmp ``reports/`` and an operator at a non-default location.
+EVALUATIONS_PATH_ENV = "EVALUATIONS_PATH"
+CANDIDATES_PATH_ENV = "CANDIDATES_PATH"
+CANDIDATE_DECISIONS_PATH_ENV = "CANDIDATE_DECISIONS_PATH"
+LIVE_OOS_QUEUE_PATH_ENV = "LIVE_OOS_QUEUE_PATH"
+
 _TWT = timezone(timedelta(hours=8))  # Taiwan is fixed UTC+8 (no DST)
 
 
@@ -117,6 +125,38 @@ def get_validation_events_path() -> Path:
 
     raw = os.environ.get(VALIDATION_EVENTS_PATH_ENV)
     return Path(raw) if raw else DEFAULT_VALIDATION_PATH
+
+
+def get_evaluations_path() -> Path:
+    """Resolve the evaluation ledger path (``$EVALUATIONS_PATH`` or the default)."""
+    from backtest_platform.research.evaluation.store import DEFAULT_EVALUATIONS_PATH
+
+    raw = os.environ.get(EVALUATIONS_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_EVALUATIONS_PATH
+
+
+def get_candidates_path() -> Path:
+    """Resolve the candidate pool path (``$CANDIDATES_PATH`` or the default)."""
+    from backtest_platform.research.candidate_store import DEFAULT_CANDIDATES_PATH
+
+    raw = os.environ.get(CANDIDATES_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_CANDIDATES_PATH
+
+
+def get_candidate_decisions_path() -> Path:
+    """Resolve the candidate decision log path (``$CANDIDATE_DECISIONS_PATH`` or default)."""
+    from backtest_platform.research.candidate_store import DEFAULT_DECISIONS_PATH
+
+    raw = os.environ.get(CANDIDATE_DECISIONS_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_DECISIONS_PATH
+
+
+def get_live_oos_queue_path() -> Path:
+    """Resolve the live-OOS queue path (``$LIVE_OOS_QUEUE_PATH`` or the default)."""
+    from backtest_platform.research.live_oos_queue import DEFAULT_QUEUE_PATH
+
+    raw = os.environ.get(LIVE_OOS_QUEUE_PATH_ENV)
+    return Path(raw) if raw else DEFAULT_QUEUE_PATH
 
 
 def get_watch_today() -> date:
