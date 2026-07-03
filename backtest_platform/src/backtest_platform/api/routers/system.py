@@ -88,6 +88,24 @@ class BundleQuality(BaseModel):
     n_ingested_failed: int | None = None
 
 
+class DatasetCard(BaseModel):
+    """One ``GET /system/datasets`` card — a strategy author's data-dictionary row.
+
+    Answers the three authoring-first questions: *what is this data* (key / name /
+    category / freq / history / description), *is it local* (``local`` binary), and
+    *which of my strategies use it* (``used_by``). No freshness / coverage — that is
+    a runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."""
+
+    key: str
+    name_zh: str
+    category: str
+    freq: str
+    history_start: str
+    description: str
+    local: str  # "cached" | "not_cached"
+    used_by: list[str]
+
+
 router = APIRouter(prefix="/system", tags=["system"])
 
 _PENDING = "pending"
@@ -200,6 +218,63 @@ def bundle_quality(bundle_id: str, data_root: Path = Depends(get_data_root)) -> 
     if info is None:
         return ok(None, meta={"data_source": "not_found", "id": bundle_id, "ttl": 300})
     return ok(BundleQuality(**asdict(info)), meta={"data_source": "parquet_scan", "ttl": 300})
+
+
+# ---- dataset catalog (sys_data) — authoring-first data dictionary --------
+@router.get("/datasets", response_model=Envelope[list[DatasetCard]])
+def datasets(
+    category: str | None = Query(None, description="filter by category slug (exact)"),
+    q: str | None = Query(None, description="case-insensitive substring on key / name_zh"),
+    data_root: Path = Depends(get_data_root),
+) -> Envelope:
+    """The FinLab dataset catalog as authoring-first cards (:mod:`data.finlab_catalog`).
+
+    Each card layers three request-time facts onto the curated snapshot: local
+    presence (``data.dataset_presence`` — the honest three-table bundle binary),
+    the strategy reverse-index (``data.strategy_data_index``), and the two author
+    filters (``?category`` exact, ``?q`` substring on key/name). Deliberately no
+    manifest read / staleness — the catalog is a data *dictionary*, not a cache
+    monitor."""
+    from backtest_platform.data.dataset_presence import presence_for_category
+    from backtest_platform.data.finlab_catalog import CATALOG_VERSION, load_catalog
+    from backtest_platform.data.strategy_data_index import (
+        build_strategy_data_index,
+        default_strategies_root,
+    )
+
+    specs = load_catalog()
+    if category:
+        specs = tuple(s for s in specs if s.category == category)
+    if q:
+        needle = q.casefold()
+        specs = tuple(
+            s for s in specs
+            if needle in s.key.casefold() or needle in s.name_zh.casefold()
+        )
+
+    index = build_strategy_data_index(default_strategies_root())
+    cards = [
+        DatasetCard(
+            key=s.key,
+            name_zh=s.name_zh,
+            category=s.category,
+            freq=s.freq,
+            history_start=s.history_start,
+            description=s.description,
+            local=presence_for_category(s.category, data_root),
+            used_by=index.get(s.key, []),
+        )
+        for s in specs
+    ]
+    return ok(
+        cards,
+        meta={
+            "catalog_version": CATALOG_VERSION,
+            "data_source": "catalog",
+            "total": len(cards),
+            "ttl": 300,
+        },
+    )
 
 
 @router.post("/ingest", response_model=Envelope, status_code=202)
