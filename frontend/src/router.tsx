@@ -12,7 +12,8 @@ import { RunReportPage } from '@/features/research/pages/RunReportPage'
 import { ComparePage } from '@/features/research/pages/ComparePage'
 import { NewRunPage } from '@/features/research/pages/NewRunPage'
 import { ValidateGatePage } from '@/features/research/pages/ValidateGatePage'
-import { StrategyLibraryPage } from '@/features/research/pages/StrategyLibraryPage'
+import { StrategyHubListPage } from '@/features/research/pages/StrategyHubListPage'
+import { StrategyHubDetailPage } from '@/features/research/pages/StrategyHubDetailPage'
 import { PromotePage } from '@/features/research/pages/PromotePage'
 import { TradeReviewPage } from '@/features/research/pages/TradeReviewPage'
 import { SweepPage } from '@/features/research/pages/SweepPage'
@@ -29,7 +30,8 @@ import { AlertsPage } from '@/features/system/pages/AlertsPage'
 
 // 有完整真實資料的實頁
 const REAL: Record<string, ReactElement> = {
-  'research/strategies': <StrategyLibraryPage />,
+  'research/strategies': <StrategyHubListPage />,
+  'research/strategies/:name': <StrategyHubDetailPage />,
   'research/runs/new': <NewRunPage />,
   'research/runs': <RunsTablePage />,
   'research/runs/:id': <RunReportPage />,
@@ -63,7 +65,8 @@ interface RouteDef {
 // index（/）單獨處理
 const ROUTES: RouteDef[] = [
   // Research
-  { path: 'research/strategies', title: '策略庫', spec: 'research_01_strategy_library' },
+  { path: 'research/strategies', title: '策略中心', spec: 'research_01_strategy_library' },
+  { path: 'research/strategies/:name', title: '策略中心 · 詳情', spec: 'research_01_strategy_library' },
   { path: 'research/runs/new', title: 'New Run 設定', spec: 'research_02_run_new' },
   { path: 'research/runs', title: 'Runs Table', spec: 'research_03_runs_table' },
   { path: 'research/runs/:id', title: 'Run Report', spec: 'research_04_run_report' },

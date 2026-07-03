@@ -1,19 +1,37 @@
 {
-  "strategies": {
-    "title": "策略庫",
-    "subtitle": "策略與版本沿革總覽",
-    "resource": "策略",
-    "newStrategy": "新建策略",
-    "count": "{{n}} 個策略",
-    "card": {
-      "runsCount": "{{n}} runs",
-      "viewRuns": "查看 runs →",
-      "promote": "晉升 →",
-      "promoteLocked": "晉升（待驗證守門通過）",
-      "promoteLockedHint": "需先通過 IS 守門方可晉升"
+  "strategyHub": {
+    "list": {
+      "title": "策略中心",
+      "subtitle": "以策略為軸 · 型錄 × 判決帳本 × 觀察艙聚合",
+      "resource": "策略",
+      "newRun": "新建回測",
+      "count": "{{n}} 個策略",
+      "card": {
+        "latestGate": "最近判決",
+        "noRuns": "尚無 run",
+        "runs": "{{n}} runs"
+      }
     },
-    "pending": {
-      "versionTimeline": "版本沿革 + 假設 diff（GET /research/strategies/{id}/versions，待後端）"
+    "detail": {
+      "back": "策略中心",
+      "resource": "判決時間線",
+      "configFields": "參數欄位（config_schema）",
+      "notInRegistry": "策略 {{name}} 不在型錄中（僅帳本有紀錄）",
+      "watch": {
+        "title": "觀察艙"
+      },
+      "timeline": {
+        "title": "判決時間線",
+        "empty": "此策略尚無 run —— 從新建回測開始"
+      },
+      "actions": {
+        "newRun": "新建回測（預填此策略）",
+        "tradeReview": "K 線覆盤",
+        "needRun": "需先有 run 方可覆盤",
+        "compare": "比較",
+        "needTwo": "需 ≥2 個 run 方可比較",
+        "notebook": "在 Notebook 開啟"
+      }
     }
   },
   "newRun": {
@@ -233,7 +251,7 @@
   "promote": {
     "title": "晉升流程",
     "subtitle": "不可逆晉升狀態機（草稿→紙上交易→實盤）· 每步寫入不可變審計",
-    "back": "策略庫",
+    "back": "策略中心",
     "advance": {
       "title": "晉升",
       "notePlaceholder": "晉升理由（記入審計）",

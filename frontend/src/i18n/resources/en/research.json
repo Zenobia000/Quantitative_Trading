@@ -1,19 +1,37 @@
 {
-  "strategies": {
-    "title": "Strategy Library",
-    "subtitle": "Strategies and version-history overview",
-    "resource": "strategies",
-    "newStrategy": "New Strategy",
-    "count": "{{n}} strategies",
-    "card": {
-      "runsCount": "{{n}} runs",
-      "viewRuns": "View runs →",
-      "promote": "Promote →",
-      "promoteLocked": "Promote (awaiting Validation Gate pass)",
-      "promoteLockedHint": "Requires passing the IS gate before promotion"
+  "strategyHub": {
+    "list": {
+      "title": "Strategy Hub",
+      "subtitle": "Strategy-axis view · catalog × verdict ledger × watch deck",
+      "resource": "strategies",
+      "newRun": "New Backtest",
+      "count": "{{n}} strategies",
+      "card": {
+        "latestGate": "Latest verdict",
+        "noRuns": "No runs yet",
+        "runs": "{{n}} runs"
+      }
     },
-    "pending": {
-      "versionTimeline": "Version history + hypothesis diff (GET /research/strategies/{id}/versions, pending backend)"
+    "detail": {
+      "back": "Strategy Hub",
+      "resource": "verdict timeline",
+      "configFields": "Config fields (config_schema)",
+      "notInRegistry": "Strategy {{name}} is not in the catalog (ledger-only)",
+      "watch": {
+        "title": "Watch Deck"
+      },
+      "timeline": {
+        "title": "Verdict Timeline",
+        "empty": "No runs yet for this strategy — start with a new backtest"
+      },
+      "actions": {
+        "newRun": "New Backtest (prefill strategy)",
+        "tradeReview": "K-line Review",
+        "needRun": "Needs a run before reviewing",
+        "compare": "Compare",
+        "needTwo": "Needs ≥2 runs to compare",
+        "notebook": "Open in Notebook"
+      }
     }
   },
   "newRun": {
@@ -233,7 +251,7 @@
   "promote": {
     "title": "Promotion",
     "subtitle": "Irreversible promotion state machine (Draft→Paper→Live) · every step written to an immutable audit trail",
-    "back": "Strategy Library",
+    "back": "Strategy Hub",
     "advance": {
       "title": "Promote",
       "notePlaceholder": "Promotion reason (recorded in audit)",
