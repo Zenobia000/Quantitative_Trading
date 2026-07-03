@@ -1,7 +1,41 @@
 {
   "data": {
     "title": "資料管理",
-    "subtitle": "資料匯入 · 股票池建置 · 資料集清單",
+    "subtitle": "資料字典 · 資料匯入 · 股票池建置",
+    "catalog": {
+      "heading": "資料字典",
+      "subheading": "搜尋可用於策略的資料，複製 key 直接寫策略",
+      "search": "搜尋資料 key、名稱或說明…",
+      "resource": "資料字典",
+      "pending": "資料字典（待後端目錄產出）",
+      "empty": "資料目錄為空",
+      "noMatch": "找不到符合「{{q}}」的資料集",
+      "noMatchHint": "試試其他關鍵字或切換分類",
+      "copyKey": "複製 key",
+      "usedByLabel": "使用中的策略",
+      "since": "自 {{year}}",
+      "category": {
+        "all": "全部",
+        "price_volume": "價量",
+        "institutional": "法人",
+        "financials": "財報",
+        "monthly_revenue": "月營收",
+        "margin_short": "融資券"
+      },
+      "freq": {
+        "daily": "日頻",
+        "monthly": "月頻",
+        "quarterly": "季頻"
+      },
+      "local": {
+        "cached": "本地已有",
+        "notCached": "未下載"
+      }
+    },
+    "ops": {
+      "heading": "資料運維",
+      "subheading": "匯入資料 · 建置股票池 · 檢視 bundle（進階）"
+    },
     "field": {
       "start": "起",
       "end": "迄",
