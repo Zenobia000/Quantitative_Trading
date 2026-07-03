@@ -96,6 +96,7 @@ src/backtest_platform/
 │
 ├── validation/                   # ★ 審判庭（純函式）
 │   ├── two_stage_gate.py         # ADR-025 真偽閘 + 配置閘（TruthGateInput / SizingInput / evaluate_two_stage）
+│   ├── portfolio_gate.py         # ADR-036 組合級證據軸 + pod 資本配置（combine_returns / sleeve_weights / apply_stop_outs）
 │   ├── gate_state.py             # gate 準則（DEFAULT_GATE / MOMENTUM_GATE / PANEL_GATE）
 │   ├── gate_machine.py           # IS→WFA→OOS 不可逆狀態機
 │   ├── dsr.py / pbo.py / wfa.py  # 防過擬合統計（DSR 含輸入衛兵，ADR-030）

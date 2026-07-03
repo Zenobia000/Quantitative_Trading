@@ -381,3 +381,54 @@ def test_run_batch_empty_groups_is_usage_error(tmp_path):
         "--runs-path", str(tmp_path / "runs.jsonl"),
     ])
     assert res.exit_code == 2  # click UsageError
+
+
+# --- portfolio-check (ADR-036) ---------------------------------------------
+
+def _write_sidecar(series_dir, run_id, returns):
+    """Build an equity sidecar whose pct_change reproduces `returns` exactly."""
+    from backtest_platform.research.run_series_store import write_series
+
+    eq, cur = [], 1.0
+    for r in returns:
+        cur *= 1.0 + r
+        eq.append(cur)
+    write_series(run_id, eq, [0.0] * len(eq), [], series_dir=series_dir)
+
+
+def test_portfolio_check_reports_premium(tmp_path):
+    sd = tmp_path / "series"
+    _write_sidecar(sd, "cand1", [0.01, -0.005, 0.008, 0.002, -0.001] * 20)
+    _write_sidecar(sd, "flt1", [-0.002, 0.009, -0.001, 0.006, 0.003] * 20)
+
+    res = CliRunner().invoke(cli, [
+        "portfolio-check", "--candidate", "cand1", "--fleet", "flt1",
+        "--n-trials", "1", "--oos-sharpe", "0.9", "--series-dir", str(sd),
+    ])
+    assert res.exit_code == 0, res.output
+    assert "standalone DSR" in res.output
+    assert "portfolio  DSR" in res.output
+    assert "suggested weight" in res.output
+    assert "不改寫 standalone verdict" in res.output
+
+
+def test_portfolio_check_rejects_length_mismatch(tmp_path):
+    sd = tmp_path / "series"
+    _write_sidecar(sd, "cand1", [0.01] * 30)
+    _write_sidecar(sd, "short", [0.01] * 10)
+    res = CliRunner().invoke(cli, [
+        "portfolio-check", "--candidate", "cand1", "--fleet", "short",
+        "--series-dir", str(sd),
+    ])
+    assert res.exit_code == 1
+    assert "equal-length" in res.output
+
+
+def test_portfolio_check_empty_fleet_first_sleeve(tmp_path):
+    sd = tmp_path / "series"
+    _write_sidecar(sd, "cand1", [0.01, -0.002] * 30)
+    res = CliRunner().invoke(cli, [
+        "portfolio-check", "--candidate", "cand1", "--series-dir", str(sd),
+    ])
+    assert res.exit_code == 0, res.output
+    assert "diversification Δ   = +0.000000" in res.output

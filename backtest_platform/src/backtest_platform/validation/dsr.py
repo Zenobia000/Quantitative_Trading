@@ -30,6 +30,7 @@ import math
 from scipy.stats import norm
 
 __all__ = [
+    "deflated_sharpe_from_returns",
     "EULER_MASCHERONI",
     "psr",
     "expected_max_sharpe",
@@ -249,3 +250,37 @@ def deflated_sharpe_ratio(
     _validate_dsr_inputs(sr, n_trials, n_obs, skew, kurtosis, sharpe_variance)
     sr_star = expected_max_sharpe(n_trials, sharpe_variance)
     return psr(sr, n_obs=n_obs, skew=skew, kurtosis=kurtosis, sr_benchmark=sr_star)
+
+
+def deflated_sharpe_from_returns(returns, *, n_trials: int) -> float:
+    """Trials-deflated Sharpe straight from a daily-returns series (ADR-036 促成的
+    升格：原 ``research/workflows/truth_gate.py::_deflated_sharpe``，搬進 validation
+    層成為單一真相源——truth gate 與 portfolio gate 共用同一條單位正確的路徑).
+
+    DSR needs PER-PERIOD statistics — never the ×√252 annualized Sharpe（ADR-030
+    修正的單位 bug）。Sharpe 以原始日報酬 ``mean / std`` 重算；``V[SR_n]`` 用
+    null-hypothesis floor（Lo 2002 estimator variance）—— pre-registered 單一
+    config 沒有 sweep landscape 可量測時**最寬鬆的誠實通縮**。Degenerate 輸入
+    （< 2 筆、零變異）回 0.0。
+    """
+    import numpy as np
+    import pandas as pd
+
+    arr = np.asarray(returns, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    n_obs = arr.size
+    if n_obs < 2:
+        return 0.0
+    sd = float(arr.std(ddof=0))
+    if sd <= 0.0:
+        return 0.0
+    sr_pp = float(arr.mean()) / sd
+    s = pd.Series(arr)
+    skew = float(s.skew()) if n_obs > 3 else 0.0
+    kurt = float(s.kurtosis()) + 3.0 if n_obs > 3 else 3.0  # pandas excess → raw
+    estimator_var = (1.0 - skew * sr_pp + (kurt - 1.0) / 4.0 * sr_pp**2) / (n_obs - 1)
+    sharpe_variance = max(estimator_var, 0.0)
+    return deflated_sharpe_ratio(
+        sr=sr_pp, n_trials=n_trials, n_obs=n_obs,
+        skew=skew, kurtosis=kurt, sharpe_variance=sharpe_variance,
+    )

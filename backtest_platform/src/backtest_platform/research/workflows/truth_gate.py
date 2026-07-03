@@ -140,38 +140,15 @@ def _wfa_oos_breadth(runner: Any, cfg: TruthGateConfig, sconf: Any, loader: Load
 
 
 def _deflated_sharpe(returns: pd.Series, n_trials: int) -> float:
-    """Trials-deflated Sharpe on a run's daily returns (Bailey & López de Prado).
+    """Trials-deflated Sharpe on a run's daily returns.
 
-    DSR needs PER-PERIOD statistics — never the ×√252 annualized Sharpe the metrics
-    dict reports (mixing an annualized SR with per-period moments was the bug that
-    inflated DSR to 1.0). We recompute the Sharpe as ``mean / std`` on the raw daily
-    returns and supply the cross-trial Sharpe variance ``V[SR_n]`` in the SAME units.
-
-    For a pre-registered single config there is no landscape sweep to measure
-    ``V[SR_n]`` from, so we use the null-hypothesis floor: the sampling variance of
-    the per-period Sharpe estimator (Lo 2002). Under H0 (no trial has skill) the N
-    trial Sharpes are noisy draws about 0 with exactly this variance — the *most
-    lenient* honest deflation. If a strategy still fails here, it fails definitively.
+    ADR-036 升格：實作搬至 ``validation.dsr.deflated_sharpe_from_returns``
+    （portfolio gate 需共用同一條 per-period 單位路徑，ADR-030 修正的單一真相源）；
+    此 shim 保留原呼叫介面。
     """
-    arr = np.asarray(returns, dtype=float)
-    arr = arr[np.isfinite(arr)]
-    n_obs = arr.size
-    if n_obs < 2:
-        return 0.0
-    sd = float(arr.std(ddof=0))
-    if sd <= 0.0:
-        return 0.0
-    sr_pp = float(arr.mean()) / sd
-    s = pd.Series(arr)
-    skew = float(s.skew()) if n_obs > 3 else 0.0
-    kurt = float(s.kurtosis()) + 3.0 if n_obs > 3 else 3.0  # pandas excess → raw (3 = Gaussian)
-    # V[SR_n] under H0 == the single-trial estimator variance (PSR denom / (n-1)).
-    estimator_var = (1.0 - skew * sr_pp + (kurt - 1.0) / 4.0 * sr_pp**2) / (n_obs - 1)
-    sharpe_variance = max(estimator_var, 0.0)
-    return deflated_sharpe_ratio(
-        sr=sr_pp, n_trials=n_trials, n_obs=n_obs,
-        skew=skew, kurtosis=kurt, sharpe_variance=sharpe_variance,
-    )
+    from backtest_platform.validation.dsr import deflated_sharpe_from_returns
+
+    return deflated_sharpe_from_returns(returns, n_trials=n_trials)
 
 
 def _slippage_sharpe(runner: Any, cfg: TruthGateConfig, sconf: Any, loader: Loader) -> float:
