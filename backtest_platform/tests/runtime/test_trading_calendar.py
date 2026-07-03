@@ -1,7 +1,7 @@
 """Tests for the Taiwan trading-day helper (after-close scheduler §).
 
 The XTAI (exchange_calendars) path is exercised only via an INJECTED calendar so
-the suite never depends on the optional ``mainframe`` extra; the default env falls
+the suite never depends on the optional ``calendar`` extra; the default env falls
 back to the weekday approximation, which these tests pin explicitly.
 """
 from __future__ import annotations

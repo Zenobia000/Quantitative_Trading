@@ -148,7 +148,7 @@ def test_side_vocab_covers_every_risk_gate_side() -> None:
 def test_make_ingest_finmind_fallback_maps_failed_symbols(monkeypatch) -> None:
     fake_result = MagicMock(failed_symbols=["9999"])
     monkeypatch.setattr(
-        "backtest_platform.engines.zipline_adapter.bundles.finmind_bundle.ingest_universe",
+        "backtest_platform.data.finmind_bundle.ingest_universe",
         lambda *a, **k: fake_result,
     )
     ingest = make_ingest(start=date(2024, 1, 1), end=date(2024, 12, 31), source="finmind")

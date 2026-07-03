@@ -7,7 +7,7 @@ name = "backtest_platform"
 version = "0.1.0"
 description = "Four-Layer Resonance Strategy Backtest Platform for Taiwan Stocks"
 readme = "README.md"
-requires-python = ">=3.10,<3.13"  # zipline-reloaded 3.1.1 支援 3.10-3.12（ADR-013 upgrade 2026-06-01）
+requires-python = ">=3.10,<3.13"  # cap retained for native-dep wheels; zipline-reloaded (prior 3.12-cap driver) removed 2026-07-03 (ADR-037)
 license = { text = "Proprietary" }
 authors = [{ name = "Self" }]
 
@@ -37,9 +37,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# M2 mainframe: zipline-reloaded (社群維護 zipline 主線，0 商業綁定) — ADR-013 supersedes ADR-005
-mainframe = [
-    "zipline-reloaded==3.1.1",
+# Taiwan trading calendar: exchange-calendars XTAI sessions — the after-close
+# scheduler's precise holiday gate (runtime/trading_calendar.py). Was the M2
+# `mainframe` extra (zipline-reloaded engine, ADR-013); zipline removed 2026-07-03
+# (ADR-037 supersedes ADR-013). exchange-calendars is kept — it is a LIVE calendar
+# dependency of the scheduler, not a zipline artifact.
+calendar = [
     "exchange-calendars>=4.5",
 ]
 # Vector engine for grid/WFA optimization — see ADR-007
@@ -90,7 +93,8 @@ dev = [
 ]
 # Convenience: install M2 Sprint 1 requirements
 sprint1 = [
-    "zipline-reloaded==3.1.1",
+    # zipline-reloaded removed 2026-07-03 (ADR-037); exchange-calendars kept for
+    # the trading-calendar gate.
     "exchange-calendars>=4.5",
     "finlab>=1.2",
     "streamlit>=1.32",
@@ -102,7 +106,7 @@ sprint1 = [
     # Sprint 2: tearsheet (CLI --tearsheet) + validation comparison
     "quantstats>=0.0.62",
     "empyrical-reloaded>=0.5.10",
-    # Sprint 2 cross-check (pandas 2 + zipline 3.1.1 stack 2026-06-01)
+    # Sprint 2 cross-check (pandas 2 stack)
     "vectorbt>=1.0",
 ]
 
@@ -132,11 +136,8 @@ omit = [
     # Skeleton modules with no production code (per Q4 decision)
     "src/backtest_platform/adapters/__init__.py",
     "src/backtest_platform/adapters/*/__init__.py",
-    "src/backtest_platform/dashboard/__init__.py",
     "src/backtest_platform/orchestration/__init__.py",
     "src/backtest_platform/strategies/__init__.py",
-    # Validation harnesses (covered by integration tests, not unit)
-    "src/backtest_platform/engines/zipline_adapter/validation/*",
 ]
 
 [tool.coverage.report]

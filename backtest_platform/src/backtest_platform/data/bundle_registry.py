@@ -3,7 +3,7 @@
 The platform writes two kinds of provenance sidecar next to a parquet cache:
 
 * ``manifest.json`` — the default FinMind/FinLab ETL cache
-  (``engines.zipline_adapter.bundles.parquet_cache.write_manifest``): aggregate
+  (``data.parquet_cache.write_manifest``): aggregate
   ``stock_count`` / ``coverage`` / ``data_hash`` over the ingested symbols.
 * ``universe_manifest.json`` — a survivorship-clean universe build
   (``research.workflows.universe._write_manifest``, ADR-032): the strategy, the

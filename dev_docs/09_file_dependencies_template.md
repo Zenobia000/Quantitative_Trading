@@ -44,8 +44,7 @@ graph TD
     subgraph Infra["Infrastructure / Adapters 層"]
         Data["data/<br/>finlab_source·finmind_etl·db_reader/writer·bundle_registry"]
         Adapters["adapters/<br/>brokers·data_feed（seam, ADR-035）"]
-        Engines["engines/<br/>zipline_adapter（event 引擎）"]
-        Monitoring["monitoring/<br/>influx·discord·alerts"]
+        Monitoring["monitoring/<br/>discord·alerts"]
     end
 
     FinLab[("FinLab API（主）")]
@@ -66,7 +65,6 @@ graph TD
     Research --> Validation
     Research --> StratImpl
     Orch --> Adapters
-    Adapters --> Engines
     Orch --> Risk
     Runtime --> Orch
     Runtime --> Data
@@ -80,7 +78,6 @@ graph TD
     Data --> FinMind
     Data --> TSDB
     Monitoring --> TSDB
-    Engines -.DEPRECATED.-> Research
 
     style Proto fill:#cfc
     style Validation fill:#cfc
@@ -91,7 +88,7 @@ graph TD
 
 - 綠色 = 零外部 IO 的 Domain 核心，最穩定、可放心 import。
 - `strategies.protocol` 是**平台↔策略的唯一接縫**：上層只認 `StrategyRunner` 契約 + registry。
-- `Engines -.DEPRECATED.->`：`engines/protocol.py` 的 `Engine` Protocol 已被策略契約取代（zipline/vectorbt 成員為 `_StubEngine` 幻影），保留只為既有 importer 解析，不建新呼叫點。
+- **engines/ 已移除（ADR-037）**：舊 `engines/protocol.py` 的 `Engine` Protocol + zipline/vectorbt stub 全刪；sim 為唯一引擎，經 `research.is_harness` 的 loader seam 運作。
 
 ---
 
@@ -102,7 +99,7 @@ graph TD
 | **Interface** | HTTP 邊界、envelope、路由 | `api/` |
 | **Application** | 編排研究工作流 / 每日鏈 / 非同步 job | `research/`、`orchestration/`、`runtime/`、`jobs/` |
 | **Domain** | 策略契約 + 純邏輯、審判庭、風控、參數 | `strategies/`、`validation/`、`risk/`、`config/` |
-| **Infrastructure** | 外部資料源、券商、引擎、DB IO、監控 | `data/`、`adapters/`、`engines/`、`monitoring/` |
+| **Infrastructure** | 外部資料源、券商、DB IO、監控 | `data/`、`adapters/`、`monitoring/` |
 
 ---
 
@@ -149,7 +146,7 @@ from backtest_platform.strategies.common.panel import column_panel, panel_metric
 from backtest_platform.validation.gate_state import PANEL_GATE
 
 # research_config.py 依賴中立 universe，不拉引擎（WP6 解纏後）
-from backtest_platform.config.universe import DEFAULT_UNIVERSE   # ✅ 不再 import finmind_bundle / zipline
+from backtest_platform.config.universe import DEFAULT_UNIVERSE   # ✅ 零依賴葉節點，不 import finmind_bundle
 ```
 
 ### 嚴禁
@@ -187,8 +184,7 @@ from backtest_platform.config.universe import DEFAULT_UNIVERSE   # ✅ 不再 im
 | 上層繞過契約直呼策略 | AST 測試守 dispatch invariant（`tests/research/workflows/`）；conformance gate 驗每隻策略滿足契約 |
 | `strategies → validation` 循環 | `validation` 保持不 import `strategies`（測試 `test_dependency_untangle.py` 守）|
 | FinLab / FinMind schema 變動 | `finlab_source._bundle_for` / `finmind_etl._normalize_*` 集中處理 + Pydantic 邊界驗證 |
-| 引擎精度分歧 | zipline vs vectorbt 對拍（`engines/zipline_adapter/validation/cross_check_vectorbt.py`）|
-| DEPRECATED `engines/protocol` 殘留耦合 | 標記 deprecated、幻影 stub raise `NotImplementedError`；full removal 為 follow-up ADR |
+| 未來重加 event 引擎 | 在 `research.is_harness` 的 loader seam 後新增 adapter（ADR-037；不復活已刪的 engines/ 樹）|
 
 ---
 
@@ -198,8 +194,7 @@ from backtest_platform.config.universe import DEFAULT_UNIVERSE   # ✅ 不再 im
 | :--- | :--- | :--- |
 | pandas / numpy | 資料運算核心 | 低 |
 | pydantic ≥2 / pydantic-settings | schema 邊界驗證 + env 配置 | 低 |
-| zipline-reloaded | event 回測引擎主骨架（[ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md)）| 中 |
-| vectorbt | 向量參數網格副引擎 | 中 |
+| exchange-calendars | 精確 XTAI 交易日曆（`calendar` extra；after-close 排程閘門，[ADR-037](./adrs/ADR-037-remove-zipline-engine-remnants.md)）| 低 |
 | finlab | 付費主資料源（lazy） | 中 |
 | FinMind | 免費 fallback 資料源（lazy） | 中 |
 | scipy | PBO/DSR/WFA 統計 | 低 |

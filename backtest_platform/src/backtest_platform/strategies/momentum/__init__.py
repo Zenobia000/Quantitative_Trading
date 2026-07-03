@@ -2,7 +2,7 @@
 
 The platform's second strategy, structurally different from four-layer resonance,
 proving the validation/research/gate stack is strategy-agnostic. See ``strategy``
-for the pure backtest + ``research.momentum_harness`` for the IS→gate wiring.
+for the pure backtest + ``research.runners.MomentumRunner`` for the IS→gate wiring.
 """
 from __future__ import annotations
 

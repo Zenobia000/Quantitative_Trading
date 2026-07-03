@@ -8,8 +8,7 @@ research harness share ONE implementation of the close-to-close sim without an
 upward ``strategies → research`` dependency.
 
 ``research.is_harness`` re-exports these names for backward compatibility, so
-existing importers (``engines.protocol`` SimEngine, ``research.sweep``, tests)
-keep working unchanged.
+existing importers (``research.sweep`` + tests) keep working unchanged.
 
 NOTE: ``_metrics`` / ``_sharpe`` are four-layer-local metric calcs kept verbatim
 for now; unifying them onto ``validation.metrics`` is Stage 2 (metrics dedup).

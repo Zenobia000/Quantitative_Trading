@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS runs (
     run_id            TEXT PRIMARY KEY,        -- deterministic RunConfig hash
     hypothesis        TEXT NOT NULL,           -- pre-registered (anti-overfit)
     strategy          TEXT NOT NULL,           -- registered strategy name (ADR-028, replaces preset)
-    engine            TEXT NOT NULL DEFAULT 'sim',  -- sim | zipline | vectorbt
+    engine            TEXT NOT NULL DEFAULT 'sim',  -- sim (zipline/vectorbt removed 2026-07-03, ADR-037)
     stocks            JSONB NOT NULL,          -- universe for this run
     is_start          DATE NOT NULL,
     is_end            DATE NOT NULL,

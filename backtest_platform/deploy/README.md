@@ -11,10 +11,10 @@ Discord, while a strategy with no active觀察艙 berth is refused before it run
 - `uv` on PATH and the project installed with the **exact XTAI holiday calendar**:
 
   ```bash
-  uv sync --all-extras        # or, minimally: uv sync --extra mainframe
+  uv sync --all-extras        # or, minimally: uv sync --extra calendar
   ```
 
-  The `mainframe` extra installs `exchange_calendars` (XTAI). Without it the
+  The `calendar` extra installs `exchange_calendars` (XTAI). Without it the
   scheduler falls back to a Mon–Fri approximation that treats weekday Taiwan public
   / lunar holidays as sessions — it over-fires on ~10–15 days/year, and each such
   day is a false Discord alert source that would drown a 3-month observation in

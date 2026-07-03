@@ -1,4 +1,9 @@
-"""Strategy runner re-export (back-compat shim — dependency-untangle refactor).
+"""Strategy runner re-export — the live strategy-registration seam.
+
+NOT a deprecated shim: importing this module is the canonical way ~12 production
+call sites (``research.is_harness``, ``research.cli``, ``research.batch``, the
+workflows, tests) trigger every built-in runner's ``@register_strategy``
+side-effect. Removing it would silently empty the strategy registry. Keep it.
 
 Strategy registration now lives in ``strategies/__init__.py`` (the seam belongs
 with the strategies, not up here in research). This module used to BE the

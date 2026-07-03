@@ -112,7 +112,7 @@ uv run python -m backtest_platform.orchestration.cli \
 
 | 守門 | 判準 | 未過 → | exit |
 | :--- | :--- | :--- | :--- |
-| 交易日 | XTAI 日曆（裝 `--extra mainframe`）；否則週一至五近似 | `NON_TRADING_DAY` no-op | 0 |
+| 交易日 | XTAI 日曆（裝 `--extra calendar`）；否則週一至五近似 | `NON_TRADING_DAY` no-op | 0 |
 | 收盤後 | 台北時區 ≥ 14:30（過去日期自動過；`--force` 跳過）| `TOO_EARLY` 拒跑 | 0 |
 | 冪等 | 同 (strategy, date) 已成功 → done-marker JSONL | `ALREADY_DONE` skip | 0 |
 | dry-run | `--dry-run`（純接線煙霧測試，不觸發 flow、不收 OOS）| `DRY_RUN` 報告 | 0 |
@@ -122,7 +122,7 @@ uv run python -m backtest_platform.orchestration.cli \
 
 > **觀察艙 enrollment（ADR-033 enforcement）**：real（收 OOS）session 執行前查 registry——不在艙內拒跑並提示先 `watch enroll`，已到期拒跑並提示重評。dry-run 不收 OOS，於此守門前短路（免 enroll 亦可煙霧測試）。每次成功 session 後 `expire_due` 掃到期者，到期當日推「觀察期滿」Discord info；成功 digest 附「觀察日 N/~60 · 到期日 · 剩餘天數」一行。
 >
-> **日曆限制 + 無資料降級**：未裝 `mainframe` extra 時退化為週一至五近似——落在平日的國定 / 農曆假日會被誤判為交易日（年約 10–15 天，**假告警來源**）；日曆模式於首次觸發 log 一次（精確 XTAI → INFO，近似 → WARNING）。裝 `uv sync --all-extras`（或至少 `--extra mainframe`）取得精確 XTAI sessions（**強烈建議，見 §2.1**）。即使誤判為開市，flow 前的 `check_panel_freshness` 會攔截「資料源無今日資料」→ 降級為 `NO_DATA` skip + info（**非** FAILED 告警），把近似日曆的殘餘爆炸半徑限縮成一則安靜的 info；冪等 + 風控仍為額外護欄。真正的 daily flow 執行錯誤仍 `FAILED` + error 告警（只攔明確的 no-data 訊號，絕不 blanket except）。
+> **日曆限制 + 無資料降級**：未裝 `calendar` extra 時退化為週一至五近似——落在平日的國定 / 農曆假日會被誤判為交易日（年約 10–15 天，**假告警來源**）；日曆模式於首次觸發 log 一次（精確 XTAI → INFO，近似 → WARNING）。裝 `uv sync --all-extras`（或至少 `--extra calendar`）取得精確 XTAI sessions（**強烈建議，見 §2.1**）。即使誤判為開市，flow 前的 `check_panel_freshness` 會攔截「資料源無今日資料」→ 降級為 `NO_DATA` skip + info（**非** FAILED 告警），把近似日曆的殘餘爆炸半徑限縮成一則安靜的 info；冪等 + 風控仍為額外護欄。真正的 daily flow 執行錯誤仍 `FAILED` + error 告警（只攔明確的 no-data 訊號，絕不 blanket except）。
 >
 > **收盤時間校準**：14:30 是台股 13:30 收盤後的 EOD 資料緩衝；若你的資料源較晚才發布三大法人 net-buy，把 timer 與 gate 一併後移（如 17:35）。
 >

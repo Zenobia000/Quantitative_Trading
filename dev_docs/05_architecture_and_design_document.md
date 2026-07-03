@@ -267,8 +267,7 @@ graph LR
 | Time-series DB | TimescaleDB | Postgres 相容 + 時間優化 | [ADR-002](./adrs/ADR-002-timescaledb-for-time-series.md) |
 | 資料源 | FinLab 主 + FinMind fallback | 全史 + 原生 survivorship-clean | [ADR-006](./adrs/ADR-006-data-source-finlab-paid.md) |
 | 快取 | Parquet + manifest | 列式壓縮 + 不可變血統 | [ADR-032](./adrs/ADR-032-survivorship-universe-workflow.md) |
-| 回測（主） | zipline-reloaded | event-driven + 台股日曆、0 商業綁定 | [ADR-013](./adrs/ADR-013-mainframe-zipline-reloaded-supersedes-tquant-lab.md) |
-| 回測（副） | vectorbt | 向量化參數網格 | [ADR-007](./adrs/ADR-007-dual-engine-zipline-vectorbt.md) |
+| 回測引擎 | 離線 close-to-close sim | 研究迴圈唯一引擎（zipline/vectorbt 引擎殘骸移除，engines/ 樹刪除）| [ADR-037](./adrs/ADR-037-remove-zipline-engine-remnants.md) |
 | 統計驗證 | 自寫 PBO/DSR/WFA | 避 AGPL、對論文範例可驗 | [ADR-018](./adrs/ADR-018-monitoring-to-research-loop-pivot.md) |
 | HTTP API | FastAPI | envelope + OpenAPI 機器真相 | [ADR-021](./adrs/ADR-021-unify-rest-contract-into-single-doc-and-openapi.md) |
 | 前端 | React 19 + TS strict + Tailwind | 三 zone SPA | [ADR-015](./adrs/ADR-015-dashboard-design-system-and-react-upgrade.md) |
