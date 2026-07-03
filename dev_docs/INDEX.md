@@ -85,6 +85,8 @@
 
 [web_design/](./web_design/) — 設計系統參考 + 大廠量化平台 UI/UX 對標（[03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md)，ADR-018 證據包）。
 
+- [rebuild_ia_spec_2026-07-03.md](./web_design/rebuild_ia_spec_2026-07-03.md) — rebuild Goal 1：五 zone（Research｜Live OOS｜Deployment｜Monitor｜System）三旅程資訊架構 + 20 路由 migration mapping（IA 藍圖，供 Wave B/C 實作）。
+
 ---
 
 ## 角色查找

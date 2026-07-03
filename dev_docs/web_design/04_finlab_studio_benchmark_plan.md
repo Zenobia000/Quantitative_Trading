@@ -93,6 +93,8 @@ FinLab 用 Pyodide 因為多租戶：使用者代碼絕不能碰他家後端。�
 
 ## 5. IA 與元件優化
 
+> **後續演進**：本 §5 的策略軸 IA 洞察已被 [rebuild_ia_spec_2026-07-03.md](./rebuild_ia_spec_2026-07-03.md)（rebuild Goal 1）擴充為五 zone 三旅程完整藍圖 —— 該檔為 Wave B/C IA 實作真相源；本節保留為對標依據。
+
 ### 5.1 IA（從 studio 偵察所得：頂部 tabs Schedule/Data Catalog/Market Pulse + My Strategies + 策略表）
 
 1. **策略中心頁（strategy hub）——本次對標最大收穫**：現行 IA 以 run 為軸、策略軸弱。新增以策略為軸的聚合頁：該策略的 runs / 歷次判決時間線 / 觀察艙狀態 / K 線覆盤入口 / Open-in-notebook。URL 深連結 `/research/strategy/:name`（對標 `?strategy_id=`）
