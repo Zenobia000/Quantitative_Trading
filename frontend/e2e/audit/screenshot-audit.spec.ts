@@ -1,9 +1,15 @@
 /*
- * Full-site screenshot + UX audit sweep (rebuild Goal 0 — current-state baseline).
+ * Full-site screenshot + UX audit sweep.
  *
- * For every ACTUAL route in src/router.tsx (reconciled at write time, F-wave
- * included: strategy hub list + detail), at three viewports, this boots a fresh
- * SPA via a real document navigation (vite's spaBypass serves index.html for
+ * Two waves share this spec:
+ *   - Goal 0 baseline (current-state, 20 routes) → dev_docs/ui_audit/current_2026-07-03/
+ *   - Wave E rebuild rerun (post-redesign, all actual routes) → dev_docs/ui_audit/rebuild_2026-07-03/
+ * The output dir is AUDIT_OUT_DIR-overridable (default = the rebuild dir), so the same
+ * spec re-runs against either baseline without an edit.
+ *
+ * For every ACTUAL route in src/router.tsx (reconciled against the five-zone IA:
+ * research / live-oos / deployment / monitor / system), at three viewports, this boots
+ * a fresh SPA via a real document navigation (vite's spaBypass serves index.html for
  * text/html Accept on API-prefixed deep links) and records, per route×viewport:
  *   - resolved URL, viewport
  *   - a full-page screenshot (nonblank, visually inspectable)
@@ -11,12 +17,18 @@
  *   - every xhr/fetch API call on mount (method/path/status/success/data_source/empty)
  *   - a derived data-source + observed-state summary
  *
- * Parametric routes resolve real ids from the live API (GET /runs → run_id,
- * GET /strategies → registry name); unresolved ids fall back and are recorded.
+ * Redirect routes (research/validate → deploy/gate, research/promote/:id →
+ * deploy/promote/:id, monitor/watch → live-oos/watch) are recorded once (redirect
+ * behaviour only) in `manifest.redirects`, NOT screenshotted × 3 (they render the
+ * same page as their target).
  *
- * Output → dev_docs/ui_audit/current_2026-07-03/ (manifest.json, api_capture.json,
- * screenshots/{desktop,laptop,mobile}/). GET-only: no write-action buttons are
- * clicked. This spec never edits src or app config.
+ * Parametric routes resolve real ids from the live API (GET /runs → run_id,
+ * GET /strategies → registry name, GET /research/candidates → latest_evaluation_id for
+ * the Report Viewer); unresolved ids fall back and are recorded.
+ *
+ * Output → AUDIT_OUT_DIR (manifest.json, api_capture.json, screenshots/{desktop,laptop,
+ * mobile}/). GET-only: no write-action buttons are clicked. This spec never edits src or
+ * app config.
  */
 import { test, expect, type APIRequestContext, type Page } from '@playwright/test'
 import { writeFileSync, mkdirSync } from 'node:fs'
@@ -25,7 +37,7 @@ import { join } from 'node:path'
 
 const OUT_DIR =
   process.env.AUDIT_OUT_DIR ??
-  fileURLToPath(new URL('../../../dev_docs/ui_audit/current_2026-07-03/', import.meta.url))
+  fileURLToPath(new URL('../../../dev_docs/ui_audit/rebuild_2026-07-03/', import.meta.url))
 
 const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
@@ -34,7 +46,6 @@ const VIEWPORTS = [
 ] as const
 
 // xhr/fetch paths that count as "API on mount" (backend bare-root prefixes).
-// `strategies` is included so the dev-proxy gap (missing prefix → 404) is captured.
 const API_RE = /^\/(runs|research|monitor|system|home|health|gate|presets|metrics|strategies|ws)(\/|\?|$)/
 const SETTLE_MS = 2600
 
@@ -64,6 +75,17 @@ interface ManifestEntry {
   consoleErrors: string[]
   pageErrors: string[]
   apiCalls: ApiCall[]
+  resolvedFrom?: string
+}
+interface RedirectRecord {
+  route: string
+  slug: string
+  title: string
+  expectedTarget: string
+  resolvedUrl: string
+  resolvedPath: string
+  redirected: boolean
+  matchedExpectedTarget: boolean
   resolvedFrom?: string
 }
 
@@ -96,34 +118,51 @@ test('screenshot + UX audit — all routes x 3 viewports', async ({ browser, req
   // --- resolve parametric ids from the live API (or documented fallback) ------
   const runIdReal = await resolveId(request, '/runs', 'run_id')
   const runId = runIdReal ?? 'NO_RUN_SEEDED'
+  // Report Viewer (/research/reports/:runId) keys on an EVALUATION id, resolved from the
+  // seeded candidate pool's latest_evaluation_id (evaluate CLI writes evaluations.jsonl).
+  const reportIdReal = await resolveId(request, '/research/candidates', 'latest_evaluation_id')
+  const reportId = reportIdReal ?? 'NO_EVAL_SEEDED'
   // strategy hub detail keys on the registry catalog name (GET /strategies).
   const stratNameReal = await resolveId(request, '/strategies', 'name')
-  const stratName = stratNameReal ?? 'four_layer'
+  const stratName = stratNameReal ?? 'momentum'
   // promote keys on strategy_id from the runs-projection roster (empty w/o runs).
   const promoteIdReal = await resolveId(request, '/research/strategies', 'strategy_id')
   const promoteId = promoteIdReal ?? stratName
 
   const runFrom = runIdReal ? `GET /runs → run_id=${runId}` : `fallback (GET /runs empty) → ${runId}`
+  const reportFrom = reportIdReal
+    ? `GET /research/candidates → latest_evaluation_id=${reportId}`
+    : `fallback (candidate pool empty) → ${reportId}`
   const nameFrom = stratNameReal
     ? `GET /strategies → name=${stratName}`
-    : `fallback (GET /strategies unreachable via proxy) → ${stratName}`
+    : `fallback (GET /strategies unreachable) → ${stratName}`
   const promoteFrom = promoteIdReal
     ? `GET /research/strategies → strategy_id=${promoteId}`
     : `fallback (roster empty) → strategy_id=${promoteId}`
 
-  // --- the ACTUAL route table (reconciled against src/router.tsx d3971ca) -----
+  // --- the ACTUAL screenshot route table (reconciled against src/router.tsx) --
+  // Five-zone IA: research / live-oos / deployment / monitor / system. Redirect
+  // routes are handled separately (see redirectRoutes below).
   const routes: Array<{ slug: string; route: string; title: string; resolvedFrom?: string }> = [
     { slug: 'home', route: '/', title: '首頁 cockpit' },
+    // Research zone
     { slug: 'research_strategies', route: '/research/strategies', title: '策略中心（Strategy Hub list）' },
     {
       slug: 'research_strategies_detail',
       route: `/research/strategies/${encodeURIComponent(stratName)}`,
-      title: '策略中心 · 詳情（F-wave, new route）',
+      title: '策略中心 · 詳情（策略資產 detail）',
       resolvedFrom: nameFrom,
     },
+    { slug: 'research_candidates', route: '/research/candidates', title: '候選池 Candidate Pool（NEW — 決策主戰場）' },
     { slug: 'research_runs_new', route: '/research/runs/new', title: 'New Run 設定' },
     { slug: 'research_runs', route: '/research/runs', title: 'Runs Table' },
-    { slug: 'research_runs_id', route: `/research/runs/${encodeURIComponent(runId)}`, title: 'Run Report', resolvedFrom: runFrom },
+    { slug: 'research_runs_id', route: `/research/runs/${encodeURIComponent(runId)}`, title: 'Run Report（舊）', resolvedFrom: runFrom },
+    {
+      slug: 'research_reports_id',
+      route: `/research/reports/${encodeURIComponent(reportId)}`,
+      title: 'Report Viewer（NEW — FinLab scorecard 報告）',
+      resolvedFrom: reportFrom,
+    },
     {
       slug: 'research_runs_id_trades',
       route: `/research/runs/${encodeURIComponent(runId)}/trades`,
@@ -132,40 +171,62 @@ test('screenshot + UX audit — all routes x 3 viewports', async ({ browser, req
     },
     { slug: 'research_compare', route: '/research/compare', title: 'Compare' },
     { slug: 'research_sweep', route: '/research/sweep', title: 'Sweep' },
-    { slug: 'research_validate', route: '/research/validate', title: 'Validate gate' },
+    // Live OOS zone (NEW — human-selected expensive OOS journey)
+    { slug: 'live_oos_queue', route: '/live-oos/queue', title: 'OOS 佇列 Live-OOS Queue（NEW）' },
+    { slug: 'live_oos_watch', route: '/live-oos/watch', title: 'Paper-Watch 觀察艙（moved from monitor）' },
+    // Deployment zone (NEW — strict gate + capital promotion, journey 3)
+    { slug: 'deploy_gate', route: '/deploy/gate', title: '部署嚴格閘 Strict Gate（NEW zone）' },
     {
-      slug: 'research_promote_id',
-      route: `/research/promote/${encodeURIComponent(promoteId)}`,
-      title: 'Promote',
+      slug: 'deploy_promote_id',
+      route: `/deploy/promote/${encodeURIComponent(promoteId)}`,
+      title: '晉升 Promote（NEW zone）',
       resolvedFrom: promoteFrom,
     },
+    // Monitor zone
     { slug: 'monitor', route: '/monitor', title: '策略艦隊總控 Fleet' },
-    { slug: 'monitor_board', route: '/monitor/board', title: 'Board（nav+REAL 有，ROUTES 未接線）' },
-    { slug: 'monitor_watch', route: '/monitor/watch', title: 'Paper-Watch 觀察艙' },
+    { slug: 'monitor_board', route: '/monitor/board', title: '運行看板 Board（now wired — was dead-404 in Goal 0）' },
     { slug: 'monitor_performance', route: '/monitor/performance', title: '績效總覽' },
     { slug: 'monitor_positions', route: '/monitor/positions', title: '部位狀態' },
     { slug: 'monitor_signals', route: '/monitor/signals', title: '訊號日誌' },
     { slug: 'monitor_risk', route: '/monitor/risk', title: '風控指標' },
+    // System zone
     { slug: 'system_data', route: '/system/data', title: '資料管理 Data' },
     { slug: 'system_alerts', route: '/system/alerts', title: '告警設定 Alerts' },
+  ]
+
+  // Redirect routes — recorded once (redirect behaviour only), not screenshotted × 3.
+  const redirectRoutes: Array<{ slug: string; route: string; title: string; expectedTarget: string; resolvedFrom?: string }> = [
+    { slug: 'redirect_research_validate', route: '/research/validate', title: 'Validate → Deployment', expectedTarget: '/deploy/gate' },
+    {
+      slug: 'redirect_research_promote',
+      route: `/research/promote/${encodeURIComponent(promoteId)}`,
+      title: 'Promote → Deployment',
+      expectedTarget: `/deploy/promote/${promoteId}`,
+      resolvedFrom: promoteFrom,
+    },
+    { slug: 'redirect_monitor_watch', route: '/monitor/watch', title: 'Paper-Watch → Live OOS', expectedTarget: '/live-oos/watch' },
   ]
 
   const manifest: {
     generatedAt: string
     baseURL: string | undefined
     backend: string
-    resolvedIds: { runId: string; strategyName: string; promoteId: string }
+    resolvedIds: { runId: string; reportEvaluationId: string; strategyName: string; promoteId: string }
     viewports: typeof VIEWPORTS
-    routeCount: number
+    screenshotRouteCount: number
+    redirectRouteCount: number
     entries: ManifestEntry[]
+    redirects: RedirectRecord[]
   } = {
     generatedAt: new Date().toISOString(),
     baseURL: test.info().project.use.baseURL,
-    backend: process.env.AUDIT_BACKEND ?? 'http://127.0.0.1:8080 (via vite proxy on 5174)',
-    resolvedIds: { runId, strategyName: stratName, promoteId },
+    backend: process.env.AUDIT_BACKEND ?? 'http://127.0.0.1:8083 (worktree uvicorn, seeded reports/) via vite proxy',
+    resolvedIds: { runId, reportEvaluationId: reportId, strategyName: stratName, promoteId },
     viewports: VIEWPORTS,
-    routeCount: routes.length,
+    screenshotRouteCount: routes.length,
+    redirectRouteCount: redirectRoutes.length,
     entries: [],
+    redirects: [],
   }
 
   mkdirSync(OUT_DIR, { recursive: true })
@@ -274,6 +335,29 @@ test('screenshot + UX audit — all routes x 3 viewports', async ({ browser, req
       writeManifest()
     }
 
+    // Redirect routes — desktop context only: record the redirect target, no screenshot.
+    if (vp.name === 'desktop') {
+      for (const rr of redirectRoutes) {
+        await page.goto(rr.route, { waitUntil: 'domcontentloaded' })
+        await page.waitForSelector('nav a', { timeout: 15_000 }).catch(() => {})
+        await page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => {})
+        await page.waitForTimeout(800)
+        const resolvedPath = new URL(page.url()).pathname
+        manifest.redirects.push({
+          route: rr.route,
+          slug: rr.slug,
+          title: rr.title,
+          expectedTarget: rr.expectedTarget,
+          resolvedUrl: page.url(),
+          resolvedPath,
+          redirected: resolvedPath !== rr.route,
+          matchedExpectedTarget: resolvedPath === rr.expectedTarget,
+          resolvedFrom: rr.resolvedFrom,
+        })
+        writeManifest()
+      }
+    }
+
     await context.close()
   }
 
@@ -299,4 +383,5 @@ test('screenshot + UX audit — all routes x 3 viewports', async ({ browser, req
 
   writeManifest()
   expect(manifest.entries.length).toBe(routes.length * VIEWPORTS.length)
+  expect(manifest.redirects.length).toBe(redirectRoutes.length)
 })

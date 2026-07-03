@@ -1,0 +1,3075 @@
+{
+  "generatedAt": "2026-07-03T15:14:10.465Z",
+  "baseURL": "http://localhost:5176",
+  "backend": "http://127.0.0.1:8083 (worktree uvicorn, seeded reports/) via vite proxy on 5176",
+  "resolvedIds": {
+    "runId": "NO_RUN_SEEDED",
+    "reportEvaluationId": "eval_reversal_quick_triage_9cd53b15afdb",
+    "strategyName": "four_layer",
+    "promoteId": "four_layer"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "laptop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "screenshotRouteCount": 23,
+  "redirectRouteCount": 3,
+  "entries": [
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/home.png",
+      "headingText": "首頁 · 控制塔",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger",
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/four_layer",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/four_layer",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_strategies_detail.png",
+      "headingText": "Four-Layer Resonance",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry",
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /strategies → name=four_layer"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger",
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/evaluations/eval_reversal_quick_triage_9cd53b15afdb",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "9cd53b15afdb"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /research/candidates → latest_evaluation_id=eval_reversal_quick_triage_9cd53b15afdb"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/four_layer",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/four_layer",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer/audit",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=four_layer"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "parquet_scan",
+        "catalog"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "parquet_scan",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "catalog",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/home.png",
+      "headingText": "首頁 · 控制塔",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry",
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/four_layer",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/four_layer",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_strategies_detail.png",
+      "headingText": "Four-Layer Resonance",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry",
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /strategies → name=four_layer"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger",
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/evaluations/eval_reversal_quick_triage_9cd53b15afdb",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "9cd53b15afdb"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /research/candidates → latest_evaluation_id=eval_reversal_quick_triage_9cd53b15afdb"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/four_layer",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/four_layer",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer/audit",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=four_layer"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "parquet_scan",
+        "catalog"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "parquet_scan",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "catalog",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/home.png",
+      "headingText": "首頁 · 控制塔",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry",
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/four_layer",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/four_layer",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_strategies_detail.png",
+      "headingText": "Four-Layer Resonance",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry",
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /strategies → name=four_layer"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/eval_reversal_quick_triage_9cd53b15afdb",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "ledger",
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/evaluations/eval_reversal_quick_triage_9cd53b15afdb",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "ledger",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/9cd53b15afdb/report",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "9cd53b15afdb"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "GET /research/candidates → latest_evaluation_id=eval_reversal_quick_triage_9cd53b15afdb"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 404,
+          "ok": false,
+          "success": false,
+          "error": {
+            "code": "NOT_FOUND",
+            "message": "not found",
+            "detail": {
+              "resource": "run",
+              "id": "NO_RUN_SEEDED"
+            }
+          },
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "watch_registry"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "watch_registry",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/four_layer",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/four_layer",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/four_layer/audit",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": true
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=four_layer"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "empty",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": true
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "parquet_scan",
+        "catalog"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "parquet_scan",
+          "dataEmpty": true
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "catalog",
+          "dataEmpty": false
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "data",
+      "isNotFound": false,
+      "dataSources": [
+        "pending"
+      ],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": false
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 200,
+          "ok": true,
+          "success": true,
+          "error": null,
+          "dataSource": "pending",
+          "dataEmpty": false
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "route": "/research/validate",
+      "slug": "redirect_research_validate",
+      "title": "Validate → Deployment",
+      "expectedTarget": "/deploy/gate",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "resolvedPath": "/deploy/gate",
+      "redirected": true,
+      "matchedExpectedTarget": true
+    },
+    {
+      "route": "/research/promote/four_layer",
+      "slug": "redirect_research_promote",
+      "title": "Promote → Deployment",
+      "expectedTarget": "/deploy/promote/four_layer",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/four_layer",
+      "resolvedPath": "/deploy/promote/four_layer",
+      "redirected": true,
+      "matchedExpectedTarget": true,
+      "resolvedFrom": "fallback (roster empty) → strategy_id=four_layer"
+    },
+    {
+      "route": "/monitor/watch",
+      "slug": "redirect_monitor_watch",
+      "title": "Paper-Watch → Live OOS",
+      "expectedTarget": "/live-oos/watch",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "resolvedPath": "/live-oos/watch",
+      "redirected": true,
+      "matchedExpectedTarget": true
+    }
+  ]
+}
