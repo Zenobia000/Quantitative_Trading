@@ -212,5 +212,55 @@ def watch_resume_cmd(strategy: str) -> None:
     click.echo(f"▶  {st.strategy} resumed — state={st.state}（剩 {st.days_remaining} 天）")
 
 
+# --------------------------------------------------------------------------- #
+# live-OOS queue — the human-selection layer the after-close scheduler consumes #
+# --------------------------------------------------------------------------- #
+@cli.group("live-oos")
+def live_oos_group() -> None:
+    """Live-OOS queue: consume human-selected candidates into paper/live OOS (Goal 10)."""
+
+
+@live_oos_group.command("consume")
+@click.option("--date", "date_str", default=None,
+              help="as-of session (YYYY-MM-DD); default = today Asia/Taipei")
+def live_oos_consume_cmd(date_str: str | None) -> None:
+    """Consume the queue: enroll selected berths, run selected replays, sync berth state.
+
+    ONLY human-selected queue items run — an unselected candidate never auto-runs
+    (Goal 10 acceptance #1). Berth enrollment is now queue-driven (ADR-040): this is
+    the primary path that gives the after-close scheduler its active berths. Meant to
+    fire on the same after-close tick, *before* the per-strategy session — see
+    ``deploy/after-close.service`` (``ExecStartPre``) and ``deploy/README``. Always exits
+    0 on a normal tick (an empty queue is a clean no-op)."""
+    from backtest_platform.research.live_oos_consumer import consume_queue
+
+    as_of = date.fromisoformat(date_str) if date_str else _today_taipei()
+    report = consume_queue(as_of)
+    click.echo(
+        f"live-oos consume {as_of}: enrolled={list(report.enrolled)} "
+        f"replayed={list(report.replayed)} synced={list(report.synced)} "
+        f"skipped={list(report.skipped)}"
+    )
+
+
+@live_oos_group.command("list")
+@click.option("--state", default=None,
+              help="filter by queue state (queued/running/paused/completed/expired/cancelled)")
+def live_oos_list_cmd(state: str | None) -> None:
+    """List the live-OOS queue: latest folded state, kind and selection audit per item."""
+    from backtest_platform.research.live_oos_queue import list_queue
+
+    items = list_queue(state=state)
+    if not items:
+        click.echo("live-oos 佇列目前為空。" if state is None else f"live-oos 佇列無 {state} 項。")
+        return
+    for it in items:
+        obs = it.get("observation", {})
+        click.echo(
+            f"[{it['state']}] {it['queue_id']}  {it['strategy']}  kind={obs.get('kind')}  "
+            f"override={it.get('override')}  reason={it.get('selection_reason')!r}"
+        )
+
+
 if __name__ == "__main__":
     cli()

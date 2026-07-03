@@ -234,7 +234,18 @@ registry's folded states (`active`→`running`, `paused`→`paused`, `expired`�
 `exited`→`completed`) plus two queue-only pre/terminal states (`queued`, `cancelled`).
 
 `position_size` is always `0.0` for live-OOS items (zero-capital observation;
-`evaluate_two_stage` never sizes a non-REAL verdict).
+`evaluate_two_stage` never sizes a non-REAL verdict). `observation.verdict_dsr` carries
+the numeric DSR (null for non-berth kinds) — the Goal 10 consumer needs it to enroll
+the berth, since `dsr_band` alone loses the number.
+
+**Consumption (Goal 10 / ADR-040):** the queue is consumed by
+`research.live_oos_consumer.consume_queue`, wired to the after-close tick
+(`deploy/after-close.service` `ExecStartPre` → `live-oos consume`). A `queued`
+`paper_watch_berth` is enrolled via `watch_registry.enroll` (→ `running`); a `queued`
+`paper_replay` runs once (→ `completed`, carrying a `run` block); running/paused berths
+re-fold their state from the registry each tick. **Nothing outside the queue runs** —
+an unselected candidate never auto-runs paper replay (acceptance #1). `run_after_close`'s
+berth gate is unchanged; the queue only changes *how berths come to exist*.
 
 ---
 

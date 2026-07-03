@@ -21,11 +21,21 @@ Discord, while a strategy with no active觀察艙 berth is refused before it run
   noise. Installing the extra is therefore a data-quality prerequisite, not optional
   polish (the calendar mode is logged once at first fire — see doc 14 §3).
 - `.env` filled with `FINLAB_API_TOKEN`, `POSTGRES_*`, and `DISCORD_*` (gitignored).
-- **The strategy is enrolled in the觀察艙** (ADR-033): a real after-close run is
-  refused unless the strategy holds an active berth. Enroll it *before* installing
-  the timer:
+- **The strategy holds an active觀察艙 berth** (ADR-033): a real after-close run is
+  refused unless the strategy holds an active berth. As of ADR-040 (Goal 10) the
+  **primary** way a berth comes to exist is the **live-OOS selection queue**: an
+  operator selects a candidate for Live OOS in the Candidate Pool, and the timer's
+  `ExecStartPre` (`live-oos consume`) enrolls the berth on the next fire. So the
+  normal path needs no manual enroll — just select the candidate. The manual CLI
+  remains for ops override / testing:
 
   ```bash
+  # Preferred: select in the Candidate Pool UI (or `candidates select-live-oos`),
+  # then the after-close.service ExecStartPre consumes the queue and enrolls the berth.
+  uv run python -m backtest_platform.orchestration.cli live-oos consume   # what ExecStartPre runs
+  uv run python -m backtest_platform.orchestration.cli live-oos list      # inspect the queue
+
+  # Manual override (ops / testing) — enroll a berth directly:
   uv run python -m backtest_platform.orchestration.cli \
       watch enroll --strategy inst_flow --dsr 0.908
   uv run python -m backtest_platform.orchestration.cli watch status

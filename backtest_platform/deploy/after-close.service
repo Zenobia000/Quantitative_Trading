@@ -11,6 +11,11 @@ Type=oneshot
 WorkingDirectory=%h/Quantitative_Trading/backtest_platform
 # Load secrets (FINLAB_API_TOKEN / POSTGRES_* / DISCORD_*) — gitignored, never in VCS.
 EnvironmentFile=%h/Quantitative_Trading/backtest_platform/.env
+# Consume the live-OOS selection queue FIRST (ADR-040 / Goal 10): enroll the berths a
+# human picked from the Candidate Pool, run any selected paper replays, and sync berth
+# state. This is now the primary enrollment path — the per-strategy session below only
+# runs strategies holding an active berth. An empty queue is a clean no-op (exit 0).
+ExecStartPre=/usr/bin/env uv run python -m backtest_platform.orchestration.cli live-oos consume
 # --date defaults to today Asia/Taipei; the trading-day + after-close guards make
 # a weekend / holiday / early fire a clean no-op (exit 0). A failed daily flow
 # exits 1 → systemd marks the unit failed and the run alerts Discord.
