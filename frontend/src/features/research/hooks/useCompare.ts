@@ -8,6 +8,6 @@ export function useCompare(baseline?: string, runIds: string[] = [], enabled = t
     queryKey: ['compare', baseline ?? null, runIds],
     queryFn: () => getCompare({ baseline, run_ids: runIds }),
     enabled,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

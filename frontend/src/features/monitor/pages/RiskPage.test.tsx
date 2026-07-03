@@ -24,7 +24,7 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('RiskPage', () => {
   it('pending stub → PendingNote (current state, no fabrication)', async () => {
-    mock({}, { data_source: 'pending_m4', ttl: 30 })
+    mock({}, { data_source: 'pending', ttl: 30 })
     renderPage()
     await waitFor(() => expect(screen.getByText(/risk telemetry producer/)).toBeInTheDocument())
   })

@@ -27,15 +27,15 @@ export interface RunMarker {
 
 export interface RunCandles {
   run_id: string
-  /** 目前作圖的個股（無交易個股時為 null）。 */
-  symbol: string | null
-  /** 該 run 有交易的個股清單（驅動 SymbolSelector）。 */
-  symbols: string[]
+  /** 目前作圖的個股 stock_id（無交易個股時為 null；doc 25 §1.3 canonical id）。 */
+  stock_id: string | null
+  /** 該 run 有交易的 stock_id 清單（驅動個股 selector）。 */
+  stock_ids: string[]
   candles: RunCandle[]
   markers: RunMarker[]
 }
 
-/** GET /runs/{id}/candles — 個股 K 線 + 進出場 marker（可選 ?symbol= 指定個股，對齊 /trades?symbol=）。 */
-export function getRunCandles(runId: string, symbol?: string): Promise<ApiResult<RunCandles>> {
-  return http<RunCandles>(`/runs/${encodeURIComponent(runId)}/candles`, { query: { symbol } })
+/** GET /runs/{id}/candles — 個股 K 線 + 進出場 marker（可選 ?stock_id= 指定個股，A5 canonical id）。 */
+export function getRunCandles(runId: string, stockId?: string): Promise<ApiResult<RunCandles>> {
+  return http<RunCandles>(`/runs/${encodeURIComponent(runId)}/candles`, { query: { stock_id: stockId } })
 }

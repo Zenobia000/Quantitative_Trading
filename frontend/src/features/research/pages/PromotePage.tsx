@@ -12,6 +12,7 @@ import { useStrategies } from '../hooks/useStrategies'
 import { PageHeader } from '@/components/PageHeader'
 import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
+import { ApiError } from '@/services/http'
 
 const STAGES = ['draft', 'paper', 'live'] as const
 
@@ -93,7 +94,15 @@ export function PromotePage() {
               >
                 {advance.isPending ? '晉升中…' : `晉升至 ${nextStage} →`}
               </button>
-              {advance.isError && <span className="text-error">{(advance.error as Error)?.message}</span>}
+              {advance.isError && (
+                // A4：後端把非法轉移映成 400 BAD_REQUEST；gate-blocked advance 則映成
+                // 409 IS_GATE_NOT_PASSED（backstop——前端已用 validation_status 先行 gate）。
+                <span className="text-error">
+                  {advance.error instanceof ApiError && advance.error.code === 'IS_GATE_NOT_PASSED'
+                    ? `晉升被驗證閘阻擋：${advance.error.message}`
+                    : (advance.error as Error)?.message}
+                </span>
+              )}
             </div>
             {!gatePassed && (
               <p className="text-xs text-warning">

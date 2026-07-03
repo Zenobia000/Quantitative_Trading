@@ -92,6 +92,11 @@ export function SweepPage() {
         <section className="mb-3 rounded-lg border border-border bg-surface p-4 text-sm">
           {submit.isError ? (
             <span className="text-error">提交失敗：{(submit.error as Error)?.message}</span>
+          ) : job.isError ? (
+            // A4：未知/過期 job → 後端 404，顯示錯誤訊息而非無盡 queued。
+            <span className="text-error">
+              任務狀態查詢失敗：{(job.error as Error)?.message}（job {jobId} 可能已過期或不存在）
+            </span>
           ) : (
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge tone={jobData?.status === 'done' ? 'gain' : jobData?.status === 'failed' ? 'error' : 'warning'}>
