@@ -503,7 +503,9 @@
       "rerun": "重跑",
       "selectLiveOos": "勾選 Live OOS",
       "marked": "已標記 {{action}}（僅本地）",
-      "reasonRequired": "需 override 理由"
+      "saved": "已寫入 {{action}}",
+      "reasonRequired": "需 override 理由",
+      "error": "失敗：{{detail}}"
     }
   }
 }

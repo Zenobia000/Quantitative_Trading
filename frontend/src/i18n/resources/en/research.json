@@ -503,7 +503,9 @@
       "rerun": "Rerun",
       "selectLiveOos": "Select Live OOS",
       "marked": "Marked {{action}} (local only)",
-      "reasonRequired": "Requires a reason (override)"
+      "saved": "Saved {{action}}",
+      "reasonRequired": "Requires a reason (override)",
+      "error": "Failed: {{detail}}"
     }
   }
 }

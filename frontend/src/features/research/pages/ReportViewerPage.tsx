@@ -104,14 +104,19 @@ export function ReportViewerPage() {
       <GateChecksSection
         checks={result.checks}
         dsr={num(result.headline_metrics.dsr)}
-        truthVerdict={result.verdict.truth_verdict}
+        truthVerdict={result.verdict.truth_verdict ?? ''}
       />
 
       {/* 4. Linked trade log */}
       <LinkedTradeLogSection runId={result.run_id} partial={tradesPartial} />
 
-      {/* 6. Decision action bar */}
-      <DecisionActionBar source={load.source} recommendationAction={result.verdict.recommendation.action} />
+      {/* 6. Decision action bar（api 模式共用 Candidate Pool mutation；決策目標 cand_<strategy>） */}
+      <DecisionActionBar
+        source={load.source}
+        recommendationAction={result.verdict.recommendation.action}
+        strategy={result.strategy}
+        recommendation={result.verdict.live_oos_recommendation}
+      />
     </div>
   )
 }

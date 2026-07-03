@@ -160,7 +160,9 @@ export function RunReportPage() {
         </div>
       </section>
 
-      {/* Open-in-notebook + 完整報告（Goal 5 Report Viewer） */}
+      {/* Open-in-notebook + 完整報告（Goal 5 Report Viewer）。
+          帶 run_id：Report Viewer 的 getEvaluation 會以候選池 report_pack_ref 反查出對應
+          evaluation_id（store 以 evaluation_id 為鍵）；反查不到 → 404 → fixture fallback。 */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <NotebookButton runId={run.run_id} />
         <button
