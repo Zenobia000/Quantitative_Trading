@@ -456,6 +456,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | POST | `/metrics/trades` | 交易清單 → E 指標（缺 key→400） | `validation.metrics` |
 | GET | `/research/workflows/{strategy}` | 列該策略宣告的研究工作流（ADR-029；未宣告/未知→400） | `research.workflows.loader.list_workflow_configs` |
 | POST | `/research/workflows/{workflow}` | 非同步排程研究工作流 job（doe/go_gates/truth_gate/paper_replay），回 202 `{job_id,status}`；未知 workflow→404、未知策略→400 | `jobs.submit` + `research.workflows.*` |
+| POST | `/research/simulate` | **研究沙盤** what-if（成本乘數/滑價/capacity/停損/停利）——讀既有 equity/trades sidecar 重算 before/after 指標 + affected trades，回 branch suggestion（不落地 config）；唯讀不持久化；未知 run→404、參數越界→422（Goal 8）。panel 策略無 per-trade pnl → 停損/停利誠實 `not_available` | `research.simulation.simulate`（over `run_series_store`）|
 | GET | `/system/bundles` | 掃 `data/parquet*` manifest → bundle 清單（id/path/kind/stock_count/coverage/data_hash；分頁）。無 manifest / 損毀 → typed-empty（`data_source="parquet_scan"`），永不 500 | `data.bundle_registry.scan_bundles` |
 | GET | `/system/bundles/{id}/quality` | 單一 bundle 由 manifest 衍生的品質摘要（default: row 統計；universe: alive/delisted + ingest 計數）。未知 id → **404**（A4；先前 `200+data:null+data_source="not_found"`） | `data.bundle_registry.compute_bundle_quality` |
 | POST | `/system/ingest` | 非同步 ingest job（FinLab/FinMind → parquet），回 202 `{job_id,status}`；輪詢 `/system/ingest/{id}/status`（8.H.6） | `orchestration.collaborators.make_ingest` + `jobs.submit` |
