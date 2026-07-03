@@ -195,7 +195,7 @@ export function RunReportPage() {
           {t('report.action.tradeReview')}
         </button>
         <button
-          onClick={() => navigate(`/research/validate?run_id=${encodeURIComponent(run.run_id)}`)}
+          onClick={() => navigate(`/deploy/gate?run_id=${encodeURIComponent(run.run_id)}`)}
           className="ml-auto rounded-pill bg-text px-4 py-1 font-medium text-base hover:opacity-90 disabled:opacity-50"
           disabled={gateRaw !== 'PASS'}
           title={gateRaw !== 'PASS' ? t('report.action.validateHint') : undefined}

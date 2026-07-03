@@ -22,8 +22,8 @@ describe('nav — Live OOS zone migration', () => {
     expect(monitorTos).not.toContain('/monitor/watch')
   })
 
-  it('orders zones Research → Live OOS → Monitor → System', () => {
-    expect(NAV.map((z) => z.zone)).toEqual(['research', 'live-oos', 'monitor', 'system'])
+  it('orders zones Research → Live OOS → Deployment → Monitor → System', () => {
+    expect(NAV.map((z) => z.zone)).toEqual(['research', 'live-oos', 'deployment', 'monitor', 'system'])
   })
 })
 

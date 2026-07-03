@@ -44,12 +44,13 @@ export function HomePage() {
             {t('hero.cta')}
           </button>
         </div>
+        {/* workflow ribbon — 對齊新 IA 三旅程軸：研究 triage → 候選池 → Live OOS → 部署（rebuild IA §1.0） */}
         <div className="mt-3 flex flex-wrap gap-2">
           {[
             { label: t('nav:item.strategies'), to: '/research/strategies' },
-            { label: t('nav:item.runs'), to: '/research/runs' },
-            { label: t('nav:item.validate'), to: '/research/validate' },
-            { label: t('nav:item.fleet'), to: '/monitor' },
+            { label: t('nav:item.candidates'), to: '/research/candidates' },
+            { label: t('nav:item.liveOosQueue'), to: '/live-oos/queue' },
+            { label: t('nav:item.strictGate'), to: '/deploy/gate' },
           ].map((q) => (
             <button
               key={q.to}

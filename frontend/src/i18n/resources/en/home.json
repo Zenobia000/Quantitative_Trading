@@ -3,7 +3,7 @@
   "subtitle": "Cross-zone overview — research loop / fleet health / system status",
   "hero": {
     "headline": "Start a backtest iteration",
-    "flow": "Hypothesis → Backtest → Compare → Gate → Promote",
+    "flow": "Assets → Evaluate → Report → Candidates → OOS/Deploy",
     "cta": "New Backtest"
   },
   "researchStatus": "Research Status",

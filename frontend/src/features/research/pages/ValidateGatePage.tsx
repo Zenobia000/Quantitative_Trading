@@ -1,5 +1,5 @@
 /*
- * Validate gate（/research/validate?run_id=）。三源對齊 assembly + design.pen frame + page spec。
+ * Validate gate（UI route /deploy/gate?run_id=，rebuild IA §1.3 移入 Deployment zone）。三源對齊 assembly + design.pen frame + page spec。
  * is_gate_checklist 接真實 GET /gate/spec（shipped，顯示硬門檻規格）。
  * 選定 candidate run（?run_id=）後：接真實 GET /research/validate/{id}/gate-state（validation_status
  * + stage + 轉移歷史）與 GET /research/validate/{id}/wfa（IS252/OOS63 rolling fold 日期窗）。
@@ -38,7 +38,7 @@ export function ValidateGatePage() {
     <div>
       <PageHeader
         title={t('validate.title')}
-        route="/research/validate"
+        route="/deploy/gate"
         subtitle={t('validate.subtitle')}
       />
 
