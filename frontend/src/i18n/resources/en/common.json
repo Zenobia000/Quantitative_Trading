@@ -1,0 +1,68 @@
+{
+  "app": {
+    "wordmark": "backtest_platform",
+    "documentTitle": "backtest_platform · Four-Layer Resonance"
+  },
+  "lang": {
+    "zh": "中",
+    "en": "EN",
+    "switch": "Language"
+  },
+  "theme": {
+    "label": "Theme",
+    "light": "Light",
+    "system": "System",
+    "dark": "Dark"
+  },
+  "action": {
+    "retry": "Retry",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…"
+  },
+  "state": {
+    "loading": "Loading…",
+    "noData": "No data",
+    "awaitingBackend": "Awaiting data"
+  },
+  "chrome": {
+    "navOpen": "Open navigation",
+    "navClose": "Close navigation",
+    "navLabel": "Navigation"
+  },
+  "cmdk": {
+    "trigger": "⌘K Search / Go",
+    "placeholder": "Search pages / jump…",
+    "empty": "No matches",
+    "dialog": "Command palette",
+    "results": "Page navigation results"
+  },
+  "pending": {
+    "note": "(endpoint not yet wired — values hidden)"
+  },
+  "placeholder": {
+    "notBuilt": "Not yet built",
+    "ref": "Page spec",
+    "notFound": "Page not found"
+  },
+  "wired": {
+    "subtitle": "Endpoint wired; data pending backend producer",
+    "wired": "Wired",
+    "pending": "Awaiting data",
+    "mainPending": "Primary endpoint {{endpoint}}",
+    "empty": "{{endpoint}}: no data"
+  },
+  "emptyState": {
+    "headline": "No strategies yet — start with your first backtest",
+    "subtitle": "Paste a CLI command or click below to start your first strategy iteration",
+    "cta": "Create your first strategy",
+    "copied": "Copied",
+    "runExample": "Start from a blank form",
+    "copyCli": "Copy CLI command",
+    "copiedCli": "CLI copied",
+    "docs": "View docs",
+    "clickToCopy": "Click to copy"
+  }
+}

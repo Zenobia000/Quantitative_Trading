@@ -6,23 +6,21 @@
  * WFA scatter（per-fold IS/OOS 績效）需 parquet → pending；OOS vault / redline / signoff 亦 pending。
  */
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useGateSpec } from '../hooks/useGateSpec'
 import { useGateState } from '../hooks/useGateState'
 import { useValidateWfa } from '../hooks/useValidateWfa'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
-import { StatusBadge } from '@/components/StatusBadge'
-
-function statusTone(s?: string | null): 'gain' | 'loss' | 'warning' | 'muted' {
-  if (!s) return 'muted'
-  if (s.includes('pass')) return 'gain'
-  if (s.includes('fail')) return 'loss'
-  return 'warning'
-}
+import { EnumBadge } from '@/components/EnumBadge'
+import { useErrorText } from '@/i18n/useErrorText'
 
 export function ValidateGatePage() {
+  const { t } = useTranslation('research')
+  const errText = useErrorText()
+  const navigate = useNavigate()
   const [sp, setSp] = useSearchParams()
   const runId = sp.get('run_id') ?? ''
   const [input, setInput] = useState(runId)
@@ -39,53 +37,62 @@ export function ValidateGatePage() {
   return (
     <div>
       <PageHeader
-        title="Validate gate"
+        title={t('validate.title')}
         route="/research/validate"
-        subtitle="不可逆 gate 狀態機 · 證明 edge 真實非過擬合"
+        subtitle={t('validate.subtitle')}
       />
 
       {/* candidate run selector */}
       <section className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-3 text-sm">
-        <label className="text-xs text-text-secondary">Candidate run_id</label>
+        <label className="text-xs text-text-secondary">{t('validate.candidateLabel')}</label>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="run_… （送驗證的候選 run）"
+          placeholder={t('validate.candidatePlaceholder')}
           className="min-w-[220px] flex-1 rounded-md border border-border bg-input px-3 py-1.5 font-mono text-xs"
         />
         <button
           onClick={() => setSp(input.trim() ? { run_id: input.trim() } : {})}
           className="rounded-md border border-border px-3 py-1.5 text-text-secondary hover:text-text"
         >
-          載入
+          {t('validate.load')}
+        </button>
+        <button
+          onClick={() => navigate('/research/runs')}
+          className="text-xs text-text-muted hover:text-text"
+        >
+          {t('validate.pickFromRuns')}
         </button>
         {gs && (
-          <StatusBadge tone={statusTone(gs.validation_status)}>
-            {gs.validation_status ?? 'draft'} · {gs.stage ?? '—'}
-          </StatusBadge>
+          <span className="flex items-center gap-1.5">
+            <EnumBadge family="validation" value={gs.validation_status ?? 'draft'} />
+            <EnumBadge family="stage" value={gs.stage} />
+          </span>
         )}
       </section>
 
       {/* gate_status_header — 需 candidate run */}
       {!runId && (
         <div className="mb-3">
-          <PendingNote label="Gate 狀態機（Draft→IS→WFA→OOS）+ 試驗數 / power gauge（請先輸入 candidate run_id）" />
+          <PendingNote label={t('validate.pending.gateHeader')} />
         </div>
       )}
 
       {/* is_gate_checklist — 真實 GET /gate/spec */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">IS gate 硬門檻</h2>
-          <span className="text-xs text-text-muted">（GET /gate/spec · 規格）</span>
+          <h2 className="text-[18px] font-semibold">{t('validate.gateChecklist.title')}</h2>
+          <span className="text-xs text-text-muted">{t('validate.gateChecklist.source')}</span>
         </div>
         {isLoading ? (
           <SkeletonRows rows={5} cols={3} />
         ) : isError ? (
           <div className="text-sm">
-            <p className="text-error">gate 規格載入失敗：{(error as Error)?.message}</p>
+            <p className="text-error">
+              {t('errors:load.failed', { resource: t('validate.gateSpec.resource'), detail: errText(error) })}
+            </p>
             <button onClick={() => refetch()} className="mt-2 rounded-md border border-border px-3 py-1 hover:text-text">
-              重試
+              {t('common:action.retry')}
             </button>
           </div>
         ) : (
@@ -95,7 +102,7 @@ export function ValidateGatePage() {
                 key={c.key}
                 className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm"
               >
-                <StatusBadge tone={c.kind === 'edge' ? 'gain' : 'muted'}>{c.kind}</StatusBadge>
+                <EnumBadge family="criterion" value={c.kind} />
                 <span className="text-text">{c.label}</span>
                 <span className="ml-auto font-mono text-xs text-text-secondary tabular">
                   {c.key} {c.op} {c.threshold}
@@ -110,19 +117,19 @@ export function ValidateGatePage() {
       {runId && (
         <section className="mb-3 rounded-lg border border-border bg-surface p-4">
           <div className="mb-2 flex items-center gap-2">
-            <h2 className="text-[18px] font-semibold">驗證狀態轉移</h2>
-            <span className="text-xs text-text-muted">（gate-state · 持久化 history）</span>
+            <h2 className="text-[18px] font-semibold">{t('validate.history.title')}</h2>
+            <span className="text-xs text-text-muted">{t('validate.history.source')}</span>
           </div>
           {gateState.isLoading ? (
             <SkeletonRows rows={2} cols={2} />
           ) : (gs?.history ?? []).length === 0 ? (
-            <p className="text-sm text-text-muted">此 run 尚無驗證轉移紀錄。</p>
+            <p className="text-sm text-text-muted">{t('validate.history.empty')}</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {(gs?.history ?? []).map((ev, i) => (
                 <li key={i} className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm">
-                  <StatusBadge tone={statusTone(ev.validation_status)}>{ev.validation_status}</StatusBadge>
-                  <span className="text-text-secondary">{ev.stage}</span>
+                  <EnumBadge family="validation" value={ev.validation_status} />
+                  <EnumBadge family="stage" value={ev.stage} />
                   <span className="ml-auto font-mono text-xs text-text-muted tabular">{ev.at}</span>
                 </li>
               ))}
@@ -135,13 +142,13 @@ export function ValidateGatePage() {
       {runId && (
         <section className="mb-3 rounded-lg border border-border bg-surface p-4">
           <div className="mb-2 flex items-center gap-2">
-            <h2 className="text-[18px] font-semibold">WFA folds</h2>
-            <span className="text-xs text-text-muted">（IS 252d + OOS 63d rolling 63d）</span>
+            <h2 className="text-[18px] font-semibold">{t('validate.wfa.title')}</h2>
+            <span className="text-xs text-text-muted">{t('validate.wfa.window')}</span>
           </div>
           {wfa.isLoading ? (
             <SkeletonRows rows={3} cols={4} />
           ) : folds.length === 0 ? (
-            <p className="text-sm text-text-muted">此 run 無 fold（缺 IS 區間或視窗過短）。</p>
+            <p className="text-sm text-text-muted">{t('validate.wfa.empty')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-sm">
@@ -176,10 +183,10 @@ export function ValidateGatePage() {
 
       {/* 仍需後端／parquet 的階段 */}
       <div className="flex flex-col gap-2">
-        <PendingNote label="WFA IS-vs-OOS scatter（per-fold 績效，需 parquet）" />
-        <PendingNote label="OOS sealed vault（IS 過後解封）" />
-        <PendingNote label="PBO / DSR 紅線（吃試驗次數 deflate）" />
-        <PendingNote label="事前承諾對照 + 風控簽核（不可逆 approved）" />
+        <PendingNote label={t('validate.pending.scatter')} />
+        <PendingNote label={t('validate.pending.vault')} />
+        <PendingNote label={t('validate.pending.redline')} />
+        <PendingNote label={t('validate.pending.signoff')} />
       </div>
     </div>
   )

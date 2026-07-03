@@ -1,0 +1,18 @@
+{
+  "gate": { "PASS": "Passed", "FAIL": "Failed", "INCOMPLETE": "Incomplete" },
+  "validation": {
+    "draft": "Draft",
+    "is_pass": "IS Passed",
+    "is_fail": "IS Failed",
+    "wfa_pass": "WFA Passed",
+    "wfa_fail": "WFA Failed",
+    "oos_pass": "OOS Passed",
+    "oos_fail": "OOS Failed"
+  },
+  "stage": { "draft": "Draft", "paper": "Paper", "live": "Live" },
+  "job": { "queued": "Queued", "running": "Running", "done": "Completed", "failed": "Failed" },
+  "session": { "OK": "OK", "FAILED": "Failed", "NO_DATA": "No Data", "SKIP": "Skipped" },
+  "criterion": { "edge": "Edge Criterion", "guard": "Guardrail" },
+  "watchState": { "active": "Active", "paused": "Paused", "expired": "Expired", "exited": "Exited" },
+  "timerHealth": { "ok": "Scheduler OK", "stale": "Scheduler may be down", "never_ran": "Never Ran" }
+}

@@ -1,0 +1,165 @@
+{
+  "queryState": {
+    "resource": "資料"
+  },
+  "fleet": {
+    "title": "策略艦隊總控",
+    "subtitle": "多策略配置與健康（ADR-022 fleet）",
+    "summary": {
+      "heading": "組合摘要",
+      "resource": "組合摘要",
+      "pending": "組合摘要（待紙上交易遙測）",
+      "empty": "尚無組合資料",
+      "strategies": "在跑策略",
+      "totalEquity": "總淨值",
+      "totalPositions": "總持倉"
+    },
+    "board": {
+      "heading": "艦隊（每策略最新）",
+      "resource": "策略艦隊",
+      "pending": "艦隊（待多策略實跑遙測）",
+      "empty": "尚無在跑策略",
+      "col": {
+        "strategy": "策略",
+        "equity": "淨值",
+        "positions": "持倉",
+        "heat": "熱度",
+        "updated": "更新"
+      }
+    },
+    "deferred": "相關性矩陣 / 艦隊操作（correlation 端點待 producer；操作需實盤控制）"
+  },
+  "board": {
+    "title": "運行看板",
+    "subtitle": "研究 run 生命週期 + 審判庭判決（runs 表，10s 輪詢）",
+    "resource": "運行看板",
+    "pending": "運行看板（待 TimescaleDB runs 表——跑一次 run-is / run-batch 即點亮）",
+    "empty": "尚無 run 記錄",
+    "kpi": {
+      "total": "總 runs",
+      "running": "進行中",
+      "done": "完成",
+      "failed": "失敗"
+    },
+    "recent": "最新 runs（新到舊）",
+    "col": {
+      "run": "Run",
+      "strategy": "策略",
+      "stocks": "標的",
+      "window": "窗口",
+      "status": "狀態",
+      "gate": "審判庭",
+      "sharpe": "Sharpe",
+      "created": "建立"
+    }
+  },
+  "watch": {
+    "title": "Paper-Watch 觀察艙",
+    "subtitle": "零資金 3 個月觀察窗（ADR-033）· 排程本體 systemd，此處負責看見與管理",
+    "resource": "觀察艙",
+    "pending": "觀察艙（待 registry）",
+    "empty": "目前無觀察艙艙位（尚無 PAPER_WATCH 策略進艙）",
+    "observedDays": "觀察日",
+    "expiry": "到期 {{date}}",
+    "daysRemaining": "剩 {{days}} 天",
+    "overdue": "已逾期 {{days}} 天",
+    "recentSessions": "最近 session",
+    "noSessions": "尚無 session 紀錄",
+    "processing": "處理中…",
+    "resume": "恢復觀察 ▶",
+    "pause": "暫停觀察 ⏸",
+    "pausedNote": "已暫停 · after-close 每日略過此艙（不發告警）",
+    "terminalHint": "已終止的艙位無法暫停/恢復",
+    "timer": {
+      "okDetail": "最後成功 session {{date}}",
+      "neverDetail": "此艙位尚無任何 after-close session 紀錄",
+      "staleDetail": "最後成功 session {{date}}，但上一交易日 {{day}} 應已產生 marker",
+      "neverHint": "若已進艙，請在部署主機啟用排程器：",
+      "staleHint": "請在部署主機確認 systemd timer 已啟用：",
+      "docsHint": "詳見 <0>{{path}}</0> 的 after-close.timer 安裝段。"
+    }
+  },
+  "performance": {
+    "title": "績效總覽",
+    "subtitle": "紙上/實盤遙測（背景程式餵入即點亮）",
+    "kpiHeading": "KPI",
+    "kpiResource": "績效 KPI",
+    "kpiPending": "績效 KPI（待紙上交易遙測）",
+    "kpiEmpty": "尚無 KPI",
+    "equityHeading": "淨值曲線（最近）",
+    "equityResource": "淨值序列",
+    "equityPending": "淨值序列（待紙上交易遙測）",
+    "equityEmpty": "尚無淨值點",
+    "kpi": {
+      "currentEquity": "淨值",
+      "totalReturn": "總報酬",
+      "cagr": "CAGR",
+      "sharpe": "Sharpe",
+      "maxDrawdown": "MaxDD",
+      "calmar": "Calmar"
+    },
+    "col": {
+      "time": "時間",
+      "equity": "淨值",
+      "drawdown": "DD"
+    },
+    "deferred": "基準對比 / 月報酬熱圖（benchmark · monthly 端點待 producer）"
+  },
+  "positions": {
+    "title": "部位狀態",
+    "subtitle": "未平倉部位（紙上/實盤）",
+    "resource": "部位快照",
+    "pending": "部位快照（待紙上交易遙測）",
+    "empty": "目前無未平倉部位",
+    "col": {
+      "stock": "股票",
+      "shares": "股數",
+      "entryPrice": "進場價",
+      "stopLoss": "停損",
+      "openedAt": "進場時間",
+      "strategy": "策略"
+    },
+    "deferred": "產業配置 / 集中度 / 即時報價（industry-allocation · concentration · prices 端點待 producer）"
+  },
+  "signals": {
+    "title": "訊號日誌",
+    "subtitle": "訊號 → 成交（紙上/實盤）",
+    "signalsHeading": "最近訊號",
+    "signalsResource": "訊號",
+    "signalsPending": "訊號（待紙上交易遙測）",
+    "signalsEmpty": "尚無訊號",
+    "fillsHeading": "最近成交",
+    "fillsResource": "成交",
+    "fillsPending": "成交（待紙上交易遙測）",
+    "fillsEmpty": "尚無成交",
+    "signalCol": {
+      "time": "時間",
+      "stock": "股票",
+      "action": "動作",
+      "priority": "優先",
+      "submitted": "已送單",
+      "strategy": "策略"
+    },
+    "fillCol": {
+      "time": "時間",
+      "stock": "股票",
+      "side": "方向",
+      "shares": "股數",
+      "price": "價格",
+      "status": "狀態"
+    },
+    "deferred": "訊號漏斗 / 時間軸（signals/funnel · signals/timeline 端點待 producer）"
+  },
+  "risk": {
+    "title": "風控指標",
+    "subtitle": "事前風控 + 熔斷狀態",
+    "resource": "風控指標",
+    "pending": "風控指標（待 risk telemetry producer）",
+    "empty": "尚無風控資料",
+    "portfolioHeat": "組合熱度",
+    "maxDrawdown": "MaxDD",
+    "grossExposure": "總曝險",
+    "openPositions": "持倉數",
+    "deferred": "MaxDD 趨勢 / 熔斷事件（risk/mdd-trend · risk/events 端點待 producer）"
+  }
+}

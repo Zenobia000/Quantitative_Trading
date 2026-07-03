@@ -1,0 +1,18 @@
+{
+  "gate": { "PASS": "通過", "FAIL": "未通過", "INCOMPLETE": "未完成" },
+  "validation": {
+    "draft": "草稿",
+    "is_pass": "IS 通過",
+    "is_fail": "IS 未通過",
+    "wfa_pass": "WFA 通過",
+    "wfa_fail": "WFA 未通過",
+    "oos_pass": "OOS 通過",
+    "oos_fail": "OOS 未通過"
+  },
+  "stage": { "draft": "草稿", "paper": "紙上交易", "live": "實盤" },
+  "job": { "queued": "佇列中", "running": "執行中", "done": "完成", "failed": "失敗" },
+  "session": { "OK": "成功", "FAILED": "失敗", "NO_DATA": "無資料", "SKIP": "略過" },
+  "criterion": { "edge": "Edge 門檻", "guard": "護欄" },
+  "watchState": { "active": "觀察中", "paused": "已暫停", "expired": "已期滿", "exited": "已出艙" },
+  "timerHealth": { "ok": "排程正常", "stale": "排程可能未在跑", "never_ran": "尚未執行" }
+}

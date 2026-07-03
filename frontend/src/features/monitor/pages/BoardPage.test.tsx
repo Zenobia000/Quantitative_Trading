@@ -40,11 +40,12 @@ describe('BoardPage', () => {
     mock([doneRow, runningRow])
     renderPage()
     await waitFor(() => expect(screen.getByText('a1b2c3d4e5f6')).toBeInTheDocument())
-    expect(screen.getByText('PASS')).toBeInTheDocument()
+    // gate/status 經 EnumBadge 本地化：PASS→通過、running→執行中
+    expect(screen.getByText('通過')).toBeInTheDocument()
     expect(screen.getByText('1.234')).toBeInTheDocument()
     expect(screen.getByText('2330, 2317')).toBeInTheDocument()
     // in-flight run：verdict/metrics null → —（不捏造）
-    expect(screen.getByText('running')).toBeInTheDocument()
+    expect(screen.getByText('執行中')).toBeInTheDocument()
   })
   it('pending → PendingNote', async () => {
     mock([], { data_source: 'pending' })

@@ -57,8 +57,9 @@ describe('PromotePage', () => {
     stubFetch('is_pass')
     renderAt()
     // current stage badge + the "advance to live" affordance (paper → live)
-    await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
-    expect(screen.getAllByText('paper').length).toBeGreaterThan(0)
+    // stage enums are now localized (paper → '紙上交易', live → '實盤')
+    await waitFor(() => expect(screen.getByText(/晉升至 實盤/)).toBeInTheDocument())
+    expect(screen.getAllByText('紙上交易').length).toBeGreaterThan(0)
   })
 
   it('shows the immutable audit trail', async () => {
@@ -70,15 +71,15 @@ describe('PromotePage', () => {
   it('gate PASS 證據存在 → advance 鈕可用', async () => {
     stubFetch('is_pass')
     renderAt()
-    await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
-    expect(screen.getByText(/晉升至 live/).closest('button')).not.toBeDisabled()
+    await waitFor(() => expect(screen.getByText(/晉升至 實盤/)).toBeInTheDocument())
+    expect(screen.getByText(/晉升至 實盤/).closest('button')).not.toBeDisabled()
   })
 
   it('無 gate PASS 證據 → advance 鈕 disabled + 說明文字（前端防線）', async () => {
     stubFetch('is_fail')
     renderAt()
-    await waitFor(() => expect(screen.getByText(/晉升至 live/)).toBeInTheDocument())
-    expect(screen.getByText(/晉升至 live/).closest('button')).toBeDisabled()
+    await waitFor(() => expect(screen.getByText(/晉升至 實盤/)).toBeInTheDocument())
+    expect(screen.getByText(/晉升至 實盤/).closest('button')).toBeDisabled()
     expect(screen.getByText(/尚無 IS gate PASS/)).toBeInTheDocument()
   })
 })

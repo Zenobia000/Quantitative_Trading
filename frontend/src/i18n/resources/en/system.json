@@ -1,0 +1,69 @@
+{
+  "data": {
+    "title": "Data Management",
+    "subtitle": "Data ingestion · Universe build · Data bundles",
+    "field": {
+      "start": "Start",
+      "end": "End",
+      "strategy": "Strategy"
+    },
+    "action": {
+      "submitting": "Submitting…",
+      "submitFailed": "Trigger failed: {{detail}}"
+    },
+    "job": {
+      "label": "Job",
+      "statusLabel": "Status",
+      "error": "job {{jobId}} status query failed: {{detail}} (may have expired or no longer exists)"
+    },
+    "ingest": {
+      "heading": "Data Ingestion",
+      "symbols": "Symbols (comma-separated)",
+      "source": "Source",
+      "submit": "Trigger Ingestion",
+      "result": "OK {{ok}} / Failed {{failed}}"
+    },
+    "universe": {
+      "heading": "Universe Build",
+      "submit": "Trigger Build",
+      "result": "{{n}} symbols (alive {{alive}} / delisted {{delisted}})"
+    },
+    "bundles": {
+      "heading": "Data Bundles",
+      "pending": "Data bundles (awaiting backend)",
+      "empty": "No data bundles (nothing scanned in data/parquet*)",
+      "col": {
+        "id": "Bundle",
+        "kind": "Kind",
+        "stockCount": "Symbols"
+      }
+    }
+  },
+  "alerts": {
+    "title": "Alert Configuration",
+    "subtitle": "Built-in alert rules and risk spec (config, not telemetry)",
+    "level": {
+      "CRITICAL": "Critical",
+      "HIGH": "High",
+      "INFO": "Info"
+    },
+    "rules": {
+      "heading": "Alert Rules (built-in)",
+      "riskCount": "Risk spec: {{n}} rules",
+      "pending": "Alert rules",
+      "empty": "No rules yet",
+      "col": {
+        "ruleId": "Rule",
+        "level": "Severity",
+        "title": "Description"
+      }
+    },
+    "channels": {
+      "heading": "Notification Channel (bot_token masked)",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "none": "No notification channel configured yet."
+    },
+    "pending": "Channel editing / test delivery / rule management (awaiting backend rule store)"
+  }
+}

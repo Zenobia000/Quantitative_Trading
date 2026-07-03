@@ -4,24 +4,21 @@
  * fleet_strip + system_health 需 live 資料（M4）→ pending（不假造數字）。
  */
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useRecent, useResearchStatus } from '../hooks/useHome'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { Skeleton } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
+import { StatCard } from '@/components/StatCard'
 import { FirstRunEmptyState } from '@/components/FirstRunEmptyState'
-
-function Kpi({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-3">
-      <div className="text-xs text-text-muted">{label}</div>
-      <div className="mt-1 font-mono text-lg tabular">{value}</div>
-    </div>
-  )
-}
+import { useErrorText } from '@/i18n/useErrorText'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const { t } = useTranslation(['home', 'nav'])
+  const errText = useErrorText()
   const rs = useResearchStatus()
   const rec = useRecent()
   const status = rs.data?.data
@@ -30,85 +27,80 @@ export function HomePage() {
 
   return (
     <div>
-      <PageHeader title="首頁 · 控制塔" route="/" subtitle="跨三區總覽——研究迴圈 / 艦隊健康 / 系統狀態" />
+      <PageHeader title={t('title')} route="/" subtitle={t('subtitle')} />
 
-      {/* command_hero */}
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface px-4 py-3">
-        <button className="rounded-pill border border-border px-3 py-1 text-xs text-text-muted">⌘K 搜尋 / 跳轉</button>
-        <button
-          onClick={() => navigate('/research/runs/new')}
-          className="ml-auto rounded-pill bg-text px-4 py-1 text-sm font-medium text-base hover:opacity-90"
-        >
-          New Run
-        </button>
-        <button
-          onClick={() => navigate('/research/runs')}
-          className="rounded-md border border-border px-3 py-1 text-sm text-text-secondary hover:text-text"
-        >
-          Runs
-        </button>
-        <button
-          onClick={() => navigate('/monitor')}
-          className="rounded-md border border-border px-3 py-1 text-sm text-text-secondary hover:text-text"
-        >
-          艦隊
-        </button>
+      {/* command_hero — primary 動作前置。⌘K 已在 topbar，這裡不放死鈕；
+          新建回測 為顯眼 primary，其餘為研究迴圈次要快捷。 */}
+      <div className="mb-4 rounded-lg border border-border bg-surface px-5 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="mr-auto">
+            <div className="text-sm font-medium text-text">{t('hero.headline')}</div>
+            <div className="text-xs text-text-muted">{t('hero.flow')}</div>
+          </div>
+          <button
+            onClick={() => navigate('/research/runs/new')}
+            className="rounded-pill bg-text px-5 py-2 text-sm font-medium text-base hover:opacity-90"
+          >
+            {t('hero.cta')}
+          </button>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            { label: t('nav:item.strategies'), to: '/research/strategies' },
+            { label: t('nav:item.runs'), to: '/research/runs' },
+            { label: t('nav:item.validate'), to: '/research/validate' },
+            { label: t('nav:item.fleet'), to: '/monitor' },
+          ].map((q) => (
+            <button
+              key={q.to}
+              onClick={() => navigate(q.to)}
+              className="rounded-md border border-border px-3 py-1 text-sm text-text-secondary hover:text-text"
+            >
+              {q.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {isNewPlatform ? (
-        <FirstRunEmptyState
-          headline="歡迎——從第一個策略開始"
-          onCta={() => navigate('/research/runs/new')}
-        />
+        <FirstRunEmptyState headline={t('welcome')} onCta={() => navigate('/research/runs/new')} />
       ) : (
         <>
-          {/* fleet_strip — live 資料 M4 */}
-          <div className="mb-3">
-            <PendingNote label="策略艦隊（live/paper 健康 + 今日績效 + 退化示警）" />
-          </div>
-
-          {/* research_status — 真接 */}
+          {/* research_status — 真實資料前置（live 數據領先，避免夾在 pending 之間） */}
           <section className="mb-3">
-            <h2 className="mb-2 text-sm text-text-secondary">研究狀態</h2>
+            <h2 className="mb-2 text-sm text-text-secondary">{t('researchStatus')}</h2>
             {rs.isLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : rs.isError ? (
               <div className="rounded-lg border border-border bg-surface p-4 text-sm text-error">
-                研究狀態載入失敗：{(rs.error as Error)?.message}
+                {t('errors:load.failed', { resource: t('researchStatus'), detail: errText(rs.error) })}
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Kpi label="總 run 數" value={status?.total_runs ?? '—'} />
-                <Kpi
-                  label="最新 gate"
+                <StatCard label={t('kpi.totalRuns')} value={status?.total_runs ?? '—'} />
+                <StatCard
+                  label={t('kpi.latestGate')}
                   value={
                     status?.latest_gate_status ? (
-                      <StatusBadge tone={status.latest_gate_status === 'PASS' ? 'gain' : 'loss'}>
-                        {status.latest_gate_status}
-                      </StatusBadge>
+                      <EnumBadge family="gate" value={status.latest_gate_status} />
                     ) : (
                       '—'
                     )
                   }
                 />
-                <Kpi label="試驗數" value={status?.trials ?? '待後端'} />
-                <Kpi label="DSR" value={status?.dsr ?? '待後端'} />
+                <StatCard label={t('kpi.trials')} value={status?.trials ?? t('common:state.awaitingBackend')} />
+                <StatCard label={t('kpi.dsr')} value={status?.dsr ?? t('common:state.awaitingBackend')} />
               </div>
             )}
           </section>
 
-          {/* system_health — live 資料 M4 */}
-          <div className="mb-3">
-            <PendingNote label="系統健康（bundle 新鮮度 / 告警計數 / FinLab quota）" />
-          </div>
-
           {/* recent_activity — 真接 */}
-          <section>
-            <h2 className="mb-2 text-sm text-text-secondary">最近活動</h2>
+          <section className="mb-3">
+            <h2 className="mb-2 text-sm text-text-secondary">{t('recentActivity')}</h2>
             {rec.isLoading ? (
               <Skeleton className="h-16 w-full" />
             ) : recent.length === 0 ? (
-              <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">尚無近期活動</div>
+              <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">{t('noRecent')}</div>
             ) : (
               <ul className="flex flex-col gap-1">
                 {recent.map((r, i) => (
@@ -120,12 +112,22 @@ export function HomePage() {
                     <StatusBadge tone="muted">{r.type}</StatusBadge>
                     <span className="font-mono text-xs tabular">{r.run_id}</span>
                     <span className="text-text-secondary">{r.preset}</span>
-                    {r.gate_status && <span className="ml-auto text-xs text-text-muted">{r.gate_status}</span>}
+                    {r.gate_status && (
+                      <span className="ml-auto">
+                        <EnumBadge family="gate" value={r.gate_status} />
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
             )}
           </section>
+
+          {/* 尚未接線（M4 producer）—— 集中置底，不夾在真實數據間造成「未完工」錯覺 */}
+          <div className="flex flex-col gap-2">
+            <PendingNote label={t('pending.fleet')} />
+            <PendingNote label={t('pending.systemHealth')} />
+          </div>
         </>
       )}
     </div>

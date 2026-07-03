@@ -9,6 +9,7 @@
   --bg-surface: #1a1a1a;
   --bg-input: #1e1e1e;
   --bg-code: #161616;
+  --bg-raised: #242424; /* 分層最上層（active stepper / 浮起輸入），仍 flat 無陰影 */
 
   /* 邊框（flat 1px 分層，取代陰影） */
   --border-default: #2a2a2a;
@@ -16,7 +17,7 @@
   /* 文字（明度階，無彩色） */
   --text-primary: #f5f5f5;
   --text-secondary: rgba(245, 245, 245, 0.65);
-  --text-muted: rgba(245, 245, 245, 0.55);
+  --text-muted: rgba(245, 245, 245, 0.6); /* 0.55→0.6：密集 muted 標籤對比更靠近 AAA（仍低於 secondary 0.65 保留階層） */
 
   /* 功能色：漲跌（唯一彩色，配 ↑↓ 雙編碼） */
   --gain: #22c55e;
@@ -27,6 +28,8 @@
 
   /* focus：單色白環（非彩色） */
   --focus-ring: rgba(245, 245, 245, 0.7);
+  /* modal 遮罩（tokenized；light 主題改用深墨半透明，見 :root.light） */
+  --scrim: rgba(0, 0, 0, 0.6);
 
   /*
    * 受控資料視覺化色盤（8.G.6）— 僅供 chart/多序列，非品牌色。
@@ -51,4 +54,52 @@
   --seq-5: #4db6ac;
 
   color-scheme: dark;
+}
+
+/*
+ * Light 備援主題（brand system doc §「Light mode 備援」認可；預設仍 dark）。
+ * 由 ThemeProvider / index.html inline script 在 <html> 掛 .light 觸發；system 模式解析後同理。
+ * 僅覆寫「值」token（div-neg/div-pos 續 alias loss/gain 自動反轉）。
+ * 對比目標：文字 ≥ AA(4.5:1)；KPI 關鍵數值 ≥ AAA(7:1)，負值用 --loss-aaa。base #FAFAFA / text #0F0F0F 為 doc 鎖定。
+ */
+:root.light {
+  --bg-base: #fafafa;
+  --bg-surface: #ffffff;
+  --bg-input: #f4f4f5;
+  --bg-code: #f1f1f2;
+  --bg-raised: #ffffff;
+
+  --border-default: #e4e4e7;
+
+  --text-primary: #0f0f0f; /* ~18:1 AAA */
+  --text-secondary: rgba(15, 15, 15, 0.7); /* ~7:1 */
+  --text-muted: rgba(15, 15, 15, 0.6); /* ~4.95:1 AA */
+
+  --gain: #136c38; /* AAA 正值 KPI + AA badge */
+  --loss: #dc2626; /* AA badge/inline */
+  --loss-aaa: #991b1b; /* AAA 負值 KPI（StatCard）*/
+  --warning: #b45309;
+  --error: #c81e1e;
+
+  --focus-ring: rgba(15, 15, 15, 0.7); /* 深環於淺底 */
+  --scrim: rgba(15, 15, 15, 0.45);
+
+  /* categorical：淺底重新調深/飽和以達 AA */
+  --cat-1: #2563eb;
+  --cat-2: #b45309;
+  --cat-3: #7c3aed;
+  --cat-4: #0f766e;
+  --cat-5: #be185d;
+  --cat-6: #4d7c0f;
+
+  --div-mid: #d4d4d8;
+
+  /* sequential：淺→深（dark 版為深→teal 的反向）*/
+  --seq-1: #e0f2f1;
+  --seq-2: #a7d8d4;
+  --seq-3: #5fb3ac;
+  --seq-4: #2a8c86;
+  --seq-5: #0f5f5a;
+
+  color-scheme: light;
 }

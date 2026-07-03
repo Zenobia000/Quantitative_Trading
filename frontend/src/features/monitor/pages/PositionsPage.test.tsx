@@ -32,6 +32,6 @@ describe('PositionsPage', () => {
   it('pending → PendingNote', async () => {
     mock([], { data_source: 'pending' })
     renderPage()
-    await waitFor(() => expect(screen.getByText(/待 paper telemetry/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/待紙上交易遙測/)).toBeInTheDocument())
   })
 })

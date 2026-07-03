@@ -36,7 +36,7 @@ describe('AlertsPage', () => {
     })
     renderPage()
     await waitFor(() => expect(screen.getByText('EX-001')).toBeInTheDocument())
-    expect(screen.getByText('CRITICAL')).toBeInTheDocument()
+    expect(screen.getByText('嚴重')).toBeInTheDocument()
     expect(screen.getByText('風控規格 12 條')).toBeInTheDocument()
     expect(screen.getByText(/Discord 未啟用/)).toBeInTheDocument()
     expect(screen.getByText(/bot_token: \*\*\*/)).toBeInTheDocument()

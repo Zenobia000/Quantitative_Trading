@@ -5,47 +5,29 @@
  * 最近 session 時間線、暫停/恢復鈕。timer stale/never_ran 附可複製的 systemd 安裝指令。
  */
 import { useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusBadge } from '@/components/StatusBadge'
+import { EnumBadge } from '@/components/EnumBadge'
+import { useEnumLabel } from '@/i18n/useEnumLabel'
+import { useErrorText } from '@/i18n/useErrorText'
 import { QueryState } from '../components'
-import type { TimerHealth, WatchRow, WatchState } from '../hooks/useWatch'
+import type { TimerHealth, WatchRow, WatchSession } from '../hooks/useWatch'
 import { useWatchOverview, useWatchToggle } from '../hooks/useWatch'
 
 const TIMER_CMD = 'systemctl --user enable --now after-close.timer'
 
-const STATE_TONE: Record<WatchState, 'gain' | 'warning' | 'muted'> = {
-  active: 'gain',
-  paused: 'warning',
-  expired: 'muted',
-  exited: 'muted',
-}
-const STATE_LABEL: Record<WatchState, string> = {
-  active: '觀察中',
-  paused: '已暫停',
-  expired: '已期滿',
-  exited: '已出艙',
-}
-
-const SESSION_TONE: Record<string, 'gain' | 'error' | 'warning' | 'muted'> = {
-  OK: 'gain',
-  FAILED: 'error',
-  NO_DATA: 'warning',
-  SKIP: 'muted',
-}
-
 export function WatchPage() {
+  const { t } = useTranslation('monitor')
   const overview = useWatchOverview()
   return (
     <div>
-      <PageHeader
-        title="Paper-Watch 觀察艙"
-        route="/monitor/watch"
-        subtitle="零資金 3 個月觀察窗（ADR-033）· 排程本體 systemd，此處負責看見與管理"
-      />
+      <PageHeader title={t('watch.title')} route="/monitor/watch" subtitle={t('watch.subtitle')} />
       <QueryState
         q={overview}
-        pendingLabel="觀察艙（待 registry）"
-        emptyLabel="目前無觀察艙艙位（尚無 PAPER_WATCH 策略進艙）"
+        resource={t('watch.resource')}
+        pendingLabel={t('watch.pending')}
+        emptyLabel={t('watch.empty')}
       >
         {(rows: WatchRow[]) => (
           <div className="flex flex-col gap-3">
@@ -60,6 +42,8 @@ export function WatchPage() {
 }
 
 function WatchCard({ row }: { row: WatchRow }) {
+  const { t } = useTranslation('monitor')
+  const errText = useErrorText()
   const toggle = useWatchToggle()
   const paused = row.status === 'paused'
   const terminal = row.status === 'expired' || row.status === 'exited'
@@ -75,7 +59,7 @@ function WatchCard({ row }: { row: WatchRow }) {
       {/* header */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <h2 className="text-[18px] font-semibold">{row.strategy}</h2>
-        <StatusBadge tone={STATE_TONE[row.status]}>{STATE_LABEL[row.status]}</StatusBadge>
+        <EnumBadge family="watchState" value={row.status} />
         <span className="ml-auto font-mono text-xs text-text-muted tabular">
           DSR {row.verdict_dsr.toFixed(4)}
         </span>
@@ -85,7 +69,7 @@ function WatchCard({ row }: { row: WatchRow }) {
       <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <div className="mb-1 flex items-baseline justify-between text-xs text-text-muted">
-            <span>觀察日</span>
+            <span>{t('watch.observedDays')}</span>
             <span className="font-mono tabular text-text-secondary">
               {row.observed_trading_days}/~{row.nominal_trading_days}
             </span>
@@ -95,9 +79,11 @@ function WatchCard({ row }: { row: WatchRow }) {
           </div>
         </div>
         <div className="flex flex-col justify-center text-sm">
-          <div className="text-xs text-text-muted">到期 {row.expiry_date}</div>
+          <div className="text-xs text-text-muted">{t('watch.expiry', { date: row.expiry_date })}</div>
           <div className="font-mono tabular text-text-secondary">
-            {row.days_remaining >= 0 ? `剩 ${row.days_remaining} 天` : `已逾期 ${-row.days_remaining} 天`}
+            {row.days_remaining >= 0
+              ? t('watch.daysRemaining', { days: row.days_remaining })
+              : t('watch.overdue', { days: -row.days_remaining })}
           </div>
         </div>
       </div>
@@ -107,16 +93,13 @@ function WatchCard({ row }: { row: WatchRow }) {
 
       {/* recent sessions timeline */}
       <div className="mt-3">
-        <div className="mb-1 text-xs text-text-muted">最近 session</div>
+        <div className="mb-1 text-xs text-text-muted">{t('watch.recentSessions')}</div>
         {row.sessions.length === 0 ? (
-          <span className="text-sm text-text-muted">尚無 session 紀錄</span>
+          <span className="text-sm text-text-muted">{t('watch.noSessions')}</span>
         ) : (
           <div className="flex flex-wrap gap-1.5">
             {row.sessions.map((s) => (
-              <StatusBadge key={s.date} tone={SESSION_TONE[s.status] ?? 'muted'}>
-                <span className="font-mono tabular">{s.date.slice(5)}</span>
-                <span>{s.status}</span>
-              </StatusBadge>
+              <SessionBadge key={s.date} session={s} />
             ))}
           </div>
         )}
@@ -127,15 +110,26 @@ function WatchCard({ row }: { row: WatchRow }) {
         <button
           onClick={onToggle}
           disabled={toggle.isPending || terminal}
-          title={terminal ? '已終止的艙位無法暫停/恢復' : undefined}
+          title={terminal ? t('watch.terminalHint') : undefined}
           className="rounded-md border border-border px-3 py-1.5 text-sm hover:text-text disabled:opacity-50"
         >
-          {toggle.isPending ? '處理中…' : paused ? '恢復觀察 ▶' : '暫停觀察 ⏸'}
+          {toggle.isPending ? t('watch.processing') : paused ? t('watch.resume') : t('watch.pause')}
         </button>
-        {paused && <span className="text-xs text-warning">已暫停 · after-close 每日略過此艙（不發告警）</span>}
-        {toggle.isError && <span className="text-xs text-error">{(toggle.error as Error)?.message}</span>}
+        {paused && <span className="text-xs text-warning">{t('watch.pausedNote')}</span>}
+        {toggle.isError && <span className="text-xs text-error">{errText(toggle.error)}</span>}
       </div>
     </section>
+  )
+}
+
+/** 單一 session 徽章：日期（mono）+ 本地化狀態（OK→成功…），tone 由 displayMap 決定。 */
+function SessionBadge({ session }: { session: WatchSession }) {
+  const { label, tone } = useEnumLabel('session', session.status)
+  return (
+    <StatusBadge tone={tone}>
+      <span className="font-mono tabular">{session.date.slice(5)}</span>
+      <span>{label}</span>
+    </StatusBadge>
   )
 }
 
@@ -148,11 +142,12 @@ function TimerHealthBlock({
   lastDate: string | null
   lastTradingDay: string
 }) {
+  const { t } = useTranslation('monitor')
   if (health === 'ok') {
     return (
       <div className="flex items-center gap-2 rounded-md border border-gain/40 bg-surface px-3 py-2 text-sm">
-        <StatusBadge tone="gain">排程正常</StatusBadge>
-        <span className="text-text-secondary">最後成功 session {lastDate}</span>
+        <EnumBadge family="timerHealth" value="ok" />
+        <span className="text-text-secondary">{t('watch.timer.okDetail', { date: lastDate })}</span>
       </div>
     )
   }
@@ -160,27 +155,31 @@ function TimerHealthBlock({
   return (
     <div className="rounded-md border border-error/40 bg-surface px-3 py-2 text-sm">
       <div className="flex items-center gap-2">
-        <StatusBadge tone={isNever ? 'warning' : 'error'}>
-          {isNever ? '尚未執行' : '排程可能未在跑'}
-        </StatusBadge>
+        <EnumBadge family="timerHealth" value={health} />
         <span className="text-text-secondary">
           {isNever
-            ? '此艙位尚無任何 after-close session 紀錄'
-            : `最後成功 session ${lastDate ?? '—'}，但上一交易日 ${lastTradingDay} 應已產生 marker`}
+            ? t('watch.timer.neverDetail')
+            : t('watch.timer.staleDetail', { date: lastDate ?? '—', day: lastTradingDay })}
         </span>
       </div>
       <p className="mt-2 text-xs text-text-muted">
-        {isNever ? '若已進艙，請在部署主機啟用排程器：' : '請在部署主機確認 systemd timer 已啟用：'}
+        {isNever ? t('watch.timer.neverHint') : t('watch.timer.staleHint')}
       </p>
       <CommandBlock cmd={TIMER_CMD} />
       <p className="mt-1 text-xs text-text-muted">
-        詳見 <span className="font-mono">deploy/README</span> 的 after-close.timer 安裝段。
+        <Trans
+          t={t}
+          i18nKey="watch.timer.docsHint"
+          values={{ path: 'deploy/README' }}
+          components={[<span className="font-mono" />]}
+        />
       </p>
     </div>
   )
 }
 
 function CommandBlock({ cmd }: { cmd: string }) {
+  const { t } = useTranslation('common')
   const [copied, setCopied] = useState(false)
   const copy = () => {
     void navigator.clipboard?.writeText(cmd)
@@ -194,7 +193,7 @@ function CommandBlock({ cmd }: { cmd: string }) {
         onClick={copy}
         className="shrink-0 rounded border border-border px-2 py-0.5 text-xs text-text-muted hover:text-text"
       >
-        {copied ? '已複製' : '複製'}
+        {copied ? t('action.copied') : t('action.copy')}
       </button>
     </div>
   )
