@@ -107,7 +107,12 @@
       "placeholder": "說明為何 override / 封存…",
       "required": "此操作需填寫理由才能送出",
       "cancel": "取消",
-      "submit": "送出"
+      "submit": "送出",
+      "submitting": "送出中…",
+      "submitError": "操作失敗：{{detail}}"
+    },
+    "error": {
+      "actionFailed": "{{strategy}} —— 操作失敗：{{detail}}"
     },
     "empty": {
       "headline": "候選池還是空的",
@@ -498,7 +503,9 @@
       "rerun": "重跑",
       "selectLiveOos": "勾選 Live OOS",
       "marked": "已標記 {{action}}（僅本地）",
-      "reasonRequired": "需 override 理由"
+      "saved": "已寫入 {{action}}",
+      "reasonRequired": "需 override 理由",
+      "error": "失敗：{{detail}}"
     }
   }
 }

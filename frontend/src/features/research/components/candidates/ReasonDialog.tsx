@@ -11,6 +11,8 @@ export function ReasonDialog({
   action,
   strategy,
   recommendationLabel,
+  error,
+  submitting = false,
   onSubmit,
   onCancel,
 }: {
@@ -18,13 +20,17 @@ export function ReasonDialog({
   strategy: string
   /** 非 eligible 勾選時顯示的建議標籤（override 情境）；archive 時可省略。 */
   recommendationLabel?: string
+  /** api 模式 mutation 失敗訊息（400/409/422）——顯示在彈窗內，彈窗不關閉，讓使用者改理由重送。 */
+  error?: string
+  /** mutation 進行中：禁用送出 + 顯示送出中，避免重複提交。 */
+  submitting?: boolean
   onSubmit: (reason: string) => void
   onCancel: () => void
 }) {
   const { t } = useTranslation('research')
   const [reason, setReason] = useState('')
   const ref = useRef<HTMLTextAreaElement>(null)
-  const valid = reason.trim().length > 0
+  const valid = reason.trim().length > 0 && !submitting
 
   useEffect(() => {
     ref.current?.focus()
@@ -69,7 +75,17 @@ export function ReasonDialog({
           placeholder={t('candidates.reason.placeholder')}
           className="mt-1 w-full resize-none rounded-md border border-border bg-input px-3 py-2 text-sm text-text placeholder:text-text-muted focus:border-text/40 focus:outline-none"
         />
-        {!valid && <p className="mt-1 text-[11px] text-text-muted">{t('candidates.reason.required')}</p>}
+        {reason.trim().length === 0 && (
+          <p className="mt-1 text-[11px] text-text-muted">{t('candidates.reason.required')}</p>
+        )}
+        {error && (
+          <p
+            role="alert"
+            className="mt-3 rounded-md border border-error/50 bg-surface px-3 py-2 text-xs text-error"
+          >
+            {t('candidates.reason.submitError', { detail: error })}
+          </p>
+        )}
         <div className="mt-4 flex items-center justify-end gap-2">
           <button
             onClick={onCancel}
@@ -82,7 +98,7 @@ export function ReasonDialog({
             disabled={!valid}
             className="rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-40"
           >
-            {t('candidates.reason.submit')}
+            {submitting ? t('candidates.reason.submitting') : t('candidates.reason.submit')}
           </button>
         </div>
       </div>

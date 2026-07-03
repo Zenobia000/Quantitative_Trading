@@ -107,7 +107,12 @@
       "placeholder": "Explain why you override / archive…",
       "required": "A reason is required to submit this action",
       "cancel": "Cancel",
-      "submit": "Submit"
+      "submit": "Submit",
+      "submitting": "Submitting…",
+      "submitError": "Action failed: {{detail}}"
+    },
+    "error": {
+      "actionFailed": "{{strategy}} — action failed: {{detail}}"
     },
     "empty": {
       "headline": "The candidate pool is empty",
@@ -498,7 +503,9 @@
       "rerun": "Rerun",
       "selectLiveOos": "Select Live OOS",
       "marked": "Marked {{action}} (local only)",
-      "reasonRequired": "Requires a reason (override)"
+      "saved": "Saved {{action}}",
+      "reasonRequired": "Requires a reason (override)",
+      "error": "Failed: {{detail}}"
     }
   }
 }

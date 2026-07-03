@@ -37,6 +37,66 @@ function stubApiMode(evaluation: unknown) {
   )
 }
 
+// API 模式 + 決策列真寫入：evaluations GET 回 envelope；POST decision/select-live-oos 記錄並回 201/錯誤。
+function stubApiWithDecision(
+  evaluation: unknown,
+  error?: { status: number; code: string; message: string },
+): { posts: { url: string; body: unknown }[] } {
+  const posts: { url: string; body: unknown }[] = []
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url)
+      if ((init?.method ?? 'GET') === 'POST') {
+        posts.push({ url: u, body: init?.body ? JSON.parse(String(init.body)) : undefined })
+        if (error) {
+          return {
+            status: error.status,
+            json: async () => ({ success: false, data: null, error: { code: error.code, message: error.message }, meta: {} }),
+          }
+        }
+        return { status: 201, json: async () => ({ success: true, data: { decision_id: 'd1' }, error: null, meta: {} }) }
+      }
+      if (u.includes('/research/evaluations/')) {
+        return { status: 200, json: async () => ({ success: true, data: evaluation, error: null, meta: {} }) }
+      }
+      return notFound()
+    }) as unknown as typeof fetch,
+  )
+  return { posts }
+}
+
+const API_EVAL = {
+  schema_version: '1.0',
+  evaluation_id: 'eval_x',
+  run_id: 'run_x',
+  strategy: 'demo_strat',
+  profile: 'quick_triage',
+  profile_version: '1.0',
+  created_at: '2026-07-03T00:00:00+08:00',
+  window: { is_start: '2015-01-01', is_end: '2024-12-31' },
+  universe: { symbols_count: 100, bundle_ref: 'x', survivorship_clean: false },
+  verdict: {
+    label: 'Promising',
+    truth_verdict: null,
+    live_oos_recommendation: 'not_recommended',
+    recommendation: { action: 'needs_more_research', confidence: 'medium', reasons: ['triage only'] },
+  },
+  headline_metrics: { cagr: 0.2, sharpe: 1.3, max_drawdown: 0.15, dsr: null, oos_holdout_sharpe: null, trades: 30 },
+  scorecards: [
+    { category: 'profitability', status: 'pass', metrics: [] },
+    { category: 'risk', status: 'pass', metrics: [] },
+    { category: 'risk_adjusted', status: 'pass', metrics: [] },
+    { category: 'win_rate', status: 'not_available', note: 'no per-trade pnl', metrics: [] },
+    { category: 'liquidity', status: 'warn', metrics: [] },
+  ],
+  checks: [],
+  sizing: { position_size: 0, reason: 'triage' },
+  lineage: { config_hash: 'run_x', params: {}, engine: 'sim', bundle_ref: 'x', n_trials: 1, git_sha: null },
+  report_pack_ref: 'x',
+  data_gaps: [],
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 function renderPage() {
@@ -150,5 +210,37 @@ describe('ReportViewerPage · api mode', () => {
     await waitFor(() => expect(screen.getByText('即時 API')).toBeInTheDocument())
     expect(screen.getAllByText('demo_strat').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('Promising')).toBeInTheDocument()
+  })
+
+  it('decision bar Keep → POST /decision {action:keep,label:promising} → saved badge', async () => {
+    const { posts } = stubApiWithDecision(API_EVAL)
+    renderPage()
+    const keep = await screen.findByTestId('decision-keep')
+    fireEvent.click(keep)
+    await waitFor(() => expect(screen.getByText(/已寫入 保留/)).toBeInTheDocument())
+    const post = posts.find((p) => p.url.includes('/decision'))
+    expect(post!.url).toContain('/research/candidates/cand_demo_strat/decision')
+    expect(post!.body).toEqual({ action: 'keep', label: 'promising' })
+  })
+
+  it('non-eligible Select Live OOS opens a reason dialog then POSTs override select', async () => {
+    const { posts } = stubApiWithDecision(API_EVAL) // recommendation = not_recommended → override
+    renderPage()
+    const select = await screen.findByTestId('decision-select_live_oos')
+    fireEvent.click(select)
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: 'paper-replay probe' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '送出' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    const post = posts.find((p) => p.url.includes('/select-live-oos'))
+    expect(post!.body).toEqual({ reason: 'paper-replay probe', override: true, observation_kind: 'paper_replay' })
+  })
+
+  it('a rejected decision surfaces the backend error in the bar (not silent)', async () => {
+    stubApiWithDecision(API_EVAL, { status: 400, code: 'BAD_REQUEST', message: 'illegal transition' })
+    renderPage()
+    const keep = await screen.findByTestId('decision-keep')
+    fireEvent.click(keep)
+    await waitFor(() => expect(screen.getByText(/illegal transition/)).toBeInTheDocument())
   })
 })
