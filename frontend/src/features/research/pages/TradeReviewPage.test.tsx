@@ -17,11 +17,11 @@ afterEach(() => vi.unstubAllGlobals())
 interface StubOpts {
   emptySeries?: boolean
   candlesPending?: boolean
-  symbols?: string[]
+  stockIds?: string[]
 }
 
 function stubFetch(opts: StubOpts = {}) {
-  const symbols = opts.symbols ?? ['2330']
+  const stockIds = opts.stockIds ?? ['2330']
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
@@ -29,13 +29,13 @@ function stubFetch(opts: StubOpts = {}) {
       let body: unknown
       if (u.includes('/candles')) {
         body = opts.candlesPending
-          ? { success: true, data: { run_id: 'r1', symbol: symbols[0], symbols, candles: [], markers: [] }, error: null, meta: { data_source: 'pending' } }
+          ? { success: true, data: { run_id: 'r1', stock_id: stockIds[0], stock_ids: stockIds, candles: [], markers: [] }, error: null, meta: { data_source: 'pending' } }
           : {
               success: true,
               data: {
                 run_id: 'r1',
-                symbol: symbols[0],
-                symbols,
+                stock_id: stockIds[0],
+                stock_ids: stockIds,
                 candles: [{ time: '2020-01-01', open: 10, high: 12, low: 9, close: 11, volume: 100 }],
                 markers: [{ time: '2020-01-01', kind: 'entry', price: 10 }],
               },
@@ -87,14 +87,14 @@ describe('TradeReviewPage', () => {
     )
   })
 
-  it('shows a symbol selector when the run has 2+ symbols', async () => {
-    stubFetch({ symbols: ['2330', '2317'] })
+  it('shows a stock_id selector when the run has 2+ stock_ids', async () => {
+    stubFetch({ stockIds: ['2330', '2317'] })
     renderAt()
     await waitFor(() => expect(screen.getByRole('combobox')).toBeInTheDocument())
     expect(screen.getByRole('option', { name: '2317' })).toBeInTheDocument()
   })
 
-  it('shows candlestick empty state when the symbol has no parquet', async () => {
+  it('shows candlestick empty state when the stock_id has no parquet', async () => {
     stubFetch({ candlesPending: true })
     renderAt()
     await waitFor(() => expect(screen.getByText(/此個股尚無 K 線資料/)).toBeInTheDocument())

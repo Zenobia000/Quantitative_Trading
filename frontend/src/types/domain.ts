@@ -27,9 +27,14 @@ export interface ApiMeta {
   total?: number
   page?: number
   limit?: number
-  /** 建議的快取/輪詢秒數 */
+  /** 建議的快取/輪詢秒數（TanStack Query staleTime 由此驅動，doc 25 §5.1） */
   ttl?: number
-  /** 例如 "pending_m4"：端點尚未有 producer，前端渲染 pending 態，不假造數字 */
+  /**
+   * 資料來源 token（後端 `api/envelope.py` 的 `DataSource` enum，doc 25 §5.4）。
+   * `"pending"` = 端點尚未有 producer（渲染 pending 態，不假造）；`"partial"` = 真實
+   * 資料帶已揭露的缺口；其餘（`timescaledb`/`watch_registry`/`parquet_scan`/`ledger`/
+   * `catalog`）= live 來源。
+   */
   data_source?: string
 }
 
@@ -77,7 +82,19 @@ export interface ApiResult<T> {
   meta: ApiMeta
 }
 
-/** 是否為「尚未上線」的 pending 端點（渲染 pending 態用） */
+/**
+ * 是否為「尚未上線」的 pending 端點（渲染 pending 態用）。
+ * 精確比對 `=== 'pending'`（後端統一 `pending_m4`→`pending`，doc 25 §5.4 / A1）；
+ * `startsWith('pending')` 已淘汰——`partial` 不再誤判為 pending。
+ */
 export function isPending(meta: ApiMeta | undefined): boolean {
-  return typeof meta?.data_source === 'string' && meta.data_source.startsWith('pending')
+  return meta?.data_source === 'pending'
+}
+
+/**
+ * 是否為「真實資料帶已揭露缺口」的 partial 端點（例如 WFA folds 已出、per-fold
+ * scatter 仍 parquet-gated）。頁面應照常渲染 live 資料，可另標示缺口（doc 25 §5.4）。
+ */
+export function isPartial(meta: ApiMeta | undefined): boolean {
+  return meta?.data_source === 'partial'
 }

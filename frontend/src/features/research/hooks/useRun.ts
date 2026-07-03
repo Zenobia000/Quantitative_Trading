@@ -8,6 +8,6 @@ export function useRun(runId: string | undefined) {
     queryKey: ['run', runId],
     queryFn: () => getRun(runId as string),
     enabled: !!runId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

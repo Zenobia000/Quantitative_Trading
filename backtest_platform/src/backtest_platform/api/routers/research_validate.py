@@ -14,7 +14,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends
 
 from backtest_platform.api.deps import get_runs_path
-from backtest_platform.api.envelope import Envelope, ok, pending
+from backtest_platform.api.envelope import DataSource, Envelope, ok, pending
 from backtest_platform.research import promotion_service
 from backtest_platform.research.runs_store import read_runs
 from backtest_platform.validation.health_indicators import health_check
@@ -89,9 +89,10 @@ def validate_wfa(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envel
         for i, f in enumerate(folds)
     ]
     # folds = real (data-free); scatter (per-fold IS/OOS perf) is parquet-gated.
+    # PARTIAL = live-with-gaps: the FE renders the real folds and marks scatter pending.
     return ok(
         {"folds": fold_rows, "scatter": [], "criteria": _WFA_CRITERIA},
-        meta={"data_source": "partial", "scatter": "pending"},
+        meta={"data_source": DataSource.PARTIAL, "scatter": "pending"},
     )
 
 

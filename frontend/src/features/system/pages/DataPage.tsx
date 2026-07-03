@@ -65,8 +65,15 @@ function IngestCard() {
       {trigger.isError && <div className="mt-2 text-sm text-error">送出失敗：{(trigger.error as Error)?.message}</div>}
       {jobId && (
         <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
-          job <span className="text-text">{jobId}</span> · 狀態 <span className="text-text">{job?.status ?? '…'}</span>
-          {job?.result && <span> · ok {job.result.ok?.length ?? 0} / failed {job.result.failed?.length ?? 0}</span>}
+          {status.isError ? (
+            // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」。
+            <span className="text-error">job {jobId} 狀態查詢失敗：{(status.error as Error)?.message}（可能已過期或不存在）</span>
+          ) : (
+            <>
+              job <span className="text-text">{jobId}</span> · 狀態 <span className="text-text">{job?.status ?? '…'}</span>
+              {job?.result && <span> · ok {job.result.ok?.length ?? 0} / failed {job.result.failed?.length ?? 0}</span>}
+            </>
+          )}
         </div>
       )}
     </section>
@@ -131,12 +138,19 @@ function UniverseBuildCard() {
       {trigger.isError && <div className="mt-2 text-sm text-error">送出失敗：{(trigger.error as Error)?.message}</div>}
       {jobId && (
         <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
-          job <span className="text-text">{jobId}</span> · 狀態 <span className="text-text">{job?.status ?? '…'}</span>
-          {job?.result && (
-            <span>
-              {' '}
-              · {job.result.n_symbols ?? 0} 檔（alive {job.result.n_alive ?? 0} / delisted {job.result.n_delisted ?? 0}）
-            </span>
+          {status.isError ? (
+            // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」。
+            <span className="text-error">job {jobId} 狀態查詢失敗：{(status.error as Error)?.message}（可能已過期或不存在）</span>
+          ) : (
+            <>
+              job <span className="text-text">{jobId}</span> · 狀態 <span className="text-text">{job?.status ?? '…'}</span>
+              {job?.result && (
+                <span>
+                  {' '}
+                  · {job.result.n_symbols ?? 0} 檔（alive {job.result.n_alive ?? 0} / delisted {job.result.n_delisted ?? 0}）
+                </span>
+              )}
+            </>
           )}
         </div>
       )}

@@ -8,7 +8,7 @@ export function usePromoteState(strategyId: string | undefined) {
     queryKey: ['promote-state', strategyId],
     queryFn: () => getPromoteState(strategyId as string),
     enabled: !!strategyId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }
 
@@ -17,7 +17,7 @@ export function usePromoteAudit(strategyId: string | undefined) {
     queryKey: ['promote-audit', strategyId],
     queryFn: () => getPromoteAudit(strategyId as string),
     enabled: !!strategyId,
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }
 

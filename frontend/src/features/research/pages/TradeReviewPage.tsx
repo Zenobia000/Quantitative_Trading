@@ -23,17 +23,17 @@ function pct(x: number): string {
 export function TradeReviewPage() {
   const { id } = useParams<{ id: string }>()
   const runId = id ?? ''
-  const [selectedSymbol, setSelectedSymbol] = useState<string | undefined>(undefined)
+  const [selectedStockId, setSelectedStockId] = useState<string | undefined>(undefined)
 
-  const candlesQ = useRunCandles(runId, selectedSymbol)
+  const candlesQ = useRunCandles(runId, selectedStockId)
   const tradesQ = useRunTrades(runId)
   const equityQ = useRunEquity(runId)
 
   const candlesRes = candlesQ.data
   const candles = candlesRes?.data?.candles ?? []
   const markers = candlesRes?.data?.markers ?? []
-  const symbols = candlesRes?.data?.symbols ?? []
-  const activeSymbol = candlesRes?.data?.symbol ?? null
+  const stockIds = candlesRes?.data?.stock_ids ?? []
+  const activeStockId = candlesRes?.data?.stock_id ?? null
   const candlesPending = isPending(candlesRes?.meta) || candles.length === 0
 
   const trades = tradesQ.data?.data?.trades ?? []
@@ -55,15 +55,15 @@ export function TradeReviewPage() {
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="text-[18px] font-semibold">個股 K 線</h2>
-          {symbols.length >= 2 && (
+          {stockIds.length >= 2 && (
             <label className="flex items-center gap-1.5 text-xs text-text-muted">
               標的
               <select
                 className="rounded-md border border-border bg-code px-2 py-1 font-mono text-text focus:outline-none focus:ring-2 focus:ring-white/80"
-                value={activeSymbol ?? ''}
-                onChange={(e) => setSelectedSymbol(e.target.value)}
+                value={activeStockId ?? ''}
+                onChange={(e) => setSelectedStockId(e.target.value)}
               >
-                {symbols.map((s) => (
+                {stockIds.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>

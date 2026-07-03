@@ -35,13 +35,22 @@ def promote_state(strategy_id: str) -> Envelope:
 
 @router.post("/{strategy_id}", response_model=Envelope)
 def promote_advance(strategy_id: str, req: PromoteRequest) -> Envelope:
-    """Advance one stage forward; 422 on an illegal skip / regress / unknown stage."""
+    """Advance one stage forward.
+
+    A domain ``ValueError`` (illegal skip / regress / unknown stage) maps to **400
+    BAD_REQUEST** (A4 — domain errors are 400 uniformly, not 422 which is reserved
+    for schema validation). ``promote`` is a pure ordered stage machine: every
+    ``ValueError`` it raises is an *illegal transition*, so 400 is the whole story.
+    The **409 IS_GATE_NOT_PASSED** code (``_STATUS_TO_CODE`` in ``app.py``) is the
+    reserved backstop for a future gate-blocked advance; the current stage machine
+    performs no IS-gate check (see ``test_promote_advance_and_audit``), so it is not
+    raised here — the FE already gates by ``validation_status`` client-side."""
     try:
         return ok(
             promotion_service.promote(strategy_id, req.to_stage, note=req.note, actor=req.actor)
         )
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from None
+        raise HTTPException(status_code=400, detail={"message": str(exc)}) from None
 
 
 @router.get("/{strategy_id}/audit", response_model=Envelope[list[PromotionEvent]])

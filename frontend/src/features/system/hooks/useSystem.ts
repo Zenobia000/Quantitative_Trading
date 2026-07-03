@@ -33,13 +33,18 @@ export const useRiskSpec = () => useEndpoint<{ rules?: unknown[] }>('/system/ris
 export const useTriggerIngest = () =>
   useMutation({ mutationFn: (body: IngestBody) => triggerIngest(body) })
 
-/** Poll an ingest job's status until terminal (done/failed). */
+/**
+ * Poll an ingest job's status until terminal (done/failed).
+ * Unknown/expired id → 404 (A4 / doc 25 §5.2): the query enters the error state and
+ * polling stops (else it would hammer a 404 forever); the page shows the error.
+ */
 export const useIngestStatus = (jobId: string | null) =>
   useQuery({
     queryKey: ['ingest-status', jobId],
     queryFn: () => getIngestStatus(jobId as string),
     enabled: !!jobId,
     refetchInterval: (q) => {
+      if (q.state.status === 'error') return false // 404/expired → stop polling
       const s = q.state.data?.data?.status
       return s === 'done' || s === 'failed' ? false : 1000
     },
@@ -49,13 +54,17 @@ export const useIngestStatus = (jobId: string | null) =>
 export const useTriggerUniverseBuild = () =>
   useMutation({ mutationFn: (body: UniverseBuildBody) => triggerUniverseBuild(body) })
 
-/** Poll a universe-build job's status until terminal (done/failed). */
+/**
+ * Poll a universe-build job's status until terminal (done/failed).
+ * Unknown/expired id → 404 (A4 / doc 25 §5.2): polling stops on the error state.
+ */
 export const useUniverseBuildStatus = (jobId: string | null) =>
   useQuery({
     queryKey: ['universe-build-status', jobId],
     queryFn: () => getUniverseBuildStatus(jobId as string),
     enabled: !!jobId,
     refetchInterval: (q) => {
+      if (q.state.status === 'error') return false // 404/expired → stop polling
       const s = q.state.data?.data?.status
       return s === 'done' || s === 'failed' ? false : 1000
     },

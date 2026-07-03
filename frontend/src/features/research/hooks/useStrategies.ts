@@ -7,6 +7,6 @@ export function useStrategies() {
   return useQuery({
     queryKey: ['strategies'],
     queryFn: () => listStrategies(),
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

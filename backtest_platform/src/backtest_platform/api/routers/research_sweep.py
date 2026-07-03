@@ -12,10 +12,10 @@ import itertools
 import json
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backtest_platform.api.envelope import Envelope, ok, pending
+from backtest_platform.api.envelope import Envelope, ok
 from backtest_platform.jobs import job_store, submit
 
 router = APIRouter(prefix="/research/sweep", tags=["research"])
@@ -49,8 +49,9 @@ def submit_sweep(req: SweepRequest) -> Envelope:
 
 @router.get("/{job_id}/status", response_model=Envelope)
 def sweep_status(job_id: str) -> Envelope:
-    """Poll a sweep job's status; typed-empty pending if the id is unknown."""
+    """Poll a sweep job's status; **404 NOT_FOUND** if the id is unknown (A4 / doc 25
+    §5.2 — an unknown/expired job surfaces as an error, not an infinite pending)."""
     job = job_store.read_job(job_id)
     if job is None:
-        return pending({"job_id": job_id, "status": None, "progress": None})
+        raise HTTPException(status_code=404, detail={"resource": "job", "id": job_id})
     return ok(job.to_dict())

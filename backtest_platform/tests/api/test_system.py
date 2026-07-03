@@ -17,6 +17,21 @@ def test_risk_spec_returns_real_rules_not_pending(client):
     assert data["thresholds"]["max_positions"] == 15
 
 
+def test_alert_history_echoes_real_page_limit(client):
+    # A3: alerts/history is offset-paginated; page/limit are echoed (not {1,50}),
+    # and the cap is le=500.
+    body = client.get("/system/alerts/history", params={"page": 2, "limit": 25}).json()
+    assert body["data"] == []
+    assert body["meta"]["page"] == 2 and body["meta"]["limit"] == 25
+    assert client.get("/system/alerts/history", params={"limit": 500}).status_code == 200
+    assert client.get("/system/alerts/history", params={"limit": 501}).status_code == 422
+
+
+def test_bundles_limit_cap_is_500(client):
+    assert client.get("/system/bundles", params={"limit": 500}).status_code == 200
+    assert client.get("/system/bundles", params={"limit": 501}).status_code == 422
+
+
 def test_alert_rules_returns_real_builtin_rules_not_pending(client):
     body = client.get("/system/alerts/rules").json()
     assert body["success"] is True
@@ -77,10 +92,13 @@ def test_ingest_submits_job_then_status_done(client, monkeypatch, isolate_jobs):
     assert final["result"]["failed"] == ["2317"]
 
 
-def test_ingest_status_unknown_is_pending(client, isolate_jobs):
-    body = client.get("/system/ingest/ghost/status").json()
-    assert body["data"]["status"] is None
-    assert body["meta"]["data_source"] == "pending"
+def test_ingest_status_unknown_is_404(client, isolate_jobs):
+    # A4 / doc 25 §5.2: an unknown/expired job id is 404 (not an infinite pending).
+    resp = client.get("/system/ingest/ghost/status")
+    assert resp.status_code == 404
+    err = resp.json()["error"]
+    assert err["code"] == "NOT_FOUND"
+    assert err["detail"] == {"resource": "job", "id": "ghost"}
 
 
 def test_ingest_empty_symbols_422(client, isolate_jobs):
@@ -172,11 +190,13 @@ def test_bundle_quality_universe_tallies(client, data_root):
     assert q["n_ingested_ok"] == 3
 
 
-def test_bundle_quality_unknown_is_typed_empty(client):
-    body = client.get("/system/bundles/ghost/quality").json()
-    assert body["success"] is True
-    assert body["data"] is None
-    assert body["meta"]["data_source"] == "not_found"
+def test_bundle_quality_unknown_is_404(client):
+    # A4: an unknown bundle id is 404 (was 200 + data:null + data_source="not_found").
+    resp = client.get("/system/bundles/ghost/quality")
+    assert resp.status_code == 404
+    err = resp.json()["error"]
+    assert err["code"] == "NOT_FOUND"
+    assert err["detail"] == {"resource": "bundle", "id": "ghost"}
 
 
 # ---- universe build async job (C2) --------------------------------------
@@ -248,10 +268,11 @@ def test_universe_build_bad_top_n_422(client, isolate_jobs):
     assert r.status_code == 422
 
 
-def test_universe_build_status_unknown_is_pending(client, isolate_jobs):
-    body = client.get("/system/universe/build/ghost/status").json()
-    assert body["data"]["status"] is None
-    assert body["meta"]["data_source"] == "pending"
+def test_universe_build_status_unknown_is_404(client, isolate_jobs):
+    # A4 / doc 25 §5.2: an unknown/expired job id is 404 (not an infinite pending).
+    resp = client.get("/system/universe/build/ghost/status")
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "NOT_FOUND"
 
 
 def _poll_status_at(client, base, job_id, timeout=5.0):

@@ -14,6 +14,6 @@ export function useRuns(params?: { strategy_id?: string; status?: string; page?:
       return res
     },
     // research 區預設 300s（meta.ttl 若有則覆寫 staleTime）
-    staleTime: ttlToMs(300, 300),
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 300),
   })
 }

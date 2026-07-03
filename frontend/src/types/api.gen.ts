@@ -153,8 +153,8 @@ export interface paths {
         /**
          * Run Log
          * @description Async-run job log (8.H.6): lifecycle (status/progress) + terminal
-         *     result/error. A typed-empty ``pending`` envelope when the id is unknown
-         *     (mirrors the sweep status route).
+         *     result/error. **404 NOT_FOUND** when the id is unknown (A4 / doc 25 §5.2 —
+         *     an unknown/expired job surfaces as an error, not an infinite pending).
          */
         get: operations["run_log_runs__job_id__log_get"];
         put?: never;
@@ -214,13 +214,13 @@ export interface paths {
         };
         /**
          * Run Candles Endpoint
-         * @description Daily OHLC candles + entry ▲ / exit ▼ markers for one symbol of a run.
+         * @description Daily OHLC candles + entry ▲ / exit ▼ markers for one ``stock_id`` of a run.
          *
-         *     ``?symbol=`` matches the sibling convention (``/runs/{id}/trades?symbol=``).
+         *     ``?stock_id=`` is the canonical id (doc 25 §1.3 — ``TEXT`` with leading zeros).
          *     Reads the run's ``stocks`` + IS window from the ledger (404 if the run is
          *     unknown), then loads OHLC from the parquet cache and overlays markers derived
          *     from the run's own signal pipeline (``research.run_candles``). A run with no
-         *     symbols, or a symbol absent from the parquet cache, returns a typed-empty
+         *     stock_ids, or a stock_id absent from the parquet cache, returns a typed-empty
          *     ``pending`` envelope — never a 500 or fabricated data (frontend/GOAL.md #8).
          */
         get: operations["run_candles_endpoint_runs__run_id__candles_get"];
@@ -566,7 +566,16 @@ export interface paths {
         put?: never;
         /**
          * Promote Advance
-         * @description Advance one stage forward; 422 on an illegal skip / regress / unknown stage.
+         * @description Advance one stage forward.
+         *
+         *     A domain ``ValueError`` (illegal skip / regress / unknown stage) maps to **400
+         *     BAD_REQUEST** (A4 — domain errors are 400 uniformly, not 422 which is reserved
+         *     for schema validation). ``promote`` is a pure ordered stage machine: every
+         *     ``ValueError`` it raises is an *illegal transition*, so 400 is the whole story.
+         *     The **409 IS_GATE_NOT_PASSED** code (``_STATUS_TO_CODE`` in ``app.py``) is the
+         *     reserved backstop for a future gate-blocked advance; the current stage machine
+         *     performs no IS-gate check (see ``test_promote_advance_and_audit``), so it is not
+         *     raised here — the FE already gates by ``validation_status`` client-side.
          */
         post: operations["promote_advance_research_promote__strategy_id__post"];
         delete?: never;
@@ -659,7 +668,8 @@ export interface paths {
         };
         /**
          * Sweep Status
-         * @description Poll a sweep job's status; typed-empty pending if the id is unknown.
+         * @description Poll a sweep job's status; **404 NOT_FOUND** if the id is unknown (A4 / doc 25
+         *     §5.2 — an unknown/expired job surfaces as an error, not an infinite pending).
          */
         get: operations["sweep_status_research_sweep__job_id__status_get"];
         put?: never;
@@ -782,7 +792,7 @@ export interface paths {
          * Board
          * @description Run board (A2) — latest research runs from the runs table: lifecycle
          *     status (running|done|failed, mirrored by run_persist / run-batch) + 審判庭
-         *     verdict + metrics. Typed-empty pending fallback when no DB.
+         *     verdict + metrics. Offset-paginated (A3); typed-empty pending fallback when no DB.
          */
         get: operations["board_monitor_board_get"];
         put?: never;
@@ -1000,7 +1010,8 @@ export interface paths {
         };
         /**
          * Signals
-         * @description Recent signals from real telemetry (8.H.8); pending fallback when no DB.
+         * @description Recent signals from real telemetry (8.H.8); offset-paginated (A3 — ``page``
+         *     was accepted but ignored); pending fallback when no DB.
          */
         get: operations["signals_monitor_signals_get"];
         put?: never;
@@ -1054,7 +1065,8 @@ export interface paths {
         };
         /**
          * Fills
-         * @description Recent order executions from real telemetry (8.H.8); pending fallback.
+         * @description Recent order executions from real telemetry (8.H.8); offset-paginated (A3);
+         *     pending fallback.
          */
         get: operations["fills_monitor_fills_get"];
         put?: never;
@@ -1106,7 +1118,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Risk Events */
+        /**
+         * Risk Events
+         * @description Risk events — offset-paginated (A3 — ``page`` was accepted but ignored). No
+         *     producer yet, so the slice is empty, but ``page``/``limit`` are echoed honestly.
+         */
         get: operations["risk_events_monitor_risk_events_get"];
         put?: never;
         post?: never;
@@ -1303,7 +1319,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Alert History */
+        /**
+         * Alert History
+         * @description Alert history — offset-paginated (A3). No producer yet, so the slice is empty,
+         *     but ``page``/``limit`` are echoed honestly rather than hard-coded.
+         */
         get: operations["alert_history_system_alerts_history_get"];
         put?: never;
         post?: never;
@@ -1363,8 +1383,9 @@ export interface paths {
         /**
          * Bundle Quality
          * @description Cheap manifest-derived quality for one bundle (row stats / alive-delisted /
-         *     ingest tallies). Unknown id → typed-empty (``data_source="not_found"``). The
-         *     heavier per-column freshness/gap audit is left to a future producer.
+         *     ingest tallies). Unknown id → **404 NOT_FOUND** (A4 — an unknown resource is an
+         *     error, not a 200 with ``data:null``). The heavier per-column freshness/gap audit
+         *     is left to a future producer.
          */
         get: operations["bundle_quality_system_bundles__bundle_id__quality_get"];
         put?: never;
@@ -1433,7 +1454,7 @@ export interface paths {
         };
         /**
          * Ingest Status
-         * @description Poll an ingest job's status/result; typed-empty ``pending`` if unknown.
+         * @description Poll an ingest job's status/result; 404 if the id is unknown.
          */
         get: operations["ingest_status_system_ingest__job_id__status_get"];
         put?: never;
@@ -1480,7 +1501,7 @@ export interface paths {
         };
         /**
          * Universe Build Status
-         * @description Poll a universe-build job's status/result; typed-empty ``pending`` if unknown.
+         * @description Poll a universe-build job's status/result; 404 if the id is unknown.
          */
         get: operations["universe_build_status_system_universe_build__job_id__status_get"];
         put?: never;
@@ -2768,8 +2789,8 @@ export interface operations {
     run_candles_endpoint_runs__run_id__candles_get: {
         parameters: {
             query?: {
-                /** @description symbol to chart; default = the run's first traded symbol */
-                symbol?: string | null;
+                /** @description stock_id to chart; default = the run's first traded stock_id */
+                stock_id?: string | null;
             };
             header?: never;
             path: {
@@ -3627,6 +3648,7 @@ export interface operations {
     board_monitor_board_get: {
         parameters: {
             query?: {
+                page?: number;
                 limit?: number;
             };
             header?: never;
@@ -3961,6 +3983,7 @@ export interface operations {
     fills_monitor_fills_get: {
         parameters: {
             query?: {
+                page?: number;
                 limit?: number;
             };
             header?: never;

@@ -8,6 +8,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEndpoint } from '@/hooks/useEndpoint'
 import { http } from '@/services/http'
+import { ttlToMs } from '@/services/queryClient'
 import type { ApiResult } from '@/types/domain'
 
 export interface EquityPoint {
@@ -87,11 +88,12 @@ export interface BoardRow {
   metrics: Record<string, number> | null
   created_at: string | null
 }
-// 看板要「活」：10s 輪詢（useEndpoint 無 refetchInterval，故直接組 useQuery）
+// 看板要「活」：10s 輪詢（useEndpoint 無 refetchInterval，故直接組 useQuery）。
+// staleTime 由 meta.ttl 驅動（board 回 ttl=5，doc 25 §5.1 / A2），fallback 5s。
 export const useRunsBoard = () =>
   useQuery<ApiResult<BoardRow[]>>({
     queryKey: ['endpoint', '/monitor/board'],
     queryFn: () => http<BoardRow[]>('/monitor/board'),
-    staleTime: 5_000,
+    staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 5),
     refetchInterval: 10_000,
   })

@@ -30,7 +30,7 @@ describe('PositionsPage', () => {
     expect(screen.getByText('inst_flow')).toBeInTheDocument()
   })
   it('pending → PendingNote', async () => {
-    mock([], { data_source: 'pending_m4' })
+    mock([], { data_source: 'pending' })
     renderPage()
     await waitFor(() => expect(screen.getByText(/待 paper telemetry/)).toBeInTheDocument())
   })

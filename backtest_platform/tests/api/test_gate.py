@@ -72,8 +72,19 @@ def test_gate_evaluate_momentum_metrics_not_incomplete(client):
     assert body["data"]["status"] == "PASS"
 
 
-def test_gate_evaluate_unknown_strategy_is_400(client):
+def test_gate_evaluate_unknown_strategy_is_404(client):
+    # A4: an unknown *named resource* is 404 everywhere (standardized with
+    # /research/workflows/{workflow}); detail is structured {resource, id}.
     resp = client.post(
         "/gate/evaluate", json={"metrics": {}, "strategy": "does_not_exist"}
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 404
+    err = resp.json()["error"]
+    assert err["code"] == "NOT_FOUND"
+    assert err["detail"] == {"resource": "strategy", "id": "does_not_exist"}
+
+
+def test_gate_spec_unknown_strategy_is_404(client):
+    resp = client.get("/gate/spec", params={"strategy": "does_not_exist"})
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "NOT_FOUND"

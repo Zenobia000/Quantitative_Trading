@@ -10,7 +10,7 @@ function mockByPath(byPath: Record<string, { data: unknown; meta?: unknown }>) {
     vi.fn(async (url: string) => {
       const path = new URL(url, 'http://x').pathname
       const hit = Object.entries(byPath).find(([p]) => path.endsWith(p))?.[1]
-      const body = hit ?? { data: [], meta: { data_source: 'pending_m4' } }
+      const body = hit ?? { data: [], meta: { data_source: 'pending' } }
       return { status: 200, json: async () => ({ success: true, data: body.data, error: null, meta: body.meta ?? { ttl: 60 } }) }
     }) as unknown as typeof fetch,
   )

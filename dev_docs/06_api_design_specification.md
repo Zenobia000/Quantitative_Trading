@@ -444,7 +444,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | GET | `/runs` | runs ledger 分頁列表（`?page=&limit=`） | `research.runs_store.read_runs` |
 | GET | `/runs/compare` | 跨 run 比較（`?baseline=`：delta/rank/sign） | `research.compare.compare_runs` |
 | GET | `/runs/{run_id}` | 單一 run 完整紀錄（未知→404） | `read_runs` |
-| GET | `/runs/{run_id}/candles` | 個股日 K + entry/exit marker（`?symbol=`，對齊 `/trades?symbol=`；讀 parquet OHLC + 訊號重推 marker，ADR-034；缺 parquet→typed-empty pending） | `research.run_candles` |
+| GET | `/runs/{run_id}/candles` | 個股日 K + entry/exit marker（`?stock_id=` canonical id，A5；回應 `stock_id`/`stock_ids[]`；讀 parquet OHLC + 訊號重推 marker，ADR-034；缺 parquet→typed-empty pending；未知 run→404） | `research.run_candles` |
 | POST | `/runs` | 觸發一次 IS run（驗 RunConfig→判 gate→append，201） | `research.is_harness.run_and_judge` |
 | GET | `/gate/spec` | 審判庭預設準則（ADR-016 K1/K2/K3 + ADR-019 health） | `validation.gate_state.DEFAULT_GATE` |
 | POST | `/gate/evaluate` | 對任意 metrics dict 判 PASS/FAIL/INCOMPLETE | `evaluate_gate` |
@@ -453,7 +453,7 @@ uv run uvicorn backtest_platform.api.app:app --reload --port 8000
 | GET | `/research/workflows/{strategy}` | 列該策略宣告的研究工作流（ADR-029；未宣告/未知→400） | `research.workflows.loader.list_workflow_configs` |
 | POST | `/research/workflows/{workflow}` | 非同步排程研究工作流 job（doe/go_gates/truth_gate/paper_replay），回 202 `{job_id,status}`；未知 workflow→404、未知策略→400 | `jobs.submit` + `research.workflows.*` |
 | GET | `/system/bundles` | 掃 `data/parquet*` manifest → bundle 清單（id/path/kind/stock_count/coverage/data_hash；分頁）。無 manifest / 損毀 → typed-empty（`data_source="parquet_scan"`），永不 500 | `data.bundle_registry.scan_bundles` |
-| GET | `/system/bundles/{id}/quality` | 單一 bundle 由 manifest 衍生的品質摘要（default: row 統計；universe: alive/delisted + ingest 計數）。未知 id → typed-empty（`not_found`） | `data.bundle_registry.compute_bundle_quality` |
+| GET | `/system/bundles/{id}/quality` | 單一 bundle 由 manifest 衍生的品質摘要（default: row 統計；universe: alive/delisted + ingest 計數）。未知 id → **404**（A4；先前 `200+data:null+data_source="not_found"`） | `data.bundle_registry.compute_bundle_quality` |
 | POST | `/system/ingest` | 非同步 ingest job（FinLab/FinMind → parquet），回 202 `{job_id,status}`；輪詢 `/system/ingest/{id}/status`（8.H.6） | `orchestration.collaborators.make_ingest` + `jobs.submit` |
 | POST | `/system/universe/build` | 非同步 survivorship-clean universe 建置 job（鏡射 ingest；驗 strategy/span/top_n/min_turnover/cache_dir，bad span→422），回 202；輪詢 `/system/universe/build/{id}/status`（ADR-032） | `research.workflows.universe.run_build_universe` + `jobs.submit` |
 

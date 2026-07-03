@@ -18,11 +18,45 @@ status↔code mapping lives in ``app.py``; ``fail`` defaults ``code`` to
 """
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel
 
 T = TypeVar("T")
+
+
+class DataSource(str, Enum):
+    """Canonical ``meta.data_source`` tokens — the single vocabulary every router
+    tags a response with (doc 25 §5.4 / §5.1).
+
+    Before this enum, seven uncoordinated string literals (``"pending"`` /
+    ``"pending_m4"`` / ``"timescaledb"`` / ``"partial"`` / ``"parquet_scan"`` /
+    ``"watch_registry"`` / ``"catalog"``) were scattered across routers; a typo
+    silently shipped an un-renderable state to the frontend. Centralising them
+    here lets ``check_openapi_drift.py`` Check D static-scan every ``data_source``
+    assignment against this membership.
+
+    Two lifecycle tokens (``PENDING`` / ``PARTIAL``) plus the live-source tokens:
+
+    * ``PENDING``        — typed-empty envelope; the feature's producer has not landed
+      (was both ``"pending"`` and the now-retired ``"pending_m4"`` — one concept).
+    * ``PARTIAL``        — real data with an honestly-disclosed gap (e.g. WFA folds
+      shipped while the per-fold scatter stays parquet-gated).
+    * ``TIMESCALEDB``    — live paper/live telemetry read from TimescaleDB.
+    * ``WATCH_REGISTRY`` — event-sourced Paper-Watch berths (JSONL registry).
+    * ``PARQUET_SCAN``   — bundle-manifest scan over the parquet cache.
+    * ``LEDGER``         — projection over the append-only runs ledger.
+    * ``CATALOG``        — the curated FinLab dataset dictionary.
+    """
+
+    PENDING = "pending"
+    PARTIAL = "partial"
+    TIMESCALEDB = "timescaledb"
+    WATCH_REGISTRY = "watch_registry"
+    PARQUET_SCAN = "parquet_scan"
+    LEDGER = "ledger"
+    CATALOG = "catalog"
 
 
 class ApiError(BaseModel):
@@ -81,9 +115,10 @@ def page_meta(total: int, page: int, limit: int) -> dict[str, int]:
 def pending(data: Any = None, ttl: int = 300) -> Envelope:
     """Typed-empty success envelope for endpoints awaiting persistence/logic.
 
-    Carries the real response *shape* with ``meta.data_source = "pending"`` so the
-    frontend can wire against the contract before the backend feature lands. Shared
-    by the research/runs sub-routers split out in the M3 seam (research_validate /
-    research_promote / research_registry / research_sweep / runs_series / runs_tags).
+    Carries the real response *shape* with ``meta.data_source = DataSource.PENDING``
+    so the frontend can wire against the contract before the backend feature lands.
+    Shared by the research/runs sub-routers split out in the M3 seam
+    (research_validate / research_registry / runs_series). ``ttl`` defaults to 300 —
+    the one default for the one pending concept (monitor's ``_stub`` matches).
     """
-    return ok(data, meta={"data_source": "pending", "ttl": ttl})
+    return ok(data, meta={"data_source": DataSource.PENDING, "ttl": ttl})
