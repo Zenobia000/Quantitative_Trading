@@ -68,6 +68,8 @@
 
 ## 審查報告
 
+- [product_repositioning_research_plan_2026-07-03.md](./product_repositioning_research_plan_2026-07-03.md) — 產品定位重構研究報告：從「審判庭」轉為「策略研究資產管理系統」
+- [rebuild_goal_spec_ai_requirements_2026-07-03.md](./rebuild_goal_spec_ai_requirements_2026-07-03.md) — 前後端重構 Goal Spec：AI 可執行需求、邊界、Playwright 審計與驗收標準
 - [platform_full_audit_2026-07-02.md](./platform_full_audit_2026-07-02.md) — 全平台多視角審查（缺陷 Top 25 + 三階段路線圖 + 平行工作包）
 - [competitive_analysis_2026-07-02.md](./competitive_analysis_2026-07-02.md) — 競品分析 + 五視角附錄
 
@@ -83,7 +85,7 @@
 
 ## UI / 設計系統
 
-[web_design/](./web_design/) — 設計系統參考 + 大廠量化平台 UI/UX 對標（[03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md)，ADR-018 證據包）。
+[web_design/](./web_design/) — 設計系統參考 + 大廠量化平台 UI/UX 對標（[03_uiux_benchmark_and_reinforcement_plan.md](./web_design/03_uiux_benchmark_and_reinforcement_plan.md)，ADR-018 證據包；[finlab_studio_feature_teardown_2026-07-03.md](./web_design/finlab_studio_feature_teardown_2026-07-03.md)，FinLab Studio 策略工作台功能拆解）。
 
 - [rebuild_ia_spec_2026-07-03.md](./web_design/rebuild_ia_spec_2026-07-03.md) — rebuild Goal 1：五 zone（Research｜Live OOS｜Deployment｜Monitor｜System）三旅程資訊架構 + 20 路由 migration mapping（IA 藍圖，供 Wave B/C 實作）。
 
