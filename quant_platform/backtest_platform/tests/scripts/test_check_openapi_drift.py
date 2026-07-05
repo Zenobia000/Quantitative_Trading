@@ -10,7 +10,10 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-_REPO_ROOT = Path(__file__).resolve().parents[3]
+# W7.1: backend moved under quant_platform/, so the true repo root (where
+# scripts/ lives) is now parents[4]; the backend package root is parents[2].
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
 _SCRIPT = _REPO_ROOT / "scripts" / "check_openapi_drift.py"
 
 
@@ -50,7 +53,7 @@ def test_scan_rejects_noncanonical_variable_reference():
 
 
 def test_datasource_members_parses_live_enum():
-    envelope = (_REPO_ROOT / "backtest_platform" / "src" / "backtest_platform" / "api" / "envelope.py")
+    envelope = (_BACKEND_ROOT / "src" / "backtest_platform" / "api" / "envelope.py")
     members = drift.datasource_members(envelope.read_text(encoding="utf-8"))
     assert members["PENDING"] == "pending"
     assert "TIMESCALEDB" in members and members["TIMESCALEDB"] == "timescaledb"

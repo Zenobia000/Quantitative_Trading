@@ -8,9 +8,9 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 # Absolute path to the checkout; override for your machine.
-WorkingDirectory=%h/Quantitative_Trading/backtest_platform
+WorkingDirectory=%h/Quantitative_Trading/quant_platform/backtest_platform
 # Load secrets (FINLAB_API_TOKEN / POSTGRES_* / DISCORD_*) — gitignored, never in VCS.
-EnvironmentFile=%h/Quantitative_Trading/backtest_platform/.env
+EnvironmentFile=%h/Quantitative_Trading/quant_platform/backtest_platform/.env
 # Consume the live-OOS selection queue FIRST (ADR-040 / Goal 10): enroll the berths a
 # human picked from the Candidate Pool, run any selected paper replays, and sync berth
 # state. This is now the primary enrollment path — the per-strategy session below only
