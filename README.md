@@ -18,7 +18,7 @@
 ### 後端（Python，uv）
 
 ```bash
-cd backtest_platform
+cd quant_platform/backtest_platform
 cp .env.example .env                       # 填 FINLAB/FINMIND/SHIOAJI/DISCORD token（可選）
 uv sync --extra sprint1 --extra api --extra dev   # 主要棧：FinLab/FinMind、sim/vectorbt、FastAPI、測試
 uv run pytest -q                            # 全套單元 + 整合測試（1116 passed）
@@ -27,7 +27,7 @@ uv run pytest -q                            # 全套單元 + 整合測試（1116
 ### 資料庫（TimescaleDB，Docker）
 
 ```bash
-cd backtest_platform
+cd quant_platform/backtest_platform
 docker compose up -d timescaledb
 POSTGRES_PASSWORD=quant_local_dev_password uv run python ../scripts/seed_demo_data.py
 ```
@@ -35,7 +35,7 @@ POSTGRES_PASSWORD=quant_local_dev_password uv run python ../scripts/seed_demo_da
 ### HTTP API（FastAPI）
 
 ```bash
-cd backtest_platform
+cd quant_platform/backtest_platform
 POSTGRES_PASSWORD=quant_local_dev_password uv run uvicorn backtest_platform.api.app:app --reload --port 8083
 # OpenAPI 文件：http://localhost:8083/docs（統一信封 {success,data,error,meta}，見 dev_docs/25）
 ```
@@ -43,7 +43,7 @@ POSTGRES_PASSWORD=quant_local_dev_password uv run uvicorn backtest_platform.api.
 ### 前端（React 19 + Vite）
 
 ```bash
-cd frontend
+cd quant_platform/apps/web_console
 npm install
 npm run dev                                # http://localhost:5173（研究/監控/系統三 zone + Cmd-K）
 # 後端不在預設 :8000 時（如共用機 port 被占）：cp .env.example .env 並設 DEV_API_PROXY_TARGET=http://localhost:<port>
@@ -69,7 +69,7 @@ build-universe → doe → go-gates → truth-gate → paper-replay
 | `paper-replay` | paper 重放 sim（收 forward OOS 前的最後一關） | ADR-029 |
 
 ```bash
-cd backtest_platform
+cd quant_platform/backtest_platform
 # --dry-run 只印 config 不跑；真實資料工作流加 --extra data_paid（FinLab token）
 uv run python -m backtest_platform.research.cli build-universe --strategy inst_flow --dry-run
 uv run python -m backtest_platform.research.cli doe          --strategy inst_flow --dry-run
@@ -84,15 +84,19 @@ uv run python -m backtest_platform.research.cli truth-gate   --strategy inst_flo
 
 ```
 .
-├── backtest_platform/       # Python 回測/研究/驗證平台（uv、FastAPI、sim/vectorbt）
-│   ├── src/backtest_platform/   # strategies / research / validation / engines / api / orchestration / monitoring
-│   ├── tests/               # pytest（1116 passed）
-│   ├── docker/              # TimescaleDB init schema
-│   └── legacy/              # 封存驗證碼（ADR-026，不打包不進 CI）
-├── frontend/                # React 19 + TS + Vite 前端（研究/監控/系統三 zone + Cmd-K）
-├── dev_docs/                # 工程文檔（INDEX + PRD + REST 契約 + 32 份 ADR + 審查報告）
-├── strategy/archive/        # 四層共振歷史規格（已廢止 ADR-023，僅存 audit trail）
-└── stock_strategy/          # 策略點子筆記（FinLab 參考策略）
+├── quant_platform/          # Golden monorepo（W7.1 收斂）
+│   ├── backtest_platform/   # Python 研究/驗證平台（維持 backtest_platform import path）
+│   │   ├── src/backtest_platform/   # domain/application/adapters（research 三層）+ services/ 5 個 + api
+│   │   ├── tests/           # pytest（1453 passed）
+│   │   ├── docker/          # TimescaleDB init schema
+│   │   └── deploy/          # systemd/cron 運維單元
+│   ├── apps/web_console/    # React 19 + TS + Vite 前端（研究/監控/系統三 zone + Cmd-K）
+│   ├── packages/contracts/  # 跨層 published language（schemas + examples）
+│   ├── services/            # golden service 骨架（M1-M6 逐服務碎解目標）
+│   └── docs/research_notes/ # 策略點子筆記 + 歷史規格 archive
+├── dev_docs/                # 工程文檔（INDEX + PRD + REST 契約 + ADR + 審查報告）
+├── scripts/                 # check_openapi_drift 等 repo-root 工具
+└── .github/workflows/       # CI（backend / frontend / architecture / contract-drift）
 ```
 
 ---
