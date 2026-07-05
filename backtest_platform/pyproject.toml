@@ -210,11 +210,14 @@ ignore_imports = [
 # (W1.3) so only the CLI composition root touches governance.
 
 [[tool.importlinter.contracts]]
-name = "Pure research-domain (strategies/validation) must not import web/DB/broker frameworks"
+name = "Pure research-domain (strategies/validation/research.domain) must not import web/DB/broker frameworks"
 type = "forbidden"
 source_modules = [
     "backtest_platform.strategies",
     "backtest_platform.validation",
+    # W4.1a: the extracted research.domain layer is framework/DB/IO-free by
+    # design; lock it so future edits can't silently pull in web/DB/broker deps.
+    "backtest_platform.research.domain",
 ]
 forbidden_modules = [
     "sqlalchemy",
