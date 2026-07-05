@@ -273,7 +273,7 @@ def datasets(
 
 
 @router.post("/ingest", response_model=Envelope, status_code=202)
-def ingest(req: IngestRequest) -> Envelope:
+def ingest(req: IngestRequest, data_root: Path = Depends(get_data_root)) -> Envelope:
     """Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``
     (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
     so the API never blocks; poll :func:`ingest_status`."""
@@ -285,7 +285,10 @@ def ingest(req: IngestRequest) -> Envelope:
     symbols = list(req.symbols)
     if not symbols:
         if req.universe:
-            resolved = symbols_for(req.universe)
+            # Resolve against the injected data root (same dep every other handler
+            # here uses) — NOT symbols_for's default ``data/`` — so a named pool in a
+            # non-default cache dir (and the test tmp dir) resolves instead of 422ing.
+            resolved = symbols_for(req.universe, data_root)
             if resolved is None:
                 raise HTTPException(
                     status_code=422,
