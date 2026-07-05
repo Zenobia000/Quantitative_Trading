@@ -43,7 +43,7 @@
 | W6.1 | 6-api | 拆 api monolith：system.py→三 service router；抽 router 內 domain 邏輯進 application service；apps/api 變薄 composition root | W5.1 | worktree | XL | ✗ |
 | W7.1 | 7-monorepo | 建 `quant_platform/{apps,packages,services}`；frontend→apps/web_console；deploy/ 與 research-note md 進 docs/ | W6.1 | worktree | XL | ✗ |
 | W8.1 | 8-docs | 同步 dev_docs 08/09、撰 repositioning ADR、維護本 WBS 狀態欄 | W2.1 | direct-commit | M | ✅ |
-| FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Wall Street operations console，以 golden 七層為 IA | — | feature-branch | S | ✅ done |
+| FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Codex-style operations console，以 golden 七層為 IA | — | feature-branch | S | ✅ done |
 | FE-R1 | frontend-reset | 重寫全局 tokens、AppShell、nav、首頁 Command Center；建立交易/風控/營運密集系統視覺基線 | FE-R0 | feature-branch | M | ✅ done |
 | FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | ⏳ 本波 |
 | FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | ⏳ 本波 |
@@ -94,7 +94,7 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - **monorepo big-bang PR 過大**（163 py + ~250 fe）：維持 deferred worktree 波次，一 service 一 PR，不做單一 mega-commit。
 - **多 session 併發**：重 worktree 波次用 git worktree 隔離，勿共用 HEAD。
 
-## 7. Frontend Reset — Wall Street Operations Console
+## 7. Frontend Reset — Codex-Style Operations Console
 
 ### 7.1 問題
 
@@ -109,7 +109,7 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 
 ### 7.2 新方向
 
-前端重設計為 **Wall Street operations console**：
+前端重設計為 **Codex-style operations console**：
 
 | 原則 | 說明 |
 | :--- | :--- |
@@ -118,14 +118,14 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 | Evidence over decoration | 每個指標都要有來源、as-of、trace id；pending 不造假。 |
 | Risk visible everywhere | CRIT / HALT / reconciliation lock 全站可見。 |
 | Keyboard / drill-down | Cmd-K、表格鍵盤導覽、audit trail drill-down。 |
-| Low-latency visual language | 深色交易台、細格線、單行狀態列、monospace 數字、有限功能色。 |
+| Codex UI color | 中性黑白灰、細格線、單行狀態列、monospace 數字、有限功能色。 |
 
 ### 7.3 設計 token
 
 | Token 類 | 方向 |
 | :--- | :--- |
-| Base | near-black / graphite / exchange blue-black |
-| Surface | panel / raised / table-row / input 分層清楚 |
+| Base | Codex neutral near-black / off-white |
+| Surface | panel / raised / table-row / input 用中性灰階分層 |
 | Border | 1px hairline grid，降低 card 感 |
 | Typography | sans for labels，monospace tabular for numbers/symbols/ids |
 | Functional colors | gain/loss/warn/crit/info/halt；不用品牌漸層 |
@@ -150,6 +150,7 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - [x] `frontend/src/features/research/pages/SweepPage.tsx` 由表單式掃描頁改為 sweep terminal，集中 grid/estimate/job 與 pending evidence queue。
 - [x] `frontend/src/features/research/pages/RunReportPage.tsx` 外殼由報告卡片頁改為 run evidence ledger，KPI/reproduce/cost/action 改為 dense terminal layout。
 - [x] `frontend/src/features/research/pages/ReportViewerPage.tsx` 首屏外殼改為 evaluation evidence ledger；headline banner 與 scorecard summary 已去卡片化。
-- [ ] `frontend/src/features/research/components/reportviewer/{ScorecardTabs,GateChecksSection,SimulationPanel,DecisionActionBar}` 仍需 terminal + evidence ledger 化。
+- [x] `frontend/src/features/research/components/reportviewer/{ScorecardTabs,GateChecksSection}` 改為 Codex-style evidence ledger；去除卡片式外框，沿用全域中性色票。
+- [ ] `frontend/src/features/research/components/reportviewer/{SimulationPanel,DecisionActionBar}` 仍需 Codex-style evidence ledger 化。
 - [ ] Live OOS Queue / Release Gate 仍需改為 Governance operations queue。
 - [ ] Data / Risk / Trading / Operations 頁面仍需去卡片化並加強 source/as-of/trace。

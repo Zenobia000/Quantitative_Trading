@@ -1,94 +1,94 @@
 /*
- * Wall Street operations console tokens.
+ * Codex-style operations console tokens.
  * 真相源：dev_docs/product_repositioning/12_frontend_architecture_specification.md
  * + 17_frontend_information_architecture.md + 18_refactor_wbs.md §7。
  */
 :root {
-  --bg-base: #070b10;
-  --bg-surface: #0d131b;
-  --bg-input: #111a24;
-  --bg-code: #080f16;
-  --bg-raised: #15202b;
-  --bg-panel: #0a1017;
-  --bg-row: #0f1720;
+  --bg-base: #0f0f0f;
+  --bg-surface: #171717;
+  --bg-input: #202020;
+  --bg-code: #111111;
+  --bg-raised: #242424;
+  --bg-panel: #131313;
+  --bg-row: #1c1c1c;
 
-  --border-default: #223043;
-  --border-strong: #34475f;
+  --border-default: #2d2d2d;
+  --border-strong: #3f3f3f;
 
-  --text-primary: #edf4ff;
-  --text-secondary: rgba(237, 244, 255, 0.72);
-  --text-muted: rgba(237, 244, 255, 0.52);
+  --text-primary: #f4f4f4;
+  --text-secondary: rgba(244, 244, 244, 0.72);
+  --text-muted: rgba(244, 244, 244, 0.52);
 
-  --gain: #38d996;
-  --loss: #ff5c72;
-  --loss-aaa: #ff9aa8;
-  --warning: #f6b73c;
-  --error: #ff3b4f;
-  --info: #6bb8ff;
-  --halt: #ff8a3d;
+  --gain: #8ddfbd;
+  --loss: #ff8a8a;
+  --loss-aaa: #ffb3b3;
+  --warning: #f2c46d;
+  --error: #ff6f7d;
+  --info: #9ecbff;
+  --halt: #f0a66a;
 
-  --focus-ring: rgba(107, 184, 255, 0.85);
+  --focus-ring: rgba(158, 203, 255, 0.85);
   --scrim: rgba(0, 0, 0, 0.68);
 
-  --cat-1: #6bb8ff;
-  --cat-2: #f6b73c;
-  --cat-3: #9b8cff;
-  --cat-4: #38d996;
-  --cat-5: #ff6aa2;
-  --cat-6: #badc58;
+  --cat-1: #9ecbff;
+  --cat-2: #f2c46d;
+  --cat-3: #c4b5fd;
+  --cat-4: #8ddfbd;
+  --cat-5: #f0a8c8;
+  --cat-6: #b8d986;
   --div-neg: var(--loss);
-  --div-mid: #617187;
+  --div-mid: #6f6f6f;
   --div-pos: var(--gain);
-  --seq-1: #0b1a27;
-  --seq-2: #12304a;
-  --seq-3: #194f78;
-  --seq-4: #236fa8;
-  --seq-5: #3796dd;
+  --seq-1: #171717;
+  --seq-2: #22272e;
+  --seq-3: #2f3a45;
+  --seq-4: #486171;
+  --seq-5: #6f9ec2;
 
   color-scheme: dark;
 }
 
 :root.light {
-  --bg-base: #eef3f8;
+  --bg-base: #f7f7f5;
   --bg-surface: #ffffff;
-  --bg-input: #e7edf5;
-  --bg-code: #e2eaf2;
+  --bg-input: #f0f0ed;
+  --bg-code: #eeeeeb;
   --bg-raised: #ffffff;
-  --bg-panel: #f8fbff;
-  --bg-row: #f3f7fb;
+  --bg-panel: #fbfbfa;
+  --bg-row: #f4f4f1;
 
-  --border-default: #c8d3e0;
-  --border-strong: #95a7bb;
+  --border-default: #d7d7d2;
+  --border-strong: #a8a8a1;
 
-  --text-primary: #07101b;
-  --text-secondary: rgba(7, 16, 27, 0.74);
-  --text-muted: rgba(7, 16, 27, 0.56);
+  --text-primary: #171717;
+  --text-secondary: rgba(23, 23, 23, 0.72);
+  --text-muted: rgba(23, 23, 23, 0.54);
 
-  --gain: #087a45;
-  --loss: #c9253b;
-  --loss-aaa: #8f1324;
-  --warning: #9b650c;
-  --error: #b51225;
-  --info: #0b66b3;
-  --halt: #b65312;
+  --gain: #167a4a;
+  --loss: #c24141;
+  --loss-aaa: #8f2424;
+  --warning: #8a5a12;
+  --error: #b42335;
+  --info: #2563eb;
+  --halt: #a04f12;
 
-  --focus-ring: rgba(11, 102, 179, 0.72);
-  --scrim: rgba(7, 16, 27, 0.45);
+  --focus-ring: rgba(37, 99, 235, 0.72);
+  --scrim: rgba(23, 23, 23, 0.45);
 
-  --cat-1: #0b66b3;
-  --cat-2: #9b650c;
-  --cat-3: #6847c6;
-  --cat-4: #087a45;
-  --cat-5: #b21e62;
+  --cat-1: #2563eb;
+  --cat-2: #8a5a12;
+  --cat-3: #6d4fc2;
+  --cat-4: #167a4a;
+  --cat-5: #a5225a;
   --cat-6: #4d7c0f;
 
-  --div-mid: #ccd6e2;
+  --div-mid: #c9c9c3;
 
-  --seq-1: #d9ecff;
-  --seq-2: #aacfee;
-  --seq-3: #6aa9d8;
-  --seq-4: #2d7db8;
-  --seq-5: #0b5a92;
+  --seq-1: #f0f0ed;
+  --seq-2: #ddddda;
+  --seq-3: #c0c7cf;
+  --seq-4: #8197ad;
+  --seq-5: #496a8a;
 
   color-scheme: light;
 }

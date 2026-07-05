@@ -1,5 +1,5 @@
 /*
- * Route table for the Wall Street operations console.
+ * Route table for the Codex-style operations console.
  * Golden IA is seven-layer: Data / Research / Governance / Trading / Risk / Operations / System.
  * Some URLs stay legacy-compatible, but comments and navigation semantics follow the new product layers.
  */

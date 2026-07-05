@@ -1,6 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-// Wall Street operations console tokens. Values live in src/styles/tokens.css.
+// Codex-style operations console tokens. Values live in src/styles/tokens.css.
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],

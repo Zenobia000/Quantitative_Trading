@@ -1,8 +1,8 @@
-# frontend/GOAL.md — Wall Street Operations Console
+# frontend/GOAL.md — Codex-Style Operations Console
 
 > 版本: v2.0 | 日期: 2026-07-05
 >
-> 目標：把舊研究後台改成個人級 EOD 量化交易平台的 Wall Street operations console。前端不再依賴已刪除的 `dev_docs/web_design/*`，真相源改為 `dev_docs/product_repositioning/00_INDEX.md` 到 `17_frontend_information_architecture.md`，重構節奏見 `18_refactor_wbs.md`。
+> 目標：把舊研究後台改成個人級 EOD 量化交易平台的 Codex-style operations console。前端不再依賴已刪除的 `dev_docs/web_design/*`，真相源改為 `dev_docs/product_repositioning/00_INDEX.md` 到 `17_frontend_information_architecture.md`，重構節奏見 `18_refactor_wbs.md`。
 
 ## 1. 產品定位
 
@@ -19,7 +19,7 @@ Data → Research → Governance → Strategy/Portfolio → Risk → Execution �
 | 原則 | 規範 |
 | :--- | :--- |
 | Dense first | 表格、ledger、status strip、risk blotter 優先。 |
-| Wall Street style | 深色交易台、細格線、緊湊面板、monospace 數字、狀態燈。 |
+| Codex UI color | 中性黑白灰、細格線、緊湊面板、monospace 數字、少量語意狀態色。 |
 | Evidence first | 每個 KPI 要能 drill-down 到 bundle/run/package/order/fill/audit。 |
 | Risk visible | CRIT、HALT、reconciliation lock 全站可見。 |
 | No fake data | pending 端點只顯示 pending/empty，不假造交易數字。 |
@@ -46,7 +46,7 @@ Data → Research → Governance → Strategy/Portfolio → Risk → Execution �
 - 漲跌必須色彩 + 符號雙編碼。
 - 密集表格在窄螢幕橫向捲動，不改成卡片。
 - 所有數字使用 tabular-nums。
-- 舊 Grok 單色 token 不再是設計真相；改用 `tokens.css` 的 ops console token。
+- 舊 Grok 單色 token 不再是設計真相；改用 `tokens.css` 的 Codex-style neutral token。
 
 ## 5. 每頁 Definition of Done
 

@@ -1,5 +1,5 @@
 /*
- * Wall Street operations console IA:
+ * Codex-style operations console IA:
  * nav 以 golden 七層產品子系統為一等區域；舊 Live OOS / Deployment
  * 語義收斂到 Governance。舊 URL 仍保留 client redirect。
  */

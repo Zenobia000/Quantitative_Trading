@@ -1,5 +1,5 @@
 /*
- * Wall Street operations console IA.
+ * Codex-style operations console IA.
  * 真相源：dev_docs/product_repositioning/17_frontend_information_architecture.md
  * + 18_refactor_wbs.md §7。七層產品子系統是一等導航；舊 Live OOS/Deployment
  * 併入 Governance，不再保護舊研究後台 IA。
