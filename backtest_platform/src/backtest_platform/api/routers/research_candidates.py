@@ -128,6 +128,7 @@ def post_select_live_oos(
             candidate_id, reason=req.reason, override=req.override,
             observation_kind=req.observation_kind,
             candidates_path=candidates_path, decisions_path=decisions_path, queue_path=queue_path,
+            enqueue=live_oos_queue.enqueue,
         )
     except cs.CandidateNotFoundError:
         raise _not_found(candidate_id) from None
