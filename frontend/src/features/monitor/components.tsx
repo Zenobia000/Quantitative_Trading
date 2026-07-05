@@ -9,7 +9,7 @@ import { PendingNote } from '@/components/PendingNote'
 import { Skeleton } from '@/components/Skeleton'
 import { StatCard } from '@/components/StatCard'
 import { useErrorText } from '@/i18n/useErrorText'
-import type { ApiResult } from '@/types/domain'
+import type { ApiMeta, ApiResult } from '@/types/domain'
 import { isPending } from '@/types/domain'
 
 /** Render children only when real data is present; otherwise loading/error/pending/empty. */
@@ -52,7 +52,32 @@ export function QueryState<T>({
   const empty = Array.isArray(data) ? data.length === 0 : data == null
   if (empty)
     return <div className="border border-border bg-surface p-4 text-sm text-text-muted">{emptyLabel}</div>
-  return <>{children(data)}</>
+  return (
+    <>
+      {children(data)}
+      <EvidenceMetaStrip meta={q.data?.meta} />
+    </>
+  )
+}
+
+function EvidenceMetaStrip({ meta }: { meta: ApiMeta | undefined }) {
+  if (!meta || Object.keys(meta).length === 0) return null
+  const parts = [
+    ['source', meta.data_source ?? '—'],
+    ['as-of', meta.as_of ?? '—'],
+    ['ttl', meta.ttl != null ? `${meta.ttl}s` : '—'],
+    ['trace', meta.trace_id ?? '—'],
+  ]
+  if (meta.total != null) parts.splice(1, 0, ['total', String(meta.total)])
+  return (
+    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 border border-border bg-base px-2 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-text-muted">
+      {parts.map(([k, v]) => (
+        <span key={k}>
+          {k}: <span className="text-text-secondary">{v}</span>
+        </span>
+      ))}
+    </div>
+  )
 }
 
 /** Monitor-zone KPI tile — thin adapter over the shared StatCard (single source of KPI styling). */

@@ -36,6 +36,10 @@ export interface ApiMeta {
    * `catalog`）= live 來源。
    */
   data_source?: string
+  /** 資料快照時間；端點尚未提供時前端顯示 `—`，不推測。 */
+  as_of?: string
+  /** 後端追蹤 id；端點尚未提供時前端顯示 `—`，不推測。 */
+  trace_id?: string
 }
 
 /**
