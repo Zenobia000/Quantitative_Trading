@@ -105,6 +105,27 @@ def test_run_build_universe_counts_alive_and_delisted(tmp_path):
     assert result.n_delisted == 1     # DEAD delisted mid-year
 
 
+def test_run_build_universe_excludes_flagged_when_opted_in(tmp_path):
+    """ADR-007 Slice 3: with ``exclude_flagged``, a name under 變更交易 is dropped."""
+    from backtest_platform.research.workflows.universe import _ELIGIBILITY_KEYS
+
+    base = _fake_getter()
+    idx = pd.date_range("2020-01-01", "2020-12-31", freq="B")
+    # BIG flagged (變更交易 = 1.0) all year; other status frames all clean.
+    flag = pd.DataFrame(0.0, index=idx, columns=list(_COLS)).astype("Float64")
+    flag.loc[:, "BIG"] = 1.0
+    clean = pd.DataFrame(False, index=idx, columns=list(_COLS)).astype("bool")
+    elig = {_ELIGIBILITY_KEYS[0]: flag, _ELIGIBILITY_KEYS[1]: clean, _ELIGIBILITY_KEYS[2]: clean}
+
+    def getter(key: str):
+        return elig[key].copy() if key in elig else base(key)
+
+    cfg = _cfg(tmp_path / "cache").model_copy(update={"exclude_flagged": True})
+    result = run_build_universe(cfg, getter=getter)
+    assert "BIG" not in result.universe          # flagged → excluded
+    assert {"MID", "SMALL", "DEAD"} <= set(result.universe)
+
+
 def test_run_build_universe_ingests_all_selected(tmp_path):
     cache = tmp_path / "cache"
     result = run_build_universe(_cfg(cache), getter=_fake_getter())

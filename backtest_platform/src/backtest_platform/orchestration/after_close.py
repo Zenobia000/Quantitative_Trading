@@ -4,7 +4,7 @@ The paper daily-flow chain (ETL→signals→risk→orders→log) has been *repla
 end-to-end (``runtime.paper_daemon`` / ``runtime.market_reader``). What was missing
 is the **forward, real-calendar** trigger: fire the chain once, after each session
 close, on real wall-clock time. Per the PRD (v4.0) that trigger is a plain
-cron / systemd-timer level concern — no Prefect. This module is the small, fully
+systemd-timer / CLI deployment concern. This module is the small, fully
 *injectable* orchestration the timer invokes:
 
     trading-day gate → after-close time gate → idempotency → run → notify
@@ -129,7 +129,7 @@ def _watch_line(watch: Any) -> str:
 
     return (
         f"[paper-watch] 觀察日 {watch.observed_trading_days}/~{NOMINAL_TRADING_DAYS}"
-        f" · 到期 {watch.expiry_date}（剩 {watch.days_remaining} 天）"
+        f" · 到期 {watch.expiry_date}(剩 {watch.days_remaining} 天)"
     )
 
 
@@ -307,7 +307,7 @@ def _watch_gate(watch: Any, strategy: str, as_of: date) -> AfterCloseResult | No
         )
         return _result(
             AfterCloseStatus.PAUSED, strategy, as_of,
-            f"{strategy} 觀察艙已暫停（app-level pause）— skipping {as_of}. "
+            f"{strategy} 觀察艙已暫停(app-level pause)— skipping {as_of}. "
             "Resume via the Monitor觀察艙 card or `... orchestration.cli watch resume "
             f"--strategy {strategy}`.",
         )
@@ -384,8 +384,8 @@ def _notify_success(
         if expired == strategy:
             _notify(
                 notifier,
-                f"[paper-watch] {strategy} 觀察期滿（{as_of}）— 請執行含 live 證據的重評"
-                "（晉升仍需 DSR ≥ 0.95）",
+                f"[paper-watch] {strategy} 觀察期滿({as_of})— 請執行含 live 證據的重評"
+                "(晉升仍需 DSR ≥ 0.95)",
                 ok=True,
             )
 

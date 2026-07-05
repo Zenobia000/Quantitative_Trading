@@ -26,7 +26,7 @@ describe('WiredPage', () => {
   it('pending 端點 → pending note + section 結構', async () => {
     renderWired({ data_source: 'pending', ttl: 300 }, {})
     await waitFor(() => expect(screen.getByText(/主端點/)).toBeInTheDocument())
-    // design.pen section 結構（monitor_a 有 equity_curve 等）
+    // transitional section structure（monitor_a 有 equity_curve 等）
     expect(screen.getByText('equity_curve')).toBeInTheDocument()
   })
 })

@@ -1,5 +1,6 @@
-# Local stack — TimescaleDB + InfluxDB + Grafana (auto-provisioned).
-# Bring up with: docker compose up -d
+# Local stack for personal EOD development.
+# TimescaleDB is the only containerized service the current app needs for
+# FastAPI monitor telemetry and frontend happy-path audits.
 # Tear down with: docker compose down
 # Volumes persist; use `docker compose down -v` to wipe.
 
@@ -10,10 +11,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-quant}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me_in_production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-quant_local_dev_password}
       POSTGRES_DB: ${POSTGRES_DB:-quant_trading}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       - ./docker/timescaledb/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
@@ -23,54 +24,5 @@ services:
       timeout: 5s
       retries: 5
 
-  # Metrics DB the app pushes to via monitoring/influx_writer.py (doc 20 §3.1).
-  influxdb:
-    image: influxdb:2.7
-    container_name: quant-influxdb
-    restart: unless-stopped
-    environment:
-      DOCKER_INFLUXDB_INIT_MODE: setup
-      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USER:-quant}
-      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-change_me_in_production}
-      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG:-quant}
-      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET:-metrics}
-      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-local-dev-token}
-    ports:
-      - "${INFLUXDB_PORT:-8086}:8086"
-    volumes:
-      - influxdb_data:/var/lib/influxdb2
-    healthcheck:
-      test: ["CMD", "influx", "ping"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-
-  grafana:
-    image: grafana/grafana:10.4.2
-    container_name: quant-grafana
-    restart: unless-stopped
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_INSTALL_PLUGINS: grafana-clock-panel
-      # Consumed by provisioning/datasources/influxdb.yaml (env interpolation).
-      INFLUXDB_ORG: ${INFLUXDB_ORG:-quant}
-      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET:-metrics}
-      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-local-dev-token}
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./docker/grafana/dashboards:/etc/grafana/dashboards:ro
-    depends_on:
-      timescaledb:
-        condition: service_healthy
-      influxdb:
-        condition: service_healthy
-
 volumes:
   timescaledb_data:
-  influxdb_data:
-  grafana_data:

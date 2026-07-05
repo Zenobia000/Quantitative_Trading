@@ -1,10 +1,7 @@
 /*
- * Runs Table 研究主頁（/research/runs）。三源對齊：
- * - assembly/research_03_runs_table_integrated.md（結構/行為）
- * - design.pen「Research · Runs Table」frame（header/toolbar/guardrail/runs_table/multi_select/empty）
- * - pages/research_03_runs_table.md（四態/RWD/copy）
+ * Runs ledger（/research/runs）。
  * 資料：useRuns → GET /runs（shipped）。guardrail（trials/DSR）端點未接線 → pending（不假造數字）。
- * RWD：runs_table @<1024 橫向捲動「不轉 card」（研究級密集表）。
+ * RWD：@<1024 橫向捲動「不轉 card」（研究級密集表）。
  */
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -24,6 +21,19 @@ const METRIC_COLS = ['sharpe', 'cagr', 'maxdd', 'win', 'trades'] as const
 function fmtMetric(v: unknown): string {
   if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
   return v == null ? '—' : String(v)
+}
+
+function gateCounts(rows: RunRow[]): { pass: number; fail: number; other: number } {
+  let pass = 0
+  let fail = 0
+  let other = 0
+  for (const row of rows) {
+    const gate = String(row.gate_status ?? '').toUpperCase()
+    if (gate === 'PASS') pass += 1
+    else if (gate === 'FAIL') fail += 1
+    else other += 1
+  }
+  return { pass, fail, other }
 }
 
 export function RunsTablePage() {
@@ -57,6 +67,7 @@ export function RunsTablePage() {
     for (const r of rows) for (const m of METRIC_COLS) if (r.metrics?.[m] != null) present.add(m)
     return METRIC_COLS.filter((m) => present.has(m))
   }, [rows])
+  const gates = useMemo(() => gateCounts(rows), [rows])
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -69,41 +80,50 @@ export function RunsTablePage() {
     <div>
       <PageHeader title={t('runs.title')} route="/research/runs" subtitle={t('runs.subtitle')} />
 
-      {/* research_toolbar */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => navigate('/research/runs/new')}
-          className="rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90"
-        >
-          {t('runs.newRun')}
-        </button>
-        <span className="rounded-md border border-border px-2 py-1 text-xs text-text-secondary">
-          {t('runs.savedView')}
-        </span>
-        {strategyId && (
-          <span className="inline-flex items-center gap-1.5 rounded-pill border border-border bg-input px-2.5 py-1 text-xs text-text">
-            {t('runs.filter.strategyLabel')}
-            <span className="font-mono tabular">{strategyId}</span>
-            <button
-              onClick={() => setSp({})}
-              aria-label={t('runs.filter.clearAria')}
-              className="text-text-muted hover:text-text"
-            >
-              ✕
-            </button>
-          </span>
-        )}
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs text-text-muted tabular">
-            {rows.length ? t('runs.showingCount', { n: rows.length }) : ''}
-          </span>
+      <div className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">Run Ledger</div>
+            <div className="mt-0.5 text-xs text-text-secondary">{t('runs.savedView')}</div>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em]">
+            <span className="border border-border px-2 py-1 text-text-secondary">
+              {rows.length ? t('runs.showingCount', { n: rows.length }) : '0'}
+            </span>
+            <span className="border border-gain/40 px-2 py-1 text-gain">PASS {gates.pass}</span>
+            <span className="border border-loss/40 px-2 py-1 text-loss">FAIL {gates.fail}</span>
+            <span className="border border-border px-2 py-1 text-text-muted">OTHER {gates.other}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2">
           <button
-            onClick={() => refetch()}
-            className="rounded-md border border-border px-2 py-1 text-xs text-text-secondary hover:text-text"
-            disabled={isFetching}
+            onClick={() => navigate('/research/runs/new')}
+            className="border border-info/60 bg-input px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-text hover:border-info"
           >
-            {isFetching ? t('common:action.refreshing') : t('common:action.refresh')}
+            {t('runs.newRun')}
           </button>
+          {strategyId && (
+            <span className="inline-flex items-center gap-1.5 border border-border bg-input px-2.5 py-1 font-mono text-xs text-text">
+              {t('runs.filter.strategyLabel')}
+              <span className="font-mono tabular">{strategyId}</span>
+              <button
+                onClick={() => setSp({})}
+                aria-label={t('runs.filter.clearAria')}
+                className="text-text-muted hover:text-text"
+              >
+                ✕
+              </button>
+            </span>
+          )}
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => refetch()}
+              className="border border-border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] text-text-secondary hover:border-border-strong hover:text-text"
+              disabled={isFetching}
+            >
+              {isFetching ? t('common:action.refreshing') : t('common:action.refresh')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -113,7 +133,7 @@ export function RunsTablePage() {
       </div>
 
       {/* runs_table — 四態 */}
-      <section className="rounded-lg border border-border bg-surface">
+      <section className="border border-border bg-panel">
         {isLoading ? (
           <div className="p-4">
             <SkeletonRows rows={8} cols={4 + metricCols.length} />
@@ -125,7 +145,7 @@ export function RunsTablePage() {
             </p>
             <button
               onClick={() => refetch()}
-              className="mt-3 rounded-md border border-border px-3 py-1.5 text-text-secondary hover:text-text"
+              className="mt-3 border border-border px-3 py-1.5 text-text-secondary hover:border-border-strong hover:text-text"
             >
               {t('common:action.retry')}
             </button>
@@ -139,21 +159,20 @@ export function RunsTablePage() {
             />
           </div>
         ) : (
-          // @<1024 橫向捲動保欄位密度（不轉 card）
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
+            <table className="w-full min-w-[860px] text-sm">
               <thead>
-                <tr className="border-b border-border text-left text-xs text-text-muted">
-                  <th className="w-8 p-2"></th>
-                  <th className="p-2 font-medium">run_id</th>
-                  <th className="p-2 font-medium">{t('runs.table.strategy')}</th>
-                  <th className="p-2 font-medium">{t('runs.table.gate')}</th>
+                <tr className="border-b border-border bg-base text-left font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+                  <th className="w-8 px-2 py-2"></th>
+                  <th className="px-2 py-2 font-medium">run_id</th>
+                  <th className="px-2 py-2 font-medium">{t('runs.table.strategy')}</th>
+                  <th className="px-2 py-2 font-medium">{t('runs.table.gate')}</th>
                   {metricCols.map((m) => (
-                    <th key={m} className="p-2 text-right font-medium">
+                    <th key={m} className="px-2 py-2 text-right font-medium">
                       {m}
                     </th>
                   ))}
-                  <th className="p-2 font-medium">{t('runs.table.hypothesis')}</th>
+                  <th className="px-2 py-2 font-medium">{t('runs.table.hypothesis')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,9 +184,9 @@ export function RunsTablePage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') navigate(`/research/runs/${encodeURIComponent(r.run_id)}`)
                     }}
-                    className="cursor-pointer border-b border-border/60 hover:bg-input focus:bg-input focus:outline-none"
+                    className="cursor-pointer border-b border-border/60 bg-surface hover:bg-row focus:bg-row focus:outline-none"
                   >
-                    <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
                         checked={selected.has(r.run_id)}
@@ -175,17 +194,17 @@ export function RunsTablePage() {
                         aria-label={t('runs.table.selectAria', { runId: r.run_id })}
                       />
                     </td>
-                    <td className="p-2 font-mono text-xs tabular">{r.run_id}</td>
-                    <td className="p-2 text-text-secondary">{r.strategy ?? '—'}</td>
-                    <td className="p-2">
+                    <td className="px-2 py-2 font-mono text-xs tabular text-text">{r.run_id}</td>
+                    <td className="px-2 py-2 font-mono text-xs text-text-secondary">{r.strategy ?? '—'}</td>
+                    <td className="px-2 py-2">
                       <EnumBadge family="gate" value={r.gate_status} />
                     </td>
                     {metricCols.map((m) => (
-                      <td key={m} className="p-2 text-right font-mono tabular">
+                      <td key={m} className="px-2 py-2 text-right font-mono tabular">
                         {fmtMetric(r.metrics?.[m])}
                       </td>
                     ))}
-                    <td className="p-2 max-w-[280px] truncate text-xs text-text-muted" title={r.hypothesis ?? undefined}>
+                    <td className="max-w-[320px] truncate px-2 py-2 text-xs text-text-muted" title={r.hypothesis ?? undefined}>
                       {r.hypothesis ?? '—'}
                     </td>
                   </tr>
@@ -198,14 +217,14 @@ export function RunsTablePage() {
 
       {/* multi_select_actions */}
       {selected.size > 0 && (
-        <div className="sticky bottom-0 mt-3 flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-2 text-sm">
+        <div className="sticky bottom-0 mt-3 flex items-center gap-3 border border-border bg-panel px-4 py-2 text-sm">
           <span className="text-text-secondary">{t('runs.selected.count', { n: selected.size })}</span>
           <button
             disabled={selected.size < 2}
             onClick={() =>
               navigate(`/research/compare?run_ids=${[...selected].map(encodeURIComponent).join(',')}`)
             }
-            className="rounded-md border border-border px-3 py-1 text-text-secondary enabled:hover:text-text disabled:opacity-40"
+            className="border border-border px-3 py-1 font-mono text-xs uppercase tracking-[0.08em] text-text-secondary enabled:hover:border-border-strong enabled:hover:text-text disabled:opacity-40"
           >
             {t('runs.selected.compare')}
           </button>

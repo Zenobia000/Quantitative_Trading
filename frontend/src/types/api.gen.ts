@@ -1685,6 +1685,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/system/universes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Universes
+         * @description List named universes discovered from ``universe_manifest.json`` (ADR-007).
+         *
+         *     A thin projection over ``data.universe_registry.list_universes`` — the read model
+         *     the New Run form selects from (SPEC-01 Slice 2) and strategies reference (N:1).
+         *     Missing data root / corrupt manifests degrade to typed-empty (``data_source``
+         *     explains), never 500 — mirrors :func:`bundles`.
+         */
+        get: operations["universes_system_universes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/system/datasets": {
         parameters: {
             query?: never;
@@ -2043,6 +2068,8 @@ export interface components {
             local: string;
             /** Used By */
             used_by: string[];
+            /** Bundle Backed */
+            bundle_backed: boolean;
         };
         /**
          * DecisionRequest
@@ -2304,6 +2331,18 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** Envelope[list[UniverseRow]] */
+        Envelope_list_UniverseRow__: {
+            /** Success */
+            success: boolean;
+            /** Data */
+            data?: components["schemas"]["UniverseRow"][] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /**
          * GateCriterion
          * @description One ADR-016/019 gate criterion (``GET /gate/spec``).
@@ -2365,10 +2404,14 @@ export interface components {
         /**
          * IngestRequest
          * @description Trigger a bundle ingest as an async job (8.H.6).
+         *
+         *     ``symbols`` is optional (ADR-007 Slice 4): an empty/omitted list resolves to the
+         *     system default universe, so the data-dictionary "download to local" one-click can
+         *     fire without the user re-typing a symbol list.
          */
         IngestRequest: {
             /** Symbols */
-            symbols: string[];
+            symbols?: string[];
             /**
              * Start
              * Format: date
@@ -2531,9 +2574,14 @@ export interface components {
             };
             /**
              * Stocks
-             * @description Stock ids to run
+             * @description Explicit stock ids. Empty → resolved from `universe`, else the system default.
              */
-            stocks: string[];
+            stocks?: string[];
+            /**
+             * Universe
+             * @description Named universe id (GET /system/universes); resolved to symbols server-side. Ignored when `stocks` is non-empty.
+             */
+            universe?: string | null;
             /**
              * Is Start
              * Format: date
@@ -2841,6 +2889,17 @@ export interface components {
              * @description dedicated parquet cache for this build
              */
             cache_dir: string;
+            /**
+             * Exchange
+             * @description board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL
+             */
+            exchange?: string | null;
+            /**
+             * Exclude Flagged
+             * @description exclude 全額交割/處置/注意 names as-of each rebalance
+             * @default false
+             */
+            exclude_flagged: boolean;
         };
         /** UniverseFiltersData */
         UniverseFiltersData: {
@@ -2848,6 +2907,36 @@ export interface components {
             markets?: string[];
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * UniverseRow
+         * @description One ``GET /system/universes`` row — a named, selectable universe (ADR-007).
+         *
+         *     Projects ``universe_manifest.json`` so the New Run form can *select* a
+         *     survivorship-clean population by name (SPEC-01 Slice 2) instead of re-typing raw
+         *     symbols, and so a strategy can *reference* it (N:1 via ``strategies``).
+         */
+        UniverseRow: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Symbols Count */
+            symbols_count: number;
+            /** Span Start */
+            span_start?: string | null;
+            /** Span End */
+            span_end?: string | null;
+            /** Top N */
+            top_n?: number | null;
+            /** Min Turnover */
+            min_turnover?: number | null;
+            /** Strategies */
+            strategies?: string[];
+            /** Cache Dir */
+            cache_dir: string;
+            /** Generated At */
+            generated_at?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -5349,6 +5438,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    universes_system_universes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_list_UniverseRow__"];
                 };
             };
         };

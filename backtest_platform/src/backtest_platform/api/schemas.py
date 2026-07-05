@@ -22,7 +22,18 @@ class RunCreateRequest(BaseModel):
     hypothesis: str = Field(..., min_length=1, description="預先註冊：這個 run 在驗什麼")
     strategy: str = Field(..., description="Registered strategy name (see GET /strategies)")
     params: dict[str, Any] = Field(default_factory=dict, description="Strategy params — validated at dispatch")
-    stocks: list[str] = Field(..., min_length=1, description="Stock ids to run")
+    # SPEC-01 Slice 2 / ADR-007: pool selection resolves server-side. Precedence —
+    # explicit ``stocks`` > named ``universe`` > the system default universe. So a
+    # run NEVER *requires* a hand-typed symbol list: omit both → system default.
+    stocks: list[str] = Field(
+        default_factory=list,
+        description="Explicit stock ids. Empty → resolved from `universe`, else the system default.",
+    )
+    universe: str | None = Field(
+        None,
+        description="Named universe id (GET /system/universes); resolved to symbols "
+        "server-side. Ignored when `stocks` is non-empty.",
+    )
     is_start: date
     is_end: date
     engine: str = Field("sim", description="sim (zipline/vectorbt removed 2026-07-03, ADR-037)")

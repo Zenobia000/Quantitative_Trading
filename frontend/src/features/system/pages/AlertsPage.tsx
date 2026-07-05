@@ -5,7 +5,6 @@
  * discord enabled + bot_token 一律遮罩）。CRUD（PUT/POST 規則、測試送達、history）待 rule store → pending。
  */
 import { useTranslation } from 'react-i18next'
-import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { StatusBadge } from '@/components/StatusBadge'
 import { QueryState, SimpleTable } from '@/features/monitor/components'
@@ -29,7 +28,20 @@ export function AlertsPage() {
 
   return (
     <div>
-      <PageHeader title={t('alerts.title')} route="/system/alerts" subtitle={t('alerts.subtitle')} />
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-start gap-3 border-b border-border px-3 py-3">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+              Operations Alert Ledger
+            </div>
+            <h1 className="mt-1 text-[18px] font-semibold text-text">{t('alerts.title')}</h1>
+            <p className="mt-1 text-xs text-text-muted">{t('alerts.subtitle')}</p>
+          </div>
+          <div className="ml-auto font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+            /system/alerts
+          </div>
+        </div>
+      </section>
 
       <section className="mb-3">
         <div className="mb-1 flex items-center gap-2 text-xs text-text-muted">
@@ -61,17 +73,19 @@ export function AlertsPage() {
       </section>
 
       {/* 頻道設定（shipped，遮罩） */}
-      <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <div className="mb-2 text-xs text-text-muted">{t('alerts.channels.heading')}</div>
+      <section className="mb-3 border border-border bg-panel">
+        <div className="border-b border-border px-3 py-2 font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+          {t('alerts.channels.heading')}
+        </div>
         {discord ? (
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3 bg-surface px-3 py-2 text-sm">
             <StatusBadge tone={discord.enabled ? 'gain' : 'muted'}>
               Discord {discord.enabled ? t('alerts.channels.enabled') : t('alerts.channels.disabled')}
             </StatusBadge>
             <span className="font-mono text-xs text-text-secondary">bot_token: {discord.bot_token ?? '***'}</span>
           </div>
         ) : (
-          <p className="text-sm text-text-muted">{t('alerts.channels.none')}</p>
+          <p className="bg-surface px-3 py-2 text-sm text-text-muted">{t('alerts.channels.none')}</p>
         )}
       </section>
 

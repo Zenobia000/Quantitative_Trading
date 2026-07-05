@@ -1,0 +1,1470 @@
+{
+  "generatedAt": "2026-07-05T10:26:55.835Z",
+  "baseURL": "http://localhost:5176",
+  "backend": "http://127.0.0.1:8083 (worktree uvicorn, seeded reports/) via vite proxy",
+  "note": "API-on-mount capture from the desktop screenshot pass; xhr/fetch only.",
+  "resolvedIds": {
+    "runId": "NO_RUN_SEEDED",
+    "reportEvaluationId": "NO_EVAL_SEEDED",
+    "strategyName": "momentum",
+    "promoteId": "momentum"
+  },
+  "routes": [
+    {
+      "route": "/",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/momentum",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/momentum",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/reports/NO_EVAL_SEEDED",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/NO_EVAL_SEEDED",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/evaluations/NO_EVAL_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "observedState": "static_no_api",
+      "dataSources": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/momentum",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/momentum",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "observedState": "error_or_degraded",
+      "dataSources": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    }
+  ]
+}

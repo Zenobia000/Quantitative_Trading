@@ -99,9 +99,11 @@ export function DecisionActionBar({
   }
 
   return (
-    <div className="sticky bottom-0 mt-3 rounded-lg border border-border bg-surface px-4 py-2">
+    <div className="sticky bottom-0 mt-3 border border-border bg-panel px-3 py-2">
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-xs text-text-muted">{t('reportViewer.decision.title')}</span>
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+          {t('reportViewer.decision.title')}
+        </span>
 
         {source === 'fixture' && (
           <StatusBadge tone="warning">
@@ -139,8 +141,8 @@ export function DecisionActionBar({
                 title={needsOverride ? t('reportViewer.decision.reasonRequired') : undefined}
                 className={
                   a.primary
-                    ? 'rounded-pill bg-text px-4 py-1 font-medium text-base hover:opacity-90 disabled:opacity-40'
-                    : 'rounded-md border border-border px-3 py-1 text-text-secondary hover:text-text disabled:opacity-40'
+                    ? 'border border-text/40 bg-text px-4 py-1 font-medium text-base hover:opacity-90 disabled:opacity-40'
+                    : 'border border-border bg-base px-3 py-1 text-text-secondary hover:border-border-strong hover:bg-input hover:text-text disabled:opacity-40'
                 }
               >
                 {t(a.labelKey)}

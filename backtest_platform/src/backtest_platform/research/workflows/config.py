@@ -62,6 +62,15 @@ class UniverseConfig(BaseModel):
     top_n: int = Field(..., ge=1, description="per-quarter top-N by market cap")
     min_turnover: float = Field(..., ge=0, description="trailing-20d avg turnover floor (TWD)")
     cache_dir: str
+    # Eligibility (ADR-007 Slice 3) — both opt-in, default off = unchanged behaviour.
+    exchange: str | None = Field(
+        None,
+        description="Board filter via finlab set_universe (e.g. 'TWSE' | 'TPEx'); None = ALL",
+    )
+    exclude_flagged: bool = Field(
+        False,
+        description="Exclude 全額交割/處置/注意 names as-of each rebalance (time-varying mask)",
+    )
 
     @model_validator(mode="after")
     def _span_ordered(self) -> UniverseConfig:

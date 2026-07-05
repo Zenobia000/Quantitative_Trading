@@ -1,8 +1,8 @@
 """Discord notifier — send-only client for trading alerts.
 
 Uses Discord REST API directly via httpx. No discord.py runtime, no event loop.
-Designed to be cheap to import and safe to call from sync Prefect tasks, CLI
-scripts, or pytest.
+Designed to be cheap to import and safe to call from scheduled CLI/session
+flows or pytest.
 
 See ADR-009 for the broader monitoring architecture.
 """
@@ -14,7 +14,6 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # Color constants — Discord embeds take an int (decimal), conventionally written hex.
 COLOR_BUY = 0x00C853

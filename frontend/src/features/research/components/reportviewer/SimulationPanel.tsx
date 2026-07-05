@@ -73,10 +73,10 @@ function MetricSpaceTable({
   if (!space.available)
     return (
       <div>
-        <h4 className="text-xs font-medium text-text-muted">{title}</h4>
+        <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">{title}</h4>
         <p
           data-testid={`sim-space-unavailable-${space.space}`}
-          className="mt-1 rounded-md border border-dashed border-border/70 bg-base px-3 py-2 text-xs text-text-muted"
+          className="mt-1 border border-dashed border-border/70 bg-base px-3 py-2 text-xs text-text-muted"
         >
           <span aria-hidden>⊘ </span>
           {t('reportViewer.simulation.notAvailable')}：{space.reason}
@@ -85,14 +85,14 @@ function MetricSpaceTable({
     )
   return (
     <div className="overflow-x-auto">
-      <h4 className="mb-1 text-xs font-medium text-text-muted">{title}</h4>
+      <h4 className="mb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">{title}</h4>
       <table className="w-full min-w-[380px] text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-xs text-text-muted">
-            <th className="py-1 pr-3 font-medium">{t('reportViewer.simulation.metricCol')}</th>
-            <th className="py-1 pr-3 text-right font-medium">{t('reportViewer.simulation.beforeCol')}</th>
-            <th className="py-1 pr-3 text-right font-medium">{t('reportViewer.simulation.afterCol')}</th>
-            <th className="py-1 text-right font-medium">{t('reportViewer.simulation.deltaCol')}</th>
+          <tr className="border-b border-border bg-base text-left font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+            <th className="px-3 py-2 font-medium">{t('reportViewer.simulation.metricCol')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('reportViewer.simulation.beforeCol')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('reportViewer.simulation.afterCol')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('reportViewer.simulation.deltaCol')}</th>
           </tr>
         </thead>
         <tbody>
@@ -100,13 +100,13 @@ function MetricSpaceTable({
             const delta = space.deltas?.[k]
             const tone = deltaTone(k, delta)
             return (
-              <tr key={k} className="border-b border-border/40">
-                <td className="py-1 pr-3 text-text">{t(`reportViewer.simulation.metric.${k}`, { defaultValue: k })}</td>
-                <td className="py-1 pr-3 text-right font-mono tabular text-text-secondary">
+              <tr key={k} className="border-b border-border/60 bg-surface hover:bg-row">
+                <td className="px-3 py-2 text-text">{t(`reportViewer.simulation.metric.${k}`, { defaultValue: k })}</td>
+                <td className="px-3 py-2 text-right font-mono tabular text-text-secondary">
                   {fmtSimValue(k, space.before?.[k])}
                 </td>
-                <td className="py-1 pr-3 text-right font-mono tabular text-text">{fmtSimValue(k, space.after?.[k])}</td>
-                <td className={`py-1 text-right font-mono tabular ${TONE_CLASS[tone]}`} data-testid={`sim-delta-${k}`}>
+                <td className="px-3 py-2 text-right font-mono tabular text-text">{fmtSimValue(k, space.after?.[k])}</td>
+                <td className={`px-3 py-2 text-right font-mono tabular ${TONE_CLASS[tone]}`} data-testid={`sim-delta-${k}`}>
                   {fmtSimDelta(k, delta)}
                 </td>
               </tr>
@@ -176,92 +176,98 @@ export function SimulationPanel({
   }
 
   return (
-    <section className="mt-4 rounded-lg border border-border bg-surface p-4" data-testid="simulation-panel">
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-medium text-text">{t('reportViewer.simulation.title')}</h3>
-        {/* 顯眼「研究沙盤」標示——不影響正式判決 */}
-        <StatusBadge tone="warning">
-          <span aria-hidden>◆</span>
-          {t('reportViewer.simulation.researchOnly')}
-        </StatusBadge>
+    <section className="mt-3 border border-border bg-panel" data-testid="simulation-panel">
+      <div className="border-b border-border px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('reportViewer.simulation.title')}
+          </h3>
+          {/* 顯眼「研究沙盤」標示——不影響正式判決 */}
+          <StatusBadge tone="warning">
+            <span aria-hidden>◆</span>
+            {t('reportViewer.simulation.researchOnly')}
+          </StatusBadge>
+        </div>
+        <p className="mt-1 text-xs text-text-muted">{t('reportViewer.simulation.subtitle')}</p>
       </div>
-      <p className="mt-1 text-xs text-text-muted">{t('reportViewer.simulation.subtitle')}</p>
 
       {/* 控制列 */}
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <SliderRow
-          label={t('reportViewer.simulation.costMultiplier')}
-          value={form.costMultiplier}
-          min={0.5}
-          max={3}
-          step={0.1}
-          suffix="×"
-          testid="sim-cost-multiplier"
-          onChange={(v) => set('costMultiplier', v)}
-        />
-        <SliderRow
-          label={t('reportViewer.simulation.slippageBps')}
-          value={form.slippageBps}
-          min={0}
-          max={50}
-          step={1}
-          suffix=" bps"
-          testid="sim-slippage-bps"
-          onChange={(v) => set('slippageBps', v)}
-        />
-        <SliderRow
-          label={t('reportViewer.simulation.capacityScale')}
-          value={form.capacityScale}
-          min={0.1}
-          max={3}
-          step={0.1}
-          suffix="×"
-          testid="sim-capacity-scale"
-          onChange={(v) => set('capacityScale', v)}
-        />
-        <NumberRow
-          label={t('reportViewer.simulation.stopLossPct')}
-          value={form.stopLossPct}
-          placeholder={t('reportViewer.simulation.optionalPct')}
-          testid="sim-stop-loss"
-          onChange={(v) => set('stopLossPct', v)}
-        />
-        <NumberRow
-          label={t('reportViewer.simulation.takeProfitPct')}
-          value={form.takeProfitPct}
-          placeholder={t('reportViewer.simulation.optionalPct')}
-          testid="sim-take-profit"
-          onChange={(v) => set('takeProfitPct', v)}
-        />
-        <div className="flex items-end">
-          <button
-            type="button"
-            data-testid="sim-run"
-            onClick={execute}
-            disabled={running || isFixture}
-            title={isFixture ? t('reportViewer.simulation.fixtureHint') : undefined}
-            className="w-full rounded-md bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-40"
-          >
-            {running ? t('reportViewer.simulation.running') : t('reportViewer.simulation.run')}
-          </button>
+      <div className="border-b border-border bg-surface p-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          <SliderRow
+            label={t('reportViewer.simulation.costMultiplier')}
+            value={form.costMultiplier}
+            min={0.5}
+            max={3}
+            step={0.1}
+            suffix="×"
+            testid="sim-cost-multiplier"
+            onChange={(v) => set('costMultiplier', v)}
+          />
+          <SliderRow
+            label={t('reportViewer.simulation.slippageBps')}
+            value={form.slippageBps}
+            min={0}
+            max={50}
+            step={1}
+            suffix=" bps"
+            testid="sim-slippage-bps"
+            onChange={(v) => set('slippageBps', v)}
+          />
+          <SliderRow
+            label={t('reportViewer.simulation.capacityScale')}
+            value={form.capacityScale}
+            min={0.1}
+            max={3}
+            step={0.1}
+            suffix="×"
+            testid="sim-capacity-scale"
+            onChange={(v) => set('capacityScale', v)}
+          />
+          <NumberRow
+            label={t('reportViewer.simulation.stopLossPct')}
+            value={form.stopLossPct}
+            placeholder={t('reportViewer.simulation.optionalPct')}
+            testid="sim-stop-loss"
+            onChange={(v) => set('stopLossPct', v)}
+          />
+          <NumberRow
+            label={t('reportViewer.simulation.takeProfitPct')}
+            value={form.takeProfitPct}
+            placeholder={t('reportViewer.simulation.optionalPct')}
+            testid="sim-take-profit"
+            onChange={(v) => set('takeProfitPct', v)}
+          />
+          <div className="flex items-end">
+            <button
+              type="button"
+              data-testid="sim-run"
+              onClick={execute}
+              disabled={running || isFixture}
+              title={isFixture ? t('reportViewer.simulation.fixtureHint') : undefined}
+              className="w-full border border-text/40 bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-40"
+            >
+              {running ? t('reportViewer.simulation.running') : t('reportViewer.simulation.run')}
+            </button>
+          </div>
         </div>
-      </div>
 
-      {isFixture && (
-        <p className="mt-2 text-xs text-text-muted">
-          <span aria-hidden>◆ </span>
-          {t('reportViewer.simulation.fixtureHint')}
-        </p>
-      )}
-      {error && (
-        <p className="mt-2 text-xs text-error" data-testid="sim-error">
-          {t('reportViewer.simulation.error', { detail: error })}
-        </p>
-      )}
+        {isFixture && (
+          <p className="mt-2 text-xs text-text-muted">
+            <span aria-hidden>◆ </span>
+            {t('reportViewer.simulation.fixtureHint')}
+          </p>
+        )}
+        {error && (
+          <p className="mt-2 text-xs text-error" data-testid="sim-error">
+            {t('reportViewer.simulation.error', { detail: error })}
+          </p>
+        )}
+      </div>
 
       {/* 結果 */}
       {result && (
-        <div className="mt-4 space-y-4" data-testid="sim-result">
+        <div className="space-y-4 p-3" data-testid="sim-result">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <StatusBadge tone="muted">
               {t('reportViewer.simulation.affected', { n: result.affected_trades_count })}
@@ -283,10 +289,12 @@ export function SimulationPanel({
 
           {result.branch_suggestion && (
             <div
-              className="rounded-lg border border-border bg-base p-3"
+              className="border border-border bg-base p-3"
               data-testid="sim-branch-suggestion"
             >
-              <h4 className="text-xs font-medium text-text">{t('reportViewer.simulation.branchTitle')}</h4>
+              <h4 className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-text-muted">
+                {t('reportViewer.simulation.branchTitle')}
+              </h4>
               <p className="mt-1 text-xs text-text-muted">{result.branch_suggestion.description}</p>
               <ul className="mt-2 space-y-0.5 text-xs text-text-secondary">
                 {result.branch_suggestion.config_delta.map((d) => (
@@ -320,7 +328,7 @@ export function SimulationPanel({
                     disabled={!canFork || forking}
                     onClick={() => fork(result.branch_suggestion)}
                     title={!canFork ? t('reportViewer.simulation.forkNeedsApi') : undefined}
-                    className="mt-2 rounded-md border border-text/40 px-3 py-1 text-xs font-medium text-text hover:bg-input disabled:opacity-40"
+                    className="mt-2 border border-border-strong bg-input px-3 py-1 text-xs font-medium text-text hover:border-text/40 disabled:opacity-40"
                   >
                     {forking ? t('reportViewer.simulation.forking') : t('reportViewer.simulation.fork')}
                   </button>
@@ -362,7 +370,7 @@ function SliderRow({
   onChange: (v: number) => void
 }) {
   return (
-    <label className="block">
+    <label className="block border border-border bg-base px-2 py-2">
       <span className="flex items-baseline justify-between text-xs text-text-muted">
         <span>{label}</span>
         <span className="font-mono tabular text-text-secondary">
@@ -378,7 +386,7 @@ function SliderRow({
         max={max}
         step={step}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-1 w-full accent-text"
+        className="mt-1 w-full accent-info"
       />
     </label>
   )
@@ -398,7 +406,7 @@ function NumberRow({
   onChange: (v: string) => void
 }) {
   return (
-    <label className="block">
+    <label className="block border border-border bg-base px-2 py-2">
       <span className="text-xs text-text-muted">{label}</span>
       <input
         type="number"
@@ -408,7 +416,7 @@ function NumberRow({
         placeholder={placeholder}
         min={0}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-md border border-border bg-base px-2 py-1 text-sm text-text"
+        className="mt-1 w-full border border-border bg-input px-2 py-1 text-sm text-text"
       />
     </label>
   )

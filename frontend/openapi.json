@@ -3455,6 +3455,28 @@
         }
       }
     },
+    "/system/universes": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Universes",
+        "description": "List named universes discovered from ``universe_manifest.json`` (ADR-007).\n\nA thin projection over ``data.universe_registry.list_universes`` \u2014 the read model\nthe New Run form selects from (SPEC-01 Slice 2) and strategies reference (N:1).\nMissing data root / corrupt manifests degrade to typed-empty (``data_source``\nexplains), never 500 \u2014 mirrors :func:`bundles`.",
+        "operationId": "universes_system_universes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_list_UniverseRow__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/system/datasets": {
       "get": {
         "tags": [
@@ -4222,6 +4244,10 @@
             },
             "type": "array",
             "title": "Used By"
+          },
+          "bundle_backed": {
+            "type": "boolean",
+            "title": "Bundle Backed"
           }
         },
         "type": "object",
@@ -4233,7 +4259,8 @@
           "history_start",
           "description",
           "local",
-          "used_by"
+          "used_by",
+          "bundle_backed"
         ],
         "title": "DatasetCard",
         "description": "One ``GET /system/datasets`` card \u2014 a strategy author's data-dictionary row.\n\nAnswers the three authoring-first questions: *what is this data* (key / name /\ncategory / freq / history / description), *is it local* (``local`` binary), and\n*which of my strategies use it* (``used_by``). No freshness / coverage \u2014 that is\na runtime concern, out of scope by design (see :mod:`data.finlab_catalog`)."
@@ -5247,6 +5274,55 @@
         ],
         "title": "Envelope[list[StrategyRow]]"
       },
+      "Envelope_list_UniverseRow__": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/UniverseRow"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[list[UniverseRow]]"
+      },
       "GateCriterion": {
         "properties": {
           "key": {
@@ -5378,7 +5454,6 @@
               "type": "string"
             },
             "type": "array",
-            "minItems": 1,
             "title": "Symbols"
           },
           "start": {
@@ -5399,12 +5474,11 @@
         },
         "type": "object",
         "required": [
-          "symbols",
           "start",
           "end"
         ],
         "title": "IngestRequest",
-        "description": "Trigger a bundle ingest as an async job (8.H.6)."
+        "description": "Trigger a bundle ingest as an async job (8.H.6).\n\n``symbols`` is optional (ADR-007 Slice 4): an empty/omitted list resolves to the\nsystem default universe, so the data-dictionary \"download to local\" one-click can\nfire without the user re-typing a symbol list."
       },
       "MetricsData": {
         "properties": {},
@@ -5665,9 +5739,20 @@
               "type": "string"
             },
             "type": "array",
-            "minItems": 1,
             "title": "Stocks",
-            "description": "Stock ids to run"
+            "description": "Explicit stock ids. Empty \u2192 resolved from `universe`, else the system default."
+          },
+          "universe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe",
+            "description": "Named universe id (GET /system/universes); resolved to symbols server-side. Ignored when `stocks` is non-empty."
           },
           "is_start": {
             "type": "string",
@@ -5691,7 +5776,6 @@
         "required": [
           "hypothesis",
           "strategy",
-          "stocks",
           "is_start",
           "is_end"
         ],
@@ -6270,6 +6354,24 @@
             "minLength": 1,
             "title": "Cache Dir",
             "description": "dedicated parquet cache for this build"
+          },
+          "exchange": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange",
+            "description": "board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL"
+          },
+          "exclude_flagged": {
+            "type": "boolean",
+            "title": "Exclude Flagged",
+            "description": "exclude \u5168\u984d\u4ea4\u5272/\u8655\u7f6e/\u6ce8\u610f names as-of each rebalance",
+            "default": false
           }
         },
         "type": "object",
@@ -6297,6 +6399,97 @@
         "additionalProperties": true,
         "type": "object",
         "title": "UniverseFiltersData"
+      },
+      "UniverseRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "symbols_count": {
+            "type": "integer",
+            "title": "Symbols Count"
+          },
+          "span_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span Start"
+          },
+          "span_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span End"
+          },
+          "top_n": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top N"
+          },
+          "min_turnover": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Turnover"
+          },
+          "strategies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Strategies"
+          },
+          "cache_dir": {
+            "type": "string",
+            "title": "Cache Dir"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "symbols_count",
+          "cache_dir"
+        ],
+        "title": "UniverseRow",
+        "description": "One ``GET /system/universes`` row \u2014 a named, selectable universe (ADR-007).\n\nProjects ``universe_manifest.json`` so the New Run form can *select* a\nsurvivorship-clean population by name (SPEC-01 Slice 2) instead of re-typing raw\nsymbols, and so a strategy can *reference* it (N:1 via ``strategies``)."
       },
       "ValidationError": {
         "properties": {

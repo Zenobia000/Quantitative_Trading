@@ -47,6 +47,17 @@
 | GET | `/data-bundles/{bundle_ref}` | 取得 bundle manifest |
 | GET | `/data-bundles` | 列表與 coverage |
 
+### Named Universes（ADR-007，實作路徑 `/system/*`）
+
+具名股票池 = 可被 New Run 選用、可被策略以 N:1 引用的 survivorship-clean 母體。真相源 `specs/SPEC-01`。
+
+| Method | Path | 說明 |
+| :--- | :--- | :--- |
+| GET | `/system/universes` | 列出具名 universe（掃 `universe_manifest.json` 投影；degrade→typed-empty，`data_source=parquet_scan`）|
+| POST | `/system/universe/build` | 觸發 survivorship-clean universe build（async job，ADR-032）|
+
+`UniverseRow`：`id` / `name` / `symbols_count` / `span_start` / `span_end` / `top_n` / `min_turnover` / `strategies[]`（N:1 讀相容舊 `strategy: str`）/ `cache_dir` / `generated_at`。
+
 ### Research Runs
 
 | Method | Path | 說明 |
@@ -54,6 +65,8 @@
 | POST | `/research-runs` | 建立 research/backtest run |
 | GET | `/research-runs/{run_id}` | 取得 run 狀態與結果 |
 | GET | `/research-runs/{run_id}/report` | 取得 report pack |
+
+> **股票池選擇（ADR-007 Slice 2，實作 `POST /runs`）**：body 的 `stocks` 改選填，新增 `universe`（具名池 id）。伺服端解析精度序 `stocks` > `universe` > 系統 `DEFAULT_UNIVERSE`；未知 universe → 422。策略**不必**手打股票池——省略即用預設。
 
 ### Strategy Definitions
 

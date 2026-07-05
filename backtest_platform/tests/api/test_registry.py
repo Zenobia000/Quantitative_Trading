@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from backtest_platform.research import (
+from backtest_platform.research.adapters import (
     run_tags_store,
     saved_views_store,
     trials_counter_store,

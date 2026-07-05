@@ -25,9 +25,13 @@ from backtest_platform.risk.risk_gate import risk_spec as _risk_spec
 
 
 class IngestRequest(BaseModel):
-    """Trigger a bundle ingest as an async job (8.H.6)."""
+    """Trigger a bundle ingest as an async job (8.H.6).
 
-    symbols: list[str] = Field(..., min_length=1)
+    ``symbols`` is optional (ADR-007 Slice 4): an empty/omitted list resolves to the
+    system default universe, so the data-dictionary "download to local" one-click can
+    fire without the user re-typing a symbol list."""
+
+    symbols: list[str] = Field(default_factory=list)
     start: date
     end: date
     source: str = "finlab"  # "finlab" (ADR-006 primary) | "finmind" (fallback)
@@ -47,6 +51,13 @@ class UniverseBuildRequest(BaseModel):
     top_n: int = Field(..., ge=1, description="per-quarter top-N by market cap")
     min_turnover: float = Field(..., ge=0, description="trailing-20d avg turnover floor (TWD)")
     cache_dir: str = Field(..., min_length=1, description="dedicated parquet cache for this build")
+    # Eligibility (ADR-007 Slice 3) — opt-in, mirror UniverseConfig.
+    exchange: str | None = Field(
+        None, description="board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL"
+    )
+    exclude_flagged: bool = Field(
+        False, description="exclude 全額交割/處置/注意 names as-of each rebalance"
+    )
 
     @model_validator(mode="after")
     def _span_ordered(self) -> UniverseBuildRequest:
@@ -88,6 +99,25 @@ class BundleQuality(BaseModel):
     n_ingested_failed: int | None = None
 
 
+class UniverseRow(BaseModel):
+    """One ``GET /system/universes`` row — a named, selectable universe (ADR-007).
+
+    Projects ``universe_manifest.json`` so the New Run form can *select* a
+    survivorship-clean population by name (SPEC-01 Slice 2) instead of re-typing raw
+    symbols, and so a strategy can *reference* it (N:1 via ``strategies``)."""
+
+    id: str
+    name: str
+    symbols_count: int
+    span_start: str | None = None
+    span_end: str | None = None
+    top_n: int | None = None
+    min_turnover: float | None = None
+    strategies: list[str] = Field(default_factory=list)
+    cache_dir: str
+    generated_at: str | None = None
+
+
 class DatasetCard(BaseModel):
     """One ``GET /system/datasets`` card — a strategy author's data-dictionary row.
 
@@ -104,6 +134,10 @@ class DatasetCard(BaseModel):
     description: str
     local: str  # "cached" | "not_cached"
     used_by: list[str]
+    # True → this category lands in a local parquet bundle (downloadable); False →
+    # fetch-at-runtime only via ``data.get`` (財報/月營收/融資融券). Lets the UI stop
+    # showing a misleading "not_cached" grey for data that never caches (ADR-007 Q1).
+    bundle_backed: bool
 
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -224,6 +258,28 @@ def bundle_quality(bundle_id: str, data_root: Path = Depends(get_data_root)) -> 
     return ok(BundleQuality(**asdict(info)), meta={"data_source": DataSource.PARQUET_SCAN, "ttl": 300})
 
 
+# ---- universes (sys_data) — named, selectable survivorship-clean pools ---
+@router.get("/universes", response_model=Envelope[list[UniverseRow]])
+def universes(data_root: Path = Depends(get_data_root)) -> Envelope:
+    """List named universes discovered from ``universe_manifest.json`` (ADR-007).
+
+    A thin projection over ``data.universe_registry.list_universes`` — the read model
+    the New Run form selects from (SPEC-01 Slice 2) and strategies reference (N:1).
+    Missing data root / corrupt manifests degrade to typed-empty (``data_source``
+    explains), never 500 — mirrors :func:`bundles`."""
+    from backtest_platform.data.universe_registry import list_universes
+
+    try:
+        refs = list_universes(data_root)
+    except Exception:  # never let a data-dir hiccup 500 the API
+        refs = []
+    rows = [UniverseRow(**asdict(r)) for r in refs]
+    return ok(
+        rows,
+        meta={"data_source": DataSource.PARQUET_SCAN, "total": len(rows), "ttl": 300},
+    )
+
+
 # ---- dataset catalog (sys_data) — authoring-first data dictionary --------
 @router.get("/datasets", response_model=Envelope[list[DatasetCard]])
 def datasets(
@@ -239,7 +295,10 @@ def datasets(
     filters (``?category`` exact, ``?q`` substring on key/name). Deliberately no
     manifest read / staleness — the catalog is a data *dictionary*, not a cache
     monitor."""
-    from backtest_platform.data.dataset_presence import presence_for_category
+    from backtest_platform.data.dataset_presence import (
+        presence_for_category,
+        table_for_category,
+    )
     from backtest_platform.data.finlab_catalog import CATALOG_VERSION, load_catalog
     from backtest_platform.data.strategy_data_index import (
         build_strategy_data_index,
@@ -267,6 +326,7 @@ def datasets(
             description=s.description,
             local=presence_for_category(s.category, data_root),
             used_by=index.get(s.key, []),
+            bundle_backed=table_for_category(s.category) is not None,
         )
         for s in specs
     ]
@@ -286,19 +346,22 @@ def ingest(req: IngestRequest) -> Envelope:
     """Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``
     (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
     so the API never blocks; poll :func:`ingest_status`."""
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
     from backtest_platform.orchestration.collaborators import make_ingest
 
+    # ADR-007 Slice 4: empty symbols → system default universe (one-click download).
+    symbols = list(req.symbols) or list(DEFAULT_UNIVERSE)
     ing = make_ingest(start=req.start, end=req.end, source=req.source)
 
     def _run() -> dict[str, Any]:
-        result = ing(list(req.symbols))
+        result = ing(symbols)
         return {
-            "requested": len(req.symbols),
+            "requested": len(symbols),
             "ok": sorted(s for s, good in result.items() if good),
             "failed": sorted(s for s, good in result.items() if not good),
         }
 
-    key = f"{req.source}|{req.start}|{req.end}|{','.join(req.symbols)}"
+    key = f"{req.source}|{req.start}|{req.end}|{','.join(symbols)}"
     job = submit("ingest", key, _run)
     return ok({"job_id": job.job_id, "status": job.status.value})
 
@@ -340,6 +403,8 @@ def universe_build(req: UniverseBuildRequest) -> Envelope:
             top_n=req.top_n,
             min_turnover=req.min_turnover,
             cache_dir=req.cache_dir,
+            exchange=req.exchange,
+            exclude_flagged=req.exclude_flagged,
         )
         result = _universe.run_build_universe(cfg)
         return {

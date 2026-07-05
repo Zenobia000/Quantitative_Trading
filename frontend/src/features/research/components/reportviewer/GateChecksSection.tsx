@@ -29,49 +29,51 @@ export function GateChecksSection({
   const band = truthVerdictToBand(truthVerdict)
 
   return (
-    <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-      <div className="mb-3">
-        <h2 className="text-[18px] font-semibold">{t('reportViewer.checks.title')}</h2>
-        <p className="text-xs text-text-muted">{t('reportViewer.checks.subtitle')}</p>
+    <section className="mb-3 border border-border bg-panel">
+      <div className="border-b border-border px-3 py-2">
+        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+          {t('reportViewer.checks.title')}
+        </h2>
+        <p className="mt-1 text-xs text-text-muted">{t('reportViewer.checks.subtitle')}</p>
       </div>
 
       {/* 真偽閘標尺（複用 F1 DsrRuler） */}
-      <div className="mb-4">
+      <div className="border-b border-border bg-surface px-3 py-3">
         <DsrRuler truthGate={{ verdict_dsr: dsr, band }} />
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
           <thead>
-            <tr className="border-b border-border text-left text-xs text-text-muted">
-              <th className="py-1.5 pr-3 font-medium">{t('reportViewer.scorecard.statusCol')}</th>
-              <th className="py-1.5 pr-3 font-medium">{t('reportViewer.checks.metricCol')}</th>
-              <th className="py-1.5 pr-3 font-medium">{t('reportViewer.scorecard.valueCol')}</th>
-              <th className="py-1.5 pr-3 font-medium">{t('reportViewer.scorecard.thresholdCol')}</th>
-              <th className="py-1.5 pr-3 font-medium">{t('reportViewer.checks.severityCol')}</th>
-              <th className="py-1.5 font-medium">{t('reportViewer.scorecard.reasonCol')}</th>
+            <tr className="border-b border-border bg-base text-left font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+              <th className="px-3 py-2 font-medium">{t('reportViewer.scorecard.statusCol')}</th>
+              <th className="px-3 py-2 font-medium">{t('reportViewer.checks.metricCol')}</th>
+              <th className="px-3 py-2 font-medium">{t('reportViewer.scorecard.valueCol')}</th>
+              <th className="px-3 py-2 font-medium">{t('reportViewer.scorecard.thresholdCol')}</th>
+              <th className="px-3 py-2 font-medium">{t('reportViewer.checks.severityCol')}</th>
+              <th className="px-3 py-2 font-medium">{t('reportViewer.scorecard.reasonCol')}</th>
             </tr>
           </thead>
           <tbody>
             {checks.map((c) => (
-              <tr key={c.metric} className="border-b border-border/40 align-top">
-                <td className="py-1.5 pr-3">
+              <tr key={c.metric} className="border-b border-border/60 bg-surface align-top hover:bg-row">
+                <td className="px-3 py-2">
                   <StatusBadge tone={statusTone(c.status)}>
                     <span aria-hidden>{statusMark(c.status)}</span>
                     <span>{t(`reportViewer.status.${c.status}`)}</span>
                   </StatusBadge>
                 </td>
-                <td className="py-1.5 pr-3 font-mono tabular text-text">{c.metric}</td>
-                <td className="py-1.5 pr-3 font-mono tabular text-text">{fmtCheckOperand(c.value)}</td>
-                <td className="py-1.5 pr-3 font-mono tabular text-text-secondary">
+                <td className="px-3 py-2 font-mono tabular text-text">{c.metric}</td>
+                <td className="px-3 py-2 font-mono tabular text-text">{fmtCheckOperand(c.value)}</td>
+                <td className="px-3 py-2 font-mono tabular text-text-secondary">
                   {c.op} {fmtCheckOperand(c.threshold)}
                 </td>
-                <td className="py-1.5 pr-3">
+                <td className="px-3 py-2">
                   <StatusBadge tone={severityTone(c.severity)}>
                     {t(`reportViewer.checks.severity.${c.severity}`, { defaultValue: c.severity })}
                   </StatusBadge>
                 </td>
-                <td className="py-1.5 text-xs text-text-muted">{c.reason}</td>
+                <td className="px-3 py-2 text-xs text-text-muted">{c.reason}</td>
               </tr>
             ))}
           </tbody>

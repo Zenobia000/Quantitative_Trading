@@ -1,9 +1,7 @@
 /*
- * 策略資產 · 清單（/research/strategies）—— 以「策略」為軸的研究資產工作台（Goal 7）。
- * 每卡：策略名 + title、一行假設（候選 → 最近 run → 型錄機制 fallback）、候選狀態 badge、
- * 五維 scorecard 迷你燈、最近判決 gate badge、觀察艙 badge、profile/label、run 數，
- * 加主要動作「Evaluate」CTA（導向 /research/runs/new?strategy= —— 目前 evaluate 後端僅 CLI）。
- * 點資訊區 → 詳情（/research/strategies/:name）。archived / 無 run 策略仍由型錄可發現。
+ * 策略資產 · 清單（/research/strategies）—— strategy ledger。
+ * 以「策略」為軸聚合 roster / runs / watch / candidates，輸出可掃描的研究資產帳本：
+ * identity / hypothesis / evidence / governance state / action。無 run、archived、未評估策略仍保留。
  * 資料聚合全用既有端點（/strategies + /runs + /monitor/watch + /research/candidates），不需新後端。
  * 四態由型錄（roster 主源）驅動；runs/watch/candidate 為 enrichment，缺席不阻塞清單。
  */
@@ -23,6 +21,11 @@ function evaluateHref(name: string): string {
   return `/research/runs/new?strategy=${encodeURIComponent(name)}`
 }
 
+function fmtMetric(v: unknown): string {
+  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : v.toFixed(2)
+  return v == null ? '—' : String(v)
+}
+
 export function StrategyHubListPage() {
   const { t } = useTranslation('research')
   const errText = useErrorText()
@@ -37,16 +40,15 @@ export function StrategyHubListPage() {
         subtitle={t('strategyHub.list.subtitle')}
       />
 
-      {/* toolbar */}
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2 border border-border bg-panel px-3 py-2">
         <button
           onClick={() => navigate('/research/runs/new')}
-          className="rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90"
+          className="border border-info/60 bg-input px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.08em] text-text hover:border-info"
         >
           {t('strategyHub.list.newRun')}
         </button>
         {rows.length > 0 && (
-          <span className="ml-auto text-xs text-text-muted tabular">
+          <span className="ml-auto font-mono text-xs text-text-muted tabular">
             {t('strategyHub.list.count', { n: rows.length })}
           </span>
         )}
@@ -54,11 +56,11 @@ export function StrategyHubListPage() {
 
       {/* roster — 四態（型錄驅動） */}
       {registry.isLoading ? (
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <div className="border border-border bg-panel p-4">
           <SkeletonRows rows={3} cols={4} />
         </div>
       ) : registry.isError ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-sm">
+        <div className="border border-border bg-panel p-6 text-sm">
           <p className="text-error">
             {t('errors:load.failed', { resource: t('strategyHub.list.resource'), detail: errText(registry.error) })}
           </p>
@@ -72,23 +74,31 @@ export function StrategyHubListPage() {
       ) : rows.length === 0 ? (
         <FirstRunEmptyState onCta={() => navigate('/research/runs/new')} />
       ) : (
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {rows.map((s) => (
-            <StrategyAssetCard
-              key={s.name}
-              row={s}
-              onOpen={() => navigate(`/research/strategies/${encodeURIComponent(s.name)}`)}
-              onEvaluate={() => navigate(evaluateHref(s.name))}
-            />
-          ))}
+        <div className="overflow-x-auto border border-border bg-panel">
+          <div className="min-w-[1100px] border-b border-border bg-base px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted lg:grid lg:grid-cols-[minmax(260px,1.3fr)_minmax(250px,1.2fr)_220px_190px_170px] lg:gap-3">
+            <span>Strategy</span>
+            <span>Hypothesis / Mechanism</span>
+            <span>Evidence</span>
+            <span>Governance</span>
+            <span>Controls</span>
+          </div>
+          <div>
+            {rows.map((s) => (
+              <StrategyAssetRow
+                key={s.name}
+                row={s}
+                onOpen={() => navigate(`/research/strategies/${encodeURIComponent(s.name)}`)}
+                onEvaluate={() => navigate(evaluateHref(s.name))}
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>
   )
 }
 
-/** 單一策略資產卡：info 區可點進詳情；Evaluate 為分離的主要動作（避免巢狀 button）。 */
-function StrategyAssetCard({
+function StrategyAssetRow({
   row,
   onOpen,
   onEvaluate,
@@ -98,70 +108,102 @@ function StrategyAssetCard({
   onEvaluate: () => void
 }) {
   const { t } = useTranslation('research')
+  const latestSharpe = row.latestRun?.metrics?.sharpe
+  const latestDsr = row.latestRun?.metrics?.dsr
+  const latestMaxdd = row.latestRun?.metrics?.maxdd
+
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-surface p-4">
-      {/* info 區（可點進詳情） */}
-      <button onClick={onOpen} className="flex flex-col text-left">
-        <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold">{row.title}</h3>
+    <section className="min-w-[1100px] border-b border-border bg-surface px-3 py-3 last:border-b-0 hover:bg-row lg:grid lg:grid-cols-[minmax(260px,1.3fr)_minmax(250px,1.2fr)_220px_190px_170px] lg:gap-3">
+      <button onClick={onOpen} className="min-w-0 text-left">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="truncate text-[13px] font-semibold text-text">{row.title}</h3>
           <span className="font-mono text-xs text-text-muted">{row.name}</span>
-        </div>
-
-        {/* 一行假設（候選 → 最近 run → 型錄機制 fallback） */}
-        {row.hypothesis && (
-          <p className="mt-1 truncate text-xs text-text-secondary" title={row.hypothesis}>
-            {row.hypothesis}
-          </p>
-        )}
-
-        {/* 狀態列：候選 state + 最近判決 gate + 觀察艙 */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
           {row.candidate && <CandidateStateBadge state={row.candidate.state} />}
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
           {row.latestRun ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-xs text-text-muted">{t('strategyHub.list.card.latestGate')}</span>
+            <>
+              <span className="text-text-muted">{t('strategyHub.list.card.latestGate')}</span>
               <EnumBadge family="gate" value={row.latestGateStatus} />
-            </span>
+            </>
           ) : (
-            <span className="text-xs text-text-muted">{t('strategyHub.list.card.noRuns')}</span>
+            <span className="text-text-muted">{t('strategyHub.list.card.noRuns')}</span>
           )}
           {row.watch && <EnumBadge family="watchState" value={row.watch.status} />}
         </div>
+      </button>
 
-        {/* 五維 scorecard 迷你燈（有候選才顯示） */}
+      <button onClick={onOpen} className="mt-3 min-w-0 text-left lg:mt-0">
+        {row.hypothesis && (
+          <p className="truncate text-xs text-text-secondary" title={row.hypothesis}>
+            {row.hypothesis}
+          </p>
+        )}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+          {row.candidate ? (
+            <>
+              <span className="text-text-muted">{t('strategyHub.list.card.profile')}</span>
+              <span className="font-mono text-text-secondary">{row.candidate.latest_profile}</span>
+              <span className="text-text-muted" aria-hidden>·</span>
+              <span className="text-text-secondary">{row.candidate.latest_label}</span>
+            </>
+          ) : (
+            <span className="text-text-muted">{t('strategyHub.list.card.notEvaluated')}</span>
+          )}
+        </div>
+      </button>
+
+      <div className="mt-3 lg:mt-0">
+        <div className="grid grid-cols-3 gap-2">
+          <EvidenceCell label="sharpe" value={fmtMetric(latestSharpe)} />
+          <EvidenceCell label="dsr" value={fmtMetric(latestDsr)} />
+          <EvidenceCell label="maxdd" value={fmtMetric(latestMaxdd)} />
+        </div>
         {row.candidate && (
           <div className="mt-2">
             <ScorecardLights summary={row.candidate.scorecard_summary} />
           </div>
         )}
+      </div>
 
-        {/* profile / label + run 數 */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          {row.candidate ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="text-text-muted">{t('strategyHub.list.card.profile')}</span>
-              <span className="font-mono text-text-secondary">{row.candidate.latest_profile}</span>
-              <span className="text-text-muted" aria-hidden>·</span>
-              <span className="text-text-secondary">{row.candidate.latest_label}</span>
-            </span>
-          ) : (
-            <span className="text-text-muted">{t('strategyHub.list.card.notEvaluated')}</span>
-          )}
-          <span className="ml-auto text-text-muted tabular">
+      <div className="mt-3 lg:mt-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] uppercase tracking-[0.12em] text-text-muted">runs</span>
+          <span className="font-mono text-xs text-text-secondary tabular">
             {t('strategyHub.list.card.runs', { n: row.runsCount })}
           </span>
         </div>
-      </button>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] uppercase tracking-[0.12em] text-text-muted">watch</span>
+          <span className="font-mono text-xs text-text-secondary tabular">
+            {row.watch?.observed_trading_days ?? '—'}/{row.watch?.nominal_trading_days ?? '—'}
+          </span>
+        </div>
+      </div>
 
-      {/* 主要動作：Evaluate（分離於 info 區之外，非巢狀 button） */}
-      <div className="mt-3 border-t border-border/50 pt-3">
+      <div className="mt-3 flex flex-col gap-2 lg:mt-0">
         <button
           onClick={onEvaluate}
-          className="w-full rounded-md border border-text/40 px-3 py-1.5 text-xs font-medium text-text hover:bg-input"
+          className="border border-info/60 bg-input px-2.5 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-text hover:border-info"
         >
           {t('strategyHub.list.evaluate')}
         </button>
+        <button
+          onClick={onOpen}
+          className="border border-border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.08em] text-text-secondary hover:border-border-strong hover:text-text"
+        >
+          Open
+        </button>
       </div>
+    </section>
+  )
+}
+
+function EvidenceCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-border bg-base px-2 py-1">
+      <div className="text-[9px] uppercase tracking-[0.12em] text-text-muted">{label}</div>
+      <div className="font-mono text-[12px] text-text-secondary tabular">{value}</div>
     </div>
   )
 }

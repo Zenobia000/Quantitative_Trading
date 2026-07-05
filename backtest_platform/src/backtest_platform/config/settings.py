@@ -26,8 +26,8 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-#: The placeholder password shipped in ``.env.example`` / docker-compose defaults.
-#: Never valid for a real connection — ``require_postgres`` refuses it (審查缺陷 #19).
+#: Legacy placeholder password. Never valid for a real connection —
+#: ``require_postgres`` refuses it (審查缺陷 #19).
 INSECURE_POSTGRES_PASSWORD = "change_me_in_production"
 
 
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     postgres_port: int = 5432
     postgres_db: str = "quant_trading"
     postgres_user: str = "quant"
-    postgres_password: str = INSECURE_POSTGRES_PASSWORD
+    postgres_password: str = "quant_local_dev_password"
 
     # --- paths ---
     # None → the caller's own default (e.g. research.runs_store.DEFAULT_RUNS_PATH).

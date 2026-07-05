@@ -2,7 +2,8 @@
  * WiredPage — 端點已接線但 live 資料待後端 producer 的頁面「實作」。
  * 呼叫真實主端點，四態完備：loading/error/pending(meta.data_source)/empty/data。
  * 後端 producer 一上線（meta 不再 pending、data 有值），同一頁即自動點亮 —— 無需改 code。
- * 各 section 結構抽自 design.pen frame（PAGE_SECTIONS）；section id 經 sections namespace 映射為人類標籤。
+ * 各 section 結構來自 product_repositioning/frontend IA 的 transitional PAGE_SECTIONS；
+ * section id 經 sections namespace 映射為人類標籤。
  */
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from './PageHeader'
@@ -69,7 +70,7 @@ export function WiredPage({
         </div>
       )}
 
-      {/* design.pen section 結構 */}
+      {/* transitional page section skeleton */}
       <div className="flex flex-col gap-2">
         {sections.map((s) => (
           <section key={s} className="rounded-lg border border-border bg-surface p-3">

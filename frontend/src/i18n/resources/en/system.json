@@ -4,7 +4,7 @@
     "subtitle": "Data dictionary · Ingestion · Universe build",
     "catalog": {
       "heading": "Data Dictionary",
-      "subheading": "Search data available for strategies; copy a key to author with it",
+      "subheading": "Look up data for strategies and how to fetch it; expand for API usage",
       "search": "Search by key, name, or description…",
       "resource": "data dictionary",
       "pending": "Data dictionary (awaiting backend catalog)",
@@ -12,6 +12,9 @@
       "noMatch": "No datasets match “{{q}}”",
       "noMatchHint": "Try another keyword or switch category",
       "copyKey": "Copy key",
+      "usage": "API usage",
+      "copyUsage": "Copy fetch call",
+      "docLink": "finlab database docs ↗",
       "usedByLabel": "Strategies using this",
       "since": "since {{year}}",
       "category": {
@@ -60,7 +63,11 @@
     "universe": {
       "heading": "Universe Build",
       "submit": "Trigger Build",
-      "result": "{{n}} symbols (alive {{alive}} / delisted {{delisted}})"
+      "result": "{{n}} symbols (alive {{alive}} / delisted {{delisted}})",
+      "exchange": "Board",
+      "exchangeAll": "All",
+      "excludeFlagged": "Exclude flagged (full-delivery/disposal/attention)",
+      "excludeFlaggedHint": "Drops untradeable names as-of each rebalance via finlab 變更交易 + disposal/attention frames (time-varying mask)"
     },
     "bundles": {
       "heading": "Data Bundles",

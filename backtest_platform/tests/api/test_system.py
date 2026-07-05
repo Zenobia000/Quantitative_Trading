@@ -101,9 +101,19 @@ def test_ingest_status_unknown_is_404(client, isolate_jobs):
     assert err["detail"] == {"resource": "job", "id": "ghost"}
 
 
-def test_ingest_empty_symbols_422(client, isolate_jobs):
+def test_ingest_empty_symbols_falls_back_to_default_universe(client, monkeypatch, isolate_jobs):
+    # ADR-007 Slice 4: empty symbols → system default universe (one-click download).
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
+
+    monkeypatch.setattr(
+        "backtest_platform.data.finlab_source.ingest_universe_finlab",
+        lambda syms, s, e, **k: type("R", (), {"failed_symbols": ()})(),
+    )
     r = client.post("/system/ingest", json={**_INGEST_REQ, "symbols": []})
-    assert r.status_code == 422
+    assert r.status_code == 202
+    final = _poll_status(client, r.json()["data"]["job_id"])
+    assert final["status"] == "done"
+    assert final["result"]["requested"] == len(DEFAULT_UNIVERSE)
 
 
 # ---- bundles manifest scan (C1) -----------------------------------------
@@ -166,6 +176,36 @@ def test_bundles_corrupt_manifest_is_skipped_not_500(client, data_root):
     d.mkdir(parents=True, exist_ok=True)
     (d / "manifest.json").write_text("{ broken", encoding="utf-8")
     r = client.get("/system/bundles")
+    assert r.status_code == 200
+    assert r.json()["data"] == []
+
+
+def test_universes_empty_when_no_manifests(client):
+    body = client.get("/system/universes").json()
+    assert body["success"] is True
+    assert body["data"] == []
+    assert body["meta"]["data_source"] == "parquet_scan"
+    assert body["meta"]["total"] == 0
+
+
+def test_universes_lists_named_pool_excluding_default_cache(client, data_root):
+    # a default ETL cache must NOT surface as a universe (ADR-007 read model)
+    _seed_manifest(data_root, "parquet", "manifest.json", _DEFAULT_MANIFEST)
+    _seed_manifest(data_root, "parquet_finlab_universe", "universe_manifest.json", _UNIVERSE_MANIFEST)
+    body = client.get("/system/universes").json()
+    assert body["meta"]["total"] == 1
+    u = body["data"][0]
+    assert u["id"] == "parquet_finlab_universe"
+    assert u["symbols_count"] == 3
+    assert u["top_n"] == 200
+    assert u["strategies"] == ["inst_flow"]  # legacy singular → one-element list
+
+
+def test_universes_corrupt_manifest_is_skipped_not_500(client, data_root):
+    d = data_root / "parquet_bad"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "universe_manifest.json").write_text("{ broken", encoding="utf-8")
+    r = client.get("/system/universes")
     assert r.status_code == 200
     assert r.json()["data"] == []
 

@@ -1,7 +1,7 @@
 {
   "app": {
-    "wordmark": "backtest_platform",
-    "documentTitle": "backtest_platform · 四層共振"
+    "wordmark": "EOD Command",
+    "documentTitle": "EOD Command · 個人量化營運台"
   },
   "lang": {
     "zh": "中",
@@ -30,7 +30,14 @@
   "chrome": {
     "navOpen": "開啟導覽",
     "navClose": "關閉導覽",
-    "navLabel": "導覽"
+    "navLabel": "導覽",
+    "tradeDate": "交易日",
+    "risk": "風控",
+    "data": "資料",
+    "mode": "模式",
+    "haltClear": "CLEAR",
+    "dataPending": "PENDING",
+    "paperMode": "PAPER"
   },
   "cmdk": {
     "trigger": "⌘K 搜尋 / 跳轉",

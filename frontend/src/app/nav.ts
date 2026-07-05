@@ -1,69 +1,70 @@
 /*
- * IA sidebar 導覽配置（真相源 dev_docs/web_design/rebuild_ia_spec_2026-07-03.md §5）。
- * 順序：Research（研究分流主軸）→ Live OOS（人工勾選昂貴驗證）→ Deployment（部署級嚴格閘）→ Monitor（已配資本 live 子視圖）→ System。首頁為 root。
- * label 已 i18n 化：item 存 `nav` namespace 的 key（見 i18n/resources 各語言 nav.json），
- * 由 AppShell / CommandPalette 以 t() 渲染；zone 顯示由 zone id 推導（t nav:zone.id）。
+ * Codex-style operations console IA.
+ * 真相源：dev_docs/product_repositioning/17_frontend_information_architecture.md
+ * + 18_refactor_wbs.md §7。七層產品子系統是一等導航；舊 Live OOS/Deployment
+ * 併入 Governance，不再保護舊研究後台 IA。
  */
 export interface NavItem {
   /** i18n key，對應 nav namespace（如 'item.strategies' 或 HOME 的 'home'） */
   key: string
   to: string
-  /** 對應 page 規格檔（dev_docs/web_design/pages/）供建頁參照 */
+  /** 對應 product_repositioning frontend IA spec 的頁面代號。 */
   spec: string
 }
 export interface NavZone {
-  zone: 'research' | 'live-oos' | 'deployment' | 'monitor' | 'system'
+  zone: 'data' | 'research' | 'governance' | 'trading' | 'risk' | 'operations' | 'system'
   items: NavItem[]
 }
 
-export const HOME: NavItem = { key: 'home', to: '/', spec: 'home_overview' }
+export const HOME: NavItem = { key: 'home', to: '/', spec: 'command_center' }
 
 export const NAV: NavZone[] = [
+  {
+    zone: 'data',
+    items: [{ key: 'item.data', to: '/system/data', spec: 'system_data' }],
+  },
   {
     zone: 'research',
     items: [
       { key: 'item.strategies', to: '/research/strategies', spec: 'research_01_strategy_library' },
-      { key: 'item.candidates', to: '/research/candidates', spec: 'research_candidate_pool' },
       { key: 'item.runsNew', to: '/research/runs/new', spec: 'research_02_run_new' },
       { key: 'item.runs', to: '/research/runs', spec: 'research_03_runs_table' },
       { key: 'item.compare', to: '/research/compare', spec: 'research_05_compare' },
       { key: 'item.sweep', to: '/research/sweep', spec: 'research_06_sweep' },
-      // validate 已移出 Research → Deployment zone（嚴格閘不再是研究第一體驗，rebuild IA §5.1/§5.3）。
     ],
   },
   {
-    // Live OOS zone（rebuild IA §1.2）：人工勾選才消耗昂貴 paper/live OOS 的旅程二。
-    zone: 'live-oos',
+    zone: 'governance',
     items: [
+      { key: 'item.candidates', to: '/research/candidates', spec: 'research_candidate_pool' },
       { key: 'item.liveOosQueue', to: '/live-oos/queue', spec: 'live_oos_queue' },
-      // 觀察艙由 monitor 移入（Paper-Watch 是零資本 OOS 觀察，語義屬 Live OOS 非 live 艦隊）。
       { key: 'item.watch', to: '/live-oos/watch', spec: 'monitor_watch' },
-    ],
-  },
-  {
-    // Deployment zone（rebuild IA §1.3）：部署級嚴格閘的旅程三。晉升（promote）為 per-strategy
-    // detail route（/deploy/promote/:strategyId），由嚴格閘/策略詳情進入，不進主 nav（§5.3）。
-    zone: 'deployment',
-    items: [
       { key: 'item.strictGate', to: '/deploy/gate', spec: 'research_07_validate_gate' },
     ],
   },
   {
-    zone: 'monitor',
+    zone: 'trading',
     items: [
-      { key: 'item.fleet', to: '/monitor', spec: 'monitor_fleet' },
-      { key: 'item.board', to: '/monitor/board', spec: 'monitor_board' },
-      { key: 'item.performance', to: '/monitor/performance', spec: 'monitor_a_performance' },
       { key: 'item.positions', to: '/monitor/positions', spec: 'monitor_b_positions' },
       { key: 'item.signals', to: '/monitor/signals', spec: 'monitor_c_signals' },
+    ],
+  },
+  {
+    zone: 'risk',
+    items: [
       { key: 'item.risk', to: '/monitor/risk', spec: 'monitor_d_risk' },
     ],
   },
   {
-    zone: 'system',
+    zone: 'operations',
     items: [
-      { key: 'item.data', to: '/system/data', spec: 'system_data' },
-      { key: 'item.alerts', to: '/system/alerts', spec: 'system_alerts' },
+      { key: 'item.fleet', to: '/monitor', spec: 'monitor_fleet' },
+      { key: 'item.board', to: '/monitor/board', spec: 'monitor_board' },
+      { key: 'item.performance', to: '/monitor/performance', spec: 'monitor_a_performance' },
     ],
+  },
+  {
+    zone: 'system',
+    items: [{ key: 'item.alerts', to: '/system/alerts', spec: 'system_alerts' }],
   },
 ]

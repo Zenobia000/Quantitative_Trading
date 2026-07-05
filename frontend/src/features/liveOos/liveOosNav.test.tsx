@@ -1,29 +1,40 @@
 /*
- * Live OOS zone 遷移驗證（rebuild IA §5.2/§5.4/§5.6）：
- * nav 新增 live-oos zone（佇列 + 觀察艙），watch 由 monitor 移入；/monitor/watch → /live-oos/watch client 重導。
+ * Governance IA 遷移驗證：
+ * Live OOS / Paper-Watch 是治理與發布觀察流程，不再是一等 zone；
+ * /monitor/watch 仍保留 client redirect 到 /live-oos/watch。
  */
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { NAV } from '@/app/nav'
 
-describe('nav — Live OOS zone migration', () => {
+describe('nav — Live OOS governance migration', () => {
   const zones = Object.fromEntries(NAV.map((z) => [z.zone, z]))
 
-  it('adds a live-oos zone carrying the queue + watch items', () => {
-    expect(zones['live-oos']).toBeDefined()
-    const tos = zones['live-oos'].items.map((i) => i.to)
+  it('carries queue + watch items under the governance zone', () => {
+    expect(zones.governance).toBeDefined()
+    const tos = zones.governance.items.map((i) => i.to)
     expect(tos).toContain('/live-oos/queue')
     expect(tos).toContain('/live-oos/watch')
+    expect(tos).toContain('/deploy/gate')
   })
 
-  it('removes watch from the monitor zone (it moved to Live OOS)', () => {
-    const monitorTos = zones.monitor.items.map((i) => i.to)
-    expect(monitorTos).not.toContain('/monitor/watch')
+  it('does not keep legacy live-oos/deployment/monitor zones as first-class navigation', () => {
+    expect(zones['live-oos']).toBeUndefined()
+    expect(zones.deployment).toBeUndefined()
+    expect(zones.monitor).toBeUndefined()
   })
 
-  it('orders zones Research → Live OOS → Deployment → Monitor → System', () => {
-    expect(NAV.map((z) => z.zone)).toEqual(['research', 'live-oos', 'deployment', 'monitor', 'system'])
+  it('orders zones by the golden seven-layer console IA', () => {
+    expect(NAV.map((z) => z.zone)).toEqual([
+      'data',
+      'research',
+      'governance',
+      'trading',
+      'risk',
+      'operations',
+      'system',
+    ])
   })
 })
 

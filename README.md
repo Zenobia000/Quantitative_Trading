@@ -20,7 +20,7 @@
 ```bash
 cd backtest_platform
 cp .env.example .env                       # 填 FINLAB/FINMIND/SHIOAJI/DISCORD token（可選）
-uv sync --extra sprint1 --extra api --extra dev   # 主要棧：zipline+vectorbt+finlab / FastAPI / 測試
+uv sync --extra sprint1 --extra api --extra dev   # 主要棧：FinLab/FinMind、sim/vectorbt、FastAPI、測試
 uv run pytest -q                            # 全套單元 + 整合測試（1116 passed）
 ```
 
@@ -28,15 +28,16 @@ uv run pytest -q                            # 全套單元 + 整合測試（1116
 
 ```bash
 cd backtest_platform
-docker compose up -d timescaledb           # 亦可 up -d 起 Grafana / InfluxDB / Prefect 全棧
+docker compose up -d timescaledb
+POSTGRES_PASSWORD=quant_local_dev_password uv run python ../scripts/seed_demo_data.py
 ```
 
 ### HTTP API（FastAPI）
 
 ```bash
 cd backtest_platform
-uv run uvicorn backtest_platform.api.app:app --reload --port 8000
-# OpenAPI 文件：http://localhost:8000/docs（統一信封 {success,data,error,meta}，見 dev_docs/25）
+POSTGRES_PASSWORD=quant_local_dev_password uv run uvicorn backtest_platform.api.app:app --reload --port 8083
+# OpenAPI 文件：http://localhost:8083/docs（統一信封 {success,data,error,meta}，見 dev_docs/25）
 ```
 
 ### 前端（React 19 + Vite）
@@ -83,10 +84,10 @@ uv run python -m backtest_platform.research.cli truth-gate   --strategy inst_flo
 
 ```
 .
-├── backtest_platform/       # Python 回測/研究/驗證平台（uv、FastAPI、zipline+vectorbt）
+├── backtest_platform/       # Python 回測/研究/驗證平台（uv、FastAPI、sim/vectorbt）
 │   ├── src/backtest_platform/   # strategies / research / validation / engines / api / orchestration / monitoring
 │   ├── tests/               # pytest（1116 passed）
-│   ├── docker/              # TimescaleDB + Grafana + InfluxDB + Prefect compose
+│   ├── docker/              # TimescaleDB init schema
 │   └── legacy/              # 封存驗證碼（ADR-026，不打包不進 CI）
 ├── frontend/                # React 19 + TS + Vite 前端（研究/監控/系統三 zone + Cmd-K）
 ├── dev_docs/                # 工程文檔（INDEX + PRD + REST 契約 + 32 份 ADR + 審查報告）

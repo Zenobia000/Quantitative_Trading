@@ -10,7 +10,7 @@ from datetime import date
 
 import pytest
 
-from backtest_platform.research import branch_store as bs
+from backtest_platform.research.adapters import branch_store as bs
 from backtest_platform.research.evaluation import evaluate
 from backtest_platform.research.evaluation.store import get_evaluation, read_evaluations
 from backtest_platform.strategies.conformance import synthetic_loader

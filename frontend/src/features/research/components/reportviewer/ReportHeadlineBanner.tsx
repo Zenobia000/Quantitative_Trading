@@ -1,11 +1,8 @@
 /*
- * Headline banner（置頂）—— 首屏三答（UX 驗收 #1）：這是什麼 / 表現如何 / 建議下一步。
- * 復用 VerdictCard 概念（大 verdict badge）+ StatCard（headline 指標網格）。
- * 左：策略/run/profile/window/universe（是什麼）；中：verdict label + truth_verdict badge（表現如何）；
- * 右：recommendation.action + confidence + 理由列（下一步）。指標 null → StatCard 顯示破折號（誠實無資料）。
+ * Report headline ledger：首屏回答「這是什麼 / 表現如何 / 下一步」。
+ * 使用 dense evidence cells，避免報告頁回到大卡片/hero 風格。
  */
 import { useTranslation } from 'react-i18next'
-import { StatCard } from '@/components/StatCard'
 import { StatusBadge } from '@/components/StatusBadge'
 import type { Tone } from '@/i18n/displayMap'
 import type { EvaluationResult } from '../../api/reportViewer'
@@ -33,6 +30,32 @@ function num(v: unknown): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 }
 
+function fmt(v: number | null, pct?: boolean): string {
+  if (v == null) return '—'
+  if (pct) return `${(v * 100).toFixed(2)}%`
+  return Number.isInteger(v) ? String(v) : v.toFixed(2)
+}
+
+function HeadlineCell({
+  label,
+  value,
+  pct,
+  signed,
+}: {
+  label: string
+  value: number | null
+  pct?: boolean
+  signed?: boolean
+}) {
+  const tone = signed && value != null ? (value >= 0 ? 'text-gain' : 'text-loss') : 'text-text'
+  return (
+    <div className="border border-border bg-base px-3 py-2">
+      <div className="text-[10px] uppercase tracking-[0.14em] text-text-muted">{label}</div>
+      <div className={`mt-1 font-mono text-[15px] tabular ${tone}`}>{fmt(value, pct)}</div>
+    </div>
+  )
+}
+
 export function ReportHeadlineBanner({ result }: { result: EvaluationResult }) {
   const { t } = useTranslation('research')
   const { strategy, run_id, profile, window, universe, verdict, headline_metrics } = result
@@ -42,12 +65,11 @@ export function ReportHeadlineBanner({ result }: { result: EvaluationResult }) {
     : `${window.is_start} → ${window.is_end}`
 
   return (
-    <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* 這是什麼 */}
-        <div>
-          <div className="mb-1.5 text-xs text-text-muted">{t('reportViewer.banner.whatTitle')}</div>
-          <div className="text-lg font-semibold">{strategy}</div>
+    <section className="mb-3 border border-border bg-panel">
+      <div className="grid grid-cols-1 border-b border-border lg:grid-cols-[1.2fr_0.8fr_1fr]">
+        <div className="border-b border-border p-3 lg:border-b-0 lg:border-r">
+          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{t('reportViewer.banner.whatTitle')}</div>
+          <div className="font-mono text-sm font-semibold text-text">{strategy}</div>
           <dl className="mt-1.5 space-y-0.5 font-mono text-xs text-text-secondary">
             <div>
               <span className="text-text-muted">{t('reportViewer.banner.profile')}: </span>
@@ -77,11 +99,11 @@ export function ReportHeadlineBanner({ result }: { result: EvaluationResult }) {
         </div>
 
         {/* 表現如何 */}
-        <div>
-          <div className="mb-1.5 text-xs text-text-muted">{t('reportViewer.banner.performanceTitle')}</div>
+        <div className="border-b border-border p-3 lg:border-b-0 lg:border-r">
+          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{t('reportViewer.banner.performanceTitle')}</div>
           <div className="flex flex-wrap items-center gap-2">
             <span
-              className={`inline-flex items-center rounded-md border px-3 py-1 text-lg font-semibold ${BIG[tone]}`}
+              className={`inline-flex items-center border px-3 py-1 font-mono text-sm font-semibold ${BIG[tone]}`}
             >
               {verdict.label}
             </span>
@@ -95,8 +117,8 @@ export function ReportHeadlineBanner({ result }: { result: EvaluationResult }) {
         </div>
 
         {/* 建議下一步 */}
-        <div>
-          <div className="mb-1.5 text-xs text-text-muted">{t('reportViewer.banner.nextTitle')}</div>
+        <div className="p-3">
+          <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{t('reportViewer.banner.nextTitle')}</div>
           <StatusBadge tone={tone}>{verdict.recommendation.action}</StatusBadge>
           <ul className="mt-2 space-y-1 text-xs text-text-secondary">
             {verdict.recommendation.reasons.map((r, i) => (
@@ -111,13 +133,12 @@ export function ReportHeadlineBanner({ result }: { result: EvaluationResult }) {
         </div>
       </div>
 
-      {/* headline 指標網格（RWD：mobile 2 欄 → 直向堆疊，無重疊） */}
-      <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 xl:grid-cols-6">
         {HEADLINE.map((k) => (
-          <StatCard
+          <HeadlineCell
             key={k.key}
             label={t(k.labelKey)}
-            value={num(headline_metrics[k.key]) ?? '—'}
+            value={num(headline_metrics[k.key])}
             pct={k.pct}
             signed={k.signed}
           />

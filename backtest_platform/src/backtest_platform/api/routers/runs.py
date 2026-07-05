@@ -18,7 +18,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import ValidationError
 
-from backtest_platform.api.deps import RunExecutor, get_run_executor, get_runs_path
+from backtest_platform.api.deps import (
+    RunExecutor,
+    get_data_root,
+    get_run_executor,
+    get_runs_path,
+)
 from backtest_platform.api.envelope import Envelope, ok, page_meta
 from backtest_platform.api.response_models import (
     CompareReportData,
@@ -175,23 +180,49 @@ def get_run(run_id: str, runs_path: Path = Depends(get_runs_path)) -> Envelope:
     return ok(match)
 
 
+def _resolve_stocks(req: RunCreateRequest, data_root: Path) -> tuple[str, ...]:
+    """Pool selection → symbols (SPEC-01 Slice 2 / ADR-007).
+
+    Precedence: explicit ``stocks`` > named ``universe`` > the system default
+    universe. A named universe that does not exist is a **422** (selecting a
+    non-existent pool is an error, not a silent fallback); an existing-but-empty
+    universe degrades to the default. Omitting both is valid — no run ever requires
+    a hand-typed symbol list."""
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
+    from backtest_platform.data.universe_registry import symbols_for
+
+    if req.stocks:
+        return tuple(req.stocks)
+    if req.universe:
+        syms = symbols_for(req.universe, data_root)
+        if syms is None:
+            raise HTTPException(
+                status_code=422, detail={"resource": "universe", "id": req.universe}
+            )
+        if syms:
+            return syms
+    return DEFAULT_UNIVERSE
+
+
 @router.post("", response_model=Envelope[RunRecord], status_code=201)
 def create_run(
     req: RunCreateRequest,
     runs_path: Path = Depends(get_runs_path),
     executor: RunExecutor = Depends(get_run_executor),
+    data_root: Path = Depends(get_data_root),
 ) -> Envelope:
     """Trigger one IS run: build+validate a RunConfig, judge it, append to the ledger.
 
     A bad config (unknown preset, reversed window, ...) surfaces as 422 from the
     domain validator rather than a 500.
     """
+    stocks = _resolve_stocks(req, data_root)
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
             strategy=req.strategy,
             params=req.params,
-            stocks=tuple(req.stocks),
+            stocks=stocks,
             is_start=req.is_start,
             is_end=req.is_end,
             engine=req.engine,
@@ -212,18 +243,20 @@ def create_run_async(
     req: RunCreateRequest,
     runs_path: Path = Depends(get_runs_path),
     executor: RunExecutor = Depends(get_run_executor),
+    data_root: Path = Depends(get_data_root),
 ) -> Envelope:
     """Async variant of ``POST /runs`` (8.H.6): validate the config up-front (422
     stays synchronous), then enqueue judge-and-append as a job and return
     ``{job_id, status}`` (202 Accepted). The sync ``POST /runs`` is unchanged;
     poll :func:`run_log` for completion.
     """
+    stocks = _resolve_stocks(req, data_root)
     try:
         cfg = RunConfig(
             hypothesis=req.hypothesis,
             strategy=req.strategy,
             params=req.params,
-            stocks=tuple(req.stocks),
+            stocks=stocks,
             is_start=req.is_start,
             is_end=req.is_end,
             engine=req.engine,
@@ -236,7 +269,7 @@ def create_run_async(
         persist_run(record, runs_path)  # ledger + best-effort runs-table mirror (A0)
         return record
 
-    key = f"{req.strategy}|{req.is_start}|{req.is_end}|{','.join(req.stocks)}"
+    key = f"{req.strategy}|{req.is_start}|{req.is_end}|{','.join(stocks)}"
     job = submit("run", key, _judge_and_append)
     return ok({"job_id": job.job_id, "status": job.status.value})
 

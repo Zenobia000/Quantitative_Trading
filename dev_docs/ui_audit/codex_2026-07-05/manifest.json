@@ -1,0 +1,5772 @@
+{
+  "generatedAt": "2026-07-05T10:26:55.835Z",
+  "baseURL": "http://localhost:5176",
+  "backend": "http://127.0.0.1:8083 (worktree uvicorn, seeded reports/) via vite proxy",
+  "resolvedIds": {
+    "runId": "NO_RUN_SEEDED",
+    "reportEvaluationId": "NO_EVAL_SEEDED",
+    "strategyName": "momentum",
+    "promoteId": "momentum"
+  },
+  "viewports": [
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "name": "laptop",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    }
+  ],
+  "screenshotRouteCount": 23,
+  "redirectRouteCount": 3,
+  "entries": [
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/home.png",
+      "headingText": "Personal EOD Trading Operations",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/momentum",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/momentum",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_strategies_detail.png",
+      "headingText": "momentum",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /strategies unreachable) → momentum"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/NO_EVAL_SEEDED",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/NO_EVAL_SEEDED",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/evaluations/NO_EVAL_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (candidate pool empty) → NO_EVAL_SEEDED"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/momentum",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/momentum",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=momentum"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "desktop",
+      "viewportSize": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "screenshots/desktop/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/home.png",
+      "headingText": "Personal EOD Trading Operations",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/momentum",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/momentum",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_strategies_detail.png",
+      "headingText": "momentum",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /strategies unreachable) → momentum"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/NO_EVAL_SEEDED",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/NO_EVAL_SEEDED",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/evaluations/NO_EVAL_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (candidate pool empty) → NO_EVAL_SEEDED"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/momentum",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/momentum",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=momentum"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "laptop",
+      "viewportSize": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "screenshots/laptop/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "首頁 cockpit",
+      "resolvedUrl": "http://localhost:5176/",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/home.png",
+      "headingText": "Personal EOD Trading Operations",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/research-status",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/home/recent",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies",
+      "slug": "research_strategies",
+      "title": "策略中心（Strategy Hub list）",
+      "resolvedUrl": "http://localhost:5176/research/strategies",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_strategies.png",
+      "headingText": "策略資產",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/strategies/momentum",
+      "slug": "research_strategies_detail",
+      "title": "策略中心 · 詳情（策略資產 detail）",
+      "resolvedUrl": "http://localhost:5176/research/strategies/momentum",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_strategies_detail.png",
+      "headingText": "momentum",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/branches?strategy=momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /strategies unreachable) → momentum"
+    },
+    {
+      "route": "/research/candidates",
+      "slug": "research_candidates",
+      "title": "候選池 Candidate Pool（NEW — 決策主戰場）",
+      "resolvedUrl": "http://localhost:5176/research/candidates",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_candidates.png",
+      "headingText": "候選池",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/new",
+      "slug": "research_runs_new",
+      "title": "New Run 設定",
+      "resolvedUrl": "http://localhost:5176/research/runs/new",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_new.png",
+      "headingText": "新建回測",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs",
+      "slug": "research_runs",
+      "title": "Runs Table",
+      "resolvedUrl": "http://localhost:5176/research/runs",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs.png",
+      "headingText": "回測紀錄",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED",
+      "slug": "research_runs_id",
+      "title": "Run Report（舊）",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_id.png",
+      "headingText": "回測報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/reports/NO_EVAL_SEEDED",
+      "slug": "research_reports_id",
+      "title": "Report Viewer（NEW — FinLab scorecard 報告）",
+      "resolvedUrl": "http://localhost:5176/research/reports/NO_EVAL_SEEDED",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_reports_id.png",
+      "headingText": "策略報告",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/candidates",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/evaluations/NO_EVAL_SEEDED",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/report",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/a1b9c3d4e5f6/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (candidate pool empty) → NO_EVAL_SEEDED"
+    },
+    {
+      "route": "/research/runs/NO_RUN_SEEDED/trades",
+      "slug": "research_runs_id_trades",
+      "title": "逐筆覆盤 Trade Review",
+      "resolvedUrl": "http://localhost:5176/research/runs/NO_RUN_SEEDED/trades",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_runs_id_trades.png",
+      "headingText": "逐筆覆盤",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/candles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/trades",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/NO_RUN_SEEDED/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (GET /runs empty) → NO_RUN_SEEDED"
+    },
+    {
+      "route": "/research/compare",
+      "slug": "research_compare",
+      "title": "Compare",
+      "resolvedUrl": "http://localhost:5176/research/compare",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_compare.png",
+      "headingText": "比較",
+      "observedState": "static_no_api",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [],
+      "pageErrors": [],
+      "apiCalls": []
+    },
+    {
+      "route": "/research/sweep",
+      "slug": "research_sweep",
+      "title": "Sweep",
+      "resolvedUrl": "http://localhost:5176/research/sweep",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/research_sweep.png",
+      "headingText": "參數掃描",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/runs/estimate?box_period=40%2C60%2C80&entry_confirm_days=1%2C2",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/queue",
+      "slug": "live_oos_queue",
+      "title": "OOS 佇列 Live-OOS Queue（NEW）",
+      "resolvedUrl": "http://localhost:5176/live-oos/queue",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/live_oos_queue.png",
+      "headingText": "OOS 佇列",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/live-oos/queue",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/live-oos/watch",
+      "slug": "live_oos_watch",
+      "title": "Paper-Watch 觀察艙（moved from monitor）",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/live_oos_watch.png",
+      "headingText": "Paper-Watch 觀察艙",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/watch",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/gate",
+      "slug": "deploy_gate",
+      "title": "部署嚴格閘 Strict Gate（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/deploy_gate.png",
+      "headingText": "驗證守門",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/gate/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/deploy/promote/momentum",
+      "slug": "deploy_promote_id",
+      "title": "晉升 Promote（NEW zone）",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/momentum",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/deploy_promote_id.png",
+      "headingText": "晉升流程",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/promote/momentum/audit",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/research/strategies",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ],
+      "resolvedFrom": "fallback (roster empty) → strategy_id=momentum"
+    },
+    {
+      "route": "/monitor",
+      "slug": "monitor",
+      "title": "策略艦隊總控 Fleet",
+      "resolvedUrl": "http://localhost:5176/monitor",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor.png",
+      "headingText": "策略艦隊總控",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/portfolio-summary",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fleet",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/board",
+      "slug": "monitor_board",
+      "title": "運行看板 Board（now wired — was dead-404 in Goal 0）",
+      "resolvedUrl": "http://localhost:5176/monitor/board",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_board.png",
+      "headingText": "運行看板",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/board",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/performance",
+      "slug": "monitor_performance",
+      "title": "績效總覽",
+      "resolvedUrl": "http://localhost:5176/monitor/performance",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_performance.png",
+      "headingText": "績效總覽",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/kpi",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/performance/equity",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/positions",
+      "slug": "monitor_positions",
+      "title": "部位狀態",
+      "resolvedUrl": "http://localhost:5176/monitor/positions",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_positions.png",
+      "headingText": "部位狀態",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/positions/snapshot",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/signals",
+      "slug": "monitor_signals",
+      "title": "訊號日誌",
+      "resolvedUrl": "http://localhost:5176/monitor/signals",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_signals.png",
+      "headingText": "訊號日誌",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/signals",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/fills",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/monitor/risk",
+      "slug": "monitor_risk",
+      "title": "風控指標",
+      "resolvedUrl": "http://localhost:5176/monitor/risk",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/monitor_risk.png",
+      "headingText": "風控指標",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/monitor/risk/metrics",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/data",
+      "slug": "system_data",
+      "title": "資料管理 Data",
+      "resolvedUrl": "http://localhost:5176/system/data",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/system_data.png",
+      "headingText": "資料管理",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/datasets",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/bundles",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    },
+    {
+      "route": "/system/alerts",
+      "slug": "system_alerts",
+      "title": "告警設定 Alerts",
+      "resolvedUrl": "http://localhost:5176/system/alerts",
+      "urlMatches": true,
+      "viewport": "mobile",
+      "viewportSize": {
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "screenshots/mobile/system_alerts.png",
+      "headingText": "告警設定",
+      "observedState": "error_or_degraded",
+      "isNotFound": false,
+      "dataSources": [],
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+        "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+      ],
+      "pageErrors": [],
+      "apiCalls": [
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/rules",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/risk/spec",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        },
+        {
+          "method": "GET",
+          "path": "/system/alerts/channels",
+          "status": 500,
+          "ok": false,
+          "success": null,
+          "error": null,
+          "dataSource": null,
+          "dataEmpty": null
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "route": "/research/validate",
+      "slug": "redirect_research_validate",
+      "title": "Validate → Deployment",
+      "expectedTarget": "/deploy/gate",
+      "resolvedUrl": "http://localhost:5176/deploy/gate",
+      "resolvedPath": "/deploy/gate",
+      "redirected": true,
+      "matchedExpectedTarget": true
+    },
+    {
+      "route": "/research/promote/momentum",
+      "slug": "redirect_research_promote",
+      "title": "Promote → Deployment",
+      "expectedTarget": "/deploy/promote/momentum",
+      "resolvedUrl": "http://localhost:5176/deploy/promote/momentum",
+      "resolvedPath": "/deploy/promote/momentum",
+      "redirected": true,
+      "matchedExpectedTarget": true,
+      "resolvedFrom": "fallback (roster empty) → strategy_id=momentum"
+    },
+    {
+      "route": "/monitor/watch",
+      "slug": "redirect_monitor_watch",
+      "title": "Paper-Watch → Live OOS",
+      "expectedTarget": "/live-oos/watch",
+      "resolvedUrl": "http://localhost:5176/live-oos/watch",
+      "resolvedPath": "/live-oos/watch",
+      "redirected": true,
+      "matchedExpectedTarget": true
+    }
+  ]
+}

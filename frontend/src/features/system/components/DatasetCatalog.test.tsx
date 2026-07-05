@@ -69,7 +69,8 @@ describe('DatasetCatalog', () => {
     mockApi()
     renderCatalog()
     await waitFor(() => expect(screen.getByText('還原收盤價')).toBeInTheDocument())
-    expect(screen.getByText('etl:adj_close')).toBeInTheDocument()
+    // key now surfaces as the API-usage snippet inside the collapsible body
+    expect(screen.getByText("data.get('etl:adj_close')")).toBeInTheDocument()
     expect(screen.getByText('投信買賣超')).toBeInTheDocument()
     expect(screen.getByText('當月營收')).toBeInTheDocument()
   })
@@ -106,26 +107,25 @@ describe('DatasetCatalog', () => {
     expect(screen.queryByText('下載到本地')).not.toBeInTheDocument()
   })
 
-  it('renders used_by chips only when a strategy references the key', async () => {
+  it('does NOT render the strategy reverse-index in the catalog (moved to strategy page)', async () => {
     mockApi()
     renderCatalog()
     await waitFor(() => expect(screen.getByText('還原收盤價')).toBeInTheDocument())
-    expect(screen.getByText('four_layer')).toBeInTheDocument()
-    expect(screen.getByText('momentum')).toBeInTheDocument()
-    // 2 of 3 cards have used_by → exactly 2 ⚡ rows (institutional card has none)
-    expect(screen.getAllByText('⚡')).toHaveLength(2)
+    // used_by chips no longer belong here — many strategies would crowd the list
+    expect(screen.queryByText('four_layer')).not.toBeInTheDocument()
+    expect(screen.queryByText('momentum')).not.toBeInTheDocument()
   })
 
-  it('copy button writes the key to the clipboard and confirms', async () => {
+  it('copy button writes the data.get usage call to the clipboard and confirms', async () => {
     const writeText = vi.fn()
     Object.assign(navigator, { clipboard: { writeText } })
     mockApi()
     renderCatalog()
     await waitFor(() => expect(screen.getByText('還原收盤價')).toBeInTheDocument())
-    // first card (etl:adj_close) copy button
-    const card = screen.getByText('etl:adj_close').closest('div')?.parentElement as HTMLElement
-    fireEvent.click(within(card).getByRole('button', { name: '複製 key' }))
-    expect(writeText).toHaveBeenCalledWith('etl:adj_close')
+    // first card copies the full fetch call (teaches usage, not a bare key)
+    const card = screen.getByText("data.get('etl:adj_close')").closest('details') as HTMLElement
+    fireEvent.click(within(card).getByRole('button', { name: '複製取數呼叫' }))
+    expect(writeText).toHaveBeenCalledWith("data.get('etl:adj_close')")
     await waitFor(() => expect(screen.getByText('已複製')).toBeInTheDocument())
   })
 
