@@ -1,7 +1,7 @@
 {
   "app": {
-    "wordmark": "backtest_platform",
-    "documentTitle": "backtest_platform · Four-Layer Resonance"
+    "wordmark": "EOD Command",
+    "documentTitle": "EOD Command · Personal Quant Operations"
   },
   "lang": {
     "zh": "中",
@@ -30,7 +30,14 @@
   "chrome": {
     "navOpen": "Open navigation",
     "navClose": "Close navigation",
-    "navLabel": "Navigation"
+    "navLabel": "Navigation",
+    "tradeDate": "Trade date",
+    "risk": "Risk",
+    "data": "Data",
+    "mode": "Mode",
+    "haltClear": "CLEAR",
+    "dataPending": "PENDING",
+    "paperMode": "PAPER"
   },
   "cmdk": {
     "trigger": "⌘K Search / Go",

@@ -43,6 +43,8 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 | 15 | `15_documentation_and_maintenance_guide.md` | 文件維護、變更流程、文檔即程式碼。 |
 | 16 | `16_wbs_development_plan.md` | 分階段 WBS 與里程碑。 |
 | 17 | `17_frontend_information_architecture.md` | 前端資訊架構、頁面、路由、旅程。 |
+| 18 | `18_refactor_wbs.md` | 現況碼 → golden 七層的重構 WBS、kill-list、波次。 |
+| — | `adrs/` | Repositioning refactor ADRs（R01–R05），見 `adrs/INDEX.md`。 |
 
 ## 3. 決策摘要
 

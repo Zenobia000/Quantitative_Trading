@@ -691,6 +691,11 @@ def candidates_decide_cmd(candidate, action, label, reason) -> None:
 @click.option("--kind", default="paper_replay", help="paper_watch_berth | paper_replay | after_close")
 def candidates_select_cmd(candidate, reason, override, kind) -> None:
     """Select a candidate for live OOS (enqueues a queue item + appends the decision)."""
+    # This CLI command is the composition root for the research `candidates`
+    # group: it is the one place allowed to wire the concrete governance-bound
+    # live-OOS queue into candidate_store's injected enqueue port (W1.3/W2.1b).
+    # The import-linter research ⊄ governance contract exempts exactly this edge.
+    from backtest_platform.governance import live_oos_queue
     from backtest_platform.research.candidate_store import (
         BlockedSelectionError,
         CandidateNotFoundError,
@@ -699,7 +704,10 @@ def candidates_select_cmd(candidate, reason, override, kind) -> None:
     )
 
     try:
-        out = select_live_oos(candidate, reason=reason, override=override, observation_kind=kind)
+        out = select_live_oos(
+            candidate, reason=reason, override=override, observation_kind=kind,
+            queue_path=live_oos_queue.DEFAULT_QUEUE_PATH, enqueue=live_oos_queue.enqueue,
+        )
     except CandidateNotFoundError as exc:
         raise click.ClickException(str(exc)) from None
     except BlockedSelectionError as exc:

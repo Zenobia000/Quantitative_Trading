@@ -13,18 +13,19 @@
   body {
     background-color: var(--bg-base);
     color: var(--text-primary);
-    font-family: 'Inter', 'Noto Sans TC', system-ui, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
+    font-family: 'Inter', 'Noto Sans TC', 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
     -webkit-font-smoothing: antialiased;
   }
-  /* 數值一律 tabular-nums（Geist Mono 由 .font-mono 套用） */
   .tabular {
     font-variant-numeric: tabular-nums;
   }
-  /* focus-visible 單色白環（非彩色 ring） */
   :focus-visible {
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--info) 35%, transparent);
   }
 }

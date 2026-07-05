@@ -17,15 +17,23 @@ candidate (global acceptance #5). A candidate is keyed 1:1 to its strategy
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from backtest_platform.research import live_oos_queue
 from backtest_platform.research.candidate_state import (
     next_state,
     reason_required,
 )
+
+#: Live-OOS enqueue port (W1.3, ADR-R02). The candidate store (Layer-2 research)
+#: *produces* into the live-OOS queue but must not import the queue module, which
+#: is Layer-3 governance-bound (live_oos_queue moves to governance/ in W2.1b).
+#: The concrete `live_oos_queue.enqueue` is injected by the composition root
+#: (API router / orchestration), keeping the research → governance direction
+#: one-way and the import-linter contract green.
+EnqueuePort = Callable[..., dict[str, Any]]
 
 DEFAULT_CANDIDATES_PATH = Path("reports") / "candidates.jsonl"
 DEFAULT_DECISIONS_PATH = Path("reports") / "candidate_decisions.jsonl"
@@ -273,9 +281,14 @@ def select_live_oos(
     actor: str = "operator",
     candidates_path: Path | str = DEFAULT_CANDIDATES_PATH,
     decisions_path: Path | str = DEFAULT_DECISIONS_PATH,
-    queue_path: Path | str = live_oos_queue.DEFAULT_QUEUE_PATH,
+    queue_path: Path | str,
+    enqueue: EnqueuePort,
 ) -> dict[str, Any]:
     """Select a candidate for live OOS: enqueue a queue item + append the decision.
+
+    ``enqueue`` is the injected live-OOS queue port (W1.3): callers pass the
+    concrete ``live_oos_queue.enqueue`` so research never imports the governance-
+    bound queue module. ``queue_path`` is the queue's storage path.
 
     Returns ``{"decision": …, "queue_item": …}``. A ``blocked`` candidate without
     ``override`` raises :class:`BlockedSelectionError` (→ 409); a not-eligible selection
@@ -296,7 +309,7 @@ def select_live_oos(
     if reason_required(action, recommendation=reco) and not (reason and reason.strip()):
         raise MissingReasonError(f"selecting a {reco!r} candidate requires a non-empty reason")
 
-    queue_item = live_oos_queue.enqueue(
+    queue_item = enqueue(
         candidate_id, cand["strategy"], cand.get("latest_evaluation_id"),
         selected_by=actor, selection_reason=reason, recommendation_at_selection=reco,
         override=(action == "override_select"), override_reason=reason if override else None,

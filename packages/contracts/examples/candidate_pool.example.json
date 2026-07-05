@@ -1,0 +1,187 @@
+{
+  "success": true,
+  "data": [
+    {
+      "candidate_id": "cand_inst_flow",
+      "strategy": "inst_flow",
+      "hypothesis": "Quarterly foreign net-buy flow predicts cross-sectional forward return (60d lookback).",
+      "created_at": "2026-06-14T10:00:00+08:00",
+      "state": "live_oos_selected",
+      "latest_evaluation_id": "eval_inst_flow_deployment_strict_20260702",
+      "latest_profile": "deployment_strict",
+      "latest_label": "Weak",
+      "latest_truth_verdict": "PAPER_WATCH",
+      "live_oos_recommendation": "eligible",
+      "scorecard_summary": {
+        "profitability": "warn",
+        "risk": "pass",
+        "risk_adjusted": "warn",
+        "win_rate": "not_available",
+        "liquidity": "warn"
+      },
+      "headline": {
+        "sharpe": 1.025,
+        "oos_holdout_sharpe": 0.892,
+        "cagr": 0.162,
+        "max_drawdown": 0.279,
+        "dsr": 0.908,
+        "trades": 60,
+        "avg_turnover": 0.83,
+        "survivorship_clean": true
+      },
+      "report_pack_ref": "reports/research_runs/a1b9c3d4e5f6/manifest.json",
+      "next_action": "Collect 3-month zero-capital live OOS in Paper-Watch berth, then re-evaluate DSR.",
+      "decisions": [
+        {"decision_id": "dec_0001", "candidate_id": "cand_inst_flow", "at": "2026-06-14T10:05:00+08:00", "actor": "system", "action": "auto_label", "from_state": "draft", "to_state": "triaged", "reason": null, "evaluation_ref": "eval_inst_flow_quick_triage_20260614"},
+        {"decision_id": "dec_0002", "candidate_id": "cand_inst_flow", "at": "2026-07-02T18:45:00+08:00", "actor": "operator", "action": "keep", "from_state": "triaged", "to_state": "weak", "reason": "DSR near-miss (0.908) but OOS breadth 100%; keep as research asset.", "evaluation_ref": "eval_inst_flow_deployment_strict_20260702"},
+        {"decision_id": "dec_0003", "candidate_id": "cand_inst_flow", "at": "2026-07-02T19:10:00+08:00", "actor": "operator", "action": "select_live_oos", "from_state": "weak", "to_state": "live_oos_selected", "reason": "PAPER_WATCH band eligible; worth 3-month live OOS to strengthen deflated significance.", "evaluation_ref": "eval_inst_flow_deployment_strict_20260702", "queue_ref": "loq_inst_flow_20260702"}
+      ]
+    },
+    {
+      "candidate_id": "cand_momentum",
+      "strategy": "momentum",
+      "hypothesis": "12-1 cross-sectional price momentum, monthly rebalance.",
+      "created_at": "2026-06-05T09:00:00+08:00",
+      "state": "negative",
+      "latest_evaluation_id": "eval_momentum_grid_search_selection_20260605",
+      "latest_profile": "grid_search_selection",
+      "latest_label": "Negative",
+      "latest_truth_verdict": "REJECTED",
+      "live_oos_recommendation": "blocked",
+      "scorecard_summary": {
+        "profitability": "fail",
+        "risk": "warn",
+        "risk_adjusted": "fail",
+        "win_rate": "not_available",
+        "liquidity": "warn"
+      },
+      "headline": {
+        "sharpe": 0.41,
+        "oos_holdout_sharpe": -0.12,
+        "cagr": 0.058,
+        "max_drawdown": 0.372,
+        "pbo": 0.63,
+        "trades": 120,
+        "avg_turnover": 1.9,
+        "survivorship_clean": true
+      },
+      "report_pack_ref": "reports/research_runs/b2c8d9e0f1a2/manifest.json",
+      "next_action": "Archive as negative control; landscape PBO 0.63 >> 0.30 (config-selection overfit).",
+      "decisions": [
+        {"decision_id": "dec_0101", "candidate_id": "cand_momentum", "at": "2026-06-05T09:30:00+08:00", "actor": "system", "action": "auto_label", "from_state": "draft", "to_state": "triaged", "reason": null, "evaluation_ref": "eval_momentum_grid_search_selection_20260605"},
+        {"decision_id": "dec_0102", "candidate_id": "cand_momentum", "at": "2026-06-05T11:00:00+08:00", "actor": "operator", "action": "keep", "from_state": "triaged", "to_state": "negative", "reason": "High landscape PBO — kept as an overfit negative control / avoidance rule.", "evaluation_ref": "eval_momentum_grid_search_selection_20260605"}
+      ]
+    },
+    {
+      "candidate_id": "cand_four_layer_resonance",
+      "strategy": "four_layer_resonance",
+      "hypothesis": "Per-stock four-layer structural resonance entry with stop-loss/exit state machine.",
+      "created_at": "2026-06-20T14:00:00+08:00",
+      "state": "promising",
+      "latest_evaluation_id": "eval_four_layer_quick_triage_20260620",
+      "latest_profile": "quick_triage",
+      "latest_label": "Promising",
+      "latest_truth_verdict": null,
+      "live_oos_recommendation": "not_recommended",
+      "scorecard_summary": {
+        "profitability": "pass",
+        "risk": "pass",
+        "risk_adjusted": "pass",
+        "win_rate": "pass",
+        "liquidity": "warn"
+      },
+      "headline": {
+        "sharpe": 1.31,
+        "oos_holdout_sharpe": null,
+        "cagr": 0.224,
+        "max_drawdown": 0.188,
+        "trade_win_rate": 0.57,
+        "trades": 84,
+        "avg_turnover": null,
+        "survivorship_clean": false
+      },
+      "report_pack_ref": "reports/research_runs/c3d9e0f1a2b3/manifest.json",
+      "next_action": "Run fixed_hypothesis_oos to check OOS breadth before spending live OOS.",
+      "note": "four_layer_resonance emits per-trade dicts (ret/hold) so Win-Rate scorecard is partially available; but no survivorship-clean universe yet.",
+      "decisions": [
+        {"decision_id": "dec_0201", "candidate_id": "cand_four_layer_resonance", "at": "2026-06-20T14:20:00+08:00", "actor": "system", "action": "auto_label", "from_state": "draft", "to_state": "triaged", "reason": null, "evaluation_ref": "eval_four_layer_quick_triage_20260620"},
+        {"decision_id": "dec_0202", "candidate_id": "cand_four_layer_resonance", "at": "2026-06-20T15:00:00+08:00", "actor": "operator", "action": "keep", "from_state": "triaged", "to_state": "promising", "reason": "Strong triage Sharpe; promote to OOS profile next.", "evaluation_ref": "eval_four_layer_quick_triage_20260620"}
+      ]
+    },
+    {
+      "candidate_id": "cand_reversal",
+      "strategy": "reversal",
+      "hypothesis": "Short-horizon mean reversion on oversold liquid names.",
+      "created_at": "2026-07-02T11:00:00+08:00",
+      "state": "data_issue",
+      "latest_evaluation_id": "eval_reversal_quick_triage_20260702",
+      "latest_profile": "quick_triage",
+      "latest_label": "Data Issue",
+      "latest_truth_verdict": null,
+      "live_oos_recommendation": "blocked",
+      "scorecard_summary": {
+        "profitability": "not_available",
+        "risk": "not_available",
+        "risk_adjusted": "not_available",
+        "win_rate": "not_available",
+        "liquidity": "not_available"
+      },
+      "headline": {
+        "sharpe": null,
+        "oos_holdout_sharpe": null,
+        "cagr": null,
+        "max_drawdown": null,
+        "trades": 0,
+        "avg_turnover": null,
+        "survivorship_clean": false
+      },
+      "report_pack_ref": "reports/research_runs/d4e0f1a2b3c4/manifest.json",
+      "next_action": "Ingest the required bundle; the run yielded no tradable bars (empty series sidecar).",
+      "decisions": [
+        {"decision_id": "dec_0301", "candidate_id": "cand_reversal", "at": "2026-07-02T11:10:00+08:00", "actor": "system", "action": "mark_data_issue", "from_state": "draft", "to_state": "data_issue", "reason": "Empty equity series — the window yielded no tradable data (runs_report._NO_SERIES_NOTE).", "evaluation_ref": "eval_reversal_quick_triage_20260702"}
+      ]
+    },
+    {
+      "candidate_id": "cand_long_short_v1",
+      "strategy": "long_short",
+      "hypothesis": "Market-neutral value/quality long-short sleeve.",
+      "created_at": "2026-05-30T16:00:00+08:00",
+      "state": "archived",
+      "latest_evaluation_id": "eval_long_short_grid_search_selection_20260530",
+      "latest_profile": "grid_search_selection",
+      "latest_label": "Weak",
+      "latest_truth_verdict": "REJECTED",
+      "live_oos_recommendation": "blocked",
+      "scorecard_summary": {
+        "profitability": "fail",
+        "risk": "pass",
+        "risk_adjusted": "fail",
+        "win_rate": "not_available",
+        "liquidity": "warn"
+      },
+      "headline": {
+        "sharpe": 0.72,
+        "oos_holdout_sharpe": 0.31,
+        "cagr": 0.041,
+        "max_drawdown": 0.121,
+        "pbo": 0.77,
+        "trades": 96,
+        "avg_turnover": 1.4,
+        "survivorship_clean": true
+      },
+      "report_pack_ref": "reports/research_runs/e5f1a2b3c4d5/manifest.json",
+      "next_action": "Archived; discoverable for comparison but not shown by default.",
+      "decisions": [
+        {"decision_id": "dec_0401", "candidate_id": "cand_long_short_v1", "at": "2026-05-30T16:30:00+08:00", "actor": "system", "action": "auto_label", "from_state": "draft", "to_state": "triaged", "reason": null, "evaluation_ref": "eval_long_short_grid_search_selection_20260530"},
+        {"decision_id": "dec_0402", "candidate_id": "cand_long_short_v1", "at": "2026-05-31T09:00:00+08:00", "actor": "operator", "action": "archive", "from_state": "triaged", "to_state": "archived", "reason": "Landscape PBO 0.77 and low absolute return; archive but keep as research asset.", "evaluation_ref": "eval_long_short_grid_search_selection_20260530"}
+      ]
+    }
+  ],
+  "error": null,
+  "meta": {
+    "total": 5,
+    "page": 1,
+    "limit": 50,
+    "data_source": "ledger"
+  }
+}

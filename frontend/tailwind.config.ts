@@ -1,7 +1,6 @@
 import type { Config } from 'tailwindcss'
 
-// Grok 單色 dark v2.0 — token 真相源 dev_docs/web_design/global/02_backtest_platform_brand_system.md
-// 顏色一律走 CSS vars（見 src/styles/tokens.css），這裡只做映射。
+// Wall Street operations console tokens. Values live in src/styles/tokens.css.
 export default {
   darkMode: 'class',
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -13,7 +12,10 @@ export default {
         input: 'var(--bg-input)',
         code: 'var(--bg-code)',
         'surface-raised': 'var(--bg-raised)',
+        panel: 'var(--bg-panel)',
+        row: 'var(--bg-row)',
         border: 'var(--border-default)',
+        'border-strong': 'var(--border-strong)',
         scrim: 'var(--scrim)',
         text: {
           DEFAULT: 'var(--text-primary)',
@@ -25,6 +27,8 @@ export default {
         'loss-aaa': 'var(--loss-aaa)',
         warning: 'var(--warning)',
         error: 'var(--error)',
+        info: 'var(--info)',
+        halt: 'var(--halt)',
       },
       fontFamily: {
         sans: ['Inter', 'Noto Sans TC', 'system-ui', 'sans-serif'],

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
+from backtest_platform.governance import live_oos_queue
 from backtest_platform.research import candidate_store as cs
-from backtest_platform.research import live_oos_queue
 from backtest_platform.research.candidate_state import IllegalTransitionError
 
 
@@ -86,7 +86,7 @@ def test_decision_on_unknown_candidate(store):
 def test_select_live_oos_eligible_no_reason(store):
     cs.ingest_evaluation(_result(reco="eligible", truth="PAPER_WATCH", label="Weak"), **_sp(store))
     cs.record_decision("cand_momentum", "keep", target_label="weak", **_sp(store))
-    out = cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"])
+    out = cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     assert out["decision"]["action"] == "select_live_oos"
     assert out["decision"]["to_state"] == "live_oos_selected"
     assert out["queue_item"]["state"] == "queued"
@@ -96,9 +96,9 @@ def test_select_live_oos_eligible_no_reason(store):
 def test_select_not_recommended_requires_reason(store):
     cs.ingest_evaluation(_result(reco="not_recommended"), **_sp(store))
     with pytest.raises(cs.MissingReasonError):
-        cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"])
+        cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     out = cs.select_live_oos("cand_momentum", reason="worth a paper look", override=True,
-                             **_sp(store), queue_path=store["queue_path"])
+                             **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     assert out["decision"]["action"] == "override_select"
     assert out["queue_item"]["override"] is True
 
@@ -106,13 +106,13 @@ def test_select_not_recommended_requires_reason(store):
 def test_select_blocked_without_override_is_blocked(store):
     cs.ingest_evaluation(_result(reco="blocked", label="Negative", truth="REJECTED"), **_sp(store))
     with pytest.raises(cs.BlockedSelectionError):
-        cs.select_live_oos("cand_momentum", reason="x", **_sp(store), queue_path=store["queue_path"])
+        cs.select_live_oos("cand_momentum", reason="x", **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
 
 
 def test_select_blocked_with_override_enqueues(store):
     cs.ingest_evaluation(_result(reco="blocked", label="Negative", truth="REJECTED"), **_sp(store))
     out = cs.select_live_oos("cand_momentum", reason="manual override", override=True,
-                             **_sp(store), queue_path=store["queue_path"])
+                             **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     assert out["queue_item"]["override"] is True
     assert len(live_oos_queue.list_queue(path=store["queue_path"])) == 1
 
@@ -127,8 +127,8 @@ def test_list_candidates_filters(store):
 
 def test_no_orphan_queue_on_illegal_select(store):
     cs.ingest_evaluation(_result(reco="eligible", truth="PAPER_WATCH"), **_sp(store))
-    cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"])
+    cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     # already live_oos_selected → a second select is an illegal transition, no new queue row
     with pytest.raises(IllegalTransitionError):
-        cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"])
+        cs.select_live_oos("cand_momentum", **_sp(store), queue_path=store["queue_path"], enqueue=live_oos_queue.enqueue)
     assert len(live_oos_queue.list_queue(path=store["queue_path"])) == 1

@@ -20,8 +20,8 @@ from backtest_platform.api.deps import (
     get_live_oos_queue_path,
 )
 from backtest_platform.api.envelope import DataSource, Envelope, ok, page_meta
+from backtest_platform.governance import live_oos_queue
 from backtest_platform.research import candidate_store as cs
-from backtest_platform.research import live_oos_queue
 from backtest_platform.research.candidate_state import DECISION_ACTIONS, IllegalTransitionError
 
 router = APIRouter(prefix="/research", tags=["research-candidates"])
@@ -128,6 +128,7 @@ def post_select_live_oos(
             candidate_id, reason=req.reason, override=req.override,
             observation_kind=req.observation_kind,
             candidates_path=candidates_path, decisions_path=decisions_path, queue_path=queue_path,
+            enqueue=live_oos_queue.enqueue,
         )
     except cs.CandidateNotFoundError:
         raise _not_found(candidate_id) from None

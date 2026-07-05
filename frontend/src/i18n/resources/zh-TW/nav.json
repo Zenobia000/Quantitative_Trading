@@ -1,10 +1,12 @@
 {
   "home": "首頁",
   "zone": {
+    "data": "資料",
     "research": "研究",
-    "live-oos": "Live OOS",
-    "deployment": "部署",
-    "monitor": "監控",
+    "governance": "治理",
+    "trading": "交易",
+    "risk": "風控",
+    "operations": "營運",
     "system": "系統"
   },
   "item": {

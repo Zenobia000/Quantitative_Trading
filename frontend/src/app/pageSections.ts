@@ -1,6 +1,7 @@
 /*
- * 各頁 section 結構（抽自 design.pen 各 frame；真相源 dev_docs/web_design/pages/<spec>.md）。
- * 用於 PendingPage：在端點未接線前，忠實呈現頁面 section 結構 + pending 態（不假造資料）。
+ * Pending page section hints. Legacy page specs were replaced by
+ * dev_docs/product_repositioning/17_frontend_information_architecture.md; keep these
+ * names only as transitional UI skeleton anchors until FE-R2/FE-R5 rewrites pages.
  */
 export const PAGE_SECTIONS: Record<string, string[]> = {
   home_overview: ['command_hero', 'fleet_strip', 'research_status', 'system_health', 'recent_activity', 'empty_state'],

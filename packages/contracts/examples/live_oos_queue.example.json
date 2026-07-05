@@ -1,0 +1,103 @@
+{
+  "success": true,
+  "data": [
+    {
+      "queue_id": "loq_inst_flow_20260702",
+      "candidate_id": "cand_inst_flow",
+      "strategy": "inst_flow",
+      "evaluation_id": "eval_inst_flow_deployment_strict_20260702",
+      "selected_at": "2026-07-02T19:10:00+08:00",
+      "selected_by": "operator",
+      "selection_reason": "PAPER_WATCH band (DSR 0.908 ∈ [0.90, 0.95)); collect 3-month live OOS to strengthen deflated significance.",
+      "recommendation_at_selection": "eligible",
+      "override": false,
+      "state": "running",
+      "observation": {
+        "kind": "paper_watch_berth",
+        "watch_registry_ref": "inst_flow",
+        "dsr_band": "watch",
+        "verdict_dsr": 0.908,
+        "enrolled_on": "2026-07-02",
+        "expiry_date": "2026-09-30",
+        "observation_days": 90,
+        "observed_trading_days": 1,
+        "days_remaining": 89,
+        "position_size": 0.0
+      },
+      "report_pack_ref": "reports/research_runs/a1b9c3d4e5f6/manifest.json",
+      "links": {
+        "report": "GET /research/evaluations/eval_inst_flow_deployment_strict_20260702/report",
+        "candidate": "GET /research/candidates/cand_inst_flow",
+        "strategy_asset": "GET /research/strategies/inst_flow"
+      }
+    },
+    {
+      "queue_id": "loq_four_layer_20260703",
+      "candidate_id": "cand_four_layer_resonance",
+      "strategy": "four_layer_resonance",
+      "evaluation_id": "eval_four_layer_fixed_hypothesis_oos_20260703",
+      "selected_at": "2026-07-03T08:30:00+08:00",
+      "selected_by": "operator",
+      "selection_reason": "Promising triage + OOS breadth passed; observe via plain paper replay (not a DSR-band berth).",
+      "recommendation_at_selection": "not_recommended",
+      "override": true,
+      "override_reason": "Manual override: worth a paper-replay look despite no survivorship-clean universe yet.",
+      "state": "queued",
+      "observation": {
+        "kind": "paper_replay",
+        "watch_registry_ref": null,
+        "dsr_band": null,
+        "verdict_dsr": null,
+        "enrolled_on": null,
+        "expiry_date": null,
+        "observation_days": null,
+        "observed_trading_days": null,
+        "days_remaining": null,
+        "position_size": 0.0
+      },
+      "report_pack_ref": "reports/research_runs/c3d9e0f1a2b3/manifest.json",
+      "links": {
+        "report": "GET /research/evaluations/eval_four_layer_fixed_hypothesis_oos_20260703/report",
+        "candidate": "GET /research/candidates/cand_four_layer_resonance",
+        "strategy_asset": "GET /research/strategies/four_layer_resonance"
+      }
+    },
+    {
+      "queue_id": "loq_inst_flow_20260401",
+      "candidate_id": "cand_inst_flow",
+      "strategy": "inst_flow",
+      "evaluation_id": "eval_inst_flow_deployment_strict_20260401",
+      "selected_at": "2026-04-01T10:00:00+08:00",
+      "selected_by": "operator",
+      "selection_reason": "Earlier Paper-Watch berth (superseded by the 2026-07-02 re-eval).",
+      "recommendation_at_selection": "eligible",
+      "override": false,
+      "state": "expired",
+      "observation": {
+        "kind": "paper_watch_berth",
+        "watch_registry_ref": "inst_flow",
+        "dsr_band": "watch",
+        "verdict_dsr": 0.908,
+        "enrolled_on": "2026-04-01",
+        "expiry_date": "2026-06-30",
+        "observation_days": 90,
+        "observed_trading_days": 61,
+        "days_remaining": -3,
+        "position_size": 0.0
+      },
+      "report_pack_ref": "reports/research_runs/aa11bb22cc33/manifest.json",
+      "links": {
+        "report": "GET /research/evaluations/eval_inst_flow_deployment_strict_20260401/report",
+        "candidate": "GET /research/candidates/cand_inst_flow",
+        "strategy_asset": "GET /research/strategies/inst_flow"
+      }
+    }
+  ],
+  "error": null,
+  "meta": {
+    "total": 3,
+    "page": 1,
+    "limit": 50,
+    "data_source": "watch_registry"
+  }
+}

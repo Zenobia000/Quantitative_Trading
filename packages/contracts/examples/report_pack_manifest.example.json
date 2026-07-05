@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "run_id": "a1b9c3d4e5f6",
+  "evaluation_id": "eval_inst_flow_deployment_strict_20260702",
+  "strategy": "inst_flow",
+  "profile": "deployment_strict",
+  "profile_version": "1.0",
+  "report_pack": "deployment_full",
+  "created_at": "2026-07-02T18:40:00+08:00",
+  "root_dir": "reports/research_runs/a1b9c3d4e5f6",
+  "human_entrypoint": "report.md",
+  "gui_entrypoint": "summary.json",
+  "files": [
+    {"name": "summary.json", "kind": "summary", "path": "summary.json", "media_type": "application/json", "status": "available", "sha256": "0f3a…(placeholder)", "description": "Headline verdict + recommendation + headline metrics. Superset-compatible with GET /runs/{id}/report verdict block."},
+    {"name": "metrics.json", "kind": "metrics", "path": "metrics.json", "media_type": "application/json", "status": "available", "sha256": "7b21…(placeholder)", "description": "Flat metric dict (cagr/sharpe/sortino/calmar/maxdd/dsr/…) from validation.metrics + workflows.truth_gate."},
+    {"name": "scorecards.json", "kind": "scorecards", "path": "scorecards.json", "media_type": "application/json", "status": "available", "sha256": "c9de…(placeholder)", "description": "The five FinLab-style scorecards with per-metric pass/warn/fail/not_available (mirrors evaluation_result.scorecards)."},
+    {"name": "gate_results.json", "kind": "gate_results", "path": "gate_results.json", "media_type": "application/json", "status": "available", "sha256": "aa41…(placeholder)", "description": "Truth-gate CheckResult list + TruthVerdict PAPER_WATCH (validation.two_stage_gate)."},
+    {"name": "report.md", "kind": "report_md", "path": "report.md", "media_type": "text/markdown", "status": "available", "sha256": "1c77…(placeholder)", "description": "Human-readable narrative report (the operator entrypoint)."},
+    {"name": "equity.parquet", "kind": "series", "path": "equity.parquet", "media_type": "application/vnd.apache.parquet", "status": "available", "sha256": "e3b0…(placeholder)", "description": "Equity + drawdown series (from research.run_series_store sidecar)."},
+    {"name": "trades.parquet", "kind": "series", "path": "trades.parquet", "media_type": "application/vnd.apache.parquet", "status": "partial", "sha256": "5d41…(placeholder)", "description": "Per-rebalance trade rows. PARTIAL: panel strategy trades carry no per-trade pnl / entry / exit / excursion columns, so Win-Rate and Liquidity trade metrics stay not_available (rule #6)."},
+    {"name": "simulations.json", "kind": "simulations", "path": "simulations.json", "media_type": "application/json", "status": "not_available", "reason": "Interactive stop-loss/take-profit/cost/capacity sweeps are Goal 8; deployment_strict does not emit them."},
+    {"name": "figures/equity.png", "kind": "figure", "path": "figures/equity.png", "media_type": "image/png", "status": "not_available", "reason": "Figure rendering is deferred (research plan Phase 9); JSON/parquet series are the GUI source and the UI renders charts client-side."},
+    {"name": "figures/parameter_heatmap.png", "kind": "figure", "path": "figures/parameter_heatmap.png", "media_type": "image/png", "status": "not_available", "reason": "No parameter landscape: deployment_strict runs a single pre-registered config (run_mode single_config), so there is no grid to heatmap."}
+  ],
+  "lineage": {
+    "config_hash": "a1b9c3d4e5f6",
+    "config_hash_source": "research.run_config.RunConfig.run_id",
+    "params": {"rebalance": "quarterly", "lookback_days": 60, "flow_source": "foreign"},
+    "engine": "sim",
+    "bundle_ref": "data/parquet_finlab_universe",
+    "universe_symbols_count": 423,
+    "survivorship_clean": true,
+    "n_trials": 16,
+    "window": {"is_start": "2010-01-01", "oos_start": "2021-01-01", "is_end": "2024-12-31"},
+    "git_sha": null,
+    "git_sha_status": "not_available",
+    "git_sha_reason": "run ledger carries no source-tree SHA today (Goal 9 lineage add)."
+  },
+  "compat": {
+    "runs_report_endpoint": "GET /runs/{run_id}/report",
+    "relationship": "The report pack is a SUPERSET of the existing RunReportData aggregate. summary.json's verdict/segments/cost_sensitivity blocks are field-compatible with RunReportData (api/routers/runs_report.py); the pack ADDS scorecards.json, metrics.json, gate_results.json and the file-level manifest that RunReportData does not carry. A frontend can render the pack from files, or read the aggregate JSON from the endpoint.",
+    "differences": [
+      "RunReportData.monthly_returns uses a reconstructed business-day index (_MONTHLY_BASIS); the pack inherits the same disclosed approximation.",
+      "RunReportData carries no five-scorecard block; that is new in scorecards.json.",
+      "The pack exposes files+sha256 for lineage/caching; the endpoint returns an in-memory aggregate only."
+    ]
+  }
+}
