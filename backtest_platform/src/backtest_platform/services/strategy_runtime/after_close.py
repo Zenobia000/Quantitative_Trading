@@ -490,7 +490,7 @@ def build_session_runner(
     symbols = _resolve_universe(universe)
     cash = _resolve_equity(equity)
 
-    from backtest_platform.runtime.market_reader import (
+    from backtest_platform.services.strategy_runtime.live_session import (
         check_panel_freshness,
         live_config_for_date,
         read_live_panel,

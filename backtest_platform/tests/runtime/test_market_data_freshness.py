@@ -14,7 +14,7 @@ import pandas as pd
 import pytest
 
 from backtest_platform.runtime.market_data_errors import NoMarketDataError
-from backtest_platform.runtime.market_reader import check_panel_freshness
+from backtest_platform.services.strategy_runtime.live_session import check_panel_freshness
 
 
 def _panel(last: date) -> pd.DataFrame:
