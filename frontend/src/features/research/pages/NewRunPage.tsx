@@ -1,5 +1,5 @@
 /*
- * New Run 設定（/research/runs/new）。三源對齊 assembly + design.pen frame + page spec。
+ * New Run 設定（/research/runs/new）。Research terminal 的 hypothesis registration 入口。
  * 接真實 POST /runs（shipped；RunCreateRequest 型別取自 OpenAPI）。提交成功 → 跳 Run Report。
  * ADR-028：body 為 strategy（已註冊策略名，取自 GET /strategies 型錄）+ params（策略參數 dict），
  * 取代舊 preset 欄位。完整 range-step / OOS 鎖死待後端擴充 RunConfig（companion 後端 goal）。

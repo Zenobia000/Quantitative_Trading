@@ -1,6 +1,5 @@
 /*
- * Compare（/research/compare?run_ids=a,b,c）。三源對齊 assembly + design.pen frame + page spec。
- * design.pen sections: header / compare_toolbar / guardrail_bar / equity_overlay / metric_diff_table / parallel_coordinates。
+ * Compare ledger（/research/compare?run_ids=a,b,c）。
  * 資料：useCompare → GET /runs/compare?baseline=&run_ids=（shipped；回應為「物件」
  * {baseline_id, metric_keys, comparisons[...]}，每列含 metrics/delta/rank/gate_status）。
  * equity_overlay / parcoords / guardrail 端點未接線 → pending（不假造數字）。

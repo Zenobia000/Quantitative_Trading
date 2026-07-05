@@ -1,6 +1,6 @@
 /*
- * FirstRunEmptyState — 零資料引導（對齊 design.pen Section · empty_state）。
- * 置中大圓角卡 + 1px border 無陰影 + 可複製真實 CLI + 單一白 pill CTA + three-path。
+ * FirstRunEmptyState — 零資料引導。
+ * 1px border 無陰影 + 可複製真實 CLI + 單一 CTA；等待後續頁面級 console 化。
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'

@@ -142,8 +142,9 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 ### 7.5 FE-R2/FE-R3 進度
 
 - [x] `frontend/src/router.tsx` 註解與 fallback route title 改為七層語義；舊 Live OOS / Deployment / Monitor 只作相容 URL 或子流程。
+- [x] `frontend/src/features/research/pages/StrategyHubListPage.tsx` 由策略卡片牆改為 strategy ledger。
 - [x] `frontend/src/features/research/pages/CandidatePoolPage.tsx` 由卡片牆改為 Research evidence blotter。
 - [x] `frontend/src/features/research/components/candidates/CandidateCard.tsx` 由候選卡改為單列決策單元，保持 strategy / scorecard / return-risk / governance / action 同列掃描。
-- [ ] Strategy Hub / Runs / Report / Compare / Sweep 仍需套用同一 terminal + ledger 模式。
+- [ ] Runs / Report / Compare / Sweep 仍需套用同一 terminal + ledger 模式。
 - [ ] Live OOS Queue / Release Gate 仍需改為 Governance operations queue。
 - [ ] Data / Risk / Trading / Operations 頁面仍需去卡片化並加強 source/as-of/trace。

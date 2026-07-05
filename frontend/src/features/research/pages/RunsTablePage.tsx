@@ -1,10 +1,7 @@
 /*
- * Runs Table 研究主頁（/research/runs）。三源對齊：
- * - assembly/research_03_runs_table_integrated.md（結構/行為）
- * - design.pen「Research · Runs Table」frame（header/toolbar/guardrail/runs_table/multi_select/empty）
- * - pages/research_03_runs_table.md（四態/RWD/copy）
+ * Runs ledger（/research/runs）。
  * 資料：useRuns → GET /runs（shipped）。guardrail（trials/DSR）端點未接線 → pending（不假造數字）。
- * RWD：runs_table @<1024 橫向捲動「不轉 card」（研究級密集表）。
+ * RWD：@<1024 橫向捲動「不轉 card」（研究級密集表）。
  */
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'

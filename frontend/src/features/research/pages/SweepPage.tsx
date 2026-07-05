@@ -1,5 +1,5 @@
 /*
- * Sweep 參數掃描（/research/sweep）。三源對齊 assembly + design.pen frame + page spec。
+ * Sweep 參數掃描（/research/sweep）。Research terminal 的 grid exploration 入口。
  * estimate_guard 接真實 GET /runs/estimate（提交前估算 N configs / est min）；
  * 提交接真實 POST /research/sweep（async job）+ GET /research/sweep/{id}/status（輪詢 grid-plan 展開）。
  * heatmap / cell_drilldown 需 per-config 回測（parquet）→ 仍 pending。
