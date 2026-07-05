@@ -38,7 +38,7 @@ class DBConfig:
     port: int = 5432
     database: str = "quant_trading"
     user: str = "quant"
-    password: str = "change_me_in_production"
+    password: str = "quant_local_dev_password"
 
     @classmethod
     def from_env(cls) -> DBConfig:

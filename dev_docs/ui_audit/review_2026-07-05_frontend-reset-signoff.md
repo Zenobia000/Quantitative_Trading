@@ -16,7 +16,8 @@
 
 **根因 = audit 環境，非前端缺陷、非後端 code bug：**
 
-- API 需 PostgreSQL（`config/settings.py` + `require_postgres` 拒絕 shipped 預設密碼）。本次 audit 後端（`127.0.0.1:8083`）未接上可用的 Postgres/seed，故所有 DB-backed endpoint 500。
+- 原始 screenshot audit 後端（`127.0.0.1:8083`）未接上可用的 Postgres/seed，故 DB-backed endpoint 當時為 fallback/error state；這是該批截圖的限制，不代表現況。
+- 2026-07-05 後續補驗：`scripts/seed_demo_data.py` 已建立 deterministic ledgers/parquet cache/TimescaleDB telemetry，並以 `127.0.0.1:8083` 驗證 `/monitor/board`、`/monitor/performance/equity`、`/monitor/signals`、`/monitor/fills`、`/monitor/positions/snapshot`、`/research/candidates`、`/research/live-oos/queue`、`/research/evaluations/...`、`/system/bundles`、`/system/datasets?category=price_volume` 皆 200 且回 populated data。
 - 後端 code 本身健康：`pytest -o addopts=""` **1443 passed / 3 skipped / 0 failed**；`lint-imports` 3 kept / 0 broken；`check_openapi_drift.py` `[OK] live spec matches frontend/openapi.json`。
 - 前端未 crash：**23/23 route `isNotFound: false`**，無白屏。
 
@@ -39,11 +40,11 @@
 ## 4. 簽核
 
 - **Frontend reset 重設計（§7.4 shell / IA / 美學 / 韌性）：✅ PASS。** 三 viewport × 23 route 一致達標；重設計甚至以「500 優雅降級」反證了 §7.4「pending 不造假 / graceful」原則。
-- **限制（誠實揭露）**：本 audit 在後端全 500 下截圖，故只驗到 **shell / IA / error / pending / empty** 狀態；**populated dense ledger/table 的資料密度未被實測**（需 seeded 後端）。此與本專案既有「data-state baseline」audit 慣例（commit `8bab301`）一致。
+- **限制（誠實揭露）**：本 screenshot audit 在後端全 500 下截圖，故該批圖片只驗到 **shell / IA / error / pending / empty** 狀態。Populated backend 已由 seeded endpoint smoke test 補驗，但尚未重新產生 populated screenshot audit。
 
 ## 5. 後續（follow-up，非本簽核阻塞項）
 
-1. **Seeded happy-path 重跑（選作）**：`docker-compose up` Postgres + 設真 `POSTGRES_PASSWORD` + migrate + seed（runs/evals/strategies）+ 隔離 port 重跑 `audit:screens`，補驗 populated ledger 密度。因需 evaluate pipeline seed（本次亦 `NO_RUN_SEEDED`），建議於乾淨窗口執行，避免多 session 搶 port/DB。
+1. **Seeded screenshot 重跑（選作）**：Postgres/seed 現已具備；可用 `127.0.0.1:8083` 重跑 `audit:screens`，補上 populated dense ledger/table 的視覺截圖證據。
 2. **`dev_docs/25_fe_be_rest_contract.md` 缺檔**：使 `check_openapi_drift.py` 一項 inventory 檢查 ERROR（pre-existing，與本次無關），待補。
 
 ## 影響評估

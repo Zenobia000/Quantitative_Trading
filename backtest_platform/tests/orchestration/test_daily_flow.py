@@ -1,11 +1,10 @@
-"""orchestration.daily_flow — flow engine (fail-fast / capture / threading),
-canonical stages (injected stubs), and Prefect-optional fallback."""
+"""orchestration.daily_flow — flow engine (fail-fast / capture / threading)
+and canonical stages with injected stubs."""
 from __future__ import annotations
 
 from backtest_platform.orchestration.daily_flow import (
     FlowContext,
     StageResult,
-    as_prefect_flow,
     build_daily_stages,
     demo_stages,
     run_flow,
@@ -144,15 +143,9 @@ def test_stage_orders_with_stub():
     assert res.ok and "3 orders" in res.detail
 
 
-# --- demo + prefect-optional ---------------------------------------------
+# --- demo ----------------------------------------------------------------
 
 def test_demo_stages_all_pass():
     run = run_flow(demo_stages())
     assert run.ok
     assert [s.name for s in run.stages] == ["etl", "signals", "risk_gate", "orders", "log"]
-
-
-def test_as_prefect_flow_falls_back_without_prefect():
-    # prefect is not installed in this env → graceful fallback to inline run_flow
-    run = as_prefect_flow(demo_stages())
-    assert run.ok

@@ -12,10 +12,8 @@ Two design choices keep it testable and un-coupled:
    the strategy, the risk gate, the broker, the sink). The stage bodies only
    orchestrate; the heavy work lives in collaborators that tests stub. A stage
    whose collaborator is missing fails cleanly (``ok=False``) rather than raising.
-2. **Prefect is optional.** :func:`as_prefect_flow` wraps the same runner in a
-   ``@flow`` for scheduling/observability *when prefect is installed*, and falls
-   back to the inline runner otherwise — mirroring the quantstats-optional tear
-   sheet. Prefect is therefore never a hard dependency.
+2. **The scheduler lives outside this engine.** Local deployment uses the
+   systemd after-close timer; this module only runs the staged pipeline once.
 
 A daily run must never crash the scheduler: a stage that raises is caught and
 recorded as a failed stage, and the flow halts there with a full audit trail.
@@ -27,10 +25,18 @@ from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
-    "StageResult", "FlowContext", "FlowRun", "Stage",
-    "run_flow", "as_prefect_flow",
-    "build_daily_stages", "demo_stages",
-    "stage_etl", "stage_signals", "stage_risk_gate", "stage_orders", "stage_log",
+    "FlowContext",
+    "FlowRun",
+    "Stage",
+    "StageResult",
+    "build_daily_stages",
+    "demo_stages",
+    "run_flow",
+    "stage_etl",
+    "stage_log",
+    "stage_orders",
+    "stage_risk_gate",
+    "stage_signals",
 ]
 
 
@@ -104,7 +110,7 @@ def run_flow(
     for name, stage in stages:
         try:
             res = stage(ctx)
-        except Exception as exc:  # noqa: BLE001 — fail-safe: capture, never crash the run
+        except Exception as exc:
             res = StageResult(name, ok=False, detail=f"raised {type(exc).__name__}: {exc}")
         # Pin the registered name (a stage may build its result with any label).
         res = StageResult(name, res.ok, res.detail, res.output)
@@ -113,24 +119,6 @@ def run_flow(
         if not res.ok:
             break
     return FlowRun(tuple(results))
-
-
-def as_prefect_flow(
-    stages: Sequence[tuple[str, Stage]],
-    context: FlowContext | None = None,
-) -> FlowRun:
-    """Run via Prefect's ``@flow`` when available (scheduling/observability), else
-    fall back to the inline :func:`run_flow`. Keeps Prefect an optional extra."""
-    try:
-        from prefect import flow  # type: ignore[import-not-found]
-    except ImportError:
-        return run_flow(stages, context)
-
-    @flow(name="backtest-daily-flow")  # pragma: no cover — exercised only with prefect installed
-    def _daily() -> FlowRun:
-        return run_flow(stages, context)
-
-    return _daily()
 
 
 # --------------------------------------------------------------------------- #

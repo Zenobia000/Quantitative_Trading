@@ -18,7 +18,7 @@ Complete the **forward live-paper** data path: the daemon's replay core is clock
 
 ## What's intentionally a stub
 
-The **after-close recurring scheduler** (fire `run_forward_session(today)` once per session close, over real calendar time): needs real time, can't be unit-tested, cron/Prefect is a deployment choice. The per-date execution + persistence is identical to replay (②-proven). This is the *only* remaining gate for live OOS — and it's a time gate, not a code gate.
+The **after-close recurring scheduler** (fire `run_forward_session(today)` once per session close, over real calendar time): needs real time, can't be unit-tested, and is a systemd-timer / CLI deployment choice. The per-date execution + persistence is identical to replay (②-proven). This is the *only* remaining gate for live OOS — and it's a time gate, not a code gate.
 
 ## Using the `stock_strategy/` references (the user's ask)
 

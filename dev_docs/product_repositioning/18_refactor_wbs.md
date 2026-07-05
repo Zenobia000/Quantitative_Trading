@@ -157,4 +157,4 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - [x] Data Platform 入口改為 Codex-style data ledger；dataset catalog 由卡片牆改為資料字典 blotter，bundle manifest 沿用 ledger table。
 - [x] Risk / Trading / Operations 外觀基線去卡片化：shared KPI/pending/table、Watch rows、Alerts channel 均改為 Codex-style ledger cells。
 - [x] Risk / Trading / Operations 共用 QueryState 補 evidence meta strip：source / total / as-of / ttl / trace，缺值明示 `—` 不推測。
-- [x] Playwright screenshot audit 完成：23 routes × 3 viewports = 69 screenshots，另驗 3 redirect routes；產物在 `dev_docs/ui_audit/codex_2026-07-05/`。本次環境未啟動 backend `127.0.0.1:8083`，因此監控/系統資料區捕捉的是 Vite proxy refused 下的前端 fallback/error state。
+- [x] Playwright screenshot audit 完成：23 routes × 3 viewports = 69 screenshots，另驗 3 redirect routes；產物在 `dev_docs/ui_audit/codex_2026-07-05/`。原始截圖捕捉的是 frontend fallback/error state；2026-07-05 已補 `scripts/seed_demo_data.py`，並以 `127.0.0.1:8083` 驗證 Monitor/Research/System 的 TimescaleDB + ledger + parquet populated happy path。

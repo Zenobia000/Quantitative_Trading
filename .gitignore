@@ -62,8 +62,10 @@ ENV/
 data/raw/
 data/processed/
 data/cache/
+backtest_platform/data/
 backtest_platform/data/raw/
 backtest_platform/data/processed/
+backtest_platform/reports/
 
 # =====================================================
 # Claude Code — 設定保留，logs/cache 不要
