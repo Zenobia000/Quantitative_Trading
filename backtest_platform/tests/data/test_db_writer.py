@@ -322,7 +322,7 @@ def _capture_sql(fn, rows):
     cur = MagicMock()
     conn = MagicMock()
     conn.cursor.return_value.__enter__.return_value = cur
-    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+    with patch("backtest_platform.services.monitoring_ops.telemetry_writer._connection") as mock_ctx, patch(
         "psycopg2.extras.execute_values"
     ) as mock_exec:
         mock_ctx.return_value.__enter__.return_value = conn
@@ -340,7 +340,7 @@ def test_trade_log_writers_empty_returns_zero_without_connection() -> None:
     )
 
     for fn in (upsert_signals, upsert_equity_snapshots, upsert_fills):
-        with patch("backtest_platform.data.db_writer._connection") as mock_ctx:
+        with patch("backtest_platform.services.monitoring_ops.telemetry_writer._connection") as mock_ctx:
             assert fn([]) == 0
             mock_ctx.assert_not_called()
 
@@ -381,7 +381,7 @@ def _capture_all_sql(fn, rows):
     cur = MagicMock()
     conn = MagicMock()
     conn.cursor.return_value.__enter__.return_value = cur
-    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+    with patch("backtest_platform.services.monitoring_ops.telemetry_writer._connection") as mock_ctx, patch(
         "psycopg2.extras.execute_values"
     ) as mock_exec:
         mock_ctx.return_value.__enter__.return_value = conn
@@ -428,7 +428,7 @@ def test_upsert_fills_single_connection() -> None:
     cur = MagicMock()
     conn = MagicMock()
     conn.cursor.return_value.__enter__.return_value = cur
-    with patch("backtest_platform.data.db_writer._connection") as mock_ctx, patch(
+    with patch("backtest_platform.services.monitoring_ops.telemetry_writer._connection") as mock_ctx, patch(
         "psycopg2.extras.execute_values"
     ):
         mock_ctx.return_value.__enter__.return_value = conn
