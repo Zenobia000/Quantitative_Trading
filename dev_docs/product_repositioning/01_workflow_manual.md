@@ -9,6 +9,8 @@
 - **邊界不可繞過**：Research 不能下單；Execution 不能改寫研究邏輯；Risk 可阻擋交易。
 - **個人級 right-size**：保留機構級紀律，不引入不必要的機構級基建。
 - **可驗證架構**：關鍵規則必須轉成測試、CI gate 或 Architecture Fitness Function。
+- **AI 研究撰寫 harness**：策略研究由 operator 驅動 Claude Code（dev-time）在 repo 內完成；agent 用 Python + finlab SDK + `research.cli` 自主跑 research 閉環（撰寫→conformance→回測→驗證→評估→候選），停在 governance 閘門前由人核准。無 MCP、非 runtime 引擎。見 ADR-009 / SPEC-03。
+- **operator 角色轉移**：從「策略程式碼撰寫者」轉為「AI 監督者 + governance 核准者」——問對問題、審閱證據、把關閘門，比 agent 產出的答案更關鍵。
 
 ## 2. 模式選擇
 
@@ -40,7 +42,7 @@ graph LR
 | A1 規劃 | 需求、KPI、非目標 | `02`、`03` | KPI 可測，BDD 可執行 |
 | A2 架構 | C4、DDD、ADR、NFR | `04`、`05` | ADR 完整，QAS 可測 |
 | A3 詳細設計 | API、模組、目錄、依賴 | `06`-`10` | 契約穩定，依賴不倒置 |
-| A4 開發品質 | Review、測試、重構 | `11` | 測試綠燈，fitness functions 通過 |
+| A4 開發品質 | Review、測試、重構；策略經 AI harness 撰寫（SPEC-03） | `11` | 測試綠燈，fitness functions 通過，agent 產出經人 review + conformance |
 | A5 安全就緒 | 安全與交易準備 | `13` | High/Medium 風險已處理 |
 | A6 上線運維 | 部署、監控、rollback | `14` | Runbook、告警、備份、回滾可用 |
 | A7 維護 | 文件與 WBS 演進 | `15`、`16` | 文件與實作同步 |

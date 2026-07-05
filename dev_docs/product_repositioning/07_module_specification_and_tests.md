@@ -33,7 +33,18 @@
 | Precondition | frozen RunConfig + bundle_ref |
 | Postcondition | 產出 report pack、trials、target portfolio time series |
 | Invariant | 不 import broker / execution adapter |
+| Invariant | sweep/DOE 每輪 trial 誠實計入 trials counter，維持 DSR deflation 正確性 |
 | Tests | lookahead guard、cost model、reproducibility、sweep trials retained |
+
+### StrategyAuthoringHarness（Claude Code, dev-time；ADR-009 / SPEC-03）
+
+| Contract | 內容 |
+| :--- | :--- |
+| Precondition | operator 驅動；agent 具 filesystem + Bash + `research.cli`，不具 broker/finlab 憑證 |
+| Postcondition | 產出通過 conformance 的 `strategies/<pkg>/`；research 閉環證據入 ledger |
+| Invariant | agent 只碰 research 表面；`orchestration.cli`/broker/execution off-limits |
+| Invariant | 跨 governance 閘門（select-live-oos / promote）須人核准，agent 不自越 |
+| Tests | conformance gate（每個註冊策略）、import-linter research⊄services、trials 誠實計數 |
 
 ### ReleaseGate
 
@@ -72,6 +83,7 @@
 | E2E Paper | data -> research -> governance -> paper -> monitoring |
 | E2E Trading Dry Run | risk-approved order intent 到 paper broker fill |
 | Architecture | import rules、no broker in research、event idempotency |
+| Authoring | conformance gate（每個註冊策略自動收案）、agent 邊界（research⊄services）、trials 誠實計數 |
 
 ## 4. 必測負路徑
 

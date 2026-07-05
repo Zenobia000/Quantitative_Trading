@@ -4,7 +4,7 @@
 
 ## 1. 目的與範圍
 
-前端 Console 支援單一操作者完成研究、發布、paper、風控、執行監控與事故處理。它不是策略 IDE，也不是高頻交易台。
+前端 Console 支援單一操作者完成研究、發布、paper、風控、執行監控與事故處理。它不是策略 IDE，也不是高頻交易台。策略撰寫與 research 閉環在 Claude Code dev-time harness 完成（ADR-009 / SPEC-03）；Console 定位為**治理 + 證據審閱台**，只消費後端 read model。
 
 ## 2. 資訊架構總覽
 

@@ -12,6 +12,8 @@
 - PnL、drawdown、decay 是否異常？
 - 哪個 package / order / fill 導致問題？
 
+> UI 是**治理 + 證據審閱台**，不是策略 IDE、也不是研究驅動台。策略撰寫與 research 閉環在 Claude Code dev-time harness 完成（ADR-009 / SPEC-03）；UI 只消費後端 read model、呈現 evidence ledger 與 gate verdict、承載 governance 核准動作。
+
 ## 2. 技術選型
 
 | 項目 | 選型 |
