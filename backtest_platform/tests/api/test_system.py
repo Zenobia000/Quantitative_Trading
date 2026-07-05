@@ -101,9 +101,19 @@ def test_ingest_status_unknown_is_404(client, isolate_jobs):
     assert err["detail"] == {"resource": "job", "id": "ghost"}
 
 
-def test_ingest_empty_symbols_422(client, isolate_jobs):
+def test_ingest_empty_symbols_falls_back_to_default_universe(client, monkeypatch, isolate_jobs):
+    # ADR-007 Slice 4: empty symbols → system default universe (one-click download).
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
+
+    monkeypatch.setattr(
+        "backtest_platform.data.finlab_source.ingest_universe_finlab",
+        lambda syms, s, e, **k: type("R", (), {"failed_symbols": ()})(),
+    )
     r = client.post("/system/ingest", json={**_INGEST_REQ, "symbols": []})
-    assert r.status_code == 422
+    assert r.status_code == 202
+    final = _poll_status(client, r.json()["data"]["job_id"])
+    assert final["status"] == "done"
+    assert final["result"]["requested"] == len(DEFAULT_UNIVERSE)
 
 
 # ---- bundles manifest scan (C1) -----------------------------------------

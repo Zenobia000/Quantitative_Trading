@@ -25,9 +25,13 @@ from backtest_platform.risk.risk_gate import risk_spec as _risk_spec
 
 
 class IngestRequest(BaseModel):
-    """Trigger a bundle ingest as an async job (8.H.6)."""
+    """Trigger a bundle ingest as an async job (8.H.6).
 
-    symbols: list[str] = Field(..., min_length=1)
+    ``symbols`` is optional (ADR-007 Slice 4): an empty/omitted list resolves to the
+    system default universe, so the data-dictionary "download to local" one-click can
+    fire without the user re-typing a symbol list."""
+
+    symbols: list[str] = Field(default_factory=list)
     start: date
     end: date
     source: str = "finlab"  # "finlab" (ADR-006 primary) | "finmind" (fallback)
@@ -130,6 +134,10 @@ class DatasetCard(BaseModel):
     description: str
     local: str  # "cached" | "not_cached"
     used_by: list[str]
+    # True → this category lands in a local parquet bundle (downloadable); False →
+    # fetch-at-runtime only via ``data.get`` (財報/月營收/融資融券). Lets the UI stop
+    # showing a misleading "not_cached" grey for data that never caches (ADR-007 Q1).
+    bundle_backed: bool
 
 
 router = APIRouter(prefix="/system", tags=["system"])
@@ -287,7 +295,10 @@ def datasets(
     filters (``?category`` exact, ``?q`` substring on key/name). Deliberately no
     manifest read / staleness — the catalog is a data *dictionary*, not a cache
     monitor."""
-    from backtest_platform.data.dataset_presence import presence_for_category
+    from backtest_platform.data.dataset_presence import (
+        presence_for_category,
+        table_for_category,
+    )
     from backtest_platform.data.finlab_catalog import CATALOG_VERSION, load_catalog
     from backtest_platform.data.strategy_data_index import (
         build_strategy_data_index,
@@ -315,6 +326,7 @@ def datasets(
             description=s.description,
             local=presence_for_category(s.category, data_root),
             used_by=index.get(s.key, []),
+            bundle_backed=table_for_category(s.category) is not None,
         )
         for s in specs
     ]
@@ -334,19 +346,22 @@ def ingest(req: IngestRequest) -> Envelope:
     """Enqueue a bundle ingest as an async job (8.H.6); returns ``{job_id, status}``
     (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
     so the API never blocks; poll :func:`ingest_status`."""
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
     from backtest_platform.orchestration.collaborators import make_ingest
 
+    # ADR-007 Slice 4: empty symbols → system default universe (one-click download).
+    symbols = list(req.symbols) or list(DEFAULT_UNIVERSE)
     ing = make_ingest(start=req.start, end=req.end, source=req.source)
 
     def _run() -> dict[str, Any]:
-        result = ing(list(req.symbols))
+        result = ing(symbols)
         return {
-            "requested": len(req.symbols),
+            "requested": len(symbols),
             "ok": sorted(s for s, good in result.items() if good),
             "failed": sorted(s for s, good in result.items() if not good),
         }
 
-    key = f"{req.source}|{req.start}|{req.end}|{','.join(req.symbols)}"
+    key = f"{req.source}|{req.start}|{req.end}|{','.join(symbols)}"
     job = submit("ingest", key, _run)
     return ok({"job_id": job.job_id, "status": job.status.value})
 

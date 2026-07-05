@@ -9,7 +9,7 @@ from __future__ import annotations
 
 _CARD_FIELDS = {
     "key", "name_zh", "category", "freq", "history_start", "description",
-    "local", "used_by",
+    "local", "used_by", "bundle_backed",
 }
 
 
@@ -22,6 +22,21 @@ def test_datasets_returns_cards_with_full_shape(client):
     assert set(sample) == _CARD_FIELDS
     assert sample["local"] in {"cached", "not_cached"}
     assert isinstance(sample["used_by"], list)
+    assert isinstance(sample["bundle_backed"], bool)
+
+
+def test_bundle_backed_true_only_for_bundle_categories(client):
+    # price_volume / institutional land in a local bundle; financials / monthly_revenue
+    # / margin_short are fetch-at-runtime only (ADR-007 Q1).
+    cards = client.get("/system/datasets").json()["data"]
+    by_cat = {}
+    for c in cards:
+        by_cat.setdefault(c["category"], set()).add(c["bundle_backed"])
+    assert by_cat.get("price_volume") == {True}
+    assert by_cat.get("institutional") == {True}
+    assert by_cat.get("financials") == {False}
+    assert by_cat.get("monthly_revenue") == {False}
+    assert by_cat.get("margin_short") == {False}
 
 
 def test_meta_carries_catalog_version(client):
