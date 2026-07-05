@@ -19,6 +19,7 @@ degrades to typed-empty rather than 500 (ADR-021 §5.4).
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -178,6 +179,22 @@ def _iter_cache_dirs(data_root: Path):
             yield entry
 
 
+def iter_manifests(data_root: Path | None = None) -> Iterator[tuple[Path, str, dict]]:
+    """Yield ``(cache_dir, kind, manifest)`` for every readable bundle cache.
+
+    The single defensive scan seam over ``parquet*`` caches — shared by
+    :func:`scan_bundles` and :mod:`data.universe_registry` so manifest discovery
+    lives in exactly one place. A missing root or an unreadable/corrupt manifest is
+    silently skipped (never raised), sorted by cache dir name.
+    """
+    root = data_root if data_root is not None else DEFAULT_DATA_ROOT
+    for cache_dir in _iter_cache_dirs(root):
+        resolved = _resolve_manifest(cache_dir)
+        if resolved is not None:
+            kind, manifest = resolved
+            yield cache_dir, kind, manifest
+
+
 def scan_bundles(data_root: Path | None = None) -> list[BundleInfo]:
     """Discover every parquet bundle cache under ``data_root`` (default ``data/``).
 
@@ -185,13 +202,8 @@ def scan_bundles(data_root: Path | None = None) -> list[BundleInfo]:
     sorted by id. Never raises: a missing root or a corrupt manifest yields fewer
     (or zero) rows so the caller can serve a typed-empty envelope.
     """
-    root = data_root if data_root is not None else DEFAULT_DATA_ROOT
     bundles: list[BundleInfo] = []
-    for cache_dir in _iter_cache_dirs(root):
-        resolved = _resolve_manifest(cache_dir)
-        if resolved is None:
-            continue
-        kind, manifest = resolved
+    for cache_dir, kind, manifest in iter_manifests(data_root):
         try:
             bundles.append(_to_bundle_info(cache_dir, kind, manifest))
         except (TypeError, ValueError):

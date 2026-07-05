@@ -88,6 +88,25 @@ class BundleQuality(BaseModel):
     n_ingested_failed: int | None = None
 
 
+class UniverseRow(BaseModel):
+    """One ``GET /system/universes`` row — a named, selectable universe (ADR-007).
+
+    Projects ``universe_manifest.json`` so the New Run form can *select* a
+    survivorship-clean population by name (SPEC-01 Slice 2) instead of re-typing raw
+    symbols, and so a strategy can *reference* it (N:1 via ``strategies``)."""
+
+    id: str
+    name: str
+    symbols_count: int
+    span_start: str | None = None
+    span_end: str | None = None
+    top_n: int | None = None
+    min_turnover: float | None = None
+    strategies: list[str] = Field(default_factory=list)
+    cache_dir: str
+    generated_at: str | None = None
+
+
 class DatasetCard(BaseModel):
     """One ``GET /system/datasets`` card — a strategy author's data-dictionary row.
 
@@ -222,6 +241,28 @@ def bundle_quality(bundle_id: str, data_root: Path = Depends(get_data_root)) -> 
     if info is None:
         raise HTTPException(status_code=404, detail={"resource": "bundle", "id": bundle_id})
     return ok(BundleQuality(**asdict(info)), meta={"data_source": DataSource.PARQUET_SCAN, "ttl": 300})
+
+
+# ---- universes (sys_data) — named, selectable survivorship-clean pools ---
+@router.get("/universes", response_model=Envelope[list[UniverseRow]])
+def universes(data_root: Path = Depends(get_data_root)) -> Envelope:
+    """List named universes discovered from ``universe_manifest.json`` (ADR-007).
+
+    A thin projection over ``data.universe_registry.list_universes`` — the read model
+    the New Run form selects from (SPEC-01 Slice 2) and strategies reference (N:1).
+    Missing data root / corrupt manifests degrade to typed-empty (``data_source``
+    explains), never 500 — mirrors :func:`bundles`."""
+    from backtest_platform.data.universe_registry import list_universes
+
+    try:
+        refs = list_universes(data_root)
+    except Exception:  # never let a data-dir hiccup 500 the API
+        refs = []
+    rows = [UniverseRow(**asdict(r)) for r in refs]
+    return ok(
+        rows,
+        meta={"data_source": DataSource.PARQUET_SCAN, "total": len(rows), "ttl": 300},
+    )
 
 
 # ---- dataset catalog (sys_data) — authoring-first data dictionary --------
