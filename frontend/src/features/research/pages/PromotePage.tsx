@@ -6,11 +6,10 @@
  * （GET /research/strategies）的 validation_status（由各 run 的 gate_status 投影）。後端硬防線屬另一工作包。
  */
 import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { usePromoteAudit, usePromoteState, useAdvancePromote } from '../hooks/usePromote'
 import { useStrategies } from '../hooks/useStrategies'
-import { PageHeader } from '@/components/PageHeader'
 import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
 import { EnumBadge } from '@/components/EnumBadge'
@@ -51,30 +50,42 @@ export function PromotePage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('promote.title')}
-        route={`/deploy/promote/${sid}`}
-        subtitle={t('promote.subtitle')}
-        back={{ label: t('promote.back'), to: '/research/strategies' }}
-      />
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-start gap-3 border-b border-border px-3 py-3">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+              Promotion State Machine
+            </div>
+            <h1 className="mt-1 text-[18px] font-semibold text-text">{t('promote.title')}</h1>
+            <p className="mt-1 text-xs text-text-muted">{t('promote.subtitle')}</p>
+          </div>
+          <Link
+            to="/research/strategies"
+            className="ml-auto border border-border px-3 py-1.5 text-xs text-text-secondary hover:bg-input hover:text-text"
+          >
+            {t('promote.back')}
+          </Link>
+        </div>
+      </section>
 
       {/* stepper */}
-      <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <div className="mb-3 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">{sid || '—'}</h2>
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[13px] font-semibold text-text">{sid || '—'}</h2>
           <EnumBadge family="stage" value={stage} />
         </div>
-        {state.isLoading ? (
-          <SkeletonRows rows={3} cols={2} />
+        <div className="p-3">
+          {state.isLoading ? (
+            <SkeletonRows rows={3} cols={2} />
         ) : (
           <ol className="flex items-center gap-2">
             {gates.map((g, i) => (
               <li key={g.stage} className="flex items-center gap-2">
                 <span
                   className={
-                    'flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm ' +
+                    'flex items-center gap-2 border px-3 py-1.5 text-sm ' +
                     (g.reached
-                      ? 'border-border bg-surface-raised text-text'
+                      ? 'border-border-strong bg-input text-text'
                       : 'border-border/60 text-text-muted')
                   }
                 >
@@ -86,25 +97,31 @@ export function PromotePage() {
             ))}
           </ol>
         )}
+        </div>
       </section>
 
       {/* advance control */}
-      <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <h2 className="mb-2 text-[18px] font-semibold">{t('promote.advance.title')}</h2>
-        {nextStage ? (
-          <div className="flex flex-col gap-2 text-sm">
+      <section className="mb-3 border border-border bg-panel">
+        <div className="border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('promote.advance.title')}
+          </h2>
+        </div>
+        <div className="p-3">
+          {nextStage ? (
+            <div className="flex flex-col gap-2 text-sm">
             <div className="flex flex-wrap items-center gap-2">
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder={t('promote.advance.notePlaceholder')}
-                className="min-w-[240px] flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5"
+                className="min-w-[240px] flex-1 border border-border bg-input px-3 py-1.5"
               />
               <button
                 onClick={() => advance.mutate({ to_stage: nextStage, note }, { onSuccess: () => setNote('') })}
                 disabled={!canAdvance}
                 title={!gatePassed ? t('promote.advance.disabledHint') : undefined}
-                className="rounded-md border border-border px-3 py-1.5 hover:text-text disabled:opacity-50"
+                className="border border-border px-3 py-1.5 hover:bg-input hover:text-text disabled:opacity-50"
               >
                 {advance.isPending ? t('promote.advance.advancing') : t('promote.advance.button', { stage: nextStageLabel })}
               </button>
@@ -124,16 +141,20 @@ export function PromotePage() {
         ) : (
           <p className="text-sm text-text-muted">{t('promote.advance.finalStage')}</p>
         )}
+        </div>
       </section>
 
       {/* immutable audit */}
-      <section className="rounded-lg border border-border bg-surface p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">{t('promote.audit.title')}</h2>
-          <span className="text-xs text-text-muted">{t('promote.audit.source')}</span>
+      <section className="border border-border bg-panel">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('promote.audit.title')}
+          </h2>
+          <span className="ml-auto text-xs text-text-muted">{t('promote.audit.source')}</span>
         </div>
-        {audit.isLoading ? (
-          <SkeletonRows rows={2} cols={3} />
+        <div className="p-3">
+          {audit.isLoading ? (
+            <SkeletonRows rows={2} cols={3} />
         ) : (audit.data?.data ?? []).length === 0 ? (
           <p className="text-sm text-text-muted">{t('promote.audit.empty')}</p>
         ) : (
@@ -141,7 +162,7 @@ export function PromotePage() {
             {(audit.data?.data ?? []).map((ev, i) => (
               <li
                 key={i}
-                className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm"
+                className="flex items-center gap-3 border border-border/60 bg-surface px-3 py-1.5 text-sm"
               >
                 <EnumBadge family="stage" value={ev.stage} />
                 <span className="text-text-secondary">{ev.note || '—'}</span>
@@ -152,6 +173,7 @@ export function PromotePage() {
             ))}
           </ul>
         )}
+        </div>
       </section>
     </div>
   )

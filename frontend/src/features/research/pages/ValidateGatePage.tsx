@@ -11,7 +11,6 @@ import { useTranslation } from 'react-i18next'
 import { useGateSpec } from '../hooks/useGateSpec'
 import { useGateState } from '../hooks/useGateState'
 import { useValidateWfa } from '../hooks/useValidateWfa'
-import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
 import { EnumBadge } from '@/components/EnumBadge'
@@ -36,24 +35,33 @@ export function ValidateGatePage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('validate.title')}
-        route="/deploy/gate"
-        subtitle={t('validate.subtitle')}
-      />
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-start gap-3 border-b border-border px-3 py-3">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+              Release Gate Governance
+            </div>
+            <h1 className="mt-1 text-[18px] font-semibold text-text">{t('validate.title')}</h1>
+            <p className="mt-1 text-xs text-text-muted">{t('validate.subtitle')}</p>
+          </div>
+          <div className="ml-auto font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+            /deploy/gate
+          </div>
+        </div>
+      </section>
 
       {/* candidate run selector */}
-      <section className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-surface p-3 text-sm">
-        <label className="text-xs text-text-secondary">{t('validate.candidateLabel')}</label>
+      <section className="mb-3 flex flex-wrap items-center gap-2 border border-border bg-surface p-3 text-sm">
+        <label className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{t('validate.candidateLabel')}</label>
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={t('validate.candidatePlaceholder')}
-          className="min-w-[220px] flex-1 rounded-md border border-border bg-input px-3 py-1.5 font-mono text-xs"
+          className="min-w-[220px] flex-1 border border-border bg-input px-3 py-1.5 font-mono text-xs"
         />
         <button
           onClick={() => setSp(input.trim() ? { run_id: input.trim() } : {})}
-          className="rounded-md border border-border px-3 py-1.5 text-text-secondary hover:text-text"
+          className="border border-border px-3 py-1.5 text-text-secondary hover:bg-input hover:text-text"
         >
           {t('validate.load')}
         </button>
@@ -79,19 +87,22 @@ export function ValidateGatePage() {
       )}
 
       {/* is_gate_checklist — 真實 GET /gate/spec */}
-      <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-        <div className="mb-2 flex items-center gap-2">
-          <h2 className="text-[18px] font-semibold">{t('validate.gateChecklist.title')}</h2>
-          <span className="text-xs text-text-muted">{t('validate.gateChecklist.source')}</span>
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('validate.gateChecklist.title')}
+          </h2>
+          <span className="ml-auto text-xs text-text-muted">{t('validate.gateChecklist.source')}</span>
         </div>
-        {isLoading ? (
-          <SkeletonRows rows={5} cols={3} />
+        <div className="p-3">
+          {isLoading ? (
+            <SkeletonRows rows={5} cols={3} />
         ) : isError ? (
           <div className="text-sm">
             <p className="text-error">
               {t('errors:load.failed', { resource: t('validate.gateSpec.resource'), detail: errText(error) })}
             </p>
-            <button onClick={() => refetch()} className="mt-2 rounded-md border border-border px-3 py-1 hover:text-text">
+            <button onClick={() => refetch()} className="mt-2 border border-border px-3 py-1 hover:bg-input hover:text-text">
               {t('common:action.retry')}
             </button>
           </div>
@@ -100,7 +111,7 @@ export function ValidateGatePage() {
             {criteria.map((c) => (
               <li
                 key={c.key}
-                className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm"
+                className="flex items-center gap-3 border border-border/60 bg-surface px-3 py-1.5 text-sm"
               >
                 <EnumBadge family="criterion" value={c.kind} />
                 <span className="text-text">{c.label}</span>
@@ -111,23 +122,27 @@ export function ValidateGatePage() {
             ))}
           </ul>
         )}
+        </div>
       </section>
 
       {/* gate-state history — 真實 GET /research/validate/{id}/gate-state */}
       {runId && (
-        <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <h2 className="text-[18px] font-semibold">{t('validate.history.title')}</h2>
-            <span className="text-xs text-text-muted">{t('validate.history.source')}</span>
+        <section className="mb-3 border border-border bg-panel">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+            <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+              {t('validate.history.title')}
+            </h2>
+            <span className="ml-auto text-xs text-text-muted">{t('validate.history.source')}</span>
           </div>
-          {gateState.isLoading ? (
-            <SkeletonRows rows={2} cols={2} />
+          <div className="p-3">
+            {gateState.isLoading ? (
+              <SkeletonRows rows={2} cols={2} />
           ) : (gs?.history ?? []).length === 0 ? (
             <p className="text-sm text-text-muted">{t('validate.history.empty')}</p>
           ) : (
             <ul className="flex flex-col gap-1.5">
               {(gs?.history ?? []).map((ev, i) => (
-                <li key={i} className="flex items-center gap-3 rounded-md border border-border/60 px-3 py-1.5 text-sm">
+                <li key={i} className="flex items-center gap-3 border border-border/60 bg-surface px-3 py-1.5 text-sm">
                   <EnumBadge family="validation" value={ev.validation_status} />
                   <EnumBadge family="stage" value={ev.stage} />
                   <span className="ml-auto font-mono text-xs text-text-muted tabular">{ev.at}</span>
@@ -135,25 +150,29 @@ export function ValidateGatePage() {
               ))}
             </ul>
           )}
+          </div>
         </section>
       )}
 
       {/* WFA folds — 真實 GET /research/validate/{id}/wfa（folds data-free；scatter pending） */}
       {runId && (
-        <section className="mb-3 rounded-lg border border-border bg-surface p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <h2 className="text-[18px] font-semibold">{t('validate.wfa.title')}</h2>
-            <span className="text-xs text-text-muted">{t('validate.wfa.window')}</span>
+        <section className="mb-3 border border-border bg-panel">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+            <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+              {t('validate.wfa.title')}
+            </h2>
+            <span className="ml-auto text-xs text-text-muted">{t('validate.wfa.window')}</span>
           </div>
-          {wfa.isLoading ? (
-            <SkeletonRows rows={3} cols={4} />
+          <div className="p-3">
+            {wfa.isLoading ? (
+              <SkeletonRows rows={3} cols={4} />
           ) : folds.length === 0 ? (
             <p className="text-sm text-text-muted">{t('validate.wfa.empty')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[520px] text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-xs text-text-muted">
+                  <tr className="border-b border-border bg-base text-left font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
                     <th className="p-2 font-medium">#</th>
                     <th className="p-2 font-medium">IS</th>
                     <th className="p-2 font-medium">OOS</th>
@@ -161,7 +180,7 @@ export function ValidateGatePage() {
                 </thead>
                 <tbody>
                   {folds.map((f) => (
-                    <tr key={f.fold} className="border-b border-border/60">
+                    <tr key={f.fold} className="border-b border-border/60 bg-surface hover:bg-row">
                       <td className="p-2 font-mono tabular text-text-muted">{f.fold}</td>
                       <td className="p-2 font-mono text-xs tabular">{f.is_start} ~ {f.is_end}</td>
                       <td className="p-2 font-mono text-xs tabular">{f.oos_start} ~ {f.oos_end}</td>
@@ -178,6 +197,7 @@ export function ValidateGatePage() {
               ))}
             </ul>
           )}
+          </div>
         </section>
       )}
 

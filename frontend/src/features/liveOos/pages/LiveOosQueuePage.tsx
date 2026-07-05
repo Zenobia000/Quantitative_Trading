@@ -8,7 +8,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { PageHeader } from '@/components/PageHeader'
 import { SkeletonRows } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
 import { FirstRunEmptyState } from '@/components/FirstRunEmptyState'
@@ -49,15 +48,24 @@ export function LiveOosQueuePage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('queue.title')}
-        route="/live-oos/queue"
-        subtitle={t('queue.subtitle')}
-      />
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-start gap-3 border-b border-border px-3 py-3">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+              Governance Operations Queue
+            </div>
+            <h1 className="mt-1 text-[18px] font-semibold text-text">{t('queue.title')}</h1>
+            <p className="mt-1 text-xs text-text-muted">{t('queue.subtitle')}</p>
+          </div>
+          <div className="ml-auto font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+            /live-oos/queue
+          </div>
+        </div>
+      </section>
 
       {/* data source badge —— fixture 模式明示為契約範例示範 */}
       {source === 'fixture' ? (
-        <div className="mb-3 flex flex-col gap-1 rounded-lg border border-warning/40 bg-surface px-4 py-2.5">
+        <div className="mb-3 flex flex-col gap-1 border border-warning/40 bg-surface px-3 py-2">
           <div className="flex items-center gap-2">
             <StatusBadge tone="warning">{t('queue.dataSource.fixture')}</StatusBadge>
           </div>
@@ -70,17 +78,17 @@ export function LiveOosQueuePage() {
       ) : null}
 
       {query.isLoading ? (
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <div className="border border-border bg-surface p-4">
           <SkeletonRows rows={4} cols={4} />
         </div>
       ) : query.isError ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-sm">
+        <div className="border border-border bg-surface p-6 text-sm">
           <p className="text-error">
             {t('errors:load.failed', { resource: t('queue.resource'), detail: errText(query.error) })}
           </p>
           <button
             onClick={() => query.refetch()}
-            className="mt-3 rounded-md border border-border px-3 py-1.5 text-text-secondary hover:text-text"
+            className="mt-3 border border-border px-3 py-1.5 text-text-secondary hover:bg-input hover:text-text"
           >
             {t('common:action.retry')}
           </button>
@@ -96,11 +104,11 @@ export function LiveOosQueuePage() {
         <>
           <QueueFilters chips={chips} active={active} onSelect={setActive} />
           {visible.length === 0 ? (
-            <div className="rounded-lg border border-border bg-surface p-6 text-sm text-text-muted">
+            <div className="border border-border bg-surface p-6 text-sm text-text-muted">
               {t('queue.filter.noMatch')}
             </div>
           ) : (
-            <div className="grid gap-2 lg:grid-cols-2">
+            <div className="grid gap-2">
               {visible.map((item: LiveOosQueueItem) => (
                 <QueueCard key={item.queue_id} item={item} />
               ))}
@@ -123,16 +131,16 @@ function QueueFilters({
 }) {
   const { t } = useTranslation('liveOos')
   return (
-    <div className="mb-3 flex flex-wrap gap-1.5">
+    <div className="mb-3 flex flex-wrap border border-border bg-panel">
       {chips.map((c) => (
         <button
           key={c.key}
           onClick={() => onSelect(c.key)}
           aria-pressed={active === c.key}
-          className={`rounded-md border px-2.5 py-1 text-xs ${
+          className={`border-r border-border px-2.5 py-1.5 text-xs ${
             active === c.key
-              ? 'border-text text-text'
-              : 'border-border text-text-muted hover:text-text-secondary'
+              ? 'bg-input text-text'
+              : 'text-text-muted hover:bg-surface hover:text-text-secondary'
           }`}
         >
           {c.key === 'all' ? t('queue.filter.all') : t(`queue.state.${c.key}`, { defaultValue: c.key })}
