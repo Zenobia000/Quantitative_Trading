@@ -199,6 +199,22 @@ ignore_imports = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "Layer-2 (research/strategies/validation) must not import Layer-3 governance"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.research",
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "backtest_platform.governance",
+]
+# Direction is one-way: governance depends on research outputs, never the
+# reverse (ADR-R02). Currently green — governance holds only promotion_*; when
+# watch_registry/live_oos move here (W2.1b) the candidate_store->live_oos_queue
+# back-edge must first be inverted via a port (W1.3) to keep this contract green.
+
+[[tool.importlinter.contracts]]
 name = "Pure research-domain (strategies/validation) must not import web/DB/broker frameworks"
 type = "forbidden"
 source_modules = [

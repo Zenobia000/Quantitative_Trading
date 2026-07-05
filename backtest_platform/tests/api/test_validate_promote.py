@@ -6,7 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from backtest_platform.research import promotion_service, promotion_store, validation_store
+from backtest_platform.governance import promotion_service, promotion_store
+from backtest_platform.research import validation_store
 
 
 @pytest.fixture

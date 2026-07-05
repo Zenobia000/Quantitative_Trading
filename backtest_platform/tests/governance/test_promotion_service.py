@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from backtest_platform.research import (
+from backtest_platform.governance import (
     promotion_service,
     promotion_store,
-    validation_store,
 )
+from backtest_platform.research import validation_store
 
 _PASS = {"cagr": 0.25, "sharpe": 1.3, "slippage_sharpe": 1.1,
          "struct1_pct": 0.1, "churn_pct": 0.1, "avg_hold": 8.0}

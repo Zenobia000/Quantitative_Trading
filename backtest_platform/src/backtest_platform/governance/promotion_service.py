@@ -17,7 +17,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from backtest_platform.research import promotion_store, validation_store
+from backtest_platform.governance import promotion_store
+from backtest_platform.research import validation_store
 from backtest_platform.validation.gate_machine import IS_VERDICT_TO_STATUS
 from backtest_platform.validation.gate_state import GateStatus, evaluate_gate
 

@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from backtest_platform.api.envelope import Envelope, ok
 from backtest_platform.api.response_models import PromotionEvent, PromotionStateData
-from backtest_platform.research import promotion_service
+from backtest_platform.governance import promotion_service
 
 router = APIRouter(prefix="/research/promote", tags=["research"])
 
@@ -56,6 +56,6 @@ def promote_advance(strategy_id: str, req: PromoteRequest) -> Envelope:
 @router.get("/{strategy_id}/audit", response_model=Envelope[list[PromotionEvent]])
 def promote_audit(strategy_id: str) -> Envelope:
     """Immutable promotion audit trail for a strategy."""
-    from backtest_platform.research import promotion_store
+    from backtest_platform.governance import promotion_store
 
     return ok(promotion_store.audit(strategy_id))
