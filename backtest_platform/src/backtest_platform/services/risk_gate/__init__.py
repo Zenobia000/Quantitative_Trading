@@ -1,7 +1,4 @@
-"""Re-export shim (W5.1a) — moved to ``services.risk_gate``.
-
-Ex-ante gate (12 rules) + 3-level circuit breaker (spec 24).
-"""
+"""Risk gate service — Ex-ante gate (12 rules) + 3-level circuit breaker (spec 24)."""
 from backtest_platform.services.risk_gate.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,

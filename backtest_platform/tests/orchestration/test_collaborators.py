@@ -140,7 +140,7 @@ def test_side_vocab_covers_every_risk_gate_side() -> None:
     """The place-layer side map must cover every side the risk gate accepts, so an
     approved order can never fail to translate to a broker side (drift guard)."""
     from backtest_platform.orchestration.collaborators import _SIGNAL_SIDE_TO_BROKER
-    from backtest_platform.risk.risk_gate import _VALID_SIDES
+    from backtest_platform.services.risk_gate.risk_gate import _VALID_SIDES
 
     assert set(_VALID_SIDES) <= set(_SIGNAL_SIDE_TO_BROKER)
 
