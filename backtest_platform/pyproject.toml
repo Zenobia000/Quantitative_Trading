@@ -90,6 +90,9 @@ dev = [
     "pytest-asyncio>=0.24,<2",
     "ruff>=0.3",
     "mypy>=1.9",
+    # Architecture fitness functions — locks the golden layer-2 boundary
+    # (Research never imports broker/execution). See ADR-R03 + 18_refactor_wbs.
+    "import-linter>=2.0",
 ]
 # Convenience: install M2 Sprint 1 requirements
 sprint1 = [
@@ -163,3 +166,67 @@ ignore = ["E501"]  # handled by formatter
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
+
+# --- Architecture Fitness Functions (import-linter) -------------------------
+# Locks the golden layer-2 boundary: Research & Validation never imports the
+# execution/risk/ops layers, and pure research-domain code never imports web/DB/
+# broker frameworks. Run: `lint-imports`. See ADR-R03 + dev_docs/product_
+# repositioning/18_refactor_wbs.md. Contracts tighten as extraction waves land.
+[tool.importlinter]
+root_package = "backtest_platform"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layer-2 (research/strategies/validation) must not import execution/risk/ops layers"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.research",
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "backtest_platform.adapters.brokers",
+    "backtest_platform.risk",
+    "backtest_platform.orchestration",
+    "backtest_platform.runtime",
+    "backtest_platform.monitoring",
+]
+# (W2.1b landed: watch_registry moved to governance/, so the former
+# research.watch_registry -> runtime.trading_calendar exception is gone and this
+# contract is now unconditionally green — research ⊄ runtime holds.)
+
+[[tool.importlinter.contracts]]
+name = "Layer-2 (research/strategies/validation) must not import Layer-3 governance"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.research",
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "backtest_platform.governance",
+]
+ignore_imports = [
+    # research.cli is the composition root for the `candidates` CLI group: the one
+    # place that wires the concrete governance live-OOS queue into candidate_store's
+    # injected enqueue port (W1.3). Composition roots are exempt from the layer rule
+    # by design — the domain/application (candidate_store) stays governance-free.
+    "backtest_platform.research.cli -> backtest_platform.governance.live_oos_queue",
+]
+# Direction is one-way: governance depends on research outputs, never the reverse
+# (ADR-R02). candidate_store's live-OOS enqueue is inverted via an injected port
+# (W1.3) so only the CLI composition root touches governance.
+
+[[tool.importlinter.contracts]]
+name = "Pure research-domain (strategies/validation) must not import web/DB/broker frameworks"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "sqlalchemy",
+    "fastapi",
+    "shioaji",
+    "requests",
+]

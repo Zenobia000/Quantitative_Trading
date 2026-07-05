@@ -67,7 +67,7 @@ def test_after_close_success_exit_zero(monkeypatch):
     monkeypatch.setattr(cli_mod, "safe_discord_notify", lambda *_a, **_k: None)
     with CliRunner().isolated_filesystem():
         # A real after-close run now requires an active觀察艙 berth (ADR-033).
-        from backtest_platform.research.watch_registry import enroll
+        from backtest_platform.governance.watch_registry import enroll
         enroll("inst_flow", 0.908, date(2026, 7, 2))
         res = CliRunner().invoke(
             cli,
@@ -89,7 +89,7 @@ def test_after_close_fresh_flag_is_forwarded(monkeypatch):
     monkeypatch.setattr(cli_mod, "build_session_runner", _fake_builder)
     monkeypatch.setattr(cli_mod, "safe_discord_notify", lambda *_a, **_k: None)
     with CliRunner().isolated_filesystem():
-        from backtest_platform.research.watch_registry import enroll
+        from backtest_platform.governance.watch_registry import enroll
         enroll("inst_flow", 0.908, date(2026, 7, 2))
         res = CliRunner().invoke(
             cli,
@@ -129,7 +129,7 @@ def test_after_close_failed_session_exit_nonzero(monkeypatch):
     monkeypatch.setattr(cli_mod, "build_session_runner", _fake_builder)
     monkeypatch.setattr(cli_mod, "safe_discord_notify", lambda *_a, **_k: None)
     with CliRunner().isolated_filesystem():
-        from backtest_platform.research.watch_registry import enroll
+        from backtest_platform.governance.watch_registry import enroll
         enroll("inst_flow", 0.908, date(2026, 7, 2))  # admit so we test FAILED, not NOT_ENROLLED
         res = CliRunner().invoke(
             cli,

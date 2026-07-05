@@ -140,7 +140,7 @@ def watch_enroll_cmd(
     a refused enrollment exits non-zero with the reason. This is the machine gate
     that decides *which* strategy may run paper — the after-close scheduler refuses
     any strategy without an active berth."""
-    from backtest_platform.research.watch_registry import WatchRegistryError, enroll
+    from backtest_platform.governance.watch_registry import WatchRegistryError, enroll
 
     on = date.fromisoformat(enrolled_on) if enrolled_on else _today_taipei()
     try:
@@ -157,7 +157,7 @@ def watch_enroll_cmd(
 @click.option("--strategy", default=None, help="one strategy; omit for all berths")
 def watch_status_cmd(strategy: str | None) -> None:
     """Show觀察艙 berths: 進艙日 / 已觀察交易日 / 到期日 / 剩餘天數 / 狀態."""
-    from backtest_platform.research.watch_registry import (
+    from backtest_platform.governance.watch_registry import (
         NOMINAL_TRADING_DAYS,
         active_watches,
         status,
@@ -189,7 +189,7 @@ def watch_pause_cmd(strategy: str) -> None:
     """App-level pause: after-close skips this berth (benign, no Discord) while it
     keeps its enrollment / expiry clock. Idempotent; only an active berth may pause.
     Mirrors the GUI ``POST /monitor/watch/{strategy}/pause``."""
-    from backtest_platform.research.watch_registry import WatchRegistryError, pause
+    from backtest_platform.governance.watch_registry import WatchRegistryError, pause
 
     try:
         st = pause(strategy)
@@ -203,7 +203,7 @@ def watch_pause_cmd(strategy: str) -> None:
 def watch_resume_cmd(strategy: str) -> None:
     """Resume a paused berth back to active (after-close resumes collecting OOS).
     Idempotent; only a paused berth may resume. Mirrors ``POST .../{strategy}/resume``."""
-    from backtest_platform.research.watch_registry import WatchRegistryError, resume
+    from backtest_platform.governance.watch_registry import WatchRegistryError, resume
 
     try:
         st = resume(strategy)
@@ -232,7 +232,7 @@ def live_oos_consume_cmd(date_str: str | None) -> None:
     fire on the same after-close tick, *before* the per-strategy session — see
     ``deploy/after-close.service`` (``ExecStartPre``) and ``deploy/README``. Always exits
     0 on a normal tick (an empty queue is a clean no-op)."""
-    from backtest_platform.research.live_oos_consumer import consume_queue
+    from backtest_platform.governance.live_oos_consumer import consume_queue
 
     as_of = date.fromisoformat(date_str) if date_str else _today_taipei()
     report = consume_queue(as_of)
@@ -248,7 +248,7 @@ def live_oos_consume_cmd(date_str: str | None) -> None:
               help="filter by queue state (queued/running/paused/completed/expired/cancelled)")
 def live_oos_list_cmd(state: str | None) -> None:
     """List the live-OOS queue: latest folded state, kind and selection audit per item."""
-    from backtest_platform.research.live_oos_queue import list_queue
+    from backtest_platform.governance.live_oos_queue import list_queue
 
     items = list_queue(state=state)
     if not items:

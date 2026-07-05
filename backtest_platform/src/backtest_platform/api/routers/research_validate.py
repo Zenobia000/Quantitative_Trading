@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends
 
 from backtest_platform.api.deps import get_runs_path
 from backtest_platform.api.envelope import DataSource, Envelope, ok, pending
-from backtest_platform.research import promotion_service
+from backtest_platform.governance import promotion_service
 from backtest_platform.research.runs_store import read_runs
 from backtest_platform.validation.health_indicators import health_check
 from backtest_platform.validation.wfa import walk_forward_splits

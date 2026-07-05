@@ -11,11 +11,11 @@ from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
 
+from backtest_platform.governance.watch_registry import OBSERVATION_DAYS, WatchStatus
 from backtest_platform.orchestration.after_close import (
     AfterCloseStatus,
     run_after_close,
 )
-from backtest_platform.research.watch_registry import OBSERVATION_DAYS, WatchStatus
 
 _TWT = timezone(timedelta(hours=8))
 _STRATEGY = "inst_flow"
@@ -199,7 +199,7 @@ def test_success_digest_carries_observation_day_line(tmp_path):
 # end-to-end — the real registry ↔ scheduler wiring (no watch_status stub)      #
 # --------------------------------------------------------------------------- #
 def test_enroll_then_after_close_admits_via_real_registry(tmp_path):
-    from backtest_platform.research.watch_registry import enroll, status
+    from backtest_platform.governance.watch_registry import enroll, status
 
     reg = tmp_path / "watch.jsonl"
     on = date(2026, 7, 2)

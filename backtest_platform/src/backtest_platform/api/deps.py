@@ -102,7 +102,7 @@ def get_telemetry_reader() -> Any:
 # --------------------------------------------------------------------------- #
 def get_watch_registry_path() -> Path:
     """Resolve the觀察艙 event-log path (``$WATCH_REGISTRY_PATH`` or the default)."""
-    from backtest_platform.research.watch_registry import DEFAULT_WATCH_PATH
+    from backtest_platform.governance.watch_registry import DEFAULT_WATCH_PATH
 
     raw = os.environ.get(WATCH_REGISTRY_PATH_ENV)
     return Path(raw) if raw else DEFAULT_WATCH_PATH
@@ -154,7 +154,7 @@ def get_candidate_decisions_path() -> Path:
 
 def get_live_oos_queue_path() -> Path:
     """Resolve the live-OOS queue path (``$LIVE_OOS_QUEUE_PATH`` or the default)."""
-    from backtest_platform.research.live_oos_queue import DEFAULT_QUEUE_PATH
+    from backtest_platform.governance.live_oos_queue import DEFAULT_QUEUE_PATH
 
     raw = os.environ.get(LIVE_OOS_QUEUE_PATH_ENV)
     return Path(raw) if raw else DEFAULT_QUEUE_PATH

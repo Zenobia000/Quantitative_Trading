@@ -14,16 +14,14 @@ import pytest
 
 from backtest_platform.orchestration.after_close import (
     AfterCloseStatus,
+    _build_broker,
+    _resolve_equity,
+    _resolve_universe,
     already_done,
     build_session_runner,
     record_done,
     run_after_close,
     safe_discord_notify,
-)
-from backtest_platform.orchestration.after_close import (
-    _build_broker,
-    _resolve_equity,
-    _resolve_universe,
 )
 
 _TWT = timezone(timedelta(hours=8))
@@ -39,7 +37,7 @@ def _active_watch(_strategy: str, _as_of: date):
     separately in ``test_after_close_watch.py``."""
     from datetime import date as _d
 
-    from backtest_platform.research.watch_registry import OBSERVATION_DAYS, WatchStatus
+    from backtest_platform.governance.watch_registry import OBSERVATION_DAYS, WatchStatus
 
     on = _d(2026, 6, 1)
     return WatchStatus(

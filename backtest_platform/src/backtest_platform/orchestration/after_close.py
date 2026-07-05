@@ -109,14 +109,14 @@ def default_watch_status(strategy: str, as_of: date) -> Any:
 
     Lazily imported so the scheduler core stays free of pandas / the gate band
     constants at import; returns a ``WatchStatus`` or None (never enrolled)."""
-    from backtest_platform.research.watch_registry import status
+    from backtest_platform.governance.watch_registry import status
 
     return status(strategy, as_of=as_of)
 
 
 def default_expire_watches(as_of: date) -> list[str]:
     """Production expiry sweep — mark due berths expired, return newly expired ones."""
-    from backtest_platform.research.watch_registry import expire_due
+    from backtest_platform.governance.watch_registry import expire_due
 
     return expire_due(as_of)
 
@@ -125,7 +125,7 @@ def _watch_line(watch: Any) -> str:
     """One-line observation digest for the Discord success message (empty if no berth)."""
     if watch is None:
         return ""
-    from backtest_platform.research.watch_registry import NOMINAL_TRADING_DAYS
+    from backtest_platform.governance.watch_registry import NOMINAL_TRADING_DAYS
 
     return (
         f"[paper-watch] 觀察日 {watch.observed_trading_days}/~{NOMINAL_TRADING_DAYS}"
@@ -147,7 +147,7 @@ def safe_discord_notify(message: str, ok: bool) -> None:
             notify_info(message)
         else:
             notify_error("after-close", message)
-    except Exception as exc:  # noqa: BLE001 — missing token / network → log & continue
+    except Exception as exc:
         logger.warning("Discord after-close alert skipped (ok={ok}): {e}", ok=ok, e=exc)
 
 
@@ -224,7 +224,7 @@ def _notify(notifier: Callable[[str, bool], None], message: str, *, ok: bool) ->
     """Call the notifier, guarding against a raising notifier (defense in depth)."""
     try:
         notifier(message, ok)
-    except Exception as exc:  # noqa: BLE001 — side channel: log, never crash the run
+    except Exception as exc:
         logger.warning("after-close notification failed (continuing): {e}", e=exc)
 
 
@@ -345,7 +345,7 @@ def _execute(
         return _result(AfterCloseStatus.NO_DATA, strategy, as_of,
                        f"after-close {label} skipped: no market data ({detail}) — "
                        "approximate-calendar false positive / TWSE halt, not a failure.")
-    except Exception as exc:  # noqa: BLE001 — surface loudly (alert + exit 1), never silent
+    except Exception as exc:
         detail = f"raised {type(exc).__name__}: {exc}"
         _notify(notifier, f"[after-close] {label} FAILED — {detail}", ok=False)
         return _result(AfterCloseStatus.FAILED, strategy, as_of, f"after-close {label} FAILED: {detail}")
