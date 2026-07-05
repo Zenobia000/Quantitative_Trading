@@ -7,7 +7,6 @@
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PageHeader } from '@/components/PageHeader'
 import { EnumBadge } from '@/components/EnumBadge'
 import { useErrorText } from '@/i18n/useErrorText'
 import { QueryState, SimpleTable } from '@/features/monitor/components'
@@ -21,9 +20,9 @@ import {
 } from '../hooks/useSystem'
 import type { BundleRow } from '../hooks/useSystem'
 
-const inputCls = 'rounded-md border border-border bg-base px-2 py-1 font-mono text-sm text-text'
+const inputCls = 'border border-border bg-base px-2 py-1 font-mono text-sm text-text'
 const btnCls =
-  'rounded-pill bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-50'
+  'border border-text/40 bg-text px-4 py-1.5 text-sm font-medium text-base hover:opacity-90 disabled:opacity-50'
 
 function IngestCard() {
   const { t } = useTranslation('system')
@@ -44,9 +43,13 @@ function IngestCard() {
   const job = status.data?.data
 
   return (
-    <section className="mb-4 rounded-lg border border-border bg-surface p-4">
-      <div className="mb-2 text-sm font-medium">{t('data.ingest.heading')}</div>
-      <div className="flex flex-wrap items-end gap-2">
+    <section className="mb-3 border border-border bg-panel">
+      <div className="border-b border-border px-3 py-2">
+        <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+          {t('data.ingest.heading')}
+        </h3>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 bg-surface p-3">
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           {t('data.ingest.symbols')}
           <input className={`${inputCls} w-48`} value={symbols} onChange={(e) => setSymbols(e.target.value)} />
@@ -74,7 +77,7 @@ function IngestCard() {
         <div className="mt-2 text-sm text-error">{t('data.action.submitFailed', { detail: errText(trigger.error) })}</div>
       )}
       {jobId && (
-        <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
+        <div className="border-t border-border bg-base px-3 py-2 font-mono text-xs text-text-secondary">
           {status.isError ? (
             // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」（契約側語意，i18n 本地化）。
             <span className="text-error">{t('data.job.error', { jobId, detail: errText(status.error) })}</span>
@@ -123,9 +126,13 @@ function UniverseBuildCard() {
   const job = status.data?.data
 
   return (
-    <section className="mb-4 rounded-lg border border-border bg-surface p-4">
-      <div className="mb-2 text-sm font-medium">{t('data.universe.heading')}</div>
-      <div className="flex flex-wrap items-end gap-2">
+    <section className="mb-3 border border-border bg-panel">
+      <div className="border-b border-border px-3 py-2">
+        <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+          {t('data.universe.heading')}
+        </h3>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 bg-surface p-3">
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           {t('data.field.strategy')}
           <input className={`${inputCls} w-36`} value={strategy} onChange={(e) => setStrategy(e.target.value)} />
@@ -157,7 +164,7 @@ function UniverseBuildCard() {
         <div className="mt-2 text-sm text-error">{t('data.action.submitFailed', { detail: errText(trigger.error) })}</div>
       )}
       {jobId && (
-        <div className="mt-3 rounded-md border border-border bg-base p-2 font-mono text-xs text-text-secondary">
+        <div className="border-t border-border bg-base px-3 py-2 font-mono text-xs text-text-secondary">
           {status.isError ? (
             // A4：未知/過期 job → 404，顯示錯誤而非無盡「…」（契約側語意，i18n 本地化）。
             <span className="text-error">{t('data.job.error', { jobId, detail: errText(status.error) })}</span>
@@ -189,45 +196,68 @@ export function DataPage() {
 
   return (
     <div>
-      <PageHeader title={t('data.title')} route="/system/data" subtitle={t('data.subtitle')} />
-
-      {/* 上半部（頁面主體）：資料字典卡片牆 —— 策略作者搜 key→複製→寫策略 */}
-      <section className="mb-8">
-        <div className="mb-3">
-          <h2 className="text-base font-semibold">{t('data.catalog.heading')}</h2>
-          <p className="text-sm text-text-secondary">{t('data.catalog.subheading')}</p>
+      <section className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-start gap-3 border-b border-border px-3 py-3">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">
+              Data Platform Ledger
+            </div>
+            <h1 className="mt-1 text-[18px] font-semibold text-text">{t('data.title')}</h1>
+            <p className="mt-1 text-xs text-text-muted">{t('data.subtitle')}</p>
+          </div>
+          <div className="ml-auto font-mono text-[11px] uppercase tracking-[0.08em] text-text-muted">
+            /system/data
+          </div>
         </div>
-        <DatasetCatalog />
+      </section>
+
+      {/* 上半部（頁面主體）：資料字典 blotter —— 策略作者搜 key→複製→寫策略 */}
+      <section className="mb-3 border border-border bg-panel">
+        <div className="border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('data.catalog.heading')}
+          </h2>
+          <p className="mt-1 text-xs text-text-muted">{t('data.catalog.subheading')}</p>
+        </div>
+        <div className="p-3">
+          <DatasetCatalog />
+        </div>
       </section>
 
       {/* 下半部（進階）：資料運維 —— 匯入 / 股票池建置 / bundle 清單 */}
-      <section className="border-t border-border pt-6">
-        <div className="mb-4">
-          <h2 className="text-base font-semibold">{t('data.ops.heading')}</h2>
-          <p className="text-sm text-text-secondary">{t('data.ops.subheading')}</p>
+      <section className="border border-border bg-panel">
+        <div className="border-b border-border px-3 py-2">
+          <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+            {t('data.ops.heading')}
+          </h2>
+          <p className="mt-1 text-xs text-text-muted">{t('data.ops.subheading')}</p>
         </div>
 
-        <IngestCard />
-        <UniverseBuildCard />
+        <div className="p-3">
+          <IngestCard />
+          <UniverseBuildCard />
 
-        {/* bundle manifest — 真實掃描 data/parquet* 的 manifest（無資料 → typed-empty） */}
-        <div className="mb-3">
-          <div className="mb-1 text-xs text-text-muted">{t('data.bundles.heading')}</div>
-          <QueryState q={bundles} pendingLabel={t('data.bundles.pending')} emptyLabel={t('data.bundles.empty')}>
-            {(rows: BundleRow[]) => (
-              <SimpleTable
-                rows={rows}
-                cols={[
-                  { key: 'id', label: t('data.bundles.col.id') },
-                  { key: 'kind', label: t('data.bundles.col.kind') },
-                  { key: 'stock_count', label: t('data.bundles.col.stockCount') },
-                  { key: 'coverage_start', label: t('data.field.start') },
-                  { key: 'coverage_end', label: t('data.field.end') },
-                  { key: 'strategy', label: t('data.field.strategy') },
-                ]}
-              />
-            )}
-          </QueryState>
+          {/* bundle manifest — 真實掃描 data/parquet* 的 manifest（無資料 → typed-empty） */}
+          <div>
+            <div className="mb-1 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+              {t('data.bundles.heading')}
+            </div>
+            <QueryState q={bundles} pendingLabel={t('data.bundles.pending')} emptyLabel={t('data.bundles.empty')}>
+              {(rows: BundleRow[]) => (
+                <SimpleTable
+                  rows={rows}
+                  cols={[
+                    { key: 'id', label: t('data.bundles.col.id') },
+                    { key: 'kind', label: t('data.bundles.col.kind') },
+                    { key: 'stock_count', label: t('data.bundles.col.stockCount') },
+                    { key: 'coverage_start', label: t('data.field.start') },
+                    { key: 'coverage_end', label: t('data.field.end') },
+                    { key: 'strategy', label: t('data.field.strategy') },
+                  ]}
+                />
+              )}
+            </QueryState>
+          </div>
         </div>
       </section>
     </div>

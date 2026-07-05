@@ -32,7 +32,7 @@ export function QueryState<T>({
   if (q.isLoading) return <Skeleton className="h-24 w-full" />
   if (q.isError)
     return (
-      <div className="rounded-lg border border-border bg-surface p-4 text-sm">
+      <div className="border border-border bg-surface p-4 text-sm">
         <span className="text-error">
           {t('errors:load.failed', {
             resource: resource ?? t('monitor:queryState.resource'),
@@ -41,7 +41,7 @@ export function QueryState<T>({
         </span>
         <button
           onClick={() => q.refetch()}
-          className="ml-3 rounded-md border border-border px-3 py-1 text-text-secondary hover:text-text"
+          className="ml-3 border border-border px-3 py-1 text-text-secondary hover:bg-input hover:text-text"
         >
           {t('common:action.retry')}
         </button>
@@ -51,7 +51,7 @@ export function QueryState<T>({
   const data = q.data?.data as T
   const empty = Array.isArray(data) ? data.length === 0 : data == null
   if (empty)
-    return <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">{emptyLabel}</div>
+    return <div className="border border-border bg-surface p-4 text-sm text-text-muted">{emptyLabel}</div>
   return <>{children(data)}</>
 }
 
@@ -71,13 +71,13 @@ export function SimpleTable<T>({
   const cell = (row: T, key: string): unknown => (row as Record<string, unknown>)[key]
   const alignCls = (a?: 'left' | 'right') => (a === 'right' ? 'text-right' : 'text-left')
   return (
-    <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+    <div className="overflow-x-auto border border-border bg-surface">
       <table className="w-full text-sm">
         {/* sticky 表頭：長表捲動時錨定欄名（scan aid） */}
         <thead>
-          <tr className="border-b border-border text-xs uppercase tracking-wide text-text-muted">
+          <tr className="border-b border-border bg-base font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
             {cols.map((c) => (
-              <th key={c.key} className={`sticky top-0 z-10 bg-surface px-3 py-2 font-medium ${alignCls(c.align)}`}>
+              <th key={c.key} className={`sticky top-0 z-10 bg-base px-3 py-2 font-medium ${alignCls(c.align)}`}>
                 {c.label}
               </th>
             ))}
@@ -85,7 +85,7 @@ export function SimpleTable<T>({
         </thead>
         <tbody>
           {rows.map((row, i) => (
-            <tr key={i} className="border-b border-border/50 last:border-0 hover:bg-input">
+            <tr key={i} className="border-b border-border/50 bg-surface last:border-0 hover:bg-row">
               {cols.map((c) => (
                 <td key={c.key} className={`px-3 py-1.5 font-mono tabular text-text-secondary ${alignCls(c.align)}`}>
                   {c.fmt ? c.fmt(cell(row, c.key), row) : String(cell(row, c.key) ?? '—')}

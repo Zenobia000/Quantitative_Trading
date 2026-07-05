@@ -1,5 +1,5 @@
 /*
- * DatasetCatalog — 資料字典卡片牆（authoring-first）。
+ * DatasetCatalog — 資料字典 blotter（authoring-first）。
  *
  * 定位：這是「策略作者的資料字典」——
  * 搜有什麼資料可以寫策略、複製 key、看本地有無 + 我的策略庫誰在用。**不是**快取運維
@@ -29,7 +29,7 @@ const CATEGORY_ORDER = [
 const FREQ_KEY: Record<string, string> = { '日': 'daily', '月': 'monthly', '季': 'quarterly' }
 
 const inputCls =
-  'w-full rounded-md border border-border bg-base px-3 py-1.5 text-sm text-text placeholder:text-text-muted'
+  'w-full border border-border bg-base px-3 py-1.5 text-sm text-text placeholder:text-text-muted'
 
 /** 前端過濾：分類精確、搜尋在 key + name_zh + description 上做不分大小寫子字串。 */
 function filterCards(cards: DatasetCard[], category: string | null, search: string): DatasetCard[] {
@@ -61,8 +61,8 @@ function CategoryChips({
         type="button"
         onClick={() => onChange(value)}
         aria-pressed={on}
-        className={`rounded-pill border px-3 py-1 text-xs transition-colors ${
-          on ? 'border-text bg-text text-base' : 'border-border text-text-secondary hover:text-text'
+        className={`border-r border-border px-3 py-1.5 text-xs transition-colors ${
+          on ? 'bg-input text-text' : 'text-text-secondary hover:bg-surface hover:text-text'
         }`}
       >
         {label}
@@ -70,7 +70,7 @@ function CategoryChips({
     )
   }
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap border border-border bg-panel">
       {chip(null, t('data.catalog.category.all'))}
       {CATEGORY_ORDER.map((c) => chip(c, t(`data.catalog.category.${c}`)))}
     </div>
@@ -82,45 +82,45 @@ function DatasetCardTile({ card }: { card: DatasetCard }) {
   const cached = card.local === 'cached'
   const freqLabel = FREQ_KEY[card.freq] ? t(`data.catalog.freq.${FREQ_KEY[card.freq]}`) : card.freq
   return (
-    <div
-      className={`flex flex-col gap-2 rounded-lg border border-border bg-surface p-4 ${
+    <section
+      className={`grid gap-2 border border-border bg-surface p-3 lg:grid-cols-[minmax(220px,0.9fr)_minmax(280px,1.2fr)_minmax(260px,1fr)] lg:items-start ${
         cached ? '' : 'opacity-60'
       }`}
     >
-      <h3 className="text-sm font-semibold text-text">{card.name_zh}</h3>
+      <div>
+        <h3 className="text-sm font-semibold text-text">{card.name_zh}</h3>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
+          <StatusBadge tone="muted">{t(`data.catalog.category.${card.category}`)}</StatusBadge>
+          <span className="tabular">
+            {freqLabel} · {t('data.catalog.since', { year: card.history_start })}
+          </span>
+        </div>
+      </div>
 
       {/* key + 一鍵複製（authoring 的主要動作：複製到策略碼裡） */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <code className="flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs text-text-secondary">
           {card.key}
         </code>
         <CopyButton value={card.key} label={t('data.catalog.copyKey')} />
       </div>
 
-      {/* 分類 · 頻率 · 歷史起點 */}
-      <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
-        <StatusBadge tone="muted">{t(`data.catalog.category.${card.category}`)}</StatusBadge>
-        <span className="tabular">
-          {freqLabel} · {t('data.catalog.since', { year: card.history_start })}
-        </span>
-      </div>
-
-      <p className="text-xs text-text-secondary">「{card.description}」</p>
-
-      {/* 狀態一：本地有無（二元；未下載不提供假下載按鈕——多數 key 尚無 ingest 管線，誠實呈現） */}
-      <div className="text-xs">
-        {cached ? (
-          <span className="inline-flex items-center gap-1 text-gain">
-            <span aria-hidden>●</span> {t('data.catalog.local.cached')}
-          </span>
-        ) : (
-          <StatusBadge tone="muted">{t('data.catalog.local.notCached')}</StatusBadge>
-        )}
+      <div className="text-xs text-text-secondary">
+        <p>「{card.description}」</p>
+        <div className="mt-2">
+          {cached ? (
+            <span className="inline-flex items-center gap-1 text-gain">
+              <span aria-hidden>●</span> {t('data.catalog.local.cached')}
+            </span>
+          ) : (
+            <StatusBadge tone="muted">{t('data.catalog.local.notCached')}</StatusBadge>
+          )}
+        </div>
       </div>
 
       {/* 狀態二：策略庫反向索引（XQ 沒有的差異化）；used_by 空則整列不顯示 */}
       {card.used_by.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2">
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2 lg:col-span-3">
           <span aria-hidden className="text-warning">
             ⚡
           </span>
@@ -128,14 +128,14 @@ function DatasetCardTile({ card }: { card: DatasetCard }) {
           {card.used_by.map((s) => (
             <span
               key={s}
-              className="rounded-pill border border-border bg-input px-2 py-0.5 font-mono text-[11px] text-text-secondary"
+              className="border border-border bg-input px-2 py-0.5 font-mono text-[11px] text-text-secondary"
             >
               {s}
             </span>
           ))}
         </div>
       )}
-    </div>
+    </section>
   )
 }
 
@@ -169,13 +169,13 @@ export function DatasetCatalog() {
           const filtered = filterCards(cards, category, search)
           if (filtered.length === 0)
             return (
-              <div className="rounded-lg border border-border bg-surface p-6 text-sm">
+              <div className="border border-border bg-surface p-6 text-sm">
                 <p className="text-text-secondary">{t('data.catalog.noMatch', { q: search })}</p>
                 <p className="mt-1 text-xs text-text-muted">{t('data.catalog.noMatchHint')}</p>
               </div>
             )
           return (
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-2">
               {filtered.map((c) => (
                 <DatasetCardTile key={c.key} card={c} />
               ))}
