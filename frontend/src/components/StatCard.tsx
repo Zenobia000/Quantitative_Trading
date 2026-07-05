@@ -1,8 +1,8 @@
 /*
- * StatCard — 單一 KPI / 大數字卡（合併原本散落三處的 Kpi/KpiCard：
+ * StatCard — 單一 KPI / evidence cell（合併原本散落三處的 Kpi/KpiCard：
  * home/HomePage、research/RunReportPage、monitor/components）。
- * FinLab「big-number」層級：數字放大、label 弱化；可選 hint 供「以佐證取信」的出處說明
- * （coverage / reproduce），而非炫耀式行銷。仍遵 Grok 單色 flat：1px border、無陰影、tabular-nums。
+ * 數字清楚、label 弱化；可選 hint 供「以佐證取信」的出處說明
+ * （coverage / reproduce），而非炫耀式行銷。遵 ops console：1px border、無陰影、tabular-nums。
  *
  * value 可為數字（配 pct/signed 自動格式化 + 漲跌雙編碼 ↑↓）或任意 ReactNode（如 StatusBadge）。
  */

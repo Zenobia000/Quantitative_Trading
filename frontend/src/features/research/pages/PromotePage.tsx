@@ -1,5 +1,5 @@
 /*
- * Promote（UI route /deploy/promote/:strategyId，rebuild IA §1.3 移入 Deployment zone）— 不可逆晉升狀態機（後端 8.H.7 / S3）。
+ * Capital promotion（UI route /deploy/promote/:strategyId）— Governance 子流程中的不可逆晉升狀態機。
  * 接真實 GET /research/promote/{id}（current stage + gates）、POST（前進一階，draft→paper→live）、
  * GET /audit（immutable trail）。stepper 顯示已達階段，advance 鈕觸發 mutation。
  * 前端防線（此工作包）：無 gate PASS 證據時 disable advance —— gate 證據取自 strategy roster

@@ -43,10 +43,10 @@
 | W6.1 | 6-api | 拆 api monolith：system.py→三 service router；抽 router 內 domain 邏輯進 application service；apps/api 變薄 composition root | W5.1 | worktree | XL | ✗ |
 | W7.1 | 7-monorepo | 建 `quant_platform/{apps,packages,services}`；frontend→apps/web_console；deploy/ 與 research-note md 進 docs/ | W6.1 | worktree | XL | ✗ |
 | W8.1 | 8-docs | 同步 dev_docs 08/09、撰 repositioning ADR、維護本 WBS 狀態欄 | W2.1 | direct-commit | M | ✅ |
-| FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Wall Street operations console，以 golden 七層為 IA | — | feature-branch | S | ⏳ 本波 |
-| FE-R1 | frontend-reset | 重寫全局 tokens、AppShell、nav、首頁 Command Center；建立交易/風控/營運密集系統視覺基線 | FE-R0 | feature-branch | M | ⏳ 本波 |
-| FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | 下一波 |
-| FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | 下一波 |
+| FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Wall Street operations console，以 golden 七層為 IA | — | feature-branch | S | ✅ done |
+| FE-R1 | frontend-reset | 重寫全局 tokens、AppShell、nav、首頁 Command Center；建立交易/風控/營運密集系統視覺基線 | FE-R0 | feature-branch | M | ✅ done |
+| FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | ⏳ 本波 |
+| FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | ⏳ 本波 |
 | FE-R4 | frontend-reset | 重做 Governance/Risk/Trading：release gate、paper、target portfolio、order intent、risk decision、fill/reconciliation | FE-R2 | feature-branch | XL | 下一波 |
 | FE-R5 | frontend-reset | 重做 Operations：PnL、positions、alerts、incidents、jobs、audit，補 Playwright screenshot audit | FE-R3/4 | feature-branch | L | 下一波 |
 
@@ -105,6 +105,8 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - `nav.ts` 仍以 Research / Live OOS / Deployment / Monitor / System 分區，沒有把 Data / Governance / Strategy/Portfolio / Risk / Execution / Operations 作為產品內一等區域。
 - 多數頁面像舊研究後台，而不是交易/風控/營運操作台。
 
+上述前三項已於 FE-R0/FE-R1 修正；目前剩餘風險集中在頁面層仍有舊卡片牆、舊註解與舊分區語義。
+
 ### 7.2 新方向
 
 前端重設計為 **Wall Street operations console**：
@@ -131,8 +133,17 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 
 ### 7.4 驗收
 
-- [ ] `frontend/GOAL.md` 不再引用舊 `dev_docs/web_design`。
-- [ ] `NAV` zone 改為七層操作台 IA。
-- [ ] `AppShell` 有 top market/risk status bar、七層 rail、workspace header。
-- [ ] 首頁改為 Command Center，優先呈現 readiness、risk、data、research、operations。
-- [ ] `npm run typecheck` 通過。
+- [x] `frontend/GOAL.md` 不再依賴舊 `dev_docs/web_design` 作為真相源。
+- [x] `NAV` zone 改為七層操作台 IA。
+- [x] `AppShell` 有 top market/risk status bar、七層 rail、workspace header。
+- [x] 首頁改為 Command Center，優先呈現 readiness、risk、data、research、operations。
+- [x] `npm run typecheck` 通過。
+
+### 7.5 FE-R2/FE-R3 進度
+
+- [x] `frontend/src/router.tsx` 註解與 fallback route title 改為七層語義；舊 Live OOS / Deployment / Monitor 只作相容 URL 或子流程。
+- [x] `frontend/src/features/research/pages/CandidatePoolPage.tsx` 由卡片牆改為 Research evidence blotter。
+- [x] `frontend/src/features/research/components/candidates/CandidateCard.tsx` 由候選卡改為單列決策單元，保持 strategy / scorecard / return-risk / governance / action 同列掃描。
+- [ ] Strategy Hub / Runs / Report / Compare / Sweep 仍需套用同一 terminal + ledger 模式。
+- [ ] Live OOS Queue / Release Gate 仍需改為 Governance operations queue。
+- [ ] Data / Risk / Trading / Operations 頁面仍需去卡片化並加強 source/as-of/trace。

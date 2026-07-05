@@ -1,7 +1,7 @@
 /*
  * DatasetCatalog — 資料字典卡片牆（authoring-first）。
  *
- * 定位（使用者拍板 / dev_docs/web_design/04 §2）：這是「策略作者的資料字典」——
+ * 定位：這是「策略作者的資料字典」——
  * 搜有什麼資料可以寫策略、複製 key、看本地有無 + 我的策略庫誰在用。**不是**快取運維
  * 儀表板，故不呈現 staleness / coverage / manifest。
  *

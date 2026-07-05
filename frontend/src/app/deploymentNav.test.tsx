@@ -9,7 +9,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { NAV } from '@/app/nav'
 import { GateRedirect, PromoteRedirect } from '@/app/redirects'
 
-describe('nav — Deployment zone migration', () => {
+describe('nav — Governance release migration', () => {
   const zones = Object.fromEntries(NAV.map((z) => [z.zone, z]))
 
   it('moves strict gate under governance', () => {

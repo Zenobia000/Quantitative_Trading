@@ -1,6 +1,7 @@
 /*
- * 路由表。Phase 0 全部指向 Placeholder；Phase 2 逐頁替換為實頁。
- * 路徑對齊各 page 規格的 route_path（dev_docs/web_design/pages/）。
+ * Route table for the Wall Street operations console.
+ * Golden IA is seven-layer: Data / Research / Governance / Trading / Risk / Operations / System.
+ * Some URLs stay legacy-compatible, but comments and navigation semantics follow the new product layers.
  */
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
@@ -44,19 +45,17 @@ const REAL: Record<string, ReactElement> = {
   'research/runs/:id/trades': <TradeReviewPage />,
   'research/compare': <ComparePage />,
   'research/sweep': <SweepPage />,
-  // validate/promote migrated to Deployment zone → keep old paths as client redirects (rebuild IA §5.6)
+  // Governance: old research validate/promote URLs remain client redirects.
   'research/validate': <GateRedirect />,
   'research/promote/:strategyId': <PromoteRedirect />,
-  // Live OOS zone — human-selected expensive OOS journey (rebuild IA §1.2)
+  // Governance: human-selected OOS queue + Paper-Watch observation.
   'live-oos/queue': <LiveOosQueuePage />,
-  'live-oos/watch': <WatchPage />, // Paper-Watch 觀察艙 migrated from monitor (元件搬 route 不搬檔)
-  // Deployment zone — strict gate + capital promotion, journey 3 (rebuild IA §1.3)
-  'deploy/gate': <ValidateGatePage />, // 承接 validate；元件搬 route 不搬檔
+  'live-oos/watch': <WatchPage />,
+  'deploy/gate': <ValidateGatePage />,
   'deploy/promote/:strategyId': <PromotePage />,
-  // Monitor zone — real feature pages (telemetry-backed; light up as the daemon feeds data)
+  // Operations / Trading / Risk pages backed by monitor endpoints.
   monitor: <FleetPage />,
   'monitor/board': <BoardPage />,
-  // watch migrated to Live OOS zone → keep the old path as a client redirect (rebuild IA §5.6)
   'monitor/watch': <Navigate to="/live-oos/watch" replace />,
   'monitor/performance': <PerformancePage />,
   'monitor/positions': <PositionsPage />,
@@ -89,23 +88,21 @@ const ROUTES: RouteDef[] = [
   { path: 'research/runs/:id/trades', title: '逐筆覆盤', spec: 'research_trade_review' },
   { path: 'research/compare', title: 'Compare', spec: 'research_05_compare' },
   { path: 'research/sweep', title: 'Sweep', spec: 'research_06_sweep' },
-  // validate/promote 已移 Deployment zone；舊 path 保留為 client 重導（→ /deploy/*）
-  { path: 'research/validate', title: 'Validate gate（→ Deployment）', spec: 'research_07_validate_gate' },
-  { path: 'research/promote/:strategyId', title: 'Promote（→ Deployment）', spec: 'research_08_promote' },
-  // Live OOS
-  { path: 'live-oos/queue', title: 'OOS 佇列', spec: 'live_oos_queue' },
-  { path: 'live-oos/watch', title: 'Paper-Watch 觀察艙', spec: 'monitor_watch' },
-  // Deployment
-  { path: 'deploy/gate', title: '部署嚴格閘', spec: 'research_07_validate_gate' },
-  { path: 'deploy/promote/:strategyId', title: '晉升', spec: 'research_08_promote' },
-  // Monitor
-  { path: 'monitor', title: '策略艦隊總控', spec: 'monitor_fleet' },
-  { path: 'monitor/board', title: '運行看板', spec: 'monitor_board' },
-  { path: 'monitor/watch', title: 'Paper-Watch 觀察艙（→ Live OOS）', spec: 'monitor_watch' },
-  { path: 'monitor/performance', title: '績效總覽', spec: 'monitor_a_performance' },
-  { path: 'monitor/positions', title: '部位狀態', spec: 'monitor_b_positions' },
-  { path: 'monitor/signals', title: '訊號日誌', spec: 'monitor_c_signals' },
-  { path: 'monitor/risk', title: '風控指標', spec: 'monitor_d_risk' },
+  // Governance
+  { path: 'research/validate', title: 'Validate gate（→ Governance）', spec: 'research_07_validate_gate' },
+  { path: 'research/promote/:strategyId', title: 'Promote（→ Governance）', spec: 'research_08_promote' },
+  { path: 'live-oos/queue', title: 'OOS Governance Queue', spec: 'live_oos_queue' },
+  { path: 'live-oos/watch', title: 'Paper-Watch Observation', spec: 'monitor_watch' },
+  { path: 'deploy/gate', title: 'Release Gate', spec: 'research_07_validate_gate' },
+  { path: 'deploy/promote/:strategyId', title: 'Capital Promotion', spec: 'research_08_promote' },
+  // Operations / Trading / Risk
+  { path: 'monitor', title: 'Operations Fleet', spec: 'monitor_fleet' },
+  { path: 'monitor/board', title: 'Operations Board', spec: 'monitor_board' },
+  { path: 'monitor/watch', title: 'Paper-Watch Observation（→ Governance）', spec: 'monitor_watch' },
+  { path: 'monitor/performance', title: 'PnL / Performance', spec: 'monitor_a_performance' },
+  { path: 'monitor/positions', title: 'Target / Position Blotter', spec: 'monitor_b_positions' },
+  { path: 'monitor/signals', title: 'Signal Ledger', spec: 'monitor_c_signals' },
+  { path: 'monitor/risk', title: 'Risk Blotter', spec: 'monitor_d_risk' },
   // System
   { path: 'system/data', title: '資料管理', spec: 'system_data' },
   { path: 'system/alerts', title: '告警設定', spec: 'system_alerts' },

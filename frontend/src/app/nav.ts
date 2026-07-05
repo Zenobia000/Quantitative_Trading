@@ -8,7 +8,7 @@ export interface NavItem {
   /** i18n key，對應 nav namespace（如 'item.strategies' 或 HOME 的 'home'） */
   key: string
   to: string
-  /** 對應 page 規格檔（dev_docs/web_design/pages/）供建頁參照 */
+  /** 對應 product_repositioning frontend IA spec 的頁面代號。 */
   spec: string
 }
 export interface NavZone {

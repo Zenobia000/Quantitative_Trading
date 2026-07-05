@@ -76,7 +76,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]" role="dialog" aria-label={t('common:cmdk.dialog')}>
       <div className="absolute inset-0 bg-scrim" onClick={onClose} />
-      {/* flat：1px border 分層取代陰影（無 shadow-xl，遵 Grok 單色 flat 規則） */}
+      {/* flat：1px border 分層取代陰影，符合 ops console 視覺基線。 */}
       <div className="relative w-full max-w-lg rounded-lg border border-border bg-surface" onKeyDown={onKeyDown}>
         <input
           ref={inputRef}

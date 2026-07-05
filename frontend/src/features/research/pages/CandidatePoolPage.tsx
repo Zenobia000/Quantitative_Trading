@@ -1,8 +1,8 @@
 /*
- * Candidate Pool（/research/candidates）—— 半自動決策主戰場（rebuild Goal 6）。
- * 每個評測結果（含壞 / 負向 / 資料問題）都留存為候選；人在此 Keep / Archive / Rerun / Select Live OOS。
+ * Candidate Pool（/research/candidates）—— Research evidence blotter。
+ * 每個評測結果（含壞 / 負向 / 資料問題）都留存為候選；人在此決定 Keep / Archive / Rerun / Select Live OOS。
  * fixture-first：先打 GET /research/candidates，失敗 fallback 打包契約範例並明示資料來源。
- * Deployment/promote 非主要動作（不放 promote 鈕）；部署判決僅以資訊態呈現。
+ * Governance/release 非主要動作（不放 promote 鈕）；只輸出觀察或發布候選，不跨界下單。
  */
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -180,7 +180,7 @@ export function CandidatePoolPage() {
 
       {/* data source badge —— fixture 模式明示尚未接後端 */}
       {source === 'fixture' ? (
-        <div className="mb-3 flex flex-col gap-1 rounded-lg border border-warning/40 bg-surface px-4 py-2.5">
+        <div className="mb-3 flex flex-col gap-1 border border-warning/40 bg-panel px-3 py-2">
           <div className="flex items-center gap-2">
             <StatusBadge tone="warning">{t('candidates.dataSource.fixture')}</StatusBadge>
           </div>
@@ -196,7 +196,7 @@ export function CandidatePoolPage() {
       {pageError && (
         <div
           role="alert"
-          className="mb-3 rounded-lg border border-error/50 bg-surface px-4 py-2.5 text-sm text-error"
+          className="mb-3 border border-error/50 bg-panel px-3 py-2 text-sm text-error"
         >
           {t('candidates.error.actionFailed', {
             strategy: pageError.strategy,
@@ -206,11 +206,11 @@ export function CandidatePoolPage() {
       )}
 
       {query.isLoading ? (
-        <div className="rounded-lg border border-border bg-surface p-4">
+        <div className="border border-border bg-panel p-4">
           <SkeletonRows rows={4} cols={4} />
         </div>
       ) : query.isError ? (
-        <div className="rounded-lg border border-border bg-surface p-6 text-sm">
+        <div className="border border-border bg-panel p-6 text-sm">
           <p className="text-error">
             {t('errors:load.failed', { resource: t('candidates.resource'), detail: errText(query.error) })}
           </p>
@@ -242,19 +242,28 @@ export function CandidatePoolPage() {
           />
 
           {visible.length === 0 ? (
-            <div className="rounded-lg border border-border bg-surface p-6 text-sm text-text-muted">
+            <div className="border border-border bg-panel p-6 text-sm text-text-muted">
               {t('candidates.filter.noMatch')}
             </div>
           ) : (
-            <div className="grid gap-2 lg:grid-cols-2">
-              {visible.map((c) => (
-                <CandidateCard
-                  key={c.candidate_id}
-                  candidate={c}
-                  locallyModified={c.candidate_id in overrides}
-                  onAction={(action) => onAction(c, action)}
-                />
-              ))}
+            <div className="overflow-x-auto border border-border bg-panel">
+              <div className="min-w-[1040px] border-b border-border bg-base px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted lg:grid lg:grid-cols-[minmax(230px,1.25fr)_180px_190px_190px_minmax(250px,1fr)] lg:gap-3">
+                <span>Strategy / Hypothesis</span>
+                <span>Scorecard</span>
+                <span>Return / Risk</span>
+                <span>Governance</span>
+                <span>Next Action / Controls</span>
+              </div>
+              <div>
+                {visible.map((c) => (
+                  <CandidateCard
+                    key={c.candidate_id}
+                    candidate={c}
+                    locallyModified={c.candidate_id in overrides}
+                    onAction={(action) => onAction(c, action)}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </>

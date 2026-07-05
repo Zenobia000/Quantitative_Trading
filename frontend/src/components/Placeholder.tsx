@@ -1,6 +1,6 @@
 /*
- * Phase 0 佔位頁：證明路由/殼/token 可跑。Phase 2 會依
- * dev_docs/web_design/assembly/<spec>_integrated.md + pages/<spec>.md + design.pen 逐頁替換。
+ * Placeholder：證明路由/殼/token 可跑。後續依
+ * dev_docs/product_repositioning/17_frontend_information_architecture.md 逐頁替換。
  */
 import { useTranslation } from 'react-i18next'
 import { StatusBadge } from './StatusBadge'
@@ -15,8 +15,8 @@ export function Placeholder({ title, route, spec }: { title: string; route: stri
       </div>
       <p className="font-mono text-sm text-text-secondary tabular">{route}</p>
       <p className="mt-4 text-sm text-text-muted">
-        {t('placeholder.ref')}：<span className="font-mono">pages/{spec}.md</span> ·{' '}
-        <span className="font-mono">assembly/{spec}_integrated.md</span> · design.pen
+        {t('placeholder.ref')}：<span className="font-mono">{spec}</span> ·{' '}
+        <span className="font-mono">product_repositioning/17_frontend_information_architecture.md</span>
       </p>
     </div>
   )
