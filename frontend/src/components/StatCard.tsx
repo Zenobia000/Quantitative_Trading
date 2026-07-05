@@ -36,9 +36,9 @@ export function StatCard({
     : value
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <div className="text-xs text-text-muted">{label}</div>
-      <div className={`mt-1.5 font-mono text-2xl tabular tracking-tight ${tone}`}>{shown}</div>
+    <div className="border border-border bg-surface p-3">
+      <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">{label}</div>
+      <div className={`mt-1.5 font-mono text-[20px] tabular ${tone}`}>{shown}</div>
       {hint != null && <div className="mt-1 text-[11px] text-text-muted">{hint}</div>}
     </div>
   )

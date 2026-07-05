@@ -154,4 +154,5 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - [x] `frontend/src/features/research/components/reportviewer/{SimulationPanel,DecisionActionBar}` 改為 Codex-style evidence ledger / sticky command strip。
 - [x] Live OOS Queue / Release Gate / Promote 改為 Governance operations queue / gate ledger / promotion state-machine ledger。
 - [x] Data Platform 入口改為 Codex-style data ledger；dataset catalog 由卡片牆改為資料字典 blotter，bundle manifest 沿用 ledger table。
-- [ ] Risk / Trading / Operations 頁面仍需去卡片化並加強 source/as-of/trace。
+- [x] Risk / Trading / Operations 外觀基線去卡片化：shared KPI/pending/table、Watch rows、Alerts channel 均改為 Codex-style ledger cells。
+- [ ] Risk / Trading / Operations 仍需補齊 source/as-of/trace 欄位與 screenshot audit。

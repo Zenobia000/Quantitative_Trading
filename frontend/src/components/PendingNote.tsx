@@ -10,7 +10,7 @@ export function PendingNote({ label }: { label: string }) {
   // 虛線 + 退到 bg-base：視覺上讀作「未接線的鷹架」而非「壞掉的成品卡」，
   // 讓已完成的區塊不因並排的 pending 而看起來未完工（VH-06 / ONB-03）。
   return (
-    <div className="flex items-center gap-2 rounded-md border border-dashed border-border/70 bg-base px-3 py-2 text-sm text-text-muted">
+    <div className="flex items-center gap-2 border border-dashed border-border/70 bg-base px-3 py-2 text-sm text-text-muted">
       <StatusBadge tone="muted">{t('state.awaitingBackend')}</StatusBadge>
       <span>
         {label}
