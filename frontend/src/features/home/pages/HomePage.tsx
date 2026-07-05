@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
-import { useRecent, useResearchStatus } from '../hooks/useHome'
+import { useHomeFleet, useRecent, useResearchStatus, useSystemHealth } from '../hooks/useHome'
 import { PendingNote } from '@/components/PendingNote'
+import { isPending } from '@/types/domain'
 import { Skeleton } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
 import { EnumBadge } from '@/components/EnumBadge'
@@ -66,9 +67,15 @@ export function HomePage() {
   const errText = useErrorText()
   const rs = useResearchStatus()
   const rec = useRecent()
+  const sh = useSystemHealth()
+  const fleet = useHomeFleet()
   const status = rs.data?.data
   const recent = rec.data?.data ?? []
+  const health = sh.data?.data
   const isNewPlatform = status?.total_runs === 0 && !rs.isLoading
+  // system-health producer 未落地（M4）→ 狀態帶顯示誠實空態，不假造 CLEAR/PAPER/OFFLINE。
+  const awaiting = t('common:state.awaitingBackend')
+  const hv = (v?: string) => v ?? '—'
 
   return (
     <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
@@ -104,10 +111,22 @@ export function HomePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-px bg-border">
-            <OpsCell label="Risk lock" value="CLEAR" tone="gain" />
-            <OpsCell label="Mode" value="PAPER" tone="info" />
-            <OpsCell label="Data bundle" value="PENDING" tone="warning" />
-            <OpsCell label="Broker" value="OFFLINE" tone="muted" />
+            <OpsCell
+              label="Risk lock"
+              value={hv(health?.risk_lock)}
+              tone={health?.risk_lock === 'CLEAR' ? 'gain' : health?.risk_lock ? 'halt' : 'muted'}
+            />
+            <OpsCell label="Mode" value={hv(health?.mode)} tone={health?.mode ? 'info' : 'muted'} />
+            <OpsCell
+              label="Data bundle"
+              value={hv(health?.data_bundle)}
+              tone={health?.data_bundle === 'READY' ? 'gain' : health?.data_bundle ? 'warning' : 'muted'}
+            />
+            <OpsCell
+              label="Broker"
+              value={hv(health?.broker)}
+              tone={health?.broker === 'ONLINE' ? 'gain' : 'muted'}
+            />
           </div>
         </div>
       </section>
@@ -148,13 +167,15 @@ export function HomePage() {
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
                 {(
                   [
-                  ['Data', 'Bundle/DQ pending', 'warning'],
+                  // Data/Research/Governance/Risk/Trading/Execution 由真實 ledger + system-health
+                  // 驅動；欄位未落地（M4）顯示誠實 awaiting，不假造 ready/offline 等狀態。
+                  ['Data', health?.data_bundle ?? awaiting, health?.data_bundle === 'READY' ? 'gain' : health?.data_bundle ? 'warning' : 'muted'],
                   ['Research', `${status?.total_runs ?? '—'} runs`, 'info'],
                   ['Governance', status?.latest_gate_status ?? 'awaiting gate', 'muted'],
-                  ['Risk', 'fail-closed ready', 'gain'],
-                  ['Trading', 'paper mode only', 'info'],
-                  ['Execution', 'broker offline', 'muted'],
-                  ['Monitoring', 'daily report pending', 'warning'],
+                  ['Risk', health?.risk_lock ?? awaiting, health?.risk_lock === 'CLEAR' ? 'gain' : health?.risk_lock ? 'warning' : 'muted'],
+                  ['Trading', health?.mode ?? awaiting, health?.mode ? 'info' : 'muted'],
+                  ['Execution', health?.broker ?? awaiting, health?.broker === 'ONLINE' ? 'gain' : 'muted'],
+                  ['Monitoring', awaiting, 'muted'],
                   ['Foundation', 'local runtime', 'muted'],
                 ] as Array<[string, string, 'gain' | 'warning' | 'info' | 'muted']>
                 ).map(([label, value, tone]) => (
@@ -204,11 +225,37 @@ export function HomePage() {
               )}
             </Panel>
 
-            <Panel title="Deferred Producers" eyebrow="Visible gaps, no fabricated values">
-              <div className="flex flex-col gap-2">
+            <Panel title="Strategy Fleet" eyebrow="Paper/live health · today's performance">
+              {fleet.isLoading ? (
+                <Skeleton className="h-16 w-full" />
+              ) : isPending(fleet.data?.meta) || (fleet.data?.data ?? []).length === 0 ? (
                 <PendingNote label={t('pending.fleet')} />
-                <PendingNote label={t('pending.systemHealth')} />
-              </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] border-collapse text-left text-xs">
+                    <thead className="text-[10px] uppercase tracking-[0.14em] text-text-muted">
+                      <tr className="border-b border-border">
+                        <th className="px-2 py-2 font-medium">Strategy</th>
+                        <th className="px-2 py-2 font-medium">Equity</th>
+                        <th className="px-2 py-2 font-medium">Open</th>
+                        <th className="px-2 py-2 font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(fleet.data?.data ?? []).map((f) => (
+                        <tr key={f.strategy_id} className="border-b border-border/70 bg-row">
+                          <td className="px-2 py-2 font-mono tabular text-text">{f.strategy_id}</td>
+                          <td className="px-2 py-2 font-mono tabular text-text-secondary">{f.equity ?? '—'}</td>
+                          <td className="px-2 py-2 font-mono tabular text-text-secondary">{f.open_positions ?? '—'}</td>
+                          <td className="px-2 py-2">
+                            <StatusBadge tone="muted">{f.status ?? '—'}</StatusBadge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </Panel>
           </div>
         </div>

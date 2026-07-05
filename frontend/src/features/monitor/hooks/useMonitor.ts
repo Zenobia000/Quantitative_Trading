@@ -2,7 +2,7 @@
  * Monitor-zone server-state hooks — thin typed wrappers over useEndpoint.
  * Each hits a real /monitor/* endpoint; pages render four states (loading/error/
  * pending/data). Endpoints that the paper daemon feeds (equity/positions/signals/
- * fills/kpi) return real telemetry; aggregate ones (fleet/strategies/risk) are
+ * fills/kpi) return real telemetry; aggregate ones (fleet/risk) are
  * typed-empty `pending` until their producers land — pages light up automatically.
  */
 import { useQuery } from '@tanstack/react-query'
@@ -71,7 +71,6 @@ export interface PortfolioSummary {
 
 export const useFleet = () => useEndpoint<FleetRow[]>('/monitor/fleet', 60)
 export const usePortfolioSummary = () => useEndpoint<PortfolioSummary>('/monitor/portfolio-summary', 60)
-export const useStrategies = () => useEndpoint<{ strategy_id: string }[]>('/monitor/strategies', 300)
 export const useRiskMetrics = () => useEndpoint<Record<string, unknown>>('/monitor/risk/metrics', 30)
 
 // ---- run board (A2) -------------------------------------------------------
@@ -97,3 +96,74 @@ export const useRunsBoard = () =>
     staleTime: (q) => ttlToMs(q.state.data?.meta?.ttl, 5),
     refetchInterval: 10_000,
   })
+
+// ---- deferred display endpoints now wired --------------------------------
+// 這些端點已註冊但回 typed-empty PENDING（meta.data_source==='pending'）；用 QueryState
+// 走四態，producer 上線即自動點亮（M4）。view-model 依端點語意取最小合理欄位（openapi
+// 為泛型 Envelope，data 無型別）。
+
+// Perf A —— 基準對比曲線 / 月報酬
+export interface BenchmarkPoint {
+  t: string
+  strategy: number
+  benchmark: number
+}
+export interface MonthlyReturn {
+  month: string
+  return_pct: number
+}
+export const usePerfBenchmark = () => useEndpoint<BenchmarkPoint[]>('/monitor/performance/benchmark', 300)
+export const usePerfMonthly = () => useEndpoint<MonthlyReturn[]>('/monitor/performance/monthly', 300)
+
+// Positions B —— 產業配置 / 集中度 / 即時報價
+export interface IndustryAllocation {
+  industry: string
+  weight: number
+}
+export interface Concentration {
+  hhi?: number
+  top5_weight?: number
+  n_holdings?: number
+}
+export interface PriceQuote {
+  stock_id: string
+  price: number
+  as_of?: string
+}
+export const usePosIndustry = () => useEndpoint<IndustryAllocation[]>('/monitor/positions/industry-allocation', 300)
+export const usePosConcentration = () => useEndpoint<Concentration>('/monitor/positions/concentration', 300)
+export const usePosPrices = () => useEndpoint<PriceQuote[]>('/monitor/positions/prices', 60)
+
+// Signals C —— 訊號漏斗 / 時間軸
+export interface FunnelStage {
+  stage: string
+  count: number
+}
+export interface TimelinePoint {
+  t: string
+  signals: number
+  submitted: number
+}
+export const useSignalsFunnel = () => useEndpoint<FunnelStage[]>('/monitor/signals/funnel', 30)
+export const useSignalsTimeline = () => useEndpoint<TimelinePoint[]>('/monitor/signals/timeline', 300)
+
+// Risk D —— MaxDD 趨勢 / 熔斷事件
+export interface MddPoint {
+  t: string
+  drawdown: number
+}
+export interface RiskEvent {
+  event_time: string
+  kind: string
+  severity: string
+  detail: string
+}
+export const useRiskMddTrend = () => useEndpoint<MddPoint[]>('/monitor/risk/mdd-trend', 60)
+export const useRiskEvents = () => useEndpoint<RiskEvent[]>('/monitor/risk/events', 30)
+
+// Fleet —— 相關性矩陣
+export interface Correlation {
+  axes: string[]
+  z: number[][]
+}
+export const useCorrelation = () => useEndpoint<Correlation>('/monitor/correlation', 300)

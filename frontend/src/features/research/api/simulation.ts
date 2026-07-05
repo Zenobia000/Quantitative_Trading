@@ -39,7 +39,7 @@ export interface PerParam {
   reason?: string
 }
 
-/** 建議分支（config delta 描述；actionable=false → fork 按鈕 disabled，待 Goal 9）。 */
+/** 建議分支（config delta 描述；actionable=false → 此建議無可套用的 delta，不可 fork）。 */
 export interface BranchSuggestion {
   label: string
   description: string

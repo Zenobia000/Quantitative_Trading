@@ -4,7 +4,8 @@
  * slider（成本乘數 / 滑價 bps / capacity）+ 選填數字（停損 / 停利 %）→ 按「執行模擬」才打
  * POST /research/simulate（不 keystroke 打 API、結果不進 react-query 快取——本地 state 即算即棄）。
  * 呈現 before/after 指標對照（Δ 有色、方向依指標好壞含義）+ affected trades 數 + 顯眼
- * 「研究沙盤——不影響正式判決」標示 + branch suggestion 卡（fork 按鈕 disabled，待 Goal 9）。
+ * 「研究沙盤——不影響正式判決」標示 + branch suggestion 卡（fork 已接 POST /research/branches；
+ * 僅 fixture 模式 / 缺 parent evaluation_id 時停用）。
  *
  * 誠實降級：panel 策略無 per-trade pnl → 停損/停利 not_available（trade_metrics.available=false
  * + per_param reason），面板照實顯示原因，不留無說明佔位（契約 §13.2 / rule #6）。

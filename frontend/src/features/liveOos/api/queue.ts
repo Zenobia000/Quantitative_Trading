@@ -1,5 +1,5 @@
 /*
- * Governance OOS queue（fixture-first）。
+ * Governance OOS queue（API-first + fixture 離線韌性）。
  * 先打 `GET /research/live-oos/queue`（envelope client，#188 已上線真後端）；
  * 任何 ApiError（404 / NETWORK / 後端錯誤）fallback 到打包契約範例 `../fixtures/live_oos_queue.json`，
  * 並回傳 source 供 UI 明示資料來源（fixture 模式 banner）。

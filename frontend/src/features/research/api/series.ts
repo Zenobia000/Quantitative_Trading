@@ -1,7 +1,8 @@
 /*
  * Research zone — run computed series（後端 8.H.3 / S4）。
- * GET /runs/{id}/equity · /runs/{id}/trades，讀 per-run sidecar；未持久化則 meta.data_source=pending。
- * data 形狀暫以 view-model 承載（待後端 response_model 後改 api.gen）。
+ * GET /runs/{id}/equity · /runs/{id}/trades（端點已上線），讀 per-run sidecar；未持久化則
+ * meta.data_source=pending（誠實空態，非後端缺件）。後端回泛型 Envelope 無 response_model，
+ * 故 data 形狀以手寫 view-model 承載（型別技術債；後端補 response_model 後可改 api.gen）。
  */
 import { http } from '@/services/http'
 import type { ApiResult } from '@/types/domain'

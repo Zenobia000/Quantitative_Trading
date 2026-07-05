@@ -27,7 +27,13 @@
         "updated": "Updated"
       }
     },
-    "deferred": "Correlation matrix / fleet actions (correlation endpoint pending producer; actions require live control)"
+    "correlation": {
+      "heading": "Correlation Matrix",
+      "resource": "Correlation matrix",
+      "pending": "Correlation matrix (awaiting producer)",
+      "empty": "No correlation data yet",
+      "summary": "{{n}} × {{n}} correlation matrix"
+    }
   },
   "board": {
     "title": "Operations Board",
@@ -103,7 +109,23 @@
       "equity": "Equity",
       "drawdown": "DD"
     },
-    "deferred": "Benchmark comparison / monthly-return heatmap (benchmark · monthly endpoints pending producer)"
+    "benchmarkHeading": "Benchmark",
+    "benchmarkResource": "Benchmark comparison",
+    "benchmarkPending": "Benchmark comparison (awaiting paper telemetry)",
+    "benchmarkEmpty": "No benchmark data yet",
+    "benchmarkCol": {
+      "time": "Time",
+      "strategy": "Strategy",
+      "benchmark": "Benchmark"
+    },
+    "monthlyHeading": "Monthly Returns",
+    "monthlyResource": "Monthly returns",
+    "monthlyPending": "Monthly returns (awaiting paper telemetry)",
+    "monthlyEmpty": "No monthly-return data yet",
+    "monthlyCol": {
+      "month": "Month",
+      "return": "Return"
+    }
   },
   "positions": {
     "title": "Positions",
@@ -119,7 +141,32 @@
       "openedAt": "Opened At",
       "strategy": "Strategy"
     },
-    "deferred": "Sector allocation / concentration / live quotes (industry-allocation · concentration · prices endpoints pending producer)"
+    "industryHeading": "Sector Allocation",
+    "industryResource": "Sector allocation",
+    "industryPending": "Sector allocation (awaiting paper telemetry)",
+    "industryEmpty": "No sector-allocation data yet",
+    "industryCol": {
+      "industry": "Sector",
+      "weight": "Weight"
+    },
+    "concentrationHeading": "Concentration",
+    "concentrationResource": "Concentration",
+    "concentrationPending": "Concentration (awaiting paper telemetry)",
+    "concentrationEmpty": "No concentration data yet",
+    "concentration": {
+      "hhi": "HHI",
+      "top5": "Top-5 Weight",
+      "holdings": "Holdings"
+    },
+    "pricesHeading": "Live Quotes",
+    "pricesResource": "Live quotes",
+    "pricesPending": "Live quotes (awaiting paper telemetry)",
+    "pricesEmpty": "No quote data yet",
+    "priceCol": {
+      "stock": "Symbol",
+      "price": "Price",
+      "asOf": "As Of"
+    }
   },
   "signals": {
     "title": "Signal Log",
@@ -148,7 +195,23 @@
       "price": "Price",
       "status": "Status"
     },
-    "deferred": "Signal funnel / timeline (signals/funnel · signals/timeline endpoints pending producer)"
+    "funnelHeading": "Signal Funnel",
+    "funnelResource": "Signal funnel",
+    "funnelPending": "Signal funnel (awaiting paper telemetry)",
+    "funnelEmpty": "No funnel data yet",
+    "funnelCol": {
+      "stage": "Stage",
+      "count": "Count"
+    },
+    "timelineHeading": "Signal Timeline",
+    "timelineResource": "Signal timeline",
+    "timelinePending": "Signal timeline (awaiting paper telemetry)",
+    "timelineEmpty": "No timeline data yet",
+    "timelineCol": {
+      "time": "Time",
+      "signals": "Signals",
+      "submitted": "Submitted"
+    }
   },
   "risk": {
     "title": "Risk Metrics",
@@ -160,6 +223,23 @@
     "maxDrawdown": "MaxDD",
     "grossExposure": "Gross Exposure",
     "openPositions": "Open Positions",
-    "deferred": "MaxDD trend / circuit-breaker events (risk/mdd-trend · risk/events endpoints pending producer)"
+    "mddHeading": "MaxDD Trend",
+    "mddResource": "MaxDD trend",
+    "mddPending": "MaxDD trend (awaiting risk telemetry)",
+    "mddEmpty": "No MaxDD-trend data yet",
+    "mddCol": {
+      "time": "Time",
+      "drawdown": "Drawdown"
+    },
+    "eventsHeading": "Circuit-Breaker Events",
+    "eventsResource": "Circuit-breaker events",
+    "eventsPending": "Circuit-breaker events (awaiting risk telemetry)",
+    "eventsEmpty": "No circuit-breaker events yet",
+    "eventCol": {
+      "time": "Time",
+      "kind": "Kind",
+      "severity": "Severity",
+      "detail": "Detail"
+    }
   }
 }

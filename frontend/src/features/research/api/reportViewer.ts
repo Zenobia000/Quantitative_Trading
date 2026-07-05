@@ -1,8 +1,8 @@
 /*
- * Report-Viewer 資料源（fixture-first，可無縫切換）。
- * 先試 GET /research/evaluations/{id}（envelope http client）；後端 Goal 3/4 尚未落地時
- * （404 / 網路失敗 / 非 envelope 回應）fallback 到 bundled fixture（從 dev_docs/contracts 複製到
- * ../fixtures，不 import repo 根外路徑）。UI 依 `source` 明示 data source（真 API vs fixture）。
+ * Report-Viewer 資料源（真 API 優先，可無縫切換）。
+ * 先試 GET /research/evaluations/{id}（envelope http client，端點已上線）；失敗時
+ * （404 / 網路失敗 / 非 envelope 回應）fallback 到 bundled fixture 作離線韌性（從 dev_docs/contracts
+ * 複製到 ../fixtures，不 import repo 根外路徑）。UI 依 `source` 明示 data source（真 API vs fixture）。
  *
  * 形狀為手寫窄化 view-model（沿用 series.ts / report.ts 慣例：後端泛型 Envelope → 前端精確承載）；
  * 不碰 api.gen.ts。真相源為 dev_docs/contracts/evaluation_result.example.json + README.md §4。
@@ -135,7 +135,7 @@ export interface EvaluationLoad {
   source: DataSource
 }
 
-/** 後端未落地時觸發 fixture fallback 的錯誤碼（404 / 網路 / 非 envelope 502-HTML）。 */
+/** 觸發 fixture 韌性 fallback 的錯誤碼（404 / 網路 / 非 envelope 502-HTML）。 */
 const FALLBACK_CODES = new Set(['NOT_FOUND', 'NETWORK', 'INTERNAL'])
 
 /** report_pack_ref（reports/research_runs/<run_id>/manifest.json）→ run_id。 */
@@ -168,7 +168,7 @@ export async function resolveEvaluationId(id: string): Promise<string> {
 
 /**
  * 載入一份 evaluation。先解 id（run_id → evaluation_id，見 {@link resolveEvaluationId}），再打真 API；
- * 後端 Goal 3/4 未落地（404/網路/非 envelope）→ 回 bundled fixture。
+ * API 失敗（404/網路/非 envelope）→ 回 bundled fixture 作離線韌性。
  * 其餘錯誤（401/422/…）照拋，讓上層渲染 error 態（不誤把真錯誤蓋成 fixture）。
  */
 export async function getEvaluation(id: string): Promise<EvaluationLoad> {
