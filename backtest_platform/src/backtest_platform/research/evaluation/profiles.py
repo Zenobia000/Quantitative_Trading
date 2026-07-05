@@ -8,7 +8,7 @@ severity-graded gates it applies, and how expensive it is — and NEVER replaces
 the primitives; it orchestrates them (``orchestrator.evaluate``).
 
 The four built-ins are the authoritative contract in
-``dev_docs/contracts/evaluation_profile.schema.json`` ``examples[]``. They live
+``packages/contracts/schemas/evaluation_profile.schema.json`` ``examples[]``. They live
 here as validated Pydantic models so the orchestrator, the CLI and the API all
 read one source; ``tests/research/evaluation/test_profiles.py`` asserts these
 built-ins are byte-identical to the contract examples, so the schema stays the
@@ -25,7 +25,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 # --------------------------------------------------------------------------- #
-# Profile schema (mirrors dev_docs/contracts/evaluation_profile.schema.json)   #
+# Profile schema (mirrors packages/contracts/schemas/evaluation_profile.schema.json) #
 # --------------------------------------------------------------------------- #
 
 
