@@ -90,6 +90,9 @@ dev = [
     "pytest-asyncio>=0.24,<2",
     "ruff>=0.3",
     "mypy>=1.9",
+    # Architecture fitness functions — locks the golden layer-2 boundary
+    # (Research never imports broker/execution). See ADR-R03 + 18_refactor_wbs.
+    "import-linter>=2.0",
 ]
 # Convenience: install M2 Sprint 1 requirements
 sprint1 = [
@@ -163,3 +166,48 @@ ignore = ["E501"]  # handled by formatter
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
+
+# --- Architecture Fitness Functions (import-linter) -------------------------
+# Locks the golden layer-2 boundary: Research & Validation never imports the
+# execution/risk/ops layers, and pure research-domain code never imports web/DB/
+# broker frameworks. Run: `lint-imports`. See ADR-R03 + dev_docs/product_
+# repositioning/18_refactor_wbs.md. Contracts tighten as extraction waves land.
+[tool.importlinter]
+root_package = "backtest_platform"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layer-2 (research/strategies/validation) must not import execution/risk/ops layers"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.research",
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "backtest_platform.adapters.brokers",
+    "backtest_platform.risk",
+    "backtest_platform.orchestration",
+    "backtest_platform.runtime",
+    "backtest_platform.monitoring",
+]
+ignore_imports = [
+    # watch_registry is Layer-3 governance mis-filed under research/; it leaves
+    # research in W2.1 (ADR-R02), taking this runtime import with it. Tracked —
+    # remove this exception once governance/ extraction lands.
+    "backtest_platform.research.watch_registry -> backtest_platform.runtime.trading_calendar",
+]
+
+[[tool.importlinter.contracts]]
+name = "Pure research-domain (strategies/validation) must not import web/DB/broker frameworks"
+type = "forbidden"
+source_modules = [
+    "backtest_platform.strategies",
+    "backtest_platform.validation",
+]
+forbidden_modules = [
+    "sqlalchemy",
+    "fastapi",
+    "shioaji",
+    "requests",
+]
