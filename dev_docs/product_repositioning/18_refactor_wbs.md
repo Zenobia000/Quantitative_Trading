@@ -37,7 +37,7 @@
 | W2.2 | 2-governance | 重指 `api/routers/{research_promote,research_validate,watch,runs_report,research_candidates}` 及測試到 governance；endpoint 不變（無 OpenAPI drift） | W2.1 | feature-branch | M | ✅ done (PR#196) |
 | W2.3 | 2-governance | 契約 research/strategies/validation ⊄ governance（單向）；watch_registry 抽離後 research ⊄ runtime 無條件成立 | W2.1 | feature-branch | S | ✅ done (PR#196) |
 | W3.1 | 3-purify | 拆 `strategies/inst_flow/signal_fn.py`：純 flow_intensity ranking 留 research；qty-sizing/stop_loss/priority 移 strategy_runtime/risk_gate（唯一消費者 market_reader 為 W5 刪除標的，**併入 W5.1**） | **W5.1** | worktree | M | ⏳ 併 W5.1 |
-| W4.1 | 4-clean-arch | research_validation 內 domain/application/adapters/infrastructure 拆分；run_persist mapper 出 DB mirror | W2.1 | worktree | XL | 🔨 進行中（見 §3.1）：W4.1c(run_persist→adapters mapper/writer)+W4.1a(domain 層+純度契約) done；W4.1b(stores)/W4.1d(app+infra) 續 |
+| W4.1 | 4-clean-arch | research_validation 內 domain/application/adapters/infrastructure 拆分；run_persist mapper 出 DB mirror | W2.1 | worktree | XL | ✅ done（見 §3.1）：W4.1a(domain)+W4.1b(adapters/stores)+W4.1c(run_persist mapper)+W4.1d(application) 全落地；workflows dispatch/runners/cli 依 pin 原地保留 |
 | W5.1 | 5-execution | 物理搬 orchestration/runtime/adapters.brokers/risk → services/{strategy_runtime,execution_gateway,risk_gate}；刪 market_reader.py | W4.1 | worktree | XL | ✗ M3-M5 |
 | W5.2 | 5-execution | 拆 db_writer（bundle→data_platform；signals/fills/equity→monitoring_ops）；搬 db_reader、monitoring、jobs、config/settings | W5.1 | worktree | L | ✗ |
 | W6.1 | 6-api | 拆 api monolith：system.py→三 service router；抽 router 內 domain 邏輯進 application service；apps/api 變薄 composition root | W5.1 | worktree | XL | ✗ |
@@ -64,7 +64,13 @@ W0/W1.1 完成後續探 W2.1/W3.1，發現兩者**非純機械搬移**、與延�
 
 `tests/research/evaluation/test_profiles.py::test_builtins_match_contract_examples_exactly` 曾自 commit `077431f` 刪除 `dev_docs/contracts/evaluation_profile.schema.json` 起失敗。**W1.2a 已 repoint 至 `packages/contracts/schemas/evaluation_profile.schema.json`，測試現通過**（全後端 `pytest -o addopts=""`：1443 passed / 3 skipped / 0 failed；`lint-imports` 3 kept / 0 broken）。
 
-- **W4.1 拆 4 子波執行（架構分析，`.claude/context/decisions/`）**：39 檔 + ~25 shim 遠超 PR size 準則，故切 W4.1a(domain 抽出)/W4.1b(stores→adapters)/W4.1c(run_persist mapper)/W4.1d(application+infra)，各自獨立可 review、tests+lint 綠。**已落地 main**：W4.1c（`run_persist` 拆 `adapters/{run_db_mapper,run_writer}`，shim 保 api/batch/cli 零改動）+ W4.1a（6 純檔 → `research/domain/`，shim 保外部零改動）+ `research.domain` 純度加入 import-linter 契約 3（1443 passed / lint 3 kept）。**續作**：W4.1b（stores：branch_store/candidate_store 有 domain 滲漏、finlab_universe 需拆 IO/選股）、W4.1d（**最高風險**：`api/routers/research_workflows.py` 用 importlib 字串動態 dispatch `workflows.doe:run_doe` 等，靜態分析/pytest 抓不到 → 模組路徑務必留 shim + 跑實際整合測試；runners.py 副作用 import 原地保留）。
+- **W4.1 拆 4 子波執行（架構分析，`.claude/context/decisions/`）**：39 檔 + ~25 shim 遠超 PR size 準則，故切 W4.1a(domain 抽出)/W4.1b(stores→adapters)/W4.1c(run_persist mapper)/W4.1d(application+infra)，各自獨立可 review、tests+lint 綠。**W4.1 全數落地 main**（每子波獨立驗證 1427 passed（codex `6546083` prune 掉 grafana/daily_flow 測試後基線由 1443→1430）/ 3 skipped / 0 failed、lint 3 kept、動態 dispatch 專項測試綠）：
+  - **W4.1a**（`f1567c6`+`62af838`）：6 純檔 → `research/domain/`（run_config/candidate_state/compare/simulation/run_candles/notebook_export）+ `research.domain` 純度加入 import-linter 契約 3。
+  - **W4.1b**（`de89900`+`9b74083`）：11 file-backed stores → `research/adapters/`（8 純 IO + branch_store/candidate_store/finlab_universe 整檔搬，domain 滲漏留待後續內部拆分）。3 個測試因 monkeypatch-on-shim/私有符號存取改指 `research.adapters.*`。
+  - **W4.1c**（`a384eb8`）：`run_persist` 拆 `adapters/{run_db_mapper,run_writer}`。
+  - **W4.1d**（`08289c0`）：is_harness/sweep/batch/orchestrator/loader → `research/application/`。
+  - **依 pin 原地保留**（物理不動、非漏做）：`workflows/{doe,go_gates,truth_gate,paper_replay,universe}`（被 `research_workflows.py` importlib 字串 dispatch + `system.py` monkeypatch pin 路徑）、`runners.py`（registry 副作用 import）、`cli.py`（composition root + import-linter ignore_imports 引用）。移動它們是純 churn + silent-break 風險。
+  - 所有外部消費者（api/strategies/governance/cli）靠舊路徑 `__all__` re-export shim **零改動**（ADR-R05 維持 import path）。
 
 ### 分支策略實務註記
 
