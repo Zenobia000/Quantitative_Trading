@@ -23,7 +23,7 @@ from pathlib import Path
 import pandas as pd
 
 from backtest_platform.config.settings import get_settings
-from backtest_platform.data.finmind_etl import write_parquet
+from backtest_platform.data.parquet_writer import write_parquet
 from backtest_platform.data.schemas import ETLBundle
 
 #: A ``finlab.data.get``-like callable: dataset key -> wide DataFrame (date x stock).
