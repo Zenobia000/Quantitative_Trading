@@ -60,6 +60,20 @@ _INGEST_REQ = {
 }
 
 
+def _seed_universe(data_root, dirname, symbols):
+    """Write a minimal ``universe_manifest.json`` so ingest can resolve a named pool."""
+    d = data_root / dirname
+    d.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "strategy": "inst_flow",
+        "params": {"span_start": "2010-01-01", "span_end": "2024-12-31"},
+        "symbols": list(symbols),
+        "n_symbols": len(symbols),
+        "generated_at": "2026-07-02T00:00:00+00:00",
+    }
+    (d / "universe_manifest.json").write_text(_json.dumps(manifest), encoding="utf-8")
+
+
 @pytest.fixture
 def isolate_jobs(tmp_path, monkeypatch):
     monkeypatch.setattr(job_store, "DEFAULT_JOBS_PATH", tmp_path / "jobs.jsonl")
@@ -114,6 +128,30 @@ def test_ingest_empty_symbols_falls_back_to_default_universe(client, monkeypatch
     final = _poll_status(client, r.json()["data"]["job_id"])
     assert final["status"] == "done"
     assert final["result"]["requested"] == len(DEFAULT_UNIVERSE)
+
+
+def test_ingest_universe_resolves_symbols(client, data_root, monkeypatch, isolate_jobs):
+    _seed_universe(data_root, "parquet_finlab_universe", ["2330", "2317", "2454"])
+    monkeypatch.setattr(
+        "backtest_platform.data.finlab_source.ingest_universe_finlab",
+        lambda syms, s, e, **k: type("R", (), {"failed_symbols": ()})(),
+    )
+    r = client.post(
+        "/system/ingest",
+        json={**_INGEST_REQ, "symbols": [], "universe": "parquet_finlab_universe"},
+    )
+    assert r.status_code == 202
+    final = _poll_status(client, r.json()["data"]["job_id"])
+    assert final["status"] == "done"
+    assert final["result"]["requested"] == 3
+
+
+def test_ingest_unknown_universe_is_422(client, isolate_jobs):
+    r = client.post(
+        "/system/ingest",
+        json={**_INGEST_REQ, "symbols": [], "universe": "does_not_exist"},
+    )
+    assert r.status_code == 422
 
 
 # ---- bundles manifest scan (C1) -----------------------------------------

@@ -63,12 +63,12 @@
 | 8.2 | monitoring dashboards | 7.1 |
 | 9.1 | secret management | 1.1 |
 | 9.2 | backup/restore rehearsal | 6.3 |
-| 10.1 | 具名 Universe 讀模型 + `GET /system/universes`（SPEC-01 Slice 1、ADR-007）— 🔨 進行中 | 2.2, 8.1 |
+| 10.1 | 具名 Universe 讀模型 + `GET /system/universes`（SPEC-01 Slice 1、ADR-007）— ✅ 落地 | 2.2, 8.1 |
 | 10.2 | New Run 股票池選單 + 後端解析（SPEC-01 Slice 2，接 Q2/Q4/Q5：預設池+提示）— ✅ 落地 | 10.1 |
 | 10.2b | 資料字典/策略頁 UX：反向索引搬策略頁、卡片教 data.get 用法、収合（SPEC-01 Slice 2.5）— ✅ 落地 | 10.1 |
 | 10.3 | Eligibility 篩選層：finlab set_universe 靜態 + 處置/注意/變更交易時變遮罩（SPEC-01 Slice 3、Q3）— ✅ 落地 | 10.1 |
 | 10.4a | 資料字典 runtime-only 標示 + ingest default universe fallback（SPEC-01 Slice 4a、Q1）— ✅ 落地 | 10.1 |
-| 10.4b | 資料字典下載對接、presence 相對 Universe+span（SPEC-01 Slice 4b/4c、Q1）— ⏳ | 10.4a |
+| 10.4b | 資料字典下載對接、presence / scope 顯示、卡片一鍵補本地（SPEC-01 Slice 4b/4c、Q1）— ✅ 落地 | 10.4a |
 | 11.1 | Strategy Package descriptor：`GET /strategies/{strategy}/asset`（SPEC-02、ADR-008、ADR-R06）— ✅ 落地 | 4.1, 8.1 |
 | 11.2 | New Run 動態 params form：由 `config_schema` 產生 guided params，raw JSON 僅 advanced fallback（SPEC-02）— ✅ 落地 | 11.1 |
 | 11.3 | DOE 最佳化 schema + grid editor：`GET /strategies/{strategy}/optimization-schema` + `POST /research/workflows/doe`（SPEC-02）— ✅ 落地 | 11.1 |

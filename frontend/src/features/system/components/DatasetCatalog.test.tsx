@@ -41,15 +41,50 @@ const CARDS = [
   },
 ]
 
+const UNIVERSES = [
+  {
+    id: 'parquet_finlab_universe',
+    name: 'liquid-top200',
+    symbols_count: 200,
+    span_start: '2010-01-01',
+    span_end: '2024-12-31',
+    top_n: 200,
+    min_turnover: 50000000,
+    strategies: ['inst_flow'],
+    cache_dir: 'data/parquet_finlab_universe',
+    generated_at: '2026-07-05T00:00:00+00:00',
+  },
+]
+
 function mockApi(cards: unknown[] = CARDS) {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string) => {
+    vi.fn(async (url: string, init?: RequestInit) => {
       const path = new URL(url, 'http://x').pathname
+      if (path === '/system/universes')
+        return {
+          status: 200,
+          json: async () => ({ success: true, data: UNIVERSES, error: null, meta: { data_source: 'parquet_scan', ttl: 300 } }),
+        }
       if (path === '/system/datasets')
         return {
           status: 200,
           json: async () => ({ success: true, data: cards, error: null, meta: { data_source: 'catalog', ttl: 300 } }),
+        }
+      if (path === '/system/ingest' && init?.method === 'POST')
+        return {
+          status: 202,
+          json: async () => ({ success: true, data: { job_id: 'j-download', status: 'queued' }, error: null, meta: { ttl: 60 } }),
+        }
+      if (path.startsWith('/system/ingest/'))
+        return {
+          status: 200,
+          json: async () => ({
+            success: true,
+            data: { job_id: 'j-download', status: 'done', result: { requested: 200, ok: ['2330'], failed: [] } },
+            error: null,
+            meta: { ttl: 60 },
+          }),
         }
       return { status: 200, json: async () => ({ success: true, data: [], error: null, meta: { ttl: 60 } }) }
     }) as unknown as typeof fetch,
@@ -146,5 +181,25 @@ describe('DatasetCatalog', () => {
     mockApi([])
     renderCatalog()
     await waitFor(() => expect(screen.getByText('資料目錄為空')).toBeInTheDocument())
+  })
+
+  it('bundle-backed not_cached card can queue a local download for the selected universe span', async () => {
+    mockApi()
+    renderCatalog()
+    await waitFor(() => expect(screen.getByText('投信買賣超')).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: '補本地資料' }))
+    await waitFor(() => expect(screen.getByText('j-download')).toBeInTheDocument())
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/system/ingest'),
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          universe: 'parquet_finlab_universe',
+          start: '2010-01-01',
+          end: '2024-12-31',
+          source: 'finlab',
+        }),
+      }),
+    )
   })
 })

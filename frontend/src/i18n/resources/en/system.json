@@ -16,7 +16,18 @@
       "copyUsage": "Copy fetch call",
       "docLink": "finlab database docs ↗",
       "usedByLabel": "Strategies using this",
+      "download": "Download locally",
       "since": "since {{year}}",
+      "universe": {
+        "resource": "Named universes",
+        "pending": "Named universes (awaiting backend catalog)",
+        "empty": "No named universes yet",
+        "default": "System default",
+        "label": "Data scope",
+        "span": "Span",
+        "defaultSpan": "—",
+        "symbols": "{{n}} symbols"
+      },
       "category": {
         "all": "All",
         "price_volume": "Price/Volume",
