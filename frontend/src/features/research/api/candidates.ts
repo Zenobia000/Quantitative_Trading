@@ -1,8 +1,8 @@
 /*
- * Research zone — Candidate Pool（Goal 6，fixture-first）。
- * 先打 `GET /research/candidates`（envelope client）；端點尚未上線（Goal 4 平行開發中）→
- * 任何 ApiError（404 / NETWORK / 後端錯誤）fallback 到打包的契約範例
- * `../fixtures/candidate_pool.json`，並回傳 source 供 UI 明示資料來源。
+ * Research zone — Candidate Pool。
+ * 先打 `GET /research/candidates`（envelope client，端點已上線）；任何 ApiError
+ * （404 / NETWORK / 後端錯誤）才 fallback 到打包的契約範例
+ * `../fixtures/candidate_pool.json` 作為離線韌性，並回傳 source 供 UI 明示資料來源。
  *
  * 型別為手寫窄化 view-model（對齊 dev_docs/contracts/candidate_pool.example.json），
  * 不碰 api.gen.ts。決策 POST 在 fixture 模式下僅本地樂觀更新（見 hooks/useCandidatePool）。
@@ -134,7 +134,7 @@ export async function fetchCandidatePool(): Promise<CandidatePoolResult> {
     const res = await http<Candidate[]>('/research/candidates')
     return { candidates: res.data ?? [], meta: res.meta, source: 'api' }
   } catch (e) {
-    // 端點尚未上線（Goal 4）→ 打包契約範例。非 ApiError（非預期）才向上拋。
+    // 端點失敗（404 / 網路）→ 離線韌性回打包契約範例。非 ApiError（非預期）才向上拋。
     if (!(e instanceof ApiError)) throw e
     const env = fixture as unknown as CandidatePoolEnvelopeShape
     return { candidates: env.data, meta: { ...env.meta, data_source: 'fixture' }, source: 'fixture' }
