@@ -45,7 +45,7 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 | 17 | `17_frontend_information_architecture.md` | 前端資訊架構、頁面、路由、旅程。 |
 | 18 | `18_refactor_wbs.md` | 現況碼 → golden 七層的重構 WBS、kill-list、波次。 |
 | — | `adrs/` | Repositioning refactor ADRs（R01–R06），見 `adrs/INDEX.md`。 |
-| — | `specs/` | Product slices：SPEC-01 named universe、SPEC-02 strategy package / dynamic params / optimization UI。 |
+| — | `specs/` | Product slices：SPEC-01 named universe、SPEC-02 strategy package / dynamic params / optimization UI、SPEC-03 Claude Code 研究撰寫 harness（dev-time，無 MCP）。 |
 
 ## 3. 決策摘要
 
@@ -58,6 +58,7 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 | 資料頻率 | EOD / 財報 / 籌碼 / 月營收；不做 Tick / Order Book。 |
 | 交付方式 | API-first、contract-first、ADR-first。 |
 | 策略撰寫 | 策略是 repo 內 Strategy Package；AI coding/IDE 寫策略，Console 透過 descriptor/schema/workflow 互動。 |
+| AI 研究 harness | Claude Code 為 dev-time 撰寫加速器（無 MCP、非 runtime 引擎）；research 全閉環可後台，execution off-limits，governance 人拍板。見 ADR-009 / SPEC-03。 |
 
 ## 4. 非目標
 

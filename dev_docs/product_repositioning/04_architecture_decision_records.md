@@ -120,3 +120,26 @@ API、Event、Schema、Layer dependency 都是 living contract，需自動化驗
 - raw JSON params 保留為 advanced fallback，但 guided schema form 是主路徑。
 - 未來若要接 Claude Code/Agent SDK，應作為 repo-level branch/PR/job workflow，而不是把任意 Python 編輯器直接嵌進回測服務。
 - 策略中心從「策略名列表」提升為「策略資產頁」：可顯示 package 結構、workflow readiness、參數 schema、最佳化入口與報表鏈路。
+
+## ADR-009: Claude Code 為 dev-time 研究撰寫 harness，無 MCP、不做 runtime 引擎
+
+> 日期: 2026-07-06 | 關聯: `specs/SPEC-03-claude-code-authoring-harness.md`、ADR-008、ADR-R06、ADR-002、ADR-005、ADR-006
+
+### 背景
+
+重定位討論參照 Nyrobrain「AI 量化 Agent」範式：以 coding agent 作為策略研究底層、UI 只做視覺化。地毯掃描（`.claude/context/decisions/explore-2026-07-06-0158-research-surface-agent-feasibility.md`）證實現況架構已是 CLI-first / importable / filesystem-ledger：真正運算全在可 import 的純 Python + `research/cli.py` ~18 子命令，FastAPI routers 僅薄包裝；research workflow 全部 headless 不需 HTTP/DB。Nyrobrain 最貴的 NL→code 編譯器本平台不需自建（Claude Code 即是），其死穴（工具≠知識、data mining）之解為既有防過擬合閘門 + skills 編碼的量化紀律。
+
+### 決策
+
+1. **Claude Code 定位為 dev-time 研究撰寫 harness**：操作者在 repo 驅動 agent 撰寫策略、跑既有研究閉環、產出證據；agent 停在 governance 閘門前等人拍板。**不做 runtime 引擎（UI 背後起 headless agent 幫終端使用者寫策略）、不做多租戶 SaaS。**
+2. **無 MCP**：agent 用 Python 直譯器 + finlab SDK（`data.search()` 離線可用）+ 既有 `research.cli` 取用平台，不專蓋 MCP tool 層。MCP 降為 optional backlog，僅當未來需「agent 與 UI 共用唯讀結構化狀態面」時再評估。
+3. **邊界不靠 MCP，靠 import-linter + 人 review**：Claude Code 有 Bash、非 sandbox；`Research ⊄ broker` 由 CI 靜態契約守（ADR-002、W1.1）。
+4. **授權分級固化**（SPEC-03 §5）：research 撰寫/回測/驗證/評估 = agent 自主；`orchestration.cli` / broker / after-close / live 排程 = off-limits；governance 跨閘與需金鑰動作 = 人審/env。
+5. **Trials 誠實計數為 skill 第一鐵律**：agent 每跑一輪 sweep/doe 必須誠實 increment trials counter，否則 DSR deflation 防線被自身繞過。
+
+### 後果
+
+- 新產品能力形狀 = 「被既有紀律閘門框住的自主研究 agent + 人在 governance 拍板」，非「AI 全自動炒策略」。
+- **UI 角色重定位**為「治理 + 證據審閱台」，與 `17_frontend_information_architecture.md` 營運台定位一致，不需改前端 IA。
+- 落地零基建優先（SPEC-03 §7）：P0 僅寫 skills + `strategies/CLAUDE.md`，不動任何既有 code / API 契約。
+- finlab 金鑰不入 agent 持有範圍（build-universe/ingest 走 env）。
