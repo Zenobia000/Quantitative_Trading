@@ -14,7 +14,10 @@ from backtest_platform.research.evaluation.profiles import (
 )
 from backtest_platform.research.evaluation.profiles import _BUILTIN_DICTS  # type: ignore
 
-_CONTRACT = Path(__file__).resolve().parents[4] / "dev_docs" / "contracts" / "evaluation_profile.schema.json"
+_CONTRACT = (
+    Path(__file__).resolve().parents[4]
+    / "packages" / "contracts" / "schemas" / "evaluation_profile.schema.json"
+)
 
 
 def test_four_builtins_registered():

@@ -29,7 +29,8 @@
 | W0.1 | 0-cleanup | 刪除 `backtest_platform/legacy/`（archive、不打包、不收集、0 引用） | — | feature-branch | S | ✅ done (PR#196) |
 | W0.2 | 0-cleanup | 刪死碼與 stale bytecode：`engines/`、`adapters/data_bundle/__init__.py`、influx_writer.pyc、`tests/engines/`、frontend `stores|utils/.gitkeep` | — | feature-branch | S | ✅ done (PR#196) |
 | W1.1 | 1-fitness | 加 import-linter，契約：research/strategies/validation **禁 import** adapters.brokers / risk / orchestration / runtime / monitoring；純碼禁 import sqlalchemy/fastapi/shioaji/requests。接 CI。 | W0.2 | feature-branch | M | ✅ done (PR#196) |
-| W1.2 | 1-fitness | 建 `packages/contracts` scaffold + 搬 DataFeed Protocol、EvaluationResult/TargetPortfolio schema 出 api/response_models | W1.1 | feature-branch | M | ⏳ 下一波 |
+| W1.2a | 1-fitness | 建 `packages/contracts/{schemas,examples}`，還原 077431f 誤刪的 8 契約檔到 golden 位置，repoint test_profiles（修 pre-existing 紅燈） | W1.1 | feature-branch | S | ✅ done (PR#196) |
+| W1.2b | 1-fitness | 搬 DataFeed Protocol + EvaluationResult/TargetPortfolio Python schema 進 contracts（**注意 OpenAPI drift**，需 regen frontend/openapi.json） | W1.2a | feature-branch | M | ⏳ 下一波 |
 | W1.3 | 1-fitness | carve `live_oos_queue` enqueue port（依賴反轉，consumer 擁有介面），candidate_store 改經注入消費，解 research→governance 反向邊 | W1.1 | feature-branch | M | ✅ done (PR#196) |
 | W2.1a | 2-governance | 抽 `promotion_service`+`promotion_store` → `governance/`（無反向邊，乾淨） | W1.1 | feature-branch | L | ✅ done (PR#196) |
 | W2.1b | 2-governance | 抽 `watch_registry`+`live_oos_queue`+`live_oos_consumer` → `governance/`；daemon（after_close/orchestration cli）import 重指 | **W1.3** | feature-branch | L | ✅ done (PR#196) |
