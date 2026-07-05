@@ -70,6 +70,21 @@ def _to_universe_ref(cache_dir: Path, manifest: dict) -> UniverseRef:
     )
 
 
+def symbols_for(universe_id: str, data_root: Path | None = None) -> tuple[str, ...] | None:
+    """Resolve a named universe's full symbol list from its manifest.
+
+    Returns the symbols tuple, or ``None`` if no universe with that id exists (the
+    caller maps ``None`` to a 422 — selecting a non-existent pool is an error). A
+    universe whose manifest carries no ``symbols`` yields an empty tuple. This is the
+    server-side resolver behind the New Run pool picker (SPEC-01 Slice 2): the
+    survivorship-clean symbol set travels with the *selection*, never re-typed."""
+    for cache_dir, kind, manifest in iter_manifests(data_root):
+        if kind == _KIND_UNIVERSE and cache_dir.name == universe_id:
+            syms = manifest.get("symbols")
+            return tuple(str(s) for s in syms) if isinstance(syms, list) else ()
+    return None
+
+
 def list_universes(data_root: Path | None = None) -> list[UniverseRef]:
     """Discover every named universe under ``data_root`` (default ``data/``).
 

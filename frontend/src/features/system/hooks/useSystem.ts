@@ -26,8 +26,14 @@ export type BundleRow = components['schemas']['BundleRow']
 /** GET /system/datasets card — 策略作者的資料字典列（形狀由 OpenAPI 生成，禁手寫）。 */
 export type DatasetCard = components['schemas']['DatasetCard']
 
+/** GET /system/universes row — 具名股票池（ADR-007；形狀由 OpenAPI 生成，禁手寫）。 */
+export type UniverseRow = components['schemas']['UniverseRow']
+
 /** GET /system/bundles — 真實 manifest 掃描（無 manifest → typed-empty，非假造）。 */
 export const useBundles = () => useEndpoint<BundleRow[]>('/system/bundles', 300)
+
+/** GET /system/universes — 具名股票池清單（New Run 選單來源；ttl 300s）。 */
+export const useUniverses = () => useEndpoint<UniverseRow[]>('/system/universes', 300)
 
 /**
  * GET /system/datasets — FinLab 目錄「全量」拉一次（catalog 約 30 列、ttl 300s）。

@@ -5736,9 +5736,20 @@
               "type": "string"
             },
             "type": "array",
-            "minItems": 1,
             "title": "Stocks",
-            "description": "Stock ids to run"
+            "description": "Explicit stock ids. Empty \u2192 resolved from `universe`, else the system default."
+          },
+          "universe": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Universe",
+            "description": "Named universe id (GET /system/universes); resolved to symbols server-side. Ignored when `stocks` is non-empty."
           },
           "is_start": {
             "type": "string",
@@ -5762,7 +5773,6 @@
         "required": [
           "hypothesis",
           "strategy",
-          "stocks",
           "is_start",
           "is_end"
         ],

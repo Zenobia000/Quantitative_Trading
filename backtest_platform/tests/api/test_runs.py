@@ -1,11 +1,26 @@
 """``/runs`` — list / get / compare / trigger, against a temp ledger + stub executor."""
 from __future__ import annotations
 
+import json
 import time
 
 import pytest
 
 from backtest_platform.jobs import job_store
+
+
+def _seed_universe(data_root, dirname, symbols):
+    """Write a minimal ``universe_manifest.json`` so a named pool resolves (Slice 2)."""
+    d = data_root / dirname
+    d.mkdir(parents=True, exist_ok=True)
+    manifest = {
+        "strategy": "inst_flow",
+        "params": {"span_start": "2010-01-01", "span_end": "2024-12-31"},
+        "symbols": list(symbols),
+        "n_symbols": len(symbols),
+        "generated_at": "2026-07-02T00:00:00+00:00",
+    }
+    (d / "universe_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
 # ---- list ---------------------------------------------------------------
 
@@ -147,10 +162,39 @@ def test_create_run_reversed_window_422(client):
     assert resp.status_code == 422
 
 
-def test_create_run_empty_stocks_422(client):
-    payload = {**_VALID_PAYLOAD, "stocks": []}
+def test_create_run_no_pool_falls_back_to_default_universe(client, stub_executor):
+    # SPEC-01 Slice 2 / ADR-007: a run never *requires* hand-typed symbols —
+    # omitting both stocks and universe resolves to the system default universe.
+    from backtest_platform.config.universe import DEFAULT_UNIVERSE
+
+    payload = {k: v for k, v in _VALID_PAYLOAD.items() if k != "stocks"}
+    resp = client.post("/runs", json=payload)
+    assert resp.status_code == 201
+    assert tuple(stub_executor.calls[-1].stocks) == DEFAULT_UNIVERSE
+
+
+def test_create_run_with_universe_resolves_symbols(client, data_root, stub_executor):
+    _seed_universe(data_root, "parquet_finlab_universe", ["2330", "2317", "2454"])
+    payload = {k: v for k, v in _VALID_PAYLOAD.items() if k != "stocks"}
+    payload["universe"] = "parquet_finlab_universe"
+    resp = client.post("/runs", json=payload)
+    assert resp.status_code == 201
+    assert tuple(stub_executor.calls[-1].stocks) == ("2330", "2317", "2454")
+
+
+def test_create_run_unknown_universe_422(client):
+    payload = {k: v for k, v in _VALID_PAYLOAD.items() if k != "stocks"}
+    payload["universe"] = "does_not_exist"
     resp = client.post("/runs", json=payload)
     assert resp.status_code == 422
+
+
+def test_create_run_explicit_stocks_win_over_universe(client, data_root, stub_executor):
+    _seed_universe(data_root, "parquet_finlab_universe", ["2330", "2317"])
+    payload = {**_VALID_PAYLOAD, "stocks": ["1101"], "universe": "parquet_finlab_universe"}
+    resp = client.post("/runs", json=payload)
+    assert resp.status_code == 201
+    assert tuple(stub_executor.calls[-1].stocks) == ("1101",)
 
 
 # ---- async (8.H.6) ------------------------------------------------------

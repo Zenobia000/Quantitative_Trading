@@ -66,6 +66,8 @@
 | GET | `/research-runs/{run_id}` | 取得 run 狀態與結果 |
 | GET | `/research-runs/{run_id}/report` | 取得 report pack |
 
+> **股票池選擇（ADR-007 Slice 2，實作 `POST /runs`）**：body 的 `stocks` 改選填，新增 `universe`（具名池 id）。伺服端解析精度序 `stocks` > `universe` > 系統 `DEFAULT_UNIVERSE`；未知 universe → 422。策略**不必**手打股票池——省略即用預設。
+
 ### Strategy Definitions
 
 | Method | Path | 說明 |

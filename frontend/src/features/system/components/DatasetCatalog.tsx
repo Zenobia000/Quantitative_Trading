@@ -77,37 +77,30 @@ function CategoryChips({
   )
 }
 
+/** finlab 取數用法（教「怎麼用這個 key」，非只複製）：`data.get('<key>')`。 */
+function usageSnippet(key: string): string {
+  return `data.get('${key}')`
+}
+
+/**
+ * 一張資料卡 = 收合列（`<details>`）。收起僅一行（名稱 · 分類 · 頻率 · 本地燈），
+ * 展開才顯示 API 用法 + 說明——直接解「畫面太長」。策略反向索引不在此呈現
+ * （移至策略詳情頁：多策略會擠爆、且 authoring 語意屬策略側）。
+ */
 function DatasetCardTile({ card }: { card: DatasetCard }) {
   const { t } = useTranslation('system')
   const cached = card.local === 'cached'
   const freqLabel = FREQ_KEY[card.freq] ? t(`data.catalog.freq.${FREQ_KEY[card.freq]}`) : card.freq
+  const usage = usageSnippet(card.key)
   return (
-    <section
-      className={`grid gap-2 border border-border bg-surface p-3 lg:grid-cols-[minmax(220px,0.9fr)_minmax(280px,1.2fr)_minmax(260px,1fr)] lg:items-start ${
-        cached ? '' : 'opacity-60'
-      }`}
-    >
-      <div>
-        <h3 className="text-sm font-semibold text-text">{card.name_zh}</h3>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-muted">
-          <StatusBadge tone="muted">{t(`data.catalog.category.${card.category}`)}</StatusBadge>
-          <span className="tabular">
-            {freqLabel} · {t('data.catalog.since', { year: card.history_start })}
-          </span>
-        </div>
-      </div>
-
-      {/* key + 一鍵複製（authoring 的主要動作：複製到策略碼裡） */}
-      <div className="flex min-w-0 items-center gap-2">
-        <code className="flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs text-text-secondary">
-          {card.key}
-        </code>
-        <CopyButton value={card.key} label={t('data.catalog.copyKey')} />
-      </div>
-
-      <div className="text-xs text-text-secondary">
-        <p>「{card.description}」</p>
-        <div className="mt-2">
+    <details className={`group border border-border bg-surface ${cached ? '' : 'opacity-70'}`}>
+      <summary className="flex cursor-pointer select-none flex-wrap items-center gap-2 px-3 py-2 marker:text-text-muted">
+        <span className="text-sm font-semibold text-text">{card.name_zh}</span>
+        <StatusBadge tone="muted">{t(`data.catalog.category.${card.category}`)}</StatusBadge>
+        <span className="tabular text-xs text-text-muted">
+          {freqLabel} · {t('data.catalog.since', { year: card.history_start })}
+        </span>
+        <span className="ml-auto text-xs">
           {cached ? (
             <span className="inline-flex items-center gap-1 text-gain">
               <span aria-hidden>●</span> {t('data.catalog.local.cached')}
@@ -115,27 +108,33 @@ function DatasetCardTile({ card }: { card: DatasetCard }) {
           ) : (
             <StatusBadge tone="muted">{t('data.catalog.local.notCached')}</StatusBadge>
           )}
-        </div>
-      </div>
+        </span>
+      </summary>
 
-      {/* 狀態二：策略庫反向索引（XQ 沒有的差異化）；used_by 空則整列不顯示 */}
-      {card.used_by.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/50 pt-2 lg:col-span-3">
-          <span aria-hidden className="text-warning">
-            ⚡
-          </span>
-          <span className="sr-only">{t('data.catalog.usedByLabel')}</span>
-          {card.used_by.map((s) => (
-            <span
-              key={s}
-              className="border border-border bg-input px-2 py-0.5 font-mono text-[11px] text-text-secondary"
-            >
-              {s}
-            </span>
-          ))}
+      <div className="grid gap-2 border-t border-border/60 px-3 py-3 text-xs text-text-secondary">
+        {/* API 用法（authoring 的主要動作：複製整段取數呼叫到策略碼裡） */}
+        <div>
+          <div className="mb-1 text-[11px] uppercase tracking-wide text-text-muted">
+            {t('data.catalog.usage')}
+          </div>
+          <div className="flex min-w-0 items-center gap-2">
+            <code className="flex-1 overflow-x-auto whitespace-nowrap rounded bg-base px-2 py-1 font-mono text-text-secondary">
+              {usage}
+            </code>
+            <CopyButton value={usage} label={t('data.catalog.copyUsage')} />
+          </div>
+          <a
+            href="https://ai.finlab.tw/database"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-block text-[11px] text-text-muted underline-offset-2 hover:text-text hover:underline"
+          >
+            {t('data.catalog.docLink')}
+          </a>
         </div>
-      )}
-    </section>
+        <p>「{card.description}」</p>
+      </div>
+    </details>
   )
 }
 

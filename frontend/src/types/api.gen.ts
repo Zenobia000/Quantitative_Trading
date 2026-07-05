@@ -2568,9 +2568,14 @@ export interface components {
             };
             /**
              * Stocks
-             * @description Stock ids to run
+             * @description Explicit stock ids. Empty → resolved from `universe`, else the system default.
              */
-            stocks: string[];
+            stocks?: string[];
+            /**
+             * Universe
+             * @description Named universe id (GET /system/universes); resolved to symbols server-side. Ignored when `stocks` is non-empty.
+             */
+            universe?: string | null;
             /**
              * Is Start
              * Format: date

@@ -10,7 +10,11 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from backtest_platform.data.universe_registry import UniverseRef, list_universes
+from backtest_platform.data.universe_registry import (
+    UniverseRef,
+    list_universes,
+    symbols_for,
+)
 
 _UNIVERSE_MANIFEST = {
     "strategy": "inst_flow",
@@ -116,3 +120,27 @@ def test_results_sorted_by_id(tmp_path):
     _write(tmp_path, "parquet_alpha", "universe_manifest.json", _UNIVERSE_MANIFEST)
     ids = [r.id for r in list_universes(tmp_path)]
     assert ids == ["parquet_alpha", "parquet_zeta"]
+
+
+# ---- symbols_for (Slice 2 server-side pool resolver) --------------------
+def test_symbols_for_returns_manifest_symbols(tmp_path):
+    _write(tmp_path, "parquet_finlab_universe", "universe_manifest.json", _UNIVERSE_MANIFEST)
+    assert symbols_for("parquet_finlab_universe", tmp_path) == ("2330", "2317", "2454")
+
+
+def test_symbols_for_unknown_universe_is_none(tmp_path):
+    # None → caller maps to 422 (selecting a non-existent pool is an error)
+    assert symbols_for("ghost", tmp_path) is None
+
+
+def test_symbols_for_ignores_default_bundle(tmp_path):
+    # a default ETL cache is not a universe → not resolvable as a pool
+    _write(tmp_path, "parquet", "manifest.json", _DEFAULT_MANIFEST)
+    assert symbols_for("parquet", tmp_path) is None
+
+
+def test_symbols_for_missing_symbols_is_empty_tuple(tmp_path):
+    manifest = {k: v for k, v in _UNIVERSE_MANIFEST.items() if k != "symbols"}
+    manifest["n_symbols"] = 0
+    _write(tmp_path, "parquet_empty", "universe_manifest.json", manifest)
+    assert symbols_for("parquet_empty", tmp_path) == ()

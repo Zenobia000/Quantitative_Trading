@@ -10,9 +10,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { createRun, type RunCreateRequest } from '../api/createRun'
 import { useStrategyRegistry } from '../hooks/useStrategyRegistry'
+import { useUniverses } from '@/features/system/hooks/useSystem'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { useErrorText } from '@/i18n/useErrorText'
+
+/** 股票池選單哨兵值：系統預設 / 自訂 symbols（其餘為具名 universe id）。 */
+const POOL_DEFAULT = '__default__'
+const POOL_CUSTOM = '__custom__'
 
 const field = 'w-full rounded-md border border-border bg-input px-3 py-1.5 text-sm'
 const label = 'mb-1 block text-xs text-text-secondary'
@@ -24,11 +29,15 @@ export function NewRunPage() {
   const [sp] = useSearchParams()
   const registry = useStrategyRegistry()
   const strategies = Array.isArray(registry.data?.data) ? registry.data.data : []
+  const universesQ = useUniverses()
+  const universes = Array.isArray(universesQ.data?.data) ? universesQ.data.data : []
 
   const [hypothesis, setHypothesis] = useState('')
   // 策略中心「New Run」以 ?strategy= 深連結預填此欄（refresh-safe）；未帶則預設 four_layer。
   const [strategy, setStrategy] = useState(sp.get('strategy') ?? 'four_layer')
   const [paramsText, setParamsText] = useState('{}')
+  // 股票池：預設用系統通用池（不必手打 symbols）；選具名池或「自訂」才需輸入。
+  const [pool, setPool] = useState<string>(POOL_DEFAULT)
   const [stocks, setStocks] = useState('2330,2454')
   const [isStart, setIsStart] = useState('2020-01-01')
   const [isEnd, setIsEnd] = useState('2024-12-31')
@@ -67,15 +76,22 @@ export function NewRunPage() {
       }
     }
     setParamsError(null)
-    mut.mutate({
+    // 股票池解析（ADR-007 精度序：自訂 stocks > 具名 universe > 系統預設）：
+    //  - 自訂 → 送 stocks；具名池 → 送 universe（symbols 由後端解析）；預設 → 兩者皆不送。
+    const body: RunCreateRequest = {
       hypothesis: hypothesis.trim(),
       strategy: strategy.trim(),
       params,
-      stocks: stocks.split(',').map((s) => s.trim()).filter(Boolean),
       is_start: isStart,
       is_end: isEnd,
       engine,
-    })
+    }
+    if (pool === POOL_CUSTOM) {
+      body.stocks = stocks.split(',').map((s) => s.trim()).filter(Boolean)
+    } else if (pool !== POOL_DEFAULT) {
+      body.universe = pool
+    }
+    mut.mutate(body)
   }
 
   return (
@@ -116,8 +132,30 @@ export function NewRunPage() {
           </datalist>
         </div>
         <div>
-          <label className={label}>{t('newRun.stocks.label')}</label>
-          <input required value={stocks} onChange={(e) => setStocks(e.target.value)} className={`${field} font-mono`} />
+          <label className={label}>{t('newRun.pool.label')}</label>
+          <select value={pool} onChange={(e) => setPool(e.target.value)} className={field}>
+            <option value={POOL_DEFAULT}>{t('newRun.pool.systemDefault')}</option>
+            {universes.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.name}（{u.symbols_count} {t('newRun.pool.stocksUnit')}）
+              </option>
+            ))}
+            <option value={POOL_CUSTOM}>{t('newRun.pool.custom')}</option>
+          </select>
+          {/* 自訂才顯示 symbols 輸入；具名池/預設由後端解析 symbols */}
+          {pool === POOL_CUSTOM && (
+            <input
+              required
+              value={stocks}
+              onChange={(e) => setStocks(e.target.value)}
+              className={`${field} mt-2 font-mono`}
+              placeholder="2330,2454"
+            />
+          )}
+          {/* 產品面提示：預設池的通用邏輯與正式回測建議 */}
+          {pool === POOL_DEFAULT && (
+            <p className="mt-1 text-xs text-text-muted">{t('newRun.pool.defaultHint')}</p>
+          )}
         </div>
         <details
           open={advOpen}

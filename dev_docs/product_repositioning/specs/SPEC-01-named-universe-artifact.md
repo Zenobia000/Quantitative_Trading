@@ -90,10 +90,16 @@ Universe（具名產物 — 一等實體）
 - manifest schema：`strategy: str` → 允許 `strategies: list[str]`（N:1），保留舊欄位讀相容。
 - 測試：manifest 掃描、typed-empty、N:1 讀相容。**無網路。**
 
-### Slice 2 — 前端：New Run 股票池選單（接 Q2/Q4）
-- `NewRunPage` 的自由文字 `stocks` → **股票池下拉**（來源 `GET /system/universes`）；保留「自訂 symbols」為 advanced fallback。
-- 選定池 → run 帶 `universe_id`（或解析後的 symbols + survivorship 旗標），**survivorship-clean 保證隨選擇一起走**，消除「自由打不乾淨清單」特殊情況。
-- 測試：選單 render、選定→送出 payload、fallback 模式。
+### Slice 2 — New Run 股票池選單 + 後端解析（接 Q2/Q4/Q5）✅ 已落地
+- `NewRunPage` 自由文字 `stocks` → **股票池下拉**（`GET /system/universes`）；「自訂 symbols」為 fallback。
+- **後端解析**（`RunCreateRequest` 加 `universe`、`stocks` 改選填；`runs._resolve_stocks`）：精度序 explicit stocks > named universe（`universe_registry.symbols_for`）> `DEFAULT_UNIVERSE`；未知 universe → 422。**survivorship-clean 保證隨選擇走**，消除自由打不乾淨清單。
+- **Q5**：策略不必設池——不設即用系統預設 + 產品提示（UI hint）。
+- 測試：後端 resolver 4 案 + 前端選單 2 案（預設不送 stocks/universe、選具名池送 universe）。
+
+### Slice 2.5 — 資料字典/策略頁 UX（使用者回饋批次）✅ 已落地
+- **反向索引搬家**：資料字典移除 `used_by` chip（多策略會擠爆）；改在**策略詳情頁** `UsedDatasetsSection` 呈現「此策略用的資料卡」（複用 `/system/datasets` 前端過濾，`used_by` 資料仍保留）。
+- **資料字典教用法**：卡片展開顯示 `data.get('<key>')` 取數呼叫 + 複製 + finlab DB 文件連結（非只複製 key）。
+- **収合**：每張卡改 `<details>`（收起一行、展開才顯示用法/說明），解「畫面太長」。
 
 ### Slice 3 — 後端：Eligibility 篩選層（接 Q3）
 - `UniverseBuildRequest` 擴充 eligibility 參數：`exchange` / `exclude_sector` / `asset_type`（透傳 finlab `set_universe`）+ `exclude_status`（處置/注意/變更交易時變遮罩）。

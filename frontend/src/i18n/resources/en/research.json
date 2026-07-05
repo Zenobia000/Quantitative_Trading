@@ -142,6 +142,10 @@
       "resource": "verdict timeline",
       "configFields": "Config fields (config_schema)",
       "notInRegistry": "Strategy {{name}} is not in the catalog (ledger-only)",
+      "datasets": {
+        "title": "Data cards used",
+        "empty": "This strategy uses only base columns (adjusted OHLC); no extra data cards"
+      },
       "premise": {
         "title": "Research Premise",
         "hypothesis": "Hypothesis",
@@ -195,6 +199,13 @@
     },
     "stocks": {
       "label": "Stocks (comma-separated, at least 1)"
+    },
+    "pool": {
+      "label": "Stock pool",
+      "systemDefault": "System default pool",
+      "custom": "Custom symbols…",
+      "stocksUnit": "stocks",
+      "defaultHint": "Unset → uses the system default pool (dev-scale large caps). For a real backtest, build a survivorship-clean pool on the Data page first, then select it here."
     },
     "params": {
       "summary": "Advanced · Params (strategy params JSON, optional; defaults to empty object)",

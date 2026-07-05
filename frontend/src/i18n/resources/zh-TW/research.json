@@ -142,6 +142,10 @@
       "resource": "判決時間線",
       "configFields": "參數欄位（config_schema）",
       "notInRegistry": "策略 {{name}} 不在型錄中（僅帳本有紀錄）",
+      "datasets": {
+        "title": "使用的資料卡",
+        "empty": "此策略僅使用還原 OHLC 等基礎欄位（無額外資料卡）"
+      },
       "premise": {
         "title": "研究命題",
         "hypothesis": "假設",
@@ -195,6 +199,13 @@
     },
     "stocks": {
       "label": "標的（逗號分隔，至少 1）"
+    },
+    "pool": {
+      "label": "股票池",
+      "systemDefault": "系統預設股票池",
+      "custom": "自訂標的…",
+      "stocksUnit": "檔",
+      "defaultHint": "未指定 → 使用系統預設股票池（開發用大型股）。正式回測建議先在「資料」頁建置 survivorship-clean 股票池再於此選用。"
     },
     "params": {
       "summary": "進階 · 參數（策略參數 JSON，選填；預設空物件）",

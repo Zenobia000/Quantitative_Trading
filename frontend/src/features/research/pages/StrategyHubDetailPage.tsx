@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useStrategyHubDetail } from '../hooks/useStrategyHub'
+import { useDatasets } from '@/features/system/hooks/useSystem'
 import { BranchExperimentsSection } from '../components/branches/BranchExperimentsSection'
 import { CandidateStateBadge } from '../components/candidates/CandidateStateBadge'
 import { ScorecardLights } from '../components/candidates/ScorecardLights'
@@ -122,6 +123,9 @@ export function StrategyHubDetailPage() {
         </div>
       )}
 
+      {/* 使用的資料卡（反向索引搬家自資料字典：語意屬策略側，多策略也不擠字典） */}
+      <UsedDatasetsSection strategy={detail.name} />
+
       {/* 候選生命週期（IA 裁決 B） */}
       <CandidateLifecycle
         candidate={detail.candidate}
@@ -227,6 +231,41 @@ export function StrategyHubDetailPage() {
         )}
       </section>
     </div>
+  )
+}
+
+/**
+ * 使用的資料卡 section —— 反向索引（哪些策略用某資料卡）從資料字典搬到策略側呈現。
+ * 複用既有 GET /system/datasets（型錄含 used_by），前端依策略名過濾，不需新後端。
+ * 空/載入/錯誤皆誠實降級：無卡 → 提示（策略只讀還原 OHLC 也屬正常）。
+ */
+function UsedDatasetsSection({ strategy }: { strategy: string }) {
+  const { t } = useTranslation('research')
+  const q = useDatasets()
+  const cards = Array.isArray(q.data?.data) ? q.data.data : []
+  const used = cards.filter((c) => (c.used_by ?? []).includes(strategy))
+
+  // 型錄未載入完成前不佔版面（次要資訊，靜默）
+  if (q.isLoading || q.isError) return null
+
+  return (
+    <section className="mb-3 rounded-lg border border-border bg-surface p-4">
+      <div className="mb-2 text-xs uppercase tracking-wide text-text-muted">
+        {t('strategyHub.detail.datasets.title')}
+      </div>
+      {used.length === 0 ? (
+        <p className="text-xs text-text-muted">{t('strategyHub.detail.datasets.empty')}</p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {used.map((c) => (
+            <li key={c.key} className="flex flex-wrap items-baseline gap-2 text-sm">
+              <span className="text-text">{c.name_zh}</span>
+              <code className="font-mono text-xs text-text-muted">{c.key}</code>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

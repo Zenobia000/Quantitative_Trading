@@ -4,7 +4,7 @@
     "subtitle": "資料字典 · 資料匯入 · 股票池建置",
     "catalog": {
       "heading": "資料字典",
-      "subheading": "搜尋可用於策略的資料，複製 key 直接寫策略",
+      "subheading": "查可用於策略的資料、怎麼取用；點開看 API 用法",
       "search": "搜尋資料 key、名稱或說明…",
       "resource": "資料字典",
       "pending": "資料字典（待後端目錄產出）",
@@ -12,6 +12,9 @@
       "noMatch": "找不到符合「{{q}}」的資料集",
       "noMatchHint": "試試其他關鍵字或切換分類",
       "copyKey": "複製 key",
+      "usage": "API 用法",
+      "copyUsage": "複製取數呼叫",
+      "docLink": "finlab 資料庫文件 ↗",
       "usedByLabel": "使用中的策略",
       "since": "自 {{year}}",
       "category": {
