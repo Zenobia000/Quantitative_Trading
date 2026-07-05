@@ -149,6 +149,7 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - [x] `frontend/src/features/research/pages/ComparePage.tsx` 由鬆散比較頁改為 comparison ledger，集中 baseline/run/gate 分布與 pending evidence queue。
 - [x] `frontend/src/features/research/pages/SweepPage.tsx` 由表單式掃描頁改為 sweep terminal，集中 grid/estimate/job 與 pending evidence queue。
 - [x] `frontend/src/features/research/pages/RunReportPage.tsx` 外殼由報告卡片頁改為 run evidence ledger，KPI/reproduce/cost/action 改為 dense terminal layout。
-- [ ] `frontend/src/features/research/pages/ReportViewerPage.tsx` 與 scorecard/reportviewer 子元件仍需 terminal + evidence ledger 化。
+- [x] `frontend/src/features/research/pages/ReportViewerPage.tsx` 首屏外殼改為 evaluation evidence ledger；headline banner 與 scorecard summary 已去卡片化。
+- [ ] `frontend/src/features/research/components/reportviewer/{ScorecardTabs,GateChecksSection,SimulationPanel,DecisionActionBar}` 仍需 terminal + evidence ledger 化。
 - [ ] Live OOS Queue / Release Gate 仍需改為 Governance operations queue。
 - [ ] Data / Risk / Trading / Operations 頁面仍需去卡片化並加強 source/as-of/trace。

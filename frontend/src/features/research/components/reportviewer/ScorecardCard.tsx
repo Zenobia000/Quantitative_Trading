@@ -1,5 +1,5 @@
 /*
- * 單張 scorecard 摘要卡 —— category 燈號 + 各指標 pass/warn/fail 計數 + 一鍵跳對應 sheet tab。
+ * 單張 scorecard ledger cell —— category 燈號 + 各指標 pass/warn/fail 計數 + 一鍵跳對應 sheet tab。
  * 整張卡 not_available（如 panel 策略的 Win Rate）→ 誠實顯示「無法產出 + 原因」，不留無說明佔位（UX 驗收 #3）。
  */
 import { useTranslation } from 'react-i18next'
@@ -36,12 +36,12 @@ export function ScorecardCard({
       onClick={onSelect}
       aria-pressed={active}
       data-testid={`scorecard-${scorecard.category}`}
-      className={`flex flex-col rounded-lg border bg-surface p-4 text-left transition-colors ${
-        active ? 'border-text' : 'border-border hover:border-text-muted'
+      className={`flex min-h-[112px] flex-col border-b border-border bg-surface p-3 text-left transition-colors lg:border-b-0 lg:border-r last:lg:border-r-0 ${
+        active ? 'bg-input outline outline-1 outline-info' : 'hover:bg-row'
       }`}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold">{label}</span>
+        <span className="font-mono text-xs font-semibold uppercase tracking-[0.08em] text-text">{label}</span>
         <StatusBadge tone={statusTone(scorecard.status)}>
           <span aria-hidden>{statusMark(scorecard.status)}</span>
           <span>{t(`reportViewer.status.${scorecard.status}`)}</span>
@@ -51,7 +51,7 @@ export function ScorecardCard({
       {unavailable ? (
         <p className="text-xs text-text-muted">{scorecard.note ?? t('reportViewer.scorecard.notAvailableCard')}</p>
       ) : (
-        <div className="flex flex-wrap gap-1.5 font-mono text-[11px] text-text-secondary tabular">
+        <div className="mt-auto flex flex-wrap gap-1.5 font-mono text-[11px] text-text-secondary tabular">
           {COUNT_ORDER.filter((s) => counts[s]).map((s) => (
             <span key={s} className="inline-flex items-center gap-1">
               <span aria-hidden>{statusMark(s)}</span>

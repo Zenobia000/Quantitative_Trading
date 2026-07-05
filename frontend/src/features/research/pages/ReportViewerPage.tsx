@@ -83,17 +83,28 @@ export function ReportViewerPage() {
         back={back}
       />
 
-      <div className="mb-3">
-        <DataSourceBadge source={load.source} />
+      <div className="mb-3 border border-border bg-panel">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
+          <div>
+            <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-text-muted">Evaluation Evidence Ledger</div>
+            <div className="mt-0.5 text-xs text-text-secondary">{result.strategy}</div>
+          </div>
+          <div className="ml-auto flex flex-wrap items-center gap-2 font-mono text-[11px] uppercase tracking-[0.08em]">
+            <span className="border border-info/50 px-2 py-1 text-info">RUN {result.run_id}</span>
+            <span className="border border-border px-2 py-1 text-text-secondary">EVAL {result.evaluation_id}</span>
+            <span className="border border-border px-2 py-1 text-text-muted">PROFILE {result.profile}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+          <DataSourceBadge source={load.source} />
+          <span className="font-mono text-xs text-text-muted">created_at {result.created_at}</span>
+        </div>
       </div>
 
-      {/* 1. Headline banner（首屏三答） */}
       <ReportHeadlineBanner result={result} />
 
-      {/* 2. 五張 scorecard 摘要 */}
       <ScorecardGrid scorecards={result.scorecards} activeCategory={activeCategory} onSelect={setActive} />
 
-      {/* 3. Sheet tabs（維度明細 + 相關序列複用元件） */}
       <ScorecardTabs
         scorecards={result.scorecards}
         runId={result.run_id}
@@ -101,18 +112,14 @@ export function ReportViewerPage() {
         onSelect={setActive}
       />
 
-      {/* 5. Evidence / gate checks（DsrRuler + hard-fail 燈） */}
       <GateChecksSection
         checks={result.checks}
         dsr={num(result.headline_metrics.dsr)}
         truthVerdict={result.verdict.truth_verdict ?? ''}
       />
 
-      {/* 4. Linked trade log */}
       <LinkedTradeLogSection runId={result.run_id} partial={tradesPartial} />
 
-      {/* 4.5 What-if 模擬（研究沙盤——唯讀不持久化，不影響正式判決；Goal 8）
-          fork 按鈕（Goal 9）以此報告 evaluation_id 為 parent 建分支 */}
       <SimulationPanel
         runId={result.run_id}
         source={load.source}
@@ -120,7 +127,6 @@ export function ReportViewerPage() {
         strategy={result.strategy}
       />
 
-      {/* 6. Decision action bar（api 模式共用 Candidate Pool mutation；決策目標 cand_<strategy>） */}
       <DecisionActionBar
         source={load.source}
         recommendationAction={result.verdict.recommendation.action}

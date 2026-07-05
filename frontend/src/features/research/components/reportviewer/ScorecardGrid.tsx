@@ -1,7 +1,6 @@
 /*
- * 五張 scorecard 摘要網格 —— Profitability / Risk / Risk-Adjusted / Win Rate / Liquidity。
- * RWD：mobile 直向堆疊（grid-cols-1）→ sm 2 欄 → xl 5 欄，無文字重疊（UX 驗收 #4）。
- * 點卡 → 選中對應 sheet tab（active 狀態上移）。
+ * Scorecard ledger summary —— Profitability / Risk / Risk-Adjusted / Win Rate / Liquidity。
+ * 點列 → 選中對應 sheet tab（active 狀態上移）。
  */
 import { useTranslation } from 'react-i18next'
 import type { Scorecard } from '../../api/reportViewer'
@@ -18,9 +17,13 @@ export function ScorecardGrid({
 }) {
   const { t } = useTranslation('research')
   return (
-    <section className="mb-3">
-      <h2 className="mb-2 text-[18px] font-semibold">{t('reportViewer.scorecard.title')}</h2>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+    <section className="mb-3 border border-border bg-panel">
+      <div className="border-b border-border px-3 py-2">
+        <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+          {t('reportViewer.scorecard.title')}
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-5">
         {scorecards.map((sc) => (
           <ScorecardCard
             key={sc.category}
