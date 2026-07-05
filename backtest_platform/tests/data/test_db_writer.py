@@ -131,7 +131,7 @@ def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
     ]
 
     with patch(
-        "backtest_platform.data.db_writer._connection"
+        "backtest_platform.data.runs_writer._connection"
     ) as mock_conn_ctx, patch(
         "psycopg2.extras.execute_values"
     ) as mock_exec:
@@ -169,7 +169,7 @@ def test_upsert_runs_calls_execute_values_with_run_id_conflict() -> None:
 def test_upsert_runs_empty_returns_zero() -> None:
     from backtest_platform.data.db_writer import upsert_runs
 
-    with patch("backtest_platform.data.db_writer._connection") as mock_conn_ctx:
+    with patch("backtest_platform.data.runs_writer._connection") as mock_conn_ctx:
         n = upsert_runs([])
     assert n == 0
     mock_conn_ctx.assert_not_called()

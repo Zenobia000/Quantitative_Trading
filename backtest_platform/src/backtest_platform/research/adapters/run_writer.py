@@ -7,8 +7,12 @@ parsing JSONL. The ledger stays the single source of truth — a DB failure
 (down, bad creds, placeholder password) degrades to ledger-only with a warning,
 never blocks or loses a run.
 
-The ``db_writer`` import stays lazy (inside the try) so this module loads
+The ``runs_writer`` import stays lazy (inside the try) so this module loads
 without psycopg2 and the pure research layer never top-level-imports the DB.
+W5.2c repointed this from ``db_writer`` to ``data.runs_writer`` so the research
+import chain reaches the runs upsert WITHOUT routing through ``db_writer`` —
+keeping research off ``db_writer`` (and, transitively, off services) as later
+waves fold service re-exports into the ``db_writer`` shim.
 """
 from __future__ import annotations
 
@@ -31,7 +35,7 @@ def mark_run_status(cfg: Any, status: str, *, writer: Any = None) -> bool:
     ``persist_run`` — never blocks or fails the run itself."""
     try:
         if writer is None:
-            from backtest_platform.data import db_writer as writer
+            from backtest_platform.data import runs_writer as writer
         writer.upsert_runs([config_to_status_row(cfg, status)])
         return True
     except Exception as exc:
@@ -59,7 +63,7 @@ def persist_run(
     append_run(record, path)
     try:
         if writer is None:
-            from backtest_platform.data import db_writer as writer
+            from backtest_platform.data import runs_writer as writer
         writer.upsert_runs([run_record_to_db_row(record)])
         return True
     except Exception as exc:
