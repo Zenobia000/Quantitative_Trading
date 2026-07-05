@@ -1,8 +1,7 @@
 /*
- * Deployment zone 遷移驗證（rebuild IA §5.1/§5.3/§5.6）：
- * nav 新增 deployment zone（部署嚴格閘），validate 由 research 移出；
- * /research/validate → /deploy/gate（保留 query）、/research/promote/:id → /deploy/promote/:id（轉發參數）client 重導。
- * 純位置搬遷，零 gate 邏輯變更（規格全域驗收 #8：嚴格閘仍可用但不再是第一研究體驗）。
+ * Wall Street operations console IA:
+ * nav 以 golden 七層產品子系統為一等區域；舊 Live OOS / Deployment
+ * 語義收斂到 Governance。舊 URL 仍保留 client redirect。
  */
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -13,9 +12,9 @@ import { GateRedirect, PromoteRedirect } from '@/app/redirects'
 describe('nav — Deployment zone migration', () => {
   const zones = Object.fromEntries(NAV.map((z) => [z.zone, z]))
 
-  it('adds a deployment zone carrying the strict gate item', () => {
-    expect(zones.deployment).toBeDefined()
-    const tos = zones.deployment.items.map((i) => i.to)
+  it('moves strict gate under governance', () => {
+    expect(zones.governance).toBeDefined()
+    const tos = zones.governance.items.map((i) => i.to)
     expect(tos).toContain('/deploy/gate')
   })
 
@@ -29,8 +28,16 @@ describe('nav — Deployment zone migration', () => {
     expect(researchTos).not.toContain('/research/validate')
   })
 
-  it('orders zones Research → Live OOS → Deployment → Monitor → System', () => {
-    expect(NAV.map((z) => z.zone)).toEqual(['research', 'live-oos', 'deployment', 'monitor', 'system'])
+  it('orders zones Data → Research → Governance → Trading → Risk → Operations → System', () => {
+    expect(NAV.map((z) => z.zone)).toEqual([
+      'data',
+      'research',
+      'governance',
+      'trading',
+      'risk',
+      'operations',
+      'system',
+    ])
   })
 })
 

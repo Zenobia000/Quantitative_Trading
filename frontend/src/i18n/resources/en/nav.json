@@ -1,10 +1,12 @@
 {
   "home": "Home",
   "zone": {
+    "data": "DATA",
     "research": "RESEARCH",
-    "live-oos": "LIVE OOS",
-    "deployment": "DEPLOYMENT",
-    "monitor": "MONITOR",
+    "governance": "GOVERNANCE",
+    "trading": "TRADING",
+    "risk": "RISK",
+    "operations": "OPERATIONS",
     "system": "SYSTEM"
   },
   "item": {

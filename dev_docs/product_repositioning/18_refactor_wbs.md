@@ -43,6 +43,12 @@
 | W6.1 | 6-api | 拆 api monolith：system.py→三 service router；抽 router 內 domain 邏輯進 application service；apps/api 變薄 composition root | W5.1 | worktree | XL | ✗ |
 | W7.1 | 7-monorepo | 建 `quant_platform/{apps,packages,services}`；frontend→apps/web_console；deploy/ 與 research-note md 進 docs/ | W6.1 | worktree | XL | ✗ |
 | W8.1 | 8-docs | 同步 dev_docs 08/09、撰 repositioning ADR、維護本 WBS 狀態欄 | W2.1 | direct-commit | M | ✅ |
+| FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Wall Street operations console，以 golden 七層為 IA | — | feature-branch | S | ⏳ 本波 |
+| FE-R1 | frontend-reset | 重寫全局 tokens、AppShell、nav、首頁 Command Center；建立交易/風控/營運密集系統視覺基線 | FE-R0 | feature-branch | M | ⏳ 本波 |
+| FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | 下一波 |
+| FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | 下一波 |
+| FE-R4 | frontend-reset | 重做 Governance/Risk/Trading：release gate、paper、target portfolio、order intent、risk decision、fill/reconciliation | FE-R2 | feature-branch | XL | 下一波 |
+| FE-R5 | frontend-reset | 重做 Operations：PnL、positions、alerts、incidents、jobs、audit，補 Playwright screenshot audit | FE-R3/4 | feature-branch | L | 下一波 |
 
 ## 3.1 執行發現與解決（2026-07-05）
 
@@ -87,3 +93,46 @@ WBS 原標 W2.x 為 worktree，實際採 **feature-branch**：本次為單一 se
 - **import-linter 立即 RED**：research→governance（watch_registry→runtime）今日存在；W1.1 只鎖已綠規則，runtime/governance 子規則於 W2.1 抽離後補。
 - **monorepo big-bang PR 過大**（163 py + ~250 fe）：維持 deferred worktree 波次，一 service 一 PR，不做單一 mega-commit。
 - **多 session 併發**：重 worktree 波次用 git worktree 隔離，勿共用 HEAD。
+
+## 7. Frontend Reset — Wall Street Operations Console
+
+### 7.1 問題
+
+現有前端仍保護舊 IA 與舊視覺真相源：
+
+- `frontend/GOAL.md` 指向已刪除的 `dev_docs/web_design/*`。
+- `tokens.css` 仍是 Grok 單色 token，與 golden 七層產品定位不一致。
+- `nav.ts` 仍以 Research / Live OOS / Deployment / Monitor / System 分區，沒有把 Data / Governance / Strategy/Portfolio / Risk / Execution / Operations 作為產品內一等區域。
+- 多數頁面像舊研究後台，而不是交易/風控/營運操作台。
+
+### 7.2 新方向
+
+前端重設計為 **Wall Street operations console**：
+
+| 原則 | 說明 |
+| :--- | :--- |
+| Dense first | 以表格、狀態列、ticker、ledger、risk blotter 為主，不做行銷式 hero。 |
+| Seven-layer IA | Data / Research / Governance / Trading / Risk / Operations / System 都是一等區域。 |
+| Evidence over decoration | 每個指標都要有來源、as-of、trace id；pending 不造假。 |
+| Risk visible everywhere | CRIT / HALT / reconciliation lock 全站可見。 |
+| Keyboard / drill-down | Cmd-K、表格鍵盤導覽、audit trail drill-down。 |
+| Low-latency visual language | 深色交易台、細格線、單行狀態列、monospace 數字、有限功能色。 |
+
+### 7.3 設計 token
+
+| Token 類 | 方向 |
+| :--- | :--- |
+| Base | near-black / graphite / exchange blue-black |
+| Surface | panel / raised / table-row / input 分層清楚 |
+| Border | 1px hairline grid，降低 card 感 |
+| Typography | sans for labels，monospace tabular for numbers/symbols/ids |
+| Functional colors | gain/loss/warn/crit/info/halt；不用品牌漸層 |
+| Layout | left rail + top market status + dense workspace |
+
+### 7.4 驗收
+
+- [ ] `frontend/GOAL.md` 不再引用舊 `dev_docs/web_design`。
+- [ ] `NAV` zone 改為七層操作台 IA。
+- [ ] `AppShell` 有 top market/risk status bar、七層 rail、workspace header。
+- [ ] 首頁改為 Command Center，優先呈現 readiness、risk、data、research、operations。
+- [ ] `npm run typecheck` 通過。

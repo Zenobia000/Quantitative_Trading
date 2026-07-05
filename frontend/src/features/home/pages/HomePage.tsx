@@ -1,12 +1,7 @@
-/*
- * 首頁 · 控制塔（/）。三源對齊 assembly + design.pen frame + page spec。
- * research_status + recent_activity 接真實 /home/*（read_runs 聚合）；
- * fleet_strip + system_health 需 live 資料（M4）→ pending（不假造數字）。
- */
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { ReactNode } from 'react'
 import { useRecent, useResearchStatus } from '../hooks/useHome'
-import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
 import { Skeleton } from '@/components/Skeleton'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -15,9 +10,59 @@ import { StatCard } from '@/components/StatCard'
 import { FirstRunEmptyState } from '@/components/FirstRunEmptyState'
 import { useErrorText } from '@/i18n/useErrorText'
 
+function Panel({
+  title,
+  eyebrow,
+  children,
+  action,
+}: {
+  title: string
+  eyebrow?: string
+  children: ReactNode
+  action?: ReactNode
+}) {
+  return (
+    <section className="border border-border bg-panel">
+      <div className="flex min-h-10 items-center justify-between border-b border-border px-3 py-2">
+        <div>
+          {eyebrow && <div className="text-[10px] uppercase tracking-[0.16em] text-text-muted">{eyebrow}</div>}
+          <h2 className="text-[12px] font-semibold uppercase tracking-[0.12em] text-text">{title}</h2>
+        </div>
+        {action}
+      </div>
+      <div className="p-3">{children}</div>
+    </section>
+  )
+}
+
+function OpsCell({
+  label,
+  value,
+  tone = 'muted',
+}: {
+  label: string
+  value: string
+  tone?: 'gain' | 'warning' | 'error' | 'info' | 'halt' | 'muted'
+}) {
+  const toneClass: Record<typeof tone, string> = {
+    gain: 'text-gain',
+    warning: 'text-warning',
+    error: 'text-error',
+    info: 'text-info',
+    halt: 'text-halt',
+    muted: 'text-text-secondary',
+  }
+  return (
+    <div className="border border-border bg-row p-3">
+      <div className="text-[10px] uppercase tracking-[0.16em] text-text-muted">{label}</div>
+      <div className={`mt-1 font-mono text-lg font-semibold tabular ${toneClass[tone]}`}>{value}</div>
+    </div>
+  )
+}
+
 export function HomePage() {
   const navigate = useNavigate()
-  const { t } = useTranslation(['home', 'nav'])
+  const { t } = useTranslation(['home', 'nav', 'common', 'errors'])
   const errText = useErrorText()
   const rs = useResearchStatus()
   const rec = useRecent()
@@ -26,110 +71,147 @@ export function HomePage() {
   const isNewPlatform = status?.total_runs === 0 && !rs.isLoading
 
   return (
-    <div>
-      <PageHeader title={t('title')} route="/" subtitle={t('subtitle')} />
-
-      {/* command_hero — primary 動作前置。⌘K 已在 topbar，這裡不放死鈕；
-          新建回測 為顯眼 primary，其餘為研究迴圈次要快捷。 */}
-      <div className="mb-4 rounded-lg border border-border bg-surface px-5 py-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="mr-auto">
-            <div className="text-sm font-medium text-text">{t('hero.headline')}</div>
-            <div className="text-xs text-text-muted">{t('hero.flow')}</div>
+    <div className="mx-auto flex max-w-[1680px] flex-col gap-3">
+      <section className="border border-border-strong bg-panel">
+        <div className="grid gap-px bg-border md:grid-cols-[1.35fr_0.65fr]">
+          <div className="bg-panel p-4">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-info">Command Center</div>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-text">Personal EOD Trading Operations</h1>
+            <p className="mt-1 max-w-3xl text-sm text-text-secondary">
+              Seven-layer control surface for data readiness, research evidence, governance gates, risk locks,
+              execution trail, and daily operations. Pending producers stay visible without fabricated values.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => navigate('/research/runs/new')}
+                className="border border-info bg-info px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-base"
+              >
+                New Research Run
+              </button>
+              <button
+                onClick={() => navigate('/deploy/gate')}
+                className="border border-border-strong bg-input px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary hover:text-text"
+              >
+                Release Gate
+              </button>
+              <button
+                onClick={() => navigate('/monitor/risk')}
+                className="border border-border-strong bg-input px-4 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-text-secondary hover:text-text"
+              >
+                Risk Blotter
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => navigate('/research/runs/new')}
-            className="rounded-pill bg-text px-5 py-2 text-sm font-medium text-base hover:opacity-90"
-          >
-            {t('hero.cta')}
-          </button>
+
+          <div className="grid grid-cols-2 gap-px bg-border">
+            <OpsCell label="Risk lock" value="CLEAR" tone="gain" />
+            <OpsCell label="Mode" value="PAPER" tone="info" />
+            <OpsCell label="Data bundle" value="PENDING" tone="warning" />
+            <OpsCell label="Broker" value="OFFLINE" tone="muted" />
+          </div>
         </div>
-        {/* workflow ribbon — 對齊新 IA 三旅程軸：研究 triage → 候選池 → Live OOS → 部署（rebuild IA §1.0） */}
-        <div className="mt-3 flex flex-wrap gap-2">
-          {[
-            { label: t('nav:item.strategies'), to: '/research/strategies' },
-            { label: t('nav:item.candidates'), to: '/research/candidates' },
-            { label: t('nav:item.liveOosQueue'), to: '/live-oos/queue' },
-            { label: t('nav:item.strictGate'), to: '/deploy/gate' },
-          ].map((q) => (
-            <button
-              key={q.to}
-              onClick={() => navigate(q.to)}
-              className="rounded-md border border-border px-3 py-1 text-sm text-text-secondary hover:text-text"
-            >
-              {q.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      </section>
 
       {isNewPlatform ? (
         <FirstRunEmptyState headline={t('welcome')} onCta={() => navigate('/research/runs/new')} />
       ) : (
-        <>
-          {/* research_status — 真實資料前置（live 數據領先，避免夾在 pending 之間） */}
-          <section className="mb-3">
-            <h2 className="mb-2 text-sm text-text-secondary">{t('researchStatus')}</h2>
-            {rs.isLoading ? (
-              <Skeleton className="h-20 w-full" />
-            ) : rs.isError ? (
-              <div className="rounded-lg border border-border bg-surface p-4 text-sm text-error">
-                {t('errors:load.failed', { resource: t('researchStatus'), detail: errText(rs.error) })}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <StatCard label={t('kpi.totalRuns')} value={status?.total_runs ?? '—'} />
-                <StatCard
-                  label={t('kpi.latestGate')}
-                  value={
-                    status?.latest_gate_status ? (
-                      <EnumBadge family="gate" value={status.latest_gate_status} />
-                    ) : (
-                      '—'
-                    )
-                  }
-                />
-                <StatCard label={t('kpi.trials')} value={status?.trials ?? t('common:state.awaitingBackend')} />
-                <StatCard label={t('kpi.dsr')} value={status?.dsr ?? t('common:state.awaitingBackend')} />
-              </div>
-            )}
-          </section>
+        <div className="grid gap-3 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex flex-col gap-3">
+            <Panel title="Research Evidence" eyebrow="Layer 2 · validation">
+              {rs.isLoading ? (
+                <Skeleton className="h-24 w-full" />
+              ) : rs.isError ? (
+                <div className="border border-error/50 bg-row p-4 text-sm text-error">
+                  {t('errors:load.failed', { resource: t('researchStatus'), detail: errText(rs.error) })}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                  <StatCard label={t('kpi.totalRuns')} value={status?.total_runs ?? '—'} hint="research run ledger" />
+                  <StatCard
+                    label={t('kpi.latestGate')}
+                    value={
+                      status?.latest_gate_status ? (
+                        <EnumBadge family="gate" value={status.latest_gate_status} />
+                      ) : (
+                        '—'
+                      )
+                    }
+                    hint="latest truth gate"
+                  />
+                  <StatCard label={t('kpi.trials')} value={status?.trials ?? t('common:state.awaitingBackend')} />
+                  <StatCard label={t('kpi.dsr')} value={status?.dsr ?? t('common:state.awaitingBackend')} />
+                </div>
+              )}
+            </Panel>
 
-          {/* recent_activity — 真接 */}
-          <section className="mb-3">
-            <h2 className="mb-2 text-sm text-text-secondary">{t('recentActivity')}</h2>
-            {rec.isLoading ? (
-              <Skeleton className="h-16 w-full" />
-            ) : recent.length === 0 ? (
-              <div className="rounded-lg border border-border bg-surface p-4 text-sm text-text-muted">{t('noRecent')}</div>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {recent.map((r, i) => (
-                  <li
-                    key={i}
-                    onClick={() => r.run_id && navigate(`/research/runs/${encodeURIComponent(r.run_id)}`)}
-                    className="flex cursor-pointer items-center gap-3 rounded-md border border-border/60 bg-surface px-3 py-1.5 text-sm hover:bg-input"
-                  >
-                    <StatusBadge tone="muted">{r.type}</StatusBadge>
-                    <span className="font-mono text-xs tabular">{r.run_id}</span>
-                    <span className="text-text-secondary">{r.preset}</span>
-                    {r.gate_status && (
-                      <span className="ml-auto">
-                        <EnumBadge family="gate" value={r.gate_status} />
-                      </span>
-                    )}
-                  </li>
+            <Panel title="Layer Readiness" eyebrow="Seven-layer operating model">
+              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                {(
+                  [
+                  ['Data', 'Bundle/DQ pending', 'warning'],
+                  ['Research', `${status?.total_runs ?? '—'} runs`, 'info'],
+                  ['Governance', status?.latest_gate_status ?? 'awaiting gate', 'muted'],
+                  ['Risk', 'fail-closed ready', 'gain'],
+                  ['Trading', 'paper mode only', 'info'],
+                  ['Execution', 'broker offline', 'muted'],
+                  ['Monitoring', 'daily report pending', 'warning'],
+                  ['Foundation', 'local runtime', 'muted'],
+                ] as Array<[string, string, 'gain' | 'warning' | 'info' | 'muted']>
+                ).map(([label, value, tone]) => (
+                  <OpsCell key={label} label={label} value={value} tone={tone} />
                 ))}
-              </ul>
-            )}
-          </section>
-
-          {/* 尚未接線（M4 producer）—— 集中置底，不夾在真實數據間造成「未完工」錯覺 */}
-          <div className="flex flex-col gap-2">
-            <PendingNote label={t('pending.fleet')} />
-            <PendingNote label={t('pending.systemHealth')} />
+              </div>
+            </Panel>
           </div>
-        </>
+
+          <div className="flex flex-col gap-3">
+            <Panel title="Activity Blotter" eyebrow="Recent research + governance events">
+              {rec.isLoading ? (
+                <Skeleton className="h-28 w-full" />
+              ) : recent.length === 0 ? (
+                <div className="border border-border bg-row p-4 text-sm text-text-muted">{t('noRecent')}</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[520px] border-collapse text-left text-xs">
+                    <thead className="text-[10px] uppercase tracking-[0.14em] text-text-muted">
+                      <tr className="border-b border-border">
+                        <th className="px-2 py-2 font-medium">Type</th>
+                        <th className="px-2 py-2 font-medium">Run ID</th>
+                        <th className="px-2 py-2 font-medium">Preset</th>
+                        <th className="px-2 py-2 font-medium">Gate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recent.map((r, i) => (
+                        <tr
+                          key={`${r.run_id ?? 'activity'}-${i}`}
+                          onClick={() => r.run_id && navigate(`/research/runs/${encodeURIComponent(r.run_id)}`)}
+                          className="cursor-pointer border-b border-border/70 bg-row hover:bg-input"
+                        >
+                          <td className="px-2 py-2">
+                            <StatusBadge tone="muted">{r.type}</StatusBadge>
+                          </td>
+                          <td className="px-2 py-2 font-mono tabular text-text">{r.run_id}</td>
+                          <td className="px-2 py-2 text-text-secondary">{r.preset}</td>
+                          <td className="px-2 py-2">
+                            {r.gate_status ? <EnumBadge family="gate" value={r.gate_status} /> : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Panel>
+
+            <Panel title="Deferred Producers" eyebrow="Visible gaps, no fabricated values">
+              <div className="flex flex-col gap-2">
+                <PendingNote label={t('pending.fleet')} />
+                <PendingNote label={t('pending.systemHealth')} />
+              </div>
+            </Panel>
+          </div>
+        </div>
       )}
     </div>
   )
