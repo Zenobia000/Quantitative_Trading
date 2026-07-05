@@ -1,18 +1,20 @@
 /*
  * Monitor C — 訊號日誌（monitor_c_signals）。
- * 訊號表 + 成交表（真實 telemetry：/signals · /fills）；漏斗為 pending。
+ * 訊號表 + 成交表（真實 telemetry：/signals · /fills）；漏斗 / 時間軸已 wired
+ * （typed-empty pending），producer 上線即點亮。
  */
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
-import { PendingNote } from '@/components/PendingNote'
 import { QueryState, SimpleTable } from '../components'
-import type { FillRow, SignalRow } from '../hooks/useMonitor'
-import { useFills, useSignals } from '../hooks/useMonitor'
+import type { FillRow, FunnelStage, SignalRow, TimelinePoint } from '../hooks/useMonitor'
+import { useFills, useSignals, useSignalsFunnel, useSignalsTimeline } from '../hooks/useMonitor'
 
 export function SignalsPage() {
   const { t } = useTranslation('monitor')
   const signals = useSignals()
   const fills = useFills()
+  const funnel = useSignalsFunnel()
+  const timeline = useSignalsTimeline()
   return (
     <div>
       <PageHeader title={t('signals.title')} route="/monitor/signals" subtitle={t('signals.subtitle')} />
@@ -65,7 +67,46 @@ export function SignalsPage() {
         </QueryState>
       </section>
 
-      <PendingNote label={t('signals.deferred')} />
+      <section className="mb-3">
+        <div className="mb-1 text-xs text-text-muted">{t('signals.funnelHeading')}</div>
+        <QueryState
+          q={funnel}
+          resource={t('signals.funnelResource')}
+          pendingLabel={t('signals.funnelPending')}
+          emptyLabel={t('signals.funnelEmpty')}
+        >
+          {(rows: FunnelStage[]) => (
+            <SimpleTable
+              rows={rows}
+              cols={[
+                { key: 'stage', label: t('signals.funnelCol.stage') },
+                { key: 'count', label: t('signals.funnelCol.count'), align: 'right', fmt: (v) => (typeof v === 'number' ? v.toLocaleString() : '—') },
+              ]}
+            />
+          )}
+        </QueryState>
+      </section>
+
+      <section className="mb-3">
+        <div className="mb-1 text-xs text-text-muted">{t('signals.timelineHeading')}</div>
+        <QueryState
+          q={timeline}
+          resource={t('signals.timelineResource')}
+          pendingLabel={t('signals.timelinePending')}
+          emptyLabel={t('signals.timelineEmpty')}
+        >
+          {(rows: TimelinePoint[]) => (
+            <SimpleTable
+              rows={rows.slice(-30)}
+              cols={[
+                { key: 't', label: t('signals.timelineCol.time'), fmt: (v) => String(v).replace('T', ' ').slice(0, 19) },
+                { key: 'signals', label: t('signals.timelineCol.signals'), align: 'right' },
+                { key: 'submitted', label: t('signals.timelineCol.submitted'), align: 'right' },
+              ]}
+            />
+          )}
+        </QueryState>
+      </section>
     </div>
   )
 }

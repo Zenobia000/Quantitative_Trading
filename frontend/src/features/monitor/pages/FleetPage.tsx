@@ -1,19 +1,20 @@
 /*
  * Monitor — 策略艦隊總控（monitor_fleet）。
  * 組合摘要（/portfolio-summary）+ 艦隊板（/fleet：每策略最新淨值，telemetry-driven，
- * 8.H.8）。多策略實跑後自動點亮；單策略時即顯該策略。相關性矩陣仍 pending。
+ * 8.H.8）。多策略實跑後自動點亮；單策略時即顯該策略。相關性矩陣已 wired
+ * （typed-empty pending），producer 上線即點亮。
  */
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '@/components/PageHeader'
-import { PendingNote } from '@/components/PendingNote'
 import { KpiCard, QueryState, SimpleTable } from '../components'
-import type { FleetRow, PortfolioSummary } from '../hooks/useMonitor'
-import { useFleet, usePortfolioSummary } from '../hooks/useMonitor'
+import type { Correlation, FleetRow, PortfolioSummary } from '../hooks/useMonitor'
+import { useCorrelation, useFleet, usePortfolioSummary } from '../hooks/useMonitor'
 
 export function FleetPage() {
   const { t } = useTranslation('monitor')
   const summary = usePortfolioSummary()
   const fleet = useFleet()
+  const correlation = useCorrelation()
   return (
     <div>
       <PageHeader title={t('fleet.title')} route="/monitor" subtitle={t('fleet.subtitle')} />
@@ -63,7 +64,22 @@ export function FleetPage() {
         </QueryState>
       </section>
 
-      <PendingNote label={t('fleet.deferred')} />
+      <section className="mb-3">
+        <div className="mb-1 text-xs text-text-muted">{t('fleet.correlation.heading')}</div>
+        <QueryState
+          q={correlation}
+          resource={t('fleet.correlation.resource')}
+          pendingLabel={t('fleet.correlation.pending')}
+          emptyLabel={t('fleet.correlation.empty')}
+        >
+          {(c: Correlation) => (
+            <div className="border border-border bg-surface p-3 text-sm text-text-secondary">
+              {t('fleet.correlation.summary', { n: c.axes.length })}
+              <div className="mt-1 font-mono text-xs text-text-muted">{c.axes.join(' · ')}</div>
+            </div>
+          )}
+        </QueryState>
+      </section>
     </div>
   )
 }

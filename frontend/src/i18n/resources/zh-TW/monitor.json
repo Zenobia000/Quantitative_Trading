@@ -27,7 +27,13 @@
         "updated": "更新"
       }
     },
-    "deferred": "相關性矩陣 / 艦隊操作（correlation 端點待 producer；操作需實盤控制）"
+    "correlation": {
+      "heading": "相關性矩陣",
+      "resource": "相關性矩陣",
+      "pending": "相關性矩陣（待 producer）",
+      "empty": "尚無相關性資料",
+      "summary": "{{n}} × {{n}} 相關性矩陣"
+    }
   },
   "board": {
     "title": "運行看板",
@@ -103,7 +109,23 @@
       "equity": "淨值",
       "drawdown": "DD"
     },
-    "deferred": "基準對比 / 月報酬熱圖（benchmark · monthly 端點待 producer）"
+    "benchmarkHeading": "基準對比",
+    "benchmarkResource": "基準對比",
+    "benchmarkPending": "基準對比（待紙上交易遙測）",
+    "benchmarkEmpty": "尚無基準對比資料",
+    "benchmarkCol": {
+      "time": "時間",
+      "strategy": "策略",
+      "benchmark": "基準"
+    },
+    "monthlyHeading": "月報酬",
+    "monthlyResource": "月報酬",
+    "monthlyPending": "月報酬（待紙上交易遙測）",
+    "monthlyEmpty": "尚無月報酬資料",
+    "monthlyCol": {
+      "month": "月份",
+      "return": "報酬"
+    }
   },
   "positions": {
     "title": "部位狀態",
@@ -119,7 +141,32 @@
       "openedAt": "進場時間",
       "strategy": "策略"
     },
-    "deferred": "產業配置 / 集中度 / 即時報價（industry-allocation · concentration · prices 端點待 producer）"
+    "industryHeading": "產業配置",
+    "industryResource": "產業配置",
+    "industryPending": "產業配置（待紙上交易遙測）",
+    "industryEmpty": "尚無產業配置資料",
+    "industryCol": {
+      "industry": "產業",
+      "weight": "權重"
+    },
+    "concentrationHeading": "集中度",
+    "concentrationResource": "集中度",
+    "concentrationPending": "集中度（待紙上交易遙測）",
+    "concentrationEmpty": "尚無集中度資料",
+    "concentration": {
+      "hhi": "HHI",
+      "top5": "前五大權重",
+      "holdings": "持股數"
+    },
+    "pricesHeading": "即時報價",
+    "pricesResource": "即時報價",
+    "pricesPending": "即時報價（待紙上交易遙測）",
+    "pricesEmpty": "尚無報價資料",
+    "priceCol": {
+      "stock": "股票",
+      "price": "價格",
+      "asOf": "報價時間"
+    }
   },
   "signals": {
     "title": "訊號日誌",
@@ -148,7 +195,23 @@
       "price": "價格",
       "status": "狀態"
     },
-    "deferred": "訊號漏斗 / 時間軸（signals/funnel · signals/timeline 端點待 producer）"
+    "funnelHeading": "訊號漏斗",
+    "funnelResource": "訊號漏斗",
+    "funnelPending": "訊號漏斗（待紙上交易遙測）",
+    "funnelEmpty": "尚無漏斗資料",
+    "funnelCol": {
+      "stage": "階段",
+      "count": "數量"
+    },
+    "timelineHeading": "訊號時間軸",
+    "timelineResource": "訊號時間軸",
+    "timelinePending": "訊號時間軸（待紙上交易遙測）",
+    "timelineEmpty": "尚無時間軸資料",
+    "timelineCol": {
+      "time": "時間",
+      "signals": "訊號數",
+      "submitted": "已送單"
+    }
   },
   "risk": {
     "title": "風控指標",
@@ -160,6 +223,23 @@
     "maxDrawdown": "MaxDD",
     "grossExposure": "總曝險",
     "openPositions": "持倉數",
-    "deferred": "MaxDD 趨勢 / 熔斷事件（risk/mdd-trend · risk/events 端點待 producer）"
+    "mddHeading": "MaxDD 趨勢",
+    "mddResource": "MaxDD 趨勢",
+    "mddPending": "MaxDD 趨勢（待風控遙測）",
+    "mddEmpty": "尚無 MaxDD 趨勢資料",
+    "mddCol": {
+      "time": "時間",
+      "drawdown": "回撤"
+    },
+    "eventsHeading": "熔斷事件",
+    "eventsResource": "熔斷事件",
+    "eventsPending": "熔斷事件（待風控遙測）",
+    "eventsEmpty": "尚無熔斷事件",
+    "eventCol": {
+      "time": "時間",
+      "kind": "類型",
+      "severity": "嚴重度",
+      "detail": "說明"
+    }
   }
 }
