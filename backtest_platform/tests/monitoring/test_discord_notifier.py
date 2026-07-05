@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 import pytest
 
-from backtest_platform.monitoring.discord_notifier import (
+from backtest_platform.services.monitoring_ops.discord_notifier import (
     COLOR_BUY,
     COLOR_SELL,
     MAX_CONTENT_LEN,
@@ -62,7 +62,7 @@ def patched_client(monkeypatch: pytest.MonkeyPatch) -> _RecordingHandler:
         kwargs["transport"] = transport
         return real_client(*args, **kwargs)
 
-    monkeypatch.setattr("backtest_platform.monitoring.discord_notifier.httpx.Client", factory)
+    monkeypatch.setattr("backtest_platform.services.monitoring_ops.discord_notifier.httpx.Client", factory)
     return handler
 
 
@@ -166,11 +166,11 @@ def test_notify_trade_buy_uses_green(
     # Helpers construct DiscordNotifier() with no args → uses DiscordSettings()
     # which reads env. Patch DiscordSettings to inject test config.
     monkeypatch.setattr(
-        "backtest_platform.monitoring.discord_notifier.DiscordSettings",
+        "backtest_platform.services.monitoring_ops.discord_notifier.DiscordSettings",
         lambda: _settings(),
     )
 
-    from backtest_platform.monitoring.discord_notifier import notify_trade
+    from backtest_platform.services.monitoring_ops.discord_notifier import notify_trade
 
     notify_trade("BUY", "2330", 600.5, 1000, reason="MA cross")
     sent = patched_client.payloads[0]["embeds"][0]
@@ -184,10 +184,10 @@ def test_notify_trade_sell_uses_red(
     patched_client: _RecordingHandler, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(
-        "backtest_platform.monitoring.discord_notifier.DiscordSettings",
+        "backtest_platform.services.monitoring_ops.discord_notifier.DiscordSettings",
         lambda: _settings(),
     )
-    from backtest_platform.monitoring.discord_notifier import notify_trade
+    from backtest_platform.services.monitoring_ops.discord_notifier import notify_trade
 
     notify_trade("SELL", "2454", 1200, 500)
     assert patched_client.payloads[0]["embeds"][0]["color"] == COLOR_SELL
@@ -205,7 +205,7 @@ def test_4xx_raises(monkeypatch: pytest.MonkeyPatch) -> None:
     transport = httpx.MockTransport(handler)
     real_client = httpx.Client
     monkeypatch.setattr(
-        "backtest_platform.monitoring.discord_notifier.httpx.Client",
+        "backtest_platform.services.monitoring_ops.discord_notifier.httpx.Client",
         lambda *a, **kw: real_client(*a, transport=transport, **kw),
     )
 
