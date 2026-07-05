@@ -28,10 +28,16 @@ class IngestRequest(BaseModel):
     """Trigger a bundle ingest as an async job (8.H.6).
 
     ``symbols`` is optional (ADR-007 Slice 4): an empty/omitted list resolves to the
-    system default universe, so the data-dictionary "download to local" one-click can
-    fire without the user re-typing a symbol list."""
+    named ``universe`` if provided, else the system default universe, so the
+    data-dictionary "download to local" one-click can fire without the user
+    re-typing a symbol list."""
 
     symbols: list[str] = Field(default_factory=list)
+    universe: str | None = Field(
+        None,
+        description="Named universe id (GET /system/universes); resolved server-side. "
+        "Ignored when `symbols` is non-empty.",
+    )
     start: date
     end: date
     source: str = "finlab"  # "finlab" (ADR-006 primary) | "finmind" (fallback)
@@ -347,10 +353,22 @@ def ingest(req: IngestRequest) -> Envelope:
     (202). The job runs the real ETL (FinLab/FinMind via ``make_ingest``) off-thread
     so the API never blocks; poll :func:`ingest_status`."""
     from backtest_platform.config.universe import DEFAULT_UNIVERSE
+    from backtest_platform.data.universe_registry import symbols_for
     from backtest_platform.orchestration.collaborators import make_ingest
 
-    # ADR-007 Slice 4: empty symbols → system default universe (one-click download).
-    symbols = list(req.symbols) or list(DEFAULT_UNIVERSE)
+    # ADR-007 Slice 4: explicit symbols > named universe > system default universe.
+    symbols = list(req.symbols)
+    if not symbols:
+        if req.universe:
+            resolved = symbols_for(req.universe)
+            if resolved is None:
+                raise HTTPException(
+                    status_code=422,
+                    detail={"resource": "universe", "id": req.universe},
+                )
+            symbols = list(resolved)
+        else:
+            symbols = list(DEFAULT_UNIVERSE)
     ing = make_ingest(start=req.start, end=req.end, source=req.source)
 
     def _run() -> dict[str, Any]:
@@ -361,7 +379,8 @@ def ingest(req: IngestRequest) -> Envelope:
             "failed": sorted(s for s, good in result.items() if not good),
         }
 
-    key = f"{req.source}|{req.start}|{req.end}|{','.join(symbols)}"
+    pool_key = req.universe or "default"
+    key = f"{req.source}|{req.start}|{req.end}|{pool_key}|{','.join(symbols)}"
     job = submit("ingest", key, _run)
     return ok({"job_id": job.job_id, "status": job.status.value})
 

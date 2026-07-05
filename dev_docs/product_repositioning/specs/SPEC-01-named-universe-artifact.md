@@ -114,8 +114,8 @@ Universe（具名產物 — 一等實體）
 ### Slice 4 — 資料下載對接資料字典（接 Q1）
 - **Slice 4a ✅ 已落地**：`GET /system/datasets` 回傳 `bundle_backed`，讓 UI 區分「可進本地 parquet bundle」與「執行時 `data.get` 即抓」。財報/月營收/融資融券先採 ADR-007 決策：**不入本地 bundle，UI 明示 runtime fetch**，不再顯示誤導性的 `not_cached` 灰態。
 - **Slice 4a ✅ 已落地**：`POST /system/ingest` 的 `symbols` 改選填；省略/空陣列時使用 `DEFAULT_UNIVERSE`，支援資料字典/資料匯入的一鍵下載，不要求使用者重打 symbols。
-- **Slice 4b ⏳ 待做**：資料字典 presence 由「全域 category 二元」→「相對選定 Universe + span」。
-- **Slice 4c ⏳ 待做**：卡片 `not_cached` → 一鍵補該表（symbols 來自池、span 來自 manifest）；現階段已先打通 API default universe fallback，尚未做 per-card action。
+- **Slice 4b ✅ 已落地**：資料字典頁增加 Universe scope selector，資料卡在同一頁顯示選定的 Universe + span，讓作者知道這次補表是對哪個母體與期間操作。
+- **Slice 4c ✅ 已落地**：bundle-backed 卡片的 `not_cached` 狀態提供一鍵補本地資料；動作透過 `POST /system/ingest` 送出 selected `universe` + span，不再要求使用者重打 symbols。
 
 ### 非目標（本 spec 不做）
 - 不搬 build 到研究區（§Q2：build 留 Data，只在研究補 select）。

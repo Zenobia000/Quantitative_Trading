@@ -54,7 +54,7 @@
 | Method | Path | 說明 |
 | :--- | :--- | :--- |
 | GET | `/system/datasets` | 資料字典 read model：finlab key/name/category/freq/history/description、`local`、`used_by`、`bundle_backed` |
-| POST | `/system/ingest` | 觸發 bundle ingest async job；`symbols` 選填，省略/空陣列時用 `DEFAULT_UNIVERSE` |
+| POST | `/system/ingest` | 觸發 bundle ingest async job；`symbols` 選填，省略/空陣列時先用 `universe`，再回退 `DEFAULT_UNIVERSE` |
 | GET | `/system/universes` | 列出具名 universe（掃 `universe_manifest.json` 投影；degrade→typed-empty，`data_source=parquet_scan`）|
 | POST | `/system/universe/build` | 觸發 survivorship-clean universe build（async job，ADR-032）|
 
