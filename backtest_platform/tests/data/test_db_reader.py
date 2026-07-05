@@ -94,7 +94,7 @@ def test_open_positions_folds_fills_into_position_rows() -> None:
         ("inst_flow", "2317", "Buy", 500, 50.0, datetime(2026, 1, 4, 1, tzinfo=timezone.utc)),
         ("inst_flow", "2317", "Sell", 500, 60.0, datetime(2026, 1, 5, 1, tzinfo=timezone.utc)),
     ])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         rows = reader.open_positions()
 
@@ -109,7 +109,7 @@ def test_open_positions_folds_fills_into_position_rows() -> None:
 
 def test_open_positions_scopes_by_strategy_when_given() -> None:
     reader, cur, conn = _reader_with_rows([])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         reader.open_positions(strategy_id="inst_flow")
     sql, params = cur.execute.call_args.args
@@ -125,7 +125,7 @@ def test_recent_fills_maps_fills_to_fillrow_shape() -> None:
         # (fill_time, stock_id, side, fill_quantity, fill_price)
         (ft, "2330", "Buy", 1000, 542.0),
     ])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         rows = reader.recent_fills(limit=10)
 
@@ -161,7 +161,7 @@ def test_load_broker_state_seeds_cash_and_positions() -> None:
             ("2317", "Buy", 500, 50.0),
         ],
     )
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         state = load_broker_state("inst_flow")
 
@@ -174,7 +174,7 @@ def test_load_broker_state_seeds_cash_and_positions() -> None:
 def test_load_broker_state_first_day_returns_none() -> None:
     """(b) no equity snapshot for the strategy → None (first session, nothing to restore)."""
     conn, _ = _fake_conn(equity_row=None, fill_rows=[])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         state = load_broker_state("inst_flow")
     assert state is None
@@ -182,7 +182,7 @@ def test_load_broker_state_first_day_returns_none() -> None:
 
 def test_load_broker_state_raises_on_db_error_never_silent_empty() -> None:
     """(c) a DB failure must propagate — never a silent empty book (dishonest OOS)."""
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.side_effect = RuntimeError("connection refused")
         with pytest.raises(RuntimeError, match="connection refused"):
             load_broker_state("inst_flow")
@@ -191,7 +191,7 @@ def test_load_broker_state_raises_on_db_error_never_silent_empty() -> None:
 def test_load_broker_state_cash_only_when_no_fills() -> None:
     """A snapshot with no fills → cash restored, empty positions (not None)."""
     conn, _ = _fake_conn(equity_row=(1_000_000.0,), fill_rows=[])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         state = load_broker_state("inst_flow")
     assert state is not None
@@ -203,7 +203,7 @@ def test_load_broker_state_queries_are_scoped() -> None:
     """The equity query filters by strategy + paper mode; fills scope by broker
     AND strategy_id (ADR-038 — fills now carries a strategy discriminator)."""
     conn, cur = _fake_conn(equity_row=(1.0,), fill_rows=[])
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         load_broker_state("inst_flow")
 
@@ -274,7 +274,7 @@ def test_runs_board_maps_rows() -> None:
     conn = MagicMock()
     conn.cursor.return_value.__enter__.return_value = cur
 
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         rows = TelemetryReader(cfg=MagicMock()).runs_board(limit=10)
 
@@ -299,6 +299,6 @@ def test_runs_board_empty_returns_empty_list() -> None:
     cur.fetchall.return_value = []
     conn = MagicMock()
     conn.cursor.return_value.__enter__.return_value = cur
-    with patch("backtest_platform.data.db_reader._connection") as ctx:
+    with patch("backtest_platform.services.monitoring_ops.telemetry_reader._connection") as ctx:
         ctx.return_value.__enter__.return_value = conn
         assert TelemetryReader(cfg=MagicMock()).runs_board() == []
