@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
+from backtest_platform.governance import live_oos_queue
 from backtest_platform.research import candidate_store as cs
-from backtest_platform.research import live_oos_queue
 from backtest_platform.research.candidate_state import IllegalTransitionError
 
 

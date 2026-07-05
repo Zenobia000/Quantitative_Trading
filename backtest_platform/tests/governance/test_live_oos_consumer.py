@@ -12,12 +12,12 @@ from datetime import date, timedelta
 
 import pytest
 
-from backtest_platform.research import live_oos_consumer as consumer
-from backtest_platform.research import live_oos_queue as q
-from backtest_platform.research.watch_registry import (
+from backtest_platform.governance import live_oos_consumer as consumer
+from backtest_platform.governance import live_oos_queue as q
+from backtest_platform.governance.watch_registry import (
+    OBSERVATION_DAYS,
     CabinFullError,
     NotPaperWatchError,
-    OBSERVATION_DAYS,
     WatchStatus,
 )
 

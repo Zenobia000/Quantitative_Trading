@@ -45,9 +45,9 @@ from backtest_platform.api.deps import (
 )
 from backtest_platform.api.envelope import Envelope, ok
 from backtest_platform.api.response_models import RunReportData
+from backtest_platform.governance.watch_registry import status as watch_status
 from backtest_platform.research import notebook_export, run_series_store, validation_store
 from backtest_platform.research.runs_store import read_runs
-from backtest_platform.research.watch_registry import status as watch_status
 from backtest_platform.validation.report import drawdown_events, dsr_band, monthly_returns_matrix
 
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -110,7 +110,7 @@ def _watch_berth(strategy: str | None, reg_path: Path) -> dict[str, Any] | None:
         return None
     try:
         st = watch_status(strategy, path=reg_path)
-    except Exception:  # noqa: BLE001 — a calendar/registry hiccup must not 500 the report
+    except Exception:
         return None
     if st is None:
         return None
@@ -148,7 +148,7 @@ def _truth_gate_window(strategy: str | None) -> dict[str, Any] | None:
         from backtest_platform.research.workflows.loader import get_truth_gate_config
 
         tg = get_truth_gate_config(strategy)
-    except Exception:  # noqa: BLE001 — no research_config / no TRUTH_GATE → honest null
+    except Exception:
         return None
     return {
         "is_start": tg.is_start.isoformat(),

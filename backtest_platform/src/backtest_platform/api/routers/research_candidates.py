@@ -20,8 +20,8 @@ from backtest_platform.api.deps import (
     get_live_oos_queue_path,
 )
 from backtest_platform.api.envelope import DataSource, Envelope, ok, page_meta
+from backtest_platform.governance import live_oos_queue
 from backtest_platform.research import candidate_store as cs
-from backtest_platform.research import live_oos_queue
 from backtest_platform.research.candidate_state import DECISION_ACTIONS, IllegalTransitionError
 
 router = APIRouter(prefix="/research", tags=["research-candidates"])

@@ -33,16 +33,17 @@ queued selection, and no selection auto-runs a session.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from loguru import logger
 
-from backtest_platform.research import live_oos_queue
-from backtest_platform.research.live_oos_queue import DEFAULT_QUEUE_PATH
-from backtest_platform.research.watch_registry import (
+from backtest_platform.governance import live_oos_queue
+from backtest_platform.governance.live_oos_queue import DEFAULT_QUEUE_PATH
+from backtest_platform.governance.watch_registry import (
     AlreadyActiveError,
     CabinFullError,
     WatchRegistryError,
@@ -87,14 +88,14 @@ class ConsumeReport:
 # --------------------------------------------------------------------------- #
 def default_enroll(strategy: str, verdict_dsr: float, as_of: date) -> Any:
     """Production enroll — admit a berth via the real ADR-033 registry (band / cap enforced)."""
-    from backtest_platform.research.watch_registry import enroll
+    from backtest_platform.governance.watch_registry import enroll
 
     return enroll(strategy, verdict_dsr, as_of)
 
 
 def default_watch_status(strategy: str, as_of: date) -> Any:
     """Production berth read — fold the strategy's current ``WatchStatus`` (or None)."""
-    from backtest_platform.research.watch_registry import status
+    from backtest_platform.governance.watch_registry import status
 
     return status(strategy, as_of=as_of)
 
@@ -214,7 +215,7 @@ def _consume_replay(
     strategy = item["strategy"]
     try:
         result = run_paper_replay_fn(strategy, as_of)
-    except Exception as exc:  # noqa: BLE001 — a failed replay must not crash the tick; stays queued
+    except Exception as exc:
         logger.warning("live-oos consume: paper_replay {} failed (stays queued): {}", qid, exc)
         skipped.append((qid, f"replay_failed: {type(exc).__name__}: {exc}"))
         return
@@ -256,7 +257,7 @@ def _sync_berth(
 
 def _berth_patch(st: Any) -> dict[str, Any]:
     """The observation fields folded from a ``WatchStatus`` onto a berth queue item."""
-    from backtest_platform.research.watch_registry import OBSERVATION_DAYS
+    from backtest_platform.governance.watch_registry import OBSERVATION_DAYS
 
     return {
         "watch_registry_ref": st.strategy,

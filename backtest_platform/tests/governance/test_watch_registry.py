@@ -13,7 +13,7 @@ from datetime import date, timedelta
 
 import pytest
 
-from backtest_platform.research.watch_registry import (
+from backtest_platform.governance.watch_registry import (
     MAX_ACTIVE_WATCHES,
     OBSERVATION_DAYS,
     AlreadyActiveError,

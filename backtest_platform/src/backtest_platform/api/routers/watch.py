@@ -65,8 +65,8 @@ def watch_overview(
     operator can see at a glance whether the systemd timer is still firing — a silent
     dead timer would otherwise stall OOS collection with no alert.
     """
+    from backtest_platform.governance.watch_registry import NOMINAL_TRADING_DAYS, all_watches
     from backtest_platform.orchestration.timer_health import timer_health
-    from backtest_platform.research.watch_registry import NOMINAL_TRADING_DAYS, all_watches
 
     berths = all_watches(as_of=today, is_trading_day=is_trading_day, path=reg_path)
     rows: list[dict[str, Any]] = []
@@ -93,8 +93,8 @@ def watch_overview(
 
 def _toggle(strategy: str, reg_path: Path, is_trading_day: Callable[[date], bool], *, resume: bool) -> Envelope:
     """Shared pause/resume body: run the registry write, map a refusal to a 400."""
-    from backtest_platform.research.watch_registry import WatchRegistryError, pause
-    from backtest_platform.research.watch_registry import resume as resume_fn
+    from backtest_platform.governance.watch_registry import WatchRegistryError, pause
+    from backtest_platform.governance.watch_registry import resume as resume_fn
 
     try:
         st = (resume_fn if resume else pause)(strategy, is_trading_day=is_trading_day, path=reg_path)
