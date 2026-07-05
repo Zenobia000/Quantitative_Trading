@@ -818,6 +818,92 @@
         }
       }
     },
+    "/strategies/{strategy}/asset": {
+      "get": {
+        "tags": [
+          "strategies"
+        ],
+        "summary": "Strategy Asset",
+        "description": "Strategy Package descriptor (ADR-008).\n\nProjects the repo folder behind one registered strategy into a frontend-safe\nread model. The browser never reads Python files directly; it sees which\npackage files are present and which workflow/config endpoints can be used.",
+        "operationId": "strategy_asset_strategies__strategy__asset_get",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StrategyAssetData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/strategies/{strategy}/optimization-schema": {
+      "get": {
+        "tags": [
+          "strategies"
+        ],
+        "summary": "Strategy Optimization Schema",
+        "description": "Per-strategy DOE grid read model for the optimization UI (ADR-008).",
+        "operationId": "strategy_optimization_schema_strategies__strategy__optimization_schema_get",
+        "parameters": [
+          {
+            "name": "strategy",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Strategy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_StrategyOptimizationData_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/research/strategies": {
       "get": {
         "tags": [
@@ -4791,6 +4877,96 @@
         ],
         "title": "Envelope[SavedView]"
       },
+      "Envelope_StrategyAssetData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyAssetData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[StrategyAssetData]"
+      },
+      "Envelope_StrategyOptimizationData_": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrategyOptimizationData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success"
+        ],
+        "title": "Envelope[StrategyOptimizationData]"
+      },
       "Envelope_SweepEstimate_": {
         "properties": {
           "success": {
@@ -6143,6 +6319,108 @@
         "title": "SimulationRequest",
         "description": "What-if parameters for one run. Bounds are enforced at the boundary so an\nout-of-range knob is a clean ``422`` (not a silent clamp). Optional per-trade\nknobs default ``None`` = \"don't apply\"."
       },
+      "StrategyAssetData": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "package": {
+            "type": "string",
+            "title": "Package"
+          },
+          "package_path": {
+            "type": "string",
+            "title": "Package Path"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/StrategyPackageFile"
+            },
+            "type": "array",
+            "title": "Files"
+          },
+          "workflows": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Workflows"
+          },
+          "endpoints": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Endpoints"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy",
+          "package",
+          "package_path",
+          "files",
+          "workflows",
+          "endpoints"
+        ],
+        "title": "StrategyAssetData"
+      },
+      "StrategyOptimizationData": {
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "title": "Strategy"
+          },
+          "config_schema": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Config Schema"
+          },
+          "optimization": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optimization"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strategy",
+          "config_schema",
+          "optimization"
+        ],
+        "title": "StrategyOptimizationData"
+      },
+      "StrategyPackageFile": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "present": {
+            "type": "boolean",
+            "title": "Present"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "role",
+          "present"
+        ],
+        "title": "StrategyPackageFile"
+      },
       "StrategyRow": {
         "properties": {
           "strategy_id": {
@@ -6351,6 +6629,24 @@
             "minLength": 1,
             "title": "Cache Dir",
             "description": "dedicated parquet cache for this build"
+          },
+          "exchange": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exchange",
+            "description": "board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL"
+          },
+          "exclude_flagged": {
+            "type": "boolean",
+            "title": "Exclude Flagged",
+            "description": "exclude \u5168\u984d\u4ea4\u5272/\u8655\u7f6e/\u6ce8\u610f names as-of each rebalance",
+            "default": false
           }
         },
         "type": "object",

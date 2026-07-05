@@ -44,6 +44,31 @@ def _asof(wide: pd.DataFrame, ts: pd.Timestamp) -> pd.Series:
     return hist.ffill().iloc[-1]
 
 
+def ineligible_asof(exclude_frames: Sequence[pd.DataFrame], ts: pd.Timestamp) -> set[str]:
+    """Symbols flagged *truthy as-of ``ts``* in any eligibility frame (no look-ahead).
+
+    Each frame is a FinLab wide ``date × stock`` status frame where a truthy value
+    means "excluded on that date" (verified live 2026-07-05):
+
+    * ``change_transaction:變更交易`` — ``Float64``, ``1.0`` = 變更交易（含全額交割）;
+    * ``esb_attention_disposal:處置有價證券`` / ``:注意有價證券`` — ``bool``, ``True``
+      during the disposal / attention window.
+
+    We take the last valid row on/before ``ts`` (``_asof`` → strictly no look-ahead)
+    and collect every column whose value is truthy. ``1.0`` and ``True`` both count;
+    ``0.0`` / ``False`` / NaN do not. An empty ``exclude_frames`` yields an empty set
+    (the eligibility layer is fully opt-in — see ADR-007 Slice 3)."""
+    excluded: set[str] = set()
+    for frame in exclude_frames:
+        if frame is None or frame.empty:
+            continue
+        row = _asof(frame, ts)
+        for stock, value in row.items():
+            if pd.notna(value) and bool(value):
+                excluded.add(str(stock))
+    return excluded
+
+
 def select_survivorship_universe(
     market_value: pd.DataFrame,
     close: pd.DataFrame,
@@ -54,14 +79,20 @@ def select_survivorship_universe(
     min_turnover: float,
     alive_window_days: int = 90,
     turnover_window: int = 20,
+    exclude_frames: Sequence[pd.DataFrame] = (),
 ) -> list[str]:
     """Return the survivorship-clean factor universe (sorted unique stock ids).
 
     At each rebalance date: keep names *alive* (a valid close within the trailing
     ``alive_window_days``) whose trailing-``turnover_window`` mean turnover clears
-    ``min_turnover``; rank the survivors by as-of market cap (desc) and take the
-    top ``top_n``. Union the per-date picks → delisted names are retained for the
-    quarters they were live.
+    ``min_turnover``; drop names *ineligible* as-of that date (``exclude_frames`` —
+    全額交割/處置/注意, ADR-007 Slice 3); rank the survivors by as-of market cap
+    (desc) and take the top ``top_n``. Union the per-date picks → delisted names are
+    retained for the quarters they were live.
+
+    Eligibility is applied *per rebalance date* (not globally): a name disposed in
+    2018Q1 but clean in 2020Q3 is correctly excluded only for the 2018Q1 pick — this
+    is exactly the point-in-time honesty the survivorship union already guarantees.
     """
     amt = turnover.rolling(turnover_window, min_periods=max(5, turnover_window // 4)).mean()
     selected: set[str] = set()
@@ -73,10 +104,12 @@ def select_survivorship_universe(
 
         mv_asof = _asof(market_value, ts)
         amt_asof = _asof(amt, ts)
+        ineligible = ineligible_asof(exclude_frames, ts)
 
         candidates = [
             s for s in close.columns
             if bool(alive.get(s, False))
+            and s not in ineligible
             and float(amt_asof.get(s, 0.0) or 0.0) >= min_turnover
             and pd.notna(mv_asof.get(s, float("nan")))
         ]

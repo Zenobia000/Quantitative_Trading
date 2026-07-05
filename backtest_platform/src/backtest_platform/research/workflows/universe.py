@@ -53,16 +53,21 @@ def run_build_universe(cfg: UniverseConfig, getter: Getter | None = None) -> Uni
     imports finlab). The selected universe is the union of per-quarter liquid large
     names alive on each rebalance date — so delisted names survive in the union.
     """
-    getter = getter or _finlab_getter()
+    getter = getter or _finlab_getter(exchange=cfg.exchange)
 
     mv = getter(finlab_source._MARKET_VALUE)
     close = getter(finlab_source._ADJ["close"])
     turnover = getter(finlab_source._TURNOVER)
 
+    # Eligibility (ADR-007 Slice 3): fetch the 全額交割/處置/注意 status frames only when
+    # asked — the time-varying exclusion mask is opt-in (default off = unchanged).
+    exclude_frames = _eligibility_frames(getter) if cfg.exclude_flagged else ()
+
     rebalance_dates = _quarterly_rebalance_dates(cfg.span_start, cfg.span_end)
     universe = select_survivorship_universe(
         mv, close, turnover, rebalance_dates,
         top_n=cfg.top_n, min_turnover=cfg.min_turnover,
+        exclude_frames=exclude_frames,
     )
     n_alive, n_delisted = _alive_delisted_counts(close, universe)
 
@@ -84,10 +89,43 @@ def run_build_universe(cfg: UniverseConfig, getter: Getter | None = None) -> Uni
     )
 
 
-def _finlab_getter() -> Getter:
-    """Authenticate FinLab and return its real getter (lazy — imports finlab)."""
+#: FinLab status-frame keys for the eligibility mask (verified live 2026-07-05):
+#: 變更交易 includes 全額交割; 處置/注意 are the ESB attention-disposal windows.
+_ELIGIBILITY_KEYS: tuple[str, ...] = (
+    "change_transaction:變更交易",
+    "esb_attention_disposal:處置有價證券",
+    "esb_attention_disposal:注意有價證券",
+)
+
+
+def _finlab_getter(exchange: str | None = None) -> Getter:
+    """Authenticate FinLab and return its real getter (lazy — imports finlab).
+
+    When ``exchange`` is given, apply the static board filter via finlab's native
+    ``data.set_universe`` (ADR-007 Slice 3 — we reuse finlab's eligibility layer, we
+    do NOT rebuild board/sector/asset-type filtering ourselves) before returning the
+    getter, so every subsequent ``data.get`` is scoped to that board."""
     finlab_source.login()
+    if exchange:
+        from finlab import data as _fdata
+
+        _fdata.set_universe(exchange=exchange)
     return finlab_source._default_getter()
+
+
+def _eligibility_frames(getter: Getter) -> tuple[pd.DataFrame, ...]:
+    """Fetch the 全額交割/處置/注意 status frames via ``getter`` (defensive).
+
+    A frame that errors (key drift / entitlement) is skipped rather than aborting the
+    build — a partial mask still excludes what it can, and the missing status is
+    simply not applied."""
+    frames: list[pd.DataFrame] = []
+    for key in _ELIGIBILITY_KEYS:
+        try:
+            frames.append(getter(key))
+        except Exception:  # key drift / entitlement — skip this status, never abort
+            continue
+    return tuple(frames)
 
 
 def _quarterly_rebalance_dates(start: date, end: date) -> list[date]:

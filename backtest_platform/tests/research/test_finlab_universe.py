@@ -10,6 +10,7 @@ import pandas as pd
 
 from backtest_platform.research.finlab_universe import (
     cached_universe_symbols,
+    ineligible_asof,
     select_survivorship_universe,
 )
 
@@ -78,3 +79,55 @@ def test_cached_universe_symbols_reads_daily_bars_filenames(tmp_path):
         (tmp_path / f"daily_bars__{sid}.parquet").write_bytes(b"")
     (tmp_path / "institutional__2330.parquet").write_bytes(b"")  # ignored
     assert cached_universe_symbols(str(tmp_path)) == ["1101", "2330", "2454"]
+
+
+# --- eligibility mask (ADR-007 Slice 3) ------------------------------------ #
+def _elig_frame(idx, values: dict, dtype: str):
+    """A date×stock status frame; ``values`` maps stock → per-date column list."""
+    return pd.DataFrame(values, index=idx).astype(dtype)
+
+
+def test_ineligible_asof_float_flag_and_bool_true():
+    idx = pd.date_range("2020-01-01", "2020-01-10", freq="D")
+    # change_transaction: Float64, 1.0 = flagged (變更交易含全額交割)
+    ct = _elig_frame(idx, {"AAA": 1.0, "BBB": 0.0}, "Float64")
+    # disposal: bool, True during window
+    disp = _elig_frame(idx, {"CCC": True, "DDD": False}, "bool")
+    got = ineligible_asof([ct, disp], pd.Timestamp("2020-01-05"))
+    assert got == {"AAA", "CCC"}  # 0.0 / False excluded, NaN-safe
+
+
+def test_ineligible_asof_no_lookahead():
+    idx = pd.date_range("2020-01-01", "2020-01-10", freq="D")
+    ct = _elig_frame(idx, {"AAA": 0.0}, "Float64")
+    ct.loc["2020-01-08":, "AAA"] = 1.0  # flagged only from 01-08
+    assert ineligible_asof([ct], pd.Timestamp("2020-01-05")) == set()   # before flag
+    assert ineligible_asof([ct], pd.Timestamp("2020-01-09")) == {"AAA"}  # after flag
+
+
+def test_ineligible_asof_empty_frames_is_empty():
+    assert ineligible_asof([], pd.Timestamp("2020-01-05")) == set()
+
+
+def test_select_excludes_flagged_names_per_rebalance():
+    mv, close, turnover = _frames()
+    # BIG is under 變更交易 as-of the (only) rebalance → dropped despite largest cap
+    flag = pd.DataFrame(0.0, index=close.index, columns=close.columns).astype("Float64")
+    flag.loc[:, "BIG"] = 1.0
+    uni = select_survivorship_universe(
+        mv, close, turnover,
+        [date(2020, 4, 1)],
+        top_n=10, min_turnover=2e7,
+        exclude_frames=[flag],
+    )
+    assert "BIG" not in uni
+    assert "MID" in uni and "DEAD" in uni  # unaffected names still selected
+
+
+def test_select_no_exclude_frames_unchanged():
+    mv, close, turnover = _frames()
+    base = select_survivorship_universe(mv, close, turnover, [date(2020, 4, 1)], top_n=10, min_turnover=2e7)
+    with_empty = select_survivorship_universe(
+        mv, close, turnover, [date(2020, 4, 1)], top_n=10, min_turnover=2e7, exclude_frames=[]
+    )
+    assert base == with_empty  # opt-in: empty exclusion is a no-op

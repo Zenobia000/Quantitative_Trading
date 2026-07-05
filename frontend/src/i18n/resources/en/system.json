@@ -63,7 +63,11 @@
     "universe": {
       "heading": "Universe Build",
       "submit": "Trigger Build",
-      "result": "{{n}} symbols (alive {{alive}} / delisted {{delisted}})"
+      "result": "{{n}} symbols (alive {{alive}} / delisted {{delisted}})",
+      "exchange": "Board",
+      "exchangeAll": "All",
+      "excludeFlagged": "Exclude flagged (full-delivery/disposal/attention)",
+      "excludeFlaggedHint": "Drops untradeable names as-of each rebalance via finlab 變更交易 + disposal/attention frames (time-varying mask)"
     },
     "bundles": {
       "heading": "Data Bundles",

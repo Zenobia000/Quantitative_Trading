@@ -63,7 +63,11 @@
     "universe": {
       "heading": "股票池建置",
       "submit": "觸發建置",
-      "result": "{{n}} 檔（存續 {{alive}} / 已下市 {{delisted}}）"
+      "result": "{{n}} 檔（存續 {{alive}} / 已下市 {{delisted}}）",
+      "exchange": "板別",
+      "exchangeAll": "全部",
+      "excludeFlagged": "排除全額交割/處置/注意",
+      "excludeFlaggedHint": "依 finlab 變更交易 + 處置/注意有價證券，於每個再平衡日剔除不可交易標的（時變遮罩）"
     },
     "bundles": {
       "heading": "資料集清單",

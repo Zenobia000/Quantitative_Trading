@@ -402,6 +402,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/strategies/{strategy}/asset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Strategy Asset
+         * @description Strategy Package descriptor (ADR-008).
+         *
+         *     Projects the repo folder behind one registered strategy into a frontend-safe
+         *     read model. The browser never reads Python files directly; it sees which
+         *     package files are present and which workflow/config endpoints can be used.
+         */
+        get: operations["strategy_asset_strategies__strategy__asset_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/strategies/{strategy}/optimization-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Strategy Optimization Schema
+         * @description Per-strategy DOE grid read model for the optimization UI (ADR-008).
+         */
+        get: operations["strategy_optimization_schema_strategies__strategy__optimization_schema_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/research/strategies": {
         parameters: {
             query?: never;
@@ -2212,6 +2256,28 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** Envelope[StrategyAssetData] */
+        Envelope_StrategyAssetData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["StrategyAssetData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Envelope[StrategyOptimizationData] */
+        Envelope_StrategyOptimizationData_: {
+            /** Success */
+            success: boolean;
+            data?: components["schemas"]["StrategyOptimizationData"] | null;
+            error?: components["schemas"]["ApiError"] | null;
+            /** Meta */
+            meta?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** Envelope[SweepEstimate] */
         Envelope_SweepEstimate_: {
             /** Success */
@@ -2762,6 +2828,45 @@ export interface components {
              */
             capacity_scale: number;
         };
+        /** StrategyAssetData */
+        StrategyAssetData: {
+            /** Strategy */
+            strategy: string;
+            /** Package */
+            package: string;
+            /** Package Path */
+            package_path: string;
+            /** Files */
+            files: components["schemas"]["StrategyPackageFile"][];
+            /** Workflows */
+            workflows: string[];
+            /** Endpoints */
+            endpoints: {
+                [key: string]: string;
+            };
+        };
+        /** StrategyOptimizationData */
+        StrategyOptimizationData: {
+            /** Strategy */
+            strategy: string;
+            /** Config Schema */
+            config_schema: {
+                [key: string]: unknown;
+            };
+            /** Optimization */
+            optimization: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** StrategyPackageFile */
+        StrategyPackageFile: {
+            /** Path */
+            path: string;
+            /** Role */
+            role: string;
+            /** Present */
+            present: boolean;
+        };
         /** StrategyRow */
         StrategyRow: {
             /** Strategy Id */
@@ -2883,6 +2988,17 @@ export interface components {
              * @description dedicated parquet cache for this build
              */
             cache_dir: string;
+            /**
+             * Exchange
+             * @description board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL
+             */
+            exchange?: string | null;
+            /**
+             * Exclude Flagged
+             * @description exclude 全額交割/處置/注意 names as-of each rebalance
+             * @default false
+             */
+            exclude_flagged: boolean;
         };
         /** UniverseFiltersData */
         UniverseFiltersData: {
@@ -3528,6 +3644,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Envelope"];
+                };
+            };
+        };
+    };
+    strategy_asset_strategies__strategy__asset_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StrategyAssetData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    strategy_optimization_schema_strategies__strategy__optimization_schema_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                strategy: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Envelope_StrategyOptimizationData_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

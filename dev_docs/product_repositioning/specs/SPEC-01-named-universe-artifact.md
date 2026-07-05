@@ -55,7 +55,10 @@ finlab set_universe（靜態資格）  →  survivorship 選股（動態 size+li
 
 **不得**用自建篩選重造 finlab 已有的 exchange/sector/asset_type 過濾。
 
-> ⚠️ 待確認（需 `FINLAB_API_TOKEN` + 網路，非本 spec 阻斷項）：`change_transaction` / `esb_attention_disposal` 的**實際 frame 形狀**（wide date×stock 布林？或事件長表需 pivot）。落地 eligibility 遮罩時以 `data.get` 實抓一次確認 dtype，再決定 normalize 方式。auth 注意：finlab 2.x `login(api_token=)` 於 2026/08/01 後 deprecated，改 `python -m finlab login`（見 `finlab_source.login` 註解）。
+> ✅ **frame 形狀已 token 實抓確認（2026-07-05）**：三個 status frame 皆 **wide `date × stock`**，可直接以 as-of 遮罩用，無需 pivot：
+> - `change_transaction:變更交易` — `Float64`，`1.0` = 變更交易（含全額交割）、`0.0` = 否（dense，~4700 日 × ~515 檔）。
+> - `esb_attention_disposal:處置有價證券` / `:注意有價證券` — `bool`，`True` = 處置/注意期間（sparse 事件視窗，末列帶顯式 `False` → ffill/as-of 正確）。
+> 落地：`ineligible_asof(frames, ts)` 取 as-of（`_asof` ffill，嚴格無 look-ahead）後收集 truthy 欄；`1.0`/`True` 皆算、`0.0`/`False`/NaN 不算。auth 注意：finlab 2.x `login(api_token=)` 於 2026/08/01 後 deprecated，改 `python -m finlab login`（見 `finlab_source.login`）。
 
 ---
 
@@ -101,11 +104,12 @@ Universe（具名產物 — 一等實體）
 - **資料字典教用法**：卡片展開顯示 `data.get('<key>')` 取數呼叫 + 複製 + finlab DB 文件連結（非只複製 key）。
 - **収合**：每張卡改 `<details>`（收起一行、展開才顯示用法/說明），解「畫面太長」。
 
-### Slice 3 — 後端：Eligibility 篩選層（接 Q3）
-- `UniverseBuildRequest` 擴充 eligibility 參數：`exchange` / `exclude_sector` / `asset_type`（透傳 finlab `set_universe`）+ `exclude_status`（處置/注意/變更交易時變遮罩）。
-- build workflow 套用：先 finlab `set_universe`（靜態）→ survivorship 選股 → eligibility 時變遮罩排除。
-- **前置**：以 token 實抓 `change_transaction` / `esb_attention_disposal` 確認 frame 形狀（§2.3 待確認項）。
-- 測試：靜態過濾透傳、時變遮罩以 fixture frame 驗證（不碰網路）。
+### Slice 3 — 後端：Eligibility 篩選層（接 Q3）✅ 已落地
+- `UniverseConfig` / `UniverseBuildRequest` 加 `exchange`（透傳 finlab `set_universe` 靜態板別）+ `exclude_flagged`（全額交割/處置/注意時變遮罩），**皆 opt-in、預設 off = 行為不變**。
+- build workflow：`_finlab_getter(exchange)` 套 `set_universe`（靜態）→ `_eligibility_frames` 抓三 status frame（defensive skip）→ `select_survivorship_universe(exclude_frames=...)` 每個再平衡日剔除。
+- **frame 形狀已 token 確認**（§2.3）；`ineligible_asof` 純函式、fixture 離線測試。
+- 前端 `UniverseBuildCard` 加板別下拉 + 排除 flagged checkbox（含 hint）。
+- 測試：`ineligible_asof` 3 案 + `select_survivorship_universe(exclude_frames)` 2 案 + workflow opt-in 1 案。
 
 ### Slice 4 — 資料下載對接資料字典（接 Q1，最後做）
 - 資料字典 presence 由「全域 category 二元」→「相對選定 Universe + span」。

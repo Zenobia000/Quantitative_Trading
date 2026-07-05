@@ -109,6 +109,9 @@ function UniverseBuildCard() {
   const [topN, setTopN] = useState('200')
   const [minTurnover, setMinTurnover] = useState('50000000')
   const [cacheDir, setCacheDir] = useState('data/parquet_finlab_universe')
+  // Eligibility（ADR-007 Slice 3）：板別（finlab set_universe 靜態）+ 排除全額交割/處置/注意（時變）
+  const [exchange, setExchange] = useState('')
+  const [excludeFlagged, setExcludeFlagged] = useState(false)
 
   const submit = () => {
     trigger.mutate(
@@ -119,6 +122,8 @@ function UniverseBuildCard() {
         top_n: Number(topN),
         min_turnover: Number(minTurnover),
         cache_dir: cacheDir,
+        exchange: exchange || null,
+        exclude_flagged: excludeFlagged,
       },
       { onSuccess: (res) => setJobId(res.data.job_id) },
     )
@@ -155,6 +160,18 @@ function UniverseBuildCard() {
         <label className="flex flex-col gap-1 text-xs text-text-muted">
           cache_dir
           <input className={`${inputCls} w-56`} value={cacheDir} onChange={(e) => setCacheDir(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-text-muted">
+          {t('data.universe.exchange')}
+          <select className={inputCls} value={exchange} onChange={(e) => setExchange(e.target.value)}>
+            <option value="">{t('data.universe.exchangeAll')}</option>
+            <option value="TWSE">TWSE</option>
+            <option value="TPEx">TPEx</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-1.5 text-xs text-text-muted" title={t('data.universe.excludeFlaggedHint')}>
+          <input type="checkbox" checked={excludeFlagged} onChange={(e) => setExcludeFlagged(e.target.checked)} />
+          {t('data.universe.excludeFlagged')}
         </label>
         <button onClick={submit} disabled={trigger.isPending} className={btnCls}>
           {trigger.isPending ? t('data.action.submitting') : t('data.universe.submit')}

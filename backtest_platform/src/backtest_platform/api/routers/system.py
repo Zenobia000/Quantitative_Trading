@@ -47,6 +47,13 @@ class UniverseBuildRequest(BaseModel):
     top_n: int = Field(..., ge=1, description="per-quarter top-N by market cap")
     min_turnover: float = Field(..., ge=0, description="trailing-20d avg turnover floor (TWD)")
     cache_dir: str = Field(..., min_length=1, description="dedicated parquet cache for this build")
+    # Eligibility (ADR-007 Slice 3) — opt-in, mirror UniverseConfig.
+    exchange: str | None = Field(
+        None, description="board filter via finlab set_universe ('TWSE' | 'TPEx'); None = ALL"
+    )
+    exclude_flagged: bool = Field(
+        False, description="exclude 全額交割/處置/注意 names as-of each rebalance"
+    )
 
     @model_validator(mode="after")
     def _span_ordered(self) -> UniverseBuildRequest:
@@ -381,6 +388,8 @@ def universe_build(req: UniverseBuildRequest) -> Envelope:
             top_n=req.top_n,
             min_turnover=req.min_turnover,
             cache_dir=req.cache_dir,
+            exchange=req.exchange,
+            exclude_flagged=req.exclude_flagged,
         )
         result = _universe.run_build_universe(cfg)
         return {

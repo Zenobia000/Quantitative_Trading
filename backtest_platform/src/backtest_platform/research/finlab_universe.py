@@ -3,10 +3,12 @@ from __future__ import annotations
 
 from backtest_platform.research.adapters.finlab_universe import (
     cached_universe_symbols,
+    ineligible_asof,
     select_survivorship_universe,
 )
 
 __all__ = [
     "cached_universe_symbols",
+    "ineligible_asof",
     "select_survivorship_universe",
 ]
