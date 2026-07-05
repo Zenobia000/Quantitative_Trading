@@ -2,11 +2,11 @@
  * Route table for the Codex-style operations console.
  * Golden IA is seven-layer: Data / Research / Governance / Trading / Risk / Operations / System.
  * Some URLs stay legacy-compatible, but comments and navigation semantics follow the new product layers.
+ * Every route is a real page; unknown paths fall through to NotFound.
  */
 import type { ReactElement } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppShell } from '@/layouts/AppShell'
-import { WiredPage } from '@/components/WiredPage'
 import { NotFoundPage } from '@/components/NotFoundPage'
 import { RunsTablePage } from '@/features/research/pages/RunsTablePage'
 import { RunReportPage } from '@/features/research/pages/RunReportPage'
@@ -33,8 +33,9 @@ import { RiskPage } from '@/features/monitor/pages/RiskPage'
 import { DataPage } from '@/features/system/pages/DataPage'
 import { AlertsPage } from '@/features/system/pages/AlertsPage'
 
-// 有完整真實資料的實頁
-const REAL: Record<string, ReactElement> = {
+// path → 實頁元件。單一真相源，router 直接迭代（無過渡佔位態）。
+const ROUTES: Record<string, ReactElement> = {
+  // Research
   'research/strategies': <StrategyHubListPage />,
   'research/strategies/:name': <StrategyHubDetailPage />,
   'research/candidates': <CandidatePoolPage />,
@@ -61,52 +62,10 @@ const REAL: Record<string, ReactElement> = {
   'monitor/positions': <PositionsPage />,
   'monitor/signals': <SignalsPage />,
   'monitor/risk': <RiskPage />,
-  // System zone — real feature pages
+  // System zone
   'system/data': <DataPage />,
   'system/alerts': <AlertsPage />,
 }
-
-// 其餘頁：接真實端點（多為 typed-empty stub / M4 deferred）→ WiredPage 渲染四態
-const ENDPOINT: Record<string, string | null> = {}
-
-interface RouteDef {
-  path: string
-  title: string
-  spec: string
-}
-
-// index（/）單獨處理
-const ROUTES: RouteDef[] = [
-  // Research
-  { path: 'research/strategies', title: '策略中心', spec: 'research_01_strategy_library' },
-  { path: 'research/strategies/:name', title: '策略中心 · 詳情', spec: 'research_01_strategy_library' },
-  { path: 'research/candidates', title: '候選池', spec: 'research_candidate_pool' },
-  { path: 'research/runs/new', title: 'New Run 設定', spec: 'research_02_run_new' },
-  { path: 'research/runs', title: 'Runs Table', spec: 'research_03_runs_table' },
-  { path: 'research/runs/:id', title: 'Run Report', spec: 'research_04_run_report' },
-  { path: 'research/reports/:runId', title: 'Report Viewer', spec: 'research_04_run_report' },
-  { path: 'research/runs/:id/trades', title: '逐筆覆盤', spec: 'research_trade_review' },
-  { path: 'research/compare', title: 'Compare', spec: 'research_05_compare' },
-  { path: 'research/sweep', title: 'Sweep', spec: 'research_06_sweep' },
-  // Governance
-  { path: 'research/validate', title: 'Validate gate（→ Governance）', spec: 'research_07_validate_gate' },
-  { path: 'research/promote/:strategyId', title: 'Promote（→ Governance）', spec: 'research_08_promote' },
-  { path: 'live-oos/queue', title: 'OOS Governance Queue', spec: 'live_oos_queue' },
-  { path: 'live-oos/watch', title: 'Paper-Watch Observation', spec: 'monitor_watch' },
-  { path: 'deploy/gate', title: 'Release Gate', spec: 'research_07_validate_gate' },
-  { path: 'deploy/promote/:strategyId', title: 'Capital Promotion', spec: 'research_08_promote' },
-  // Operations / Trading / Risk
-  { path: 'monitor', title: 'Operations Fleet', spec: 'monitor_fleet' },
-  { path: 'monitor/board', title: 'Operations Board', spec: 'monitor_board' },
-  { path: 'monitor/watch', title: 'Paper-Watch Observation（→ Governance）', spec: 'monitor_watch' },
-  { path: 'monitor/performance', title: 'PnL / Performance', spec: 'monitor_a_performance' },
-  { path: 'monitor/positions', title: 'Target / Position Blotter', spec: 'monitor_b_positions' },
-  { path: 'monitor/signals', title: 'Signal Ledger', spec: 'monitor_c_signals' },
-  { path: 'monitor/risk', title: 'Risk Blotter', spec: 'monitor_d_risk' },
-  // System
-  { path: 'system/data', title: '資料管理', spec: 'system_data' },
-  { path: 'system/alerts', title: '告警設定', spec: 'system_alerts' },
-]
 
 export const router = createBrowserRouter([
   {
@@ -114,17 +73,7 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <HomePage /> },
-      ...ROUTES.map((r) => ({
-        path: r.path,
-        element: REAL[r.path] ?? (
-          <WiredPage
-            title={r.title}
-            route={`/${r.path}`}
-            spec={r.spec}
-            endpoint={r.path in ENDPOINT ? ENDPOINT[r.path] : null}
-          />
-        ),
-      })),
+      ...Object.entries(ROUTES).map(([path, element]) => ({ path, element })),
       { path: '*', element: <NotFoundPage /> },
     ],
   },

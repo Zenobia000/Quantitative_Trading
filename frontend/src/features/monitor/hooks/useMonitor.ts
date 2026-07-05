@@ -2,7 +2,7 @@
  * Monitor-zone server-state hooks — thin typed wrappers over useEndpoint.
  * Each hits a real /monitor/* endpoint; pages render four states (loading/error/
  * pending/data). Endpoints that the paper daemon feeds (equity/positions/signals/
- * fills/kpi) return real telemetry; aggregate ones (fleet/strategies/risk) are
+ * fills/kpi) return real telemetry; aggregate ones (fleet/risk) are
  * typed-empty `pending` until their producers land — pages light up automatically.
  */
 import { useQuery } from '@tanstack/react-query'
@@ -71,7 +71,6 @@ export interface PortfolioSummary {
 
 export const useFleet = () => useEndpoint<FleetRow[]>('/monitor/fleet', 60)
 export const usePortfolioSummary = () => useEndpoint<PortfolioSummary>('/monitor/portfolio-summary', 60)
-export const useStrategies = () => useEndpoint<{ strategy_id: string }[]>('/monitor/strategies', 300)
 export const useRiskMetrics = () => useEndpoint<Record<string, unknown>>('/monitor/risk/metrics', 30)
 
 // ---- run board (A2) -------------------------------------------------------

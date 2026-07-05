@@ -1,4 +1,4 @@
-/* Home cockpit BFF（/home/*）。research-status / recent 真聚合；fleet / system-health pending。 */
+/* Home cockpit BFF（/home/*）。research-status / recent 真聚合。 */
 import { http } from '@/services/http'
 import type { ApiResult } from '@/types/domain'
 
@@ -18,6 +18,3 @@ export interface RecentItem {
 
 export const getResearchStatus = (): Promise<ApiResult<ResearchStatus>> => http<ResearchStatus>('/home/research-status')
 export const getRecent = (): Promise<ApiResult<RecentItem[]>> => http<RecentItem[]>('/home/recent')
-export const getHomeFleet = (): Promise<ApiResult<unknown[]>> => http<unknown[]>('/home/fleet')
-export const getSystemHealth = (): Promise<ApiResult<Record<string, unknown>>> =>
-  http<Record<string, unknown>>('/home/system-health')
