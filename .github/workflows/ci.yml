@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backtest_platform
+        working-directory: quant_platform/backtest_platform
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -46,14 +46,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: quant_platform/apps/web_console
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: quant_platform/apps/web_console/package-lock.json
       - name: Install dependencies
         run: npm ci
       - name: Type check
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backtest_platform
+        working-directory: quant_platform/backtest_platform
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -84,11 +84,11 @@ jobs:
         run: uv run lint-imports
 
   # ---------------------------------------------------------------------------
-  # Contract drift: live OpenAPI spec vs frontend/openapi.json, plus runs DDL
+  # Contract drift: live OpenAPI spec vs quant_platform/apps/web_console/openapi.json, plus runs DDL
   # vs db_writer._RUNS_COLS. `--extra api` is enough — the script only imports
   # the FastAPI app to dump the spec; the DDL check is pure text/ast parsing.
   # Hard gate: any schema change must land together with a regenerated
-  # frontend/openapi.json + api.gen.ts (`npm run gen:api`) in the same PR.
+  # quant_platform/apps/web_console/openapi.json + api.gen.ts (`npm run gen:api`) in the same PR.
   # ---------------------------------------------------------------------------
   contract-drift:
     runs-on: ubuntu-latest
@@ -98,7 +98,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install API deps (script imports the FastAPI app)
-        working-directory: backtest_platform
+        working-directory: quant_platform/backtest_platform
         run: uv sync --extra api
       - name: Check OpenAPI + runs DDL contract drift
         run: python3 scripts/check_openapi_drift.py

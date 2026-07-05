@@ -13,4 +13,4 @@
 # 30 15 * * *  → 15:30 every day. Weekend/holiday runs are cheap no-ops for pg (the
 # telemetry just hasn't changed) and harmless mirrors for reports/ + data/parquet*.
 
-30 15 * * *  cd "$HOME/Quantitative_Trading/backtest_platform" && set -a && . ./.env && set +a && /usr/bin/env bash deploy/backup.sh >> "$HOME/Quantitative_Trading/backtest_platform/reports/backup.cron.log" 2>&1
+30 15 * * *  cd "$HOME/Quantitative_Trading/quant_platform/backtest_platform" && set -a && . ./.env && set +a && /usr/bin/env bash deploy/backup.sh >> "$HOME/Quantitative_Trading/quant_platform/backtest_platform/reports/backup.cron.log" 2>&1

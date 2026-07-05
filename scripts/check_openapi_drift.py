@@ -47,8 +47,9 @@ from pathlib import Path
 # Paths (all derived from this file's location — repo-root independent)
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
-BACKEND_DIR = REPO_ROOT / "backtest_platform"
-OPENAPI_SNAPSHOT = REPO_ROOT / "frontend" / "openapi.json"
+BACKEND_DIR = REPO_ROOT / "quant_platform" / "backtest_platform"
+# frontend moved to quant_platform/apps/web_console in W7.1 (monorepo relocation).
+OPENAPI_SNAPSHOT = REPO_ROOT / "quant_platform" / "apps" / "web_console" / "openapi.json"
 INIT_SQL = BACKEND_DIR / "docker" / "timescaledb" / "init.sql"
 # _RUNS_COLS moved db_writer.py → runs_writer.py in W5.2c (db_writer split).
 RUNS_WRITER = BACKEND_DIR / "src" / "backtest_platform" / "data" / "runs_writer.py"
