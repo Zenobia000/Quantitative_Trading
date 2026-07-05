@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from backtest_platform.orchestration.after_close import (
+from backtest_platform.services.strategy_runtime.after_close import (
     AfterCloseStatus,
     _build_broker,
     _resolve_equity,

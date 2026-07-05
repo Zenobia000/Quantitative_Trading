@@ -5,8 +5,8 @@ from datetime import date
 
 from click.testing import CliRunner
 
-from backtest_platform.orchestration import cli as cli_mod
-from backtest_platform.orchestration.cli import cli
+from backtest_platform.services.strategy_runtime import cli as cli_mod
+from backtest_platform.services.strategy_runtime.cli import cli
 
 
 def test_run_dry_run_passes():
