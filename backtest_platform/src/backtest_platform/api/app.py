@@ -39,7 +39,9 @@ from backtest_platform.api.routers import (
     runs_series,
     runs_tags,
     strategies,
-    system,
+    system_alerts,
+    system_data,
+    system_risk,
     watch,
 )
 
@@ -103,7 +105,9 @@ def create_app() -> FastAPI:
     app.include_router(research_branches.router)  # Goal 9: branch experiment lineage + compare
     app.include_router(monitor.router)
     app.include_router(watch.router)  # ADR-033: Paper-Watch 觀察艙 overview + pause/resume
-    app.include_router(system.router)
+    app.include_router(system_risk.router)
+    app.include_router(system_alerts.router)
+    app.include_router(system_data.router)
     app.include_router(home.router)
 
     @app.exception_handler(HTTPException)

@@ -50,7 +50,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 BACKEND_DIR = REPO_ROOT / "backtest_platform"
 OPENAPI_SNAPSHOT = REPO_ROOT / "frontend" / "openapi.json"
 INIT_SQL = BACKEND_DIR / "docker" / "timescaledb" / "init.sql"
-DB_WRITER = BACKEND_DIR / "src" / "backtest_platform" / "data" / "db_writer.py"
+# _RUNS_COLS moved db_writer.py → runs_writer.py in W5.2c (db_writer split).
+RUNS_WRITER = BACKEND_DIR / "src" / "backtest_platform" / "data" / "runs_writer.py"
 API_DIR = BACKEND_DIR / "src" / "backtest_platform" / "api"
 ENVELOPE_PY = API_DIR / "envelope.py"
 ROUTERS_DIR = API_DIR / "routers"
@@ -243,7 +244,7 @@ def parse_runs_ddl_columns(sql_text: str) -> dict[str, dict[str, bool]]:
 
 
 def parse_runs_cols(source: str) -> tuple[str, ...]:
-    """Extract the ``_RUNS_COLS`` tuple literal from db_writer.py via ``ast``."""
+    """Extract the ``_RUNS_COLS`` tuple literal from runs_writer.py via ``ast``."""
     tree = ast.parse(source)
     for node in tree.body:
         if isinstance(node, ast.Assign):
@@ -258,18 +259,18 @@ def parse_runs_cols(source: str) -> tuple[str, ...]:
                             and isinstance(elt.value, str)
                         ]
                         return tuple(cols)
-    raise CheckInfraError("could not find `_RUNS_COLS` tuple in db_writer.py")
+    raise CheckInfraError("could not find `_RUNS_COLS` tuple in runs_writer.py")
 
 
 def check_ddl_column_alignment() -> None:
     """Assert runs DDL columns and db_writer `_RUNS_COLS` agree; raise on drift."""
     if not INIT_SQL.exists():
         raise CheckInfraError(f"init.sql not found: {INIT_SQL}")
-    if not DB_WRITER.exists():
-        raise CheckInfraError(f"db_writer.py not found: {DB_WRITER}")
+    if not RUNS_WRITER.exists():
+        raise CheckInfraError(f"runs_writer.py not found: {RUNS_WRITER}")
 
     ddl_columns = parse_runs_ddl_columns(INIT_SQL.read_text())
-    runs_cols = parse_runs_cols(DB_WRITER.read_text())
+    runs_cols = parse_runs_cols(RUNS_WRITER.read_text())
     ddl_names = set(ddl_columns)
     writer_names = set(runs_cols)
 
