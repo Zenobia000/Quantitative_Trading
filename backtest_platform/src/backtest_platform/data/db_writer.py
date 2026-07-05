@@ -12,15 +12,16 @@ from __future__ import annotations
 
 from typing import Any
 
-import pandas as pd
 from loguru import logger
 
 # W5.2c: the connection kernel (DBConfig / _connection / _serialize_cell) moved to
 # data.db_kernel; the runs writer (upsert_runs + _RUNS_* column specs) moved to
 # data.runs_writer so research can reach it without routing through db_writer.
+# W5.2d: the bundle writer (upsert_bundle / _upsert_frame + _*_COLS specs) moved to
+# services.data_platform.bundle_writer.
 # Re-exported here (see ``__all__``) so existing `from data.db_writer import
-# DBConfig/_connection/upsert_runs/_RUNS_COLS` consumers and tests stay untouched.
-# The bundle + telemetry (signals/equity/fills) writers below reuse the
+# DBConfig/_connection/upsert_runs/upsert_bundle/_upsert_frame` consumers and tests
+# stay untouched. The telemetry (signals/equity/fills) writers below reuse the
 # re-exported kernel symbols.
 from backtest_platform.data.db_kernel import DBConfig, _connection, _serialize_cell
 from backtest_platform.data.runs_writer import (
@@ -29,85 +30,32 @@ from backtest_platform.data.runs_writer import (
     _RUNS_JSON_COLS,
     upsert_runs,
 )
-from backtest_platform.data.schemas import ETLBundle
+from backtest_platform.services.data_platform.bundle_writer import (
+    _BROKER_CHIPS_COLS,
+    _DAILY_BARS_COLS,
+    _INSTITUTIONAL_COLS,
+    _upsert_frame,
+    upsert_bundle,
+)
 
-# Re-exported kernel/runs symbols kept in the public surface for backward compat.
+# Re-exported kernel/runs/bundle symbols kept in the public surface for back-compat.
 __all__ = [
+    "_BROKER_CHIPS_COLS",
+    "_DAILY_BARS_COLS",
+    "_INSTITUTIONAL_COLS",
     "_RUNS_COLS",
     "_RUNS_IMMUTABLE_COLS",
     "_RUNS_JSON_COLS",
     "DBConfig",
     "_connection",
     "_serialize_cell",
+    "_upsert_frame",
     "upsert_bundle",
     "upsert_equity_snapshots",
     "upsert_fills",
     "upsert_runs",
     "upsert_signals",
 ]
-
-_DAILY_BARS_COLS = (
-    "stock_id",
-    "trade_date",
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "adj_factor",
-)
-_INSTITUTIONAL_COLS = ("stock_id", "trade_date", "foreign_buy", "trust_buy", "dealer_buy")
-_BROKER_CHIPS_COLS = (
-    "stock_id",
-    "trade_date",
-    "top_broker_buy",
-    "key_broker_buy",
-    "gov_broker_buy",
-    "geo_broker_buy",
-    "day_trade_volume",
-    "margin_offset_volume",
-)
-
-
-def upsert_bundle(bundle: ETLBundle, cfg: DBConfig | None = None) -> dict[str, int]:
-    """Upsert daily_bars / institutional_flows / broker_chips. Returns row counts."""
-    cfg = cfg or DBConfig.from_env()
-    counts: dict[str, int] = {}
-    with _connection(cfg) as conn, conn.cursor() as cur:
-        counts["daily_bars"] = _upsert_frame(
-            cur, "daily_bars", _DAILY_BARS_COLS, bundle.daily_bars
-        )
-        counts["institutional_flows"] = _upsert_frame(
-            cur, "institutional_flows", _INSTITUTIONAL_COLS, bundle.institutional
-        )
-        counts["broker_chips"] = _upsert_frame(
-            cur, "broker_chips", _BROKER_CHIPS_COLS, bundle.broker_chips
-        )
-    logger.info("upsert complete stock={} counts={}", bundle.stock_id, counts)
-    return counts
-
-
-def _upsert_frame(cur, table: str, cols: tuple[str, ...], df: pd.DataFrame) -> int:
-    """Build ON CONFLICT upsert SQL and execute_values batch insert."""
-    if df.empty:
-        return 0
-
-    from psycopg2.extras import execute_values  # type: ignore[import-not-found]
-
-    missing = [c for c in cols if c not in df.columns]
-    if missing:
-        raise ValueError(f"frame for {table} missing columns: {missing}")
-
-    update_cols = [c for c in cols if c not in ("stock_id", "trade_date")]
-    set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
-    sql = (
-        f"INSERT INTO {table} ({', '.join(cols)}) VALUES %s "
-        f"ON CONFLICT (stock_id, trade_date) DO UPDATE SET {set_clause}"
-    )
-    # tuples in column order
-    rows = [tuple(row[c] for c in cols) for row in df.to_dict("records")]
-    execute_values(cur, sql, rows, page_size=500)
-    return len(rows)
 
 
 # ---------------------------------------------------------------------------
