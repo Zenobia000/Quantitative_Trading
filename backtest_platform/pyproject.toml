@@ -177,6 +177,11 @@ source_modules = [
     "backtest_platform.validation",
 ]
 forbidden_modules = [
+    # W5.1: execution/risk physically relocated into services/. Layer-2 must not
+    # import the services package (strategy_runtime/execution_gateway/risk_gate).
+    "backtest_platform.services",
+    # Old paths kept during the shim transition; each still holds a re-export shim
+    # so these remain forbidden until the shims are deleted (post daemon e2e).
     "backtest_platform.adapters.brokers",
     "backtest_platform.risk",
     "backtest_platform.orchestration",
@@ -186,6 +191,9 @@ forbidden_modules = [
 # (W2.1b landed: watch_registry moved to governance/, so the former
 # research.watch_registry -> runtime.trading_calendar exception is gone and this
 # contract is now unconditionally green — research ⊄ runtime holds.)
+# (W5.1d: signal_fn sizing relocated to services.strategy_runtime; the pure
+# flow_intensity ranking stays in strategies.inst_flow.strategy — no shim left
+# in strategies/, so strategies ⊄ services holds with no exemption.)
 
 [[tool.importlinter.contracts]]
 name = "Layer-2 (research/strategies/validation) must not import Layer-3 governance"

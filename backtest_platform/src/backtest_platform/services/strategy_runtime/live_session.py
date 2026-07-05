@@ -38,7 +38,7 @@ import pandas as pd
 from backtest_platform.data import finlab_source as fl
 from backtest_platform.orchestration.collaborators import build_paper_collaborators
 from backtest_platform.runtime.market_data_errors import NoMarketDataError
-from backtest_platform.strategies.inst_flow.signal_fn import (
+from backtest_platform.services.strategy_runtime.inst_flow_signals import (
     DEFAULT_MAX_NAMES,
     DEFAULT_PER_NAME_CAP,
     STOP_LOSS_FRAC,
