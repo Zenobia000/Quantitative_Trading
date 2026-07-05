@@ -9,4 +9,4 @@
 # 35 14 * * 1-5  → 14:35, Monday(1)..Friday(5). The CLI's own trading-day guard
 # turns any TWSE holiday that lands on a weekday into a clean no-op (exit 0).
 
-35 14 * * 1-5  cd "$HOME/Quantitative_Trading/backtest_platform" && set -a && . ./.env && set +a && /usr/bin/env uv run python -m backtest_platform.orchestration.cli after-close --strategy inst_flow --universe 2330,2317,2454,2308,2382 >> "$HOME/Quantitative_Trading/backtest_platform/reports/after_close.cron.log" 2>&1
+35 14 * * 1-5  cd "$HOME/Quantitative_Trading/backtest_platform" && set -a && . ./.env && set +a && /usr/bin/env uv run python -m backtest_platform.services.strategy_runtime.cli after-close --strategy inst_flow --universe 2330,2317,2454,2308,2382 >> "$HOME/Quantitative_Trading/backtest_platform/reports/after_close.cron.log" 2>&1

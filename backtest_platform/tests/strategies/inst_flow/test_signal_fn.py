@@ -5,7 +5,7 @@ from datetime import date
 
 import pandas as pd
 
-from backtest_platform.strategies.inst_flow.signal_fn import (
+from backtest_platform.services.strategy_runtime.inst_flow_signals import (
     compute_inst_flow_signals,
     make_inst_flow_signal_fn,
 )

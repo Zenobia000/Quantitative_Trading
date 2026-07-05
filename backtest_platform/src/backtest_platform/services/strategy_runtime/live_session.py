@@ -1,4 +1,9 @@
-"""Live market reader + forward-paper wiring (③ / 7.A.4 forward / 8.H.8 live).
+"""Live session: market reader + forward-paper wiring (③ / 7.A.4 forward / 8.H.8 live).
+
+W5.1d: relocated from ``runtime.market_reader`` into ``services.strategy_runtime``
+(execution physically separated from research). The old ``runtime.market_reader``
+path is a re-export shim during the transition.
+
 
 The paper daemon's replay core (`runtime.paper_daemon.run_paper_replay`) is
 clock-agnostic: it runs the daily-flow chain once per as-of date. **Replay** reads
@@ -33,7 +38,7 @@ import pandas as pd
 from backtest_platform.data import finlab_source as fl
 from backtest_platform.orchestration.collaborators import build_paper_collaborators
 from backtest_platform.runtime.market_data_errors import NoMarketDataError
-from backtest_platform.strategies.inst_flow.signal_fn import (
+from backtest_platform.services.strategy_runtime.inst_flow_signals import (
     DEFAULT_MAX_NAMES,
     DEFAULT_PER_NAME_CAP,
     STOP_LOSS_FRAC,

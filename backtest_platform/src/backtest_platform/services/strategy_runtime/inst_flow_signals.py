@@ -1,5 +1,12 @@
 """Paper/live signal adapter for the inst-flow factor (7.A.4).
 
+W3.1 / W5.1d: relocated from ``strategies.inst_flow.signal_fn`` into
+``services.strategy_runtime`` — the qty-sizing / stop-loss / priority logic is
+layer-4/5 execution, not research. The pure cross-sectional ``flow_intensity``
+ranking stays in research (``strategies.inst_flow.strategy``); this adapter only
+imports it. The old ``strategies.inst_flow.signal_fn`` path is a re-export shim.
+
+
 Turns the cross-sectional inst-flow ranking into a daily-flow ``signal_fn`` so the
 *validated* fixed config (ADR-024 / inst_flow_truth_gate REAL) can drive the real
 ETL→signals→risk→orders→log chain. On an as-of date it ranks the universe by

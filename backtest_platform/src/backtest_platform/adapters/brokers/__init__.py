@@ -1,5 +1,9 @@
-"""Broker adapters — PaperBroker (sim撮合); Shioaji (live, M5)."""
-from backtest_platform.adapters.brokers.paper_broker import (
+"""Broker adapters — PaperBroker (sim撮合); Shioaji (live, M5).
+
+W5.1b: PaperBroker moved to ``services.execution_gateway.paper_broker``; this
+package now re-exports the same public API for backward compatibility.
+"""
+from backtest_platform.services.execution_gateway.paper_broker import (
     Fill,
     InsufficientPositionError,
     OrderSide,
@@ -7,4 +11,4 @@ from backtest_platform.adapters.brokers.paper_broker import (
     Position,
 )
 
-__all__ = ["PaperBroker", "Fill", "OrderSide", "Position", "InsufficientPositionError"]
+__all__ = ["Fill", "InsufficientPositionError", "OrderSide", "PaperBroker", "Position"]

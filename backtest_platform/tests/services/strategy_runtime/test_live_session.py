@@ -9,8 +9,8 @@ from datetime import date
 import pandas as pd
 
 from backtest_platform.adapters.brokers.paper_broker import PaperBroker
-from backtest_platform.runtime import market_reader as mr
-from backtest_platform.runtime.paper_daemon import run_paper_replay
+from backtest_platform.services.strategy_runtime import live_session as mr
+from backtest_platform.services.strategy_runtime.paper_daemon import run_paper_replay
 from backtest_platform.strategies.inst_flow.strategy import InstFlowConfig
 
 _INST = "institutional_investors_trading_summary"

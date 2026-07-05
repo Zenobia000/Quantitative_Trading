@@ -32,13 +32,13 @@ Discord, while a strategy with no active觀察艙 berth is refused before it run
   ```bash
   # Preferred: select in the Candidate Pool UI (or `candidates select-live-oos`),
   # then the after-close.service ExecStartPre consumes the queue and enrolls the berth.
-  uv run python -m backtest_platform.orchestration.cli live-oos consume   # what ExecStartPre runs
-  uv run python -m backtest_platform.orchestration.cli live-oos list      # inspect the queue
+  uv run python -m backtest_platform.services.strategy_runtime.cli live-oos consume   # what ExecStartPre runs
+  uv run python -m backtest_platform.services.strategy_runtime.cli live-oos list      # inspect the queue
 
   # Manual override (ops / testing) — enroll a berth directly:
-  uv run python -m backtest_platform.orchestration.cli \
+  uv run python -m backtest_platform.services.strategy_runtime.cli \
       watch enroll --strategy inst_flow --dsr 0.908
-  uv run python -m backtest_platform.orchestration.cli watch status
+  uv run python -m backtest_platform.services.strategy_runtime.cli watch status
   ```
 
 ## Option A — systemd user timer (recommended)
@@ -57,7 +57,7 @@ journalctl --user -u after-close.service -n 50    # inspect the last run
 Back-fill a missed session manually:
 
 ```bash
-uv run python -m backtest_platform.orchestration.cli \
+uv run python -m backtest_platform.services.strategy_runtime.cli \
     after-close --strategy inst_flow --date 2026-07-01 --universe 2330,2317
 ```
 
@@ -72,7 +72,7 @@ Discord alert) rather than silently starting empty. Pass `--fresh` to opt out an
 force an empty-book start:
 
 ```bash
-uv run python -m backtest_platform.orchestration.cli \
+uv run python -m backtest_platform.services.strategy_runtime.cli \
     after-close --strategy inst_flow --universe 2330,2317 --fresh
 ```
 

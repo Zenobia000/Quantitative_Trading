@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from backtest_platform.jobs import job_store
+from backtest_platform.services.monitoring_ops.jobs import job_store
 
 
 def _seed_universe(data_root, dirname, symbols):

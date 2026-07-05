@@ -1,11 +1,14 @@
-"""Risk management — Ex-ante gate (12 rules) + 3-level circuit breaker (spec 24)."""
-from backtest_platform.risk.circuit_breaker import (
+"""Re-export shim (W5.1a) — moved to ``services.risk_gate``.
+
+Ex-ante gate (12 rules) + 3-level circuit breaker (spec 24).
+"""
+from backtest_platform.services.risk_gate.circuit_breaker import (
     CircuitBreaker,
     CircuitBreakerConfig,
     RiskMetrics,
     Transition,
 )
-from backtest_platform.risk.risk_gate import (
+from backtest_platform.services.risk_gate.risk_gate import (
     AccountState,
     Order,
     Position,
@@ -13,10 +16,18 @@ from backtest_platform.risk.risk_gate import (
     RiskGateConfig,
     RiskGateResult,
 )
-from backtest_platform.risk.types import BreakerState
+from backtest_platform.services.risk_gate.types import BreakerState
 
 __all__ = [
+    "AccountState",
     "BreakerState",
-    "RiskGate", "RiskGateConfig", "RiskGateResult", "Order", "AccountState", "Position",
-    "CircuitBreaker", "CircuitBreakerConfig", "RiskMetrics", "Transition",
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "Order",
+    "Position",
+    "RiskGate",
+    "RiskGateConfig",
+    "RiskGateResult",
+    "RiskMetrics",
+    "Transition",
 ]
