@@ -53,10 +53,14 @@
 
 | Method | Path | 說明 |
 | :--- | :--- | :--- |
+| GET | `/system/datasets` | 資料字典 read model：finlab key/name/category/freq/history/description、`local`、`used_by`、`bundle_backed` |
+| POST | `/system/ingest` | 觸發 bundle ingest async job；`symbols` 選填，省略/空陣列時用 `DEFAULT_UNIVERSE` |
 | GET | `/system/universes` | 列出具名 universe（掃 `universe_manifest.json` 投影；degrade→typed-empty，`data_source=parquet_scan`）|
 | POST | `/system/universe/build` | 觸發 survivorship-clean universe build（async job，ADR-032）|
 
 `UniverseRow`：`id` / `name` / `symbols_count` / `span_start` / `span_end` / `top_n` / `min_turnover` / `strategies[]`（N:1 讀相容舊 `strategy: str`）/ `cache_dir` / `generated_at`。
+
+`DatasetCard.bundle_backed=false` 表示該類資料不進本地 parquet bundle（例如財報/月營收/融資融券），前端應標示 runtime `data.get`，不得顯示成可下載但未下載的 cache miss。
 
 ### Research Runs
 
@@ -67,6 +71,8 @@
 | GET | `/research-runs/{run_id}/report` | 取得 report pack |
 
 > **股票池選擇（ADR-007 Slice 2，實作 `POST /runs`）**：body 的 `stocks` 改選填，新增 `universe`（具名池 id）。伺服端解析精度序 `stocks` > `universe` > 系統 `DEFAULT_UNIVERSE`；未知 universe → 422。策略**不必**手打股票池——省略即用預設。
+>
+> **策略參數（ADR-008 / ADR-R06，實作 `GET /strategies` + `POST /runs`）**：前端由 `config_schema` 動態產生 params 表單；提交仍是 `params: object`，後端於 dispatch 以 runner 的 `config_model(**params)` 驗證。raw JSON 僅作 advanced fallback。
 
 ### Strategy Definitions
 
@@ -75,6 +81,18 @@
 | POST | `/strategy-definitions` | 建立策略定義草稿 |
 | GET | `/strategy-definitions/{strategy_id}` | 取得策略定義 |
 | POST | `/strategy-definitions/{strategy_id}/freeze` | 凍結版本 |
+
+### Strategy Packages（ADR-008 / ADR-R06，實作路徑 `/strategies/*`）
+
+策略不是單一腳本，而是 repo 內 `strategies/<pkg>/` package；前端不讀檔案系統，只讀後端投影。
+
+| Method | Path | 說明 |
+| :--- | :--- | :--- |
+| GET | `/strategies` | 已註冊策略型錄：`name/title/description/config_schema` |
+| GET | `/strategies/{strategy}/asset` | Strategy Package descriptor：package module/path、必要檔案 present/missing、workflows、互動端點 |
+| GET | `/strategies/{strategy}/optimization-schema` | 策略 DOE 最佳化 read model：`config_schema` + `DOE.grid` + `n_configs` + window/universe 摘要 |
+
+`POST /research/workflows/doe` 接收 `{strategy, overrides: {grid}}` 啟動 DOE job；`overrides` 必須在 HTTP edge 重新驗證。
 
 ### Governance
 
@@ -151,4 +169,3 @@
   "created_at": "2026-07-05T00:00:00Z"
 }
 ```
-

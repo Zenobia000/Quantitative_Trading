@@ -4,12 +4,13 @@
  * ADR-028：body 為 strategy（已註冊策略名，取自 GET /strategies 型錄）+ params（策略參數 dict），
  * 取代舊 preset 欄位。完整 range-step / OOS 鎖死待後端擴充 RunConfig（companion 後端 goal）。
  */
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { createRun, type RunCreateRequest } from '../api/createRun'
-import { useStrategyRegistry } from '../hooks/useStrategyRegistry'
+import { submitDoeWorkflow } from '../api/registry'
+import { useStrategyOptimizationSchema, useStrategyRegistry } from '../hooks/useStrategyRegistry'
 import { useUniverses } from '@/features/system/hooks/useSystem'
 import { PageHeader } from '@/components/PageHeader'
 import { PendingNote } from '@/components/PendingNote'
@@ -22,20 +23,105 @@ const POOL_CUSTOM = '__custom__'
 const field = 'w-full rounded-md border border-border bg-input px-3 py-1.5 text-sm'
 const label = 'mb-1 block text-xs text-text-secondary'
 
+type JsonSchema = Record<string, unknown>
+
+interface ParamField {
+  name: string
+  type: string
+  enumValues: unknown[]
+  defaultValue: unknown
+  description: string
+}
+
+function schemaProps(schema: Record<string, unknown> | undefined): Record<string, JsonSchema> {
+  const props = schema?.properties
+  return props && typeof props === 'object' ? (props as Record<string, JsonSchema>) : {}
+}
+
+function unwrapNullable(schema: JsonSchema): JsonSchema {
+  const anyOf = schema.anyOf
+  if (!Array.isArray(anyOf)) return schema
+  const concrete = anyOf.find((s) => s && typeof s === 'object' && (s as JsonSchema).type !== 'null')
+  return concrete ? { ...schema, ...(concrete as JsonSchema) } : schema
+}
+
+function enumValues(schema: JsonSchema): unknown[] {
+  if (Array.isArray(schema.enum)) return schema.enum
+  const anyOf = schema.anyOf
+  if (!Array.isArray(anyOf)) return []
+  const vals = anyOf
+    .filter((s): s is JsonSchema => !!s && typeof s === 'object')
+    .filter((s) => s.type !== 'null' && Object.prototype.hasOwnProperty.call(s, 'const'))
+    .map((s) => s.const)
+  return vals.length ? vals : []
+}
+
+function paramFields(schema: Record<string, unknown> | undefined): ParamField[] {
+  return Object.entries(schemaProps(schema)).map(([name, raw]) => {
+    const s = unwrapNullable(raw)
+    const values = enumValues(raw)
+    return {
+      name,
+      type: typeof s.type === 'string' ? s.type : values.length ? 'string' : 'string',
+      enumValues: values,
+      defaultValue: s.default,
+      description: typeof s.description === 'string' ? s.description : '',
+    }
+  })
+}
+
+function parseParamValue(f: ParamField, raw: string | boolean): unknown {
+  if (f.type === 'boolean') return Boolean(raw)
+  if (f.type === 'integer') return raw === '' ? undefined : Math.trunc(Number(raw))
+  if (f.type === 'number') return raw === '' ? undefined : Number(raw)
+  return String(raw)
+}
+
+function splitGridValues(raw: string): unknown[] {
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => {
+      const n = Number(s)
+      return Number.isFinite(n) && s !== '' ? n : s
+    })
+}
+
+function gridStats(grid: Record<string, string>): { axes: number; configs: number } {
+  let axes = 0
+  let configs = 1
+  for (const raw of Object.values(grid)) {
+    const n = splitGridValues(raw).length
+    if (n > 0) {
+      axes += 1
+      configs *= n
+    }
+  }
+  return { axes, configs: axes ? configs : 0 }
+}
+
 export function NewRunPage() {
   const { t } = useTranslation('research')
   const errText = useErrorText()
   const navigate = useNavigate()
   const [sp] = useSearchParams()
-  const registry = useStrategyRegistry()
-  const strategies = Array.isArray(registry.data?.data) ? registry.data.data : []
-  const universesQ = useUniverses()
-  const universes = Array.isArray(universesQ.data?.data) ? universesQ.data.data : []
-
   const [hypothesis, setHypothesis] = useState('')
   // 策略中心「New Run」以 ?strategy= 深連結預填此欄（refresh-safe）；未帶則預設 four_layer。
   const [strategy, setStrategy] = useState(sp.get('strategy') ?? 'four_layer')
+  const registry = useStrategyRegistry()
+  const strategies = Array.isArray(registry.data?.data) ? registry.data.data : []
+  const selectedInfo = strategies.find((s) => s.name === strategy)
+  const fields = useMemo(() => paramFields(selectedInfo?.config_schema), [selectedInfo?.config_schema])
+  const optQ = useStrategyOptimizationSchema(strategy)
+  const optimization = optQ.data?.data?.optimization ?? null
+  const universesQ = useUniverses()
+  const universes = Array.isArray(universesQ.data?.data) ? universesQ.data.data : []
+
   const [paramsText, setParamsText] = useState('{}')
+  const [guidedParams, setGuidedParams] = useState<Record<string, string | boolean>>({})
+  const [gridText, setGridText] = useState<Record<string, string>>({})
+  const [doeJob, setDoeJob] = useState<string | null>(null)
   // 股票池：預設用系統通用池（不必手打 symbols）；選具名池或「自訂」才需輸入。
   const [pool, setPool] = useState<string>(POOL_DEFAULT)
   const [stocks, setStocks] = useState('2330,2454')
@@ -46,6 +132,11 @@ export function NewRunPage() {
   // 進階（raw JSON params）預設收合 —— guided 欄位先行，params 為 opt-in 逃生艙（PD-01）。
   const [advOpen, setAdvOpen] = useState(false)
 
+  useEffect(() => {
+    const grid = optimization?.grid ?? {}
+    setGridText(Object.fromEntries(Object.entries(grid).map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : ''])))
+  }, [optimization])
+
   const mut = useMutation({
     mutationFn: (body: RunCreateRequest) => createRun(body),
     onSuccess: (res) => {
@@ -55,10 +146,21 @@ export function NewRunPage() {
     },
   })
 
+  const doeMut = useMutation({
+    mutationFn: (grid: Record<string, unknown[]>) =>
+      submitDoeWorkflow({ strategy: strategy.trim(), overrides: { grid } }),
+    onSuccess: (res) => setDoeJob(res.data?.job_id ?? null),
+  })
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     // params 為選填 JSON dict；空白視為 {}，解析失敗則擋下（快速失敗，清楚訊息）
     let params: Record<string, unknown> = {}
+    for (const f of fields) {
+      if (!(f.name in guidedParams)) continue
+      const parsed = parseParamValue(f, guidedParams[f.name])
+      if (parsed !== undefined) params[f.name] = parsed
+    }
     const raw = paramsText.trim()
     if (raw) {
       try {
@@ -68,7 +170,7 @@ export function NewRunPage() {
           setAdvOpen(true)
           return
         }
-        params = parsed as Record<string, unknown>
+        params = { ...params, ...(parsed as Record<string, unknown>) }
       } catch {
         setParamsError(t('newRun.params.errorParse'))
         setAdvOpen(true)
@@ -93,6 +195,17 @@ export function NewRunPage() {
     }
     mut.mutate(body)
   }
+
+  const submitDoe = () => {
+    const grid: Record<string, unknown[]> = {}
+    for (const [k, v] of Object.entries(gridText)) {
+      const vals = splitGridValues(v)
+      if (vals.length) grid[k] = vals
+    }
+    doeMut.mutate(grid)
+  }
+
+  const gridSummary = gridStats(gridText)
 
   return (
     <form onSubmit={submit}>
@@ -157,6 +270,51 @@ export function NewRunPage() {
             <p className="mt-1 text-xs text-text-muted">{t('newRun.pool.defaultHint')}</p>
           )}
         </div>
+        {fields.length > 0 && (
+          <div className="sm:col-span-2">
+            <div className="mb-2 text-xs text-text-muted">{t('newRun.params.guidedTitle')}</div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {fields.map((f) => {
+                const current = guidedParams[f.name]
+                const value = current ?? (f.defaultValue ?? '')
+                return (
+                  <label key={f.name} className="block">
+                    <span className={label}>{f.name}</span>
+                    {f.type === 'boolean' ? (
+                      <input
+                        type="checkbox"
+                        checked={Boolean(value)}
+                        onChange={(e) => setGuidedParams((p) => ({ ...p, [f.name]: e.target.checked }))}
+                        className="h-4 w-4 accent-text"
+                      />
+                    ) : f.enumValues.length > 0 ? (
+                      <select
+                        value={String(value)}
+                        onChange={(e) => setGuidedParams((p) => ({ ...p, [f.name]: e.target.value }))}
+                        className={field}
+                      >
+                        {f.enumValues.map((v) => (
+                          <option key={String(v)} value={String(v)}>
+                            {String(v)}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={f.type === 'integer' || f.type === 'number' ? 'number' : 'text'}
+                        step={f.type === 'integer' ? 1 : 'any'}
+                        value={String(value)}
+                        onChange={(e) => setGuidedParams((p) => ({ ...p, [f.name]: e.target.value }))}
+                        className={`${field} font-mono`}
+                      />
+                    )}
+                    {f.description && <span className="mt-1 block text-xs text-text-muted">{f.description}</span>}
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+        )}
         <details
           open={advOpen}
           onToggle={(e) => setAdvOpen((e.currentTarget as HTMLDetailsElement).open)}
@@ -180,6 +338,51 @@ export function NewRunPage() {
       <div className="mb-3">
         <PendingNote label={t('newRun.pending.paramForm')} />
       </div>
+
+      {/* DOE optimization grid（ADR-008）：讀 research_config.DOE.grid，可覆寫後送 workflow。 */}
+      {optimization && (
+        <section className="mb-3 rounded-lg border border-border bg-surface p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div>
+              <div className="text-xs uppercase tracking-wide text-text-muted">{t('newRun.optimization.title')}</div>
+              <div className="mt-0.5 text-xs text-text-secondary">
+                {t('newRun.optimization.window', {
+                  start: optimization.is_start,
+                  end: optimization.is_end,
+                  symbols: optimization.symbols_count,
+                })}
+              </div>
+            </div>
+            <span className="ml-auto font-mono text-xs text-text-muted">
+              {t('newRun.optimization.gridStats', { axes: gridSummary.axes, configs: gridSummary.configs })}
+            </span>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {Object.entries(gridText).map(([k, v]) => (
+              <label key={k} className="block">
+                <span className={label}>{k}</span>
+                <input
+                  value={v}
+                  onChange={(e) => setGridText((g) => ({ ...g, [k]: e.target.value }))}
+                  className={`${field} font-mono`}
+                />
+              </label>
+            ))}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {doeMut.isError && <span className="text-sm text-error">{errText(doeMut.error)}</span>}
+            {doeJob && <span className="font-mono text-xs text-text-muted">job {doeJob}</span>}
+            <button
+              type="button"
+              onClick={submitDoe}
+              disabled={doeMut.isPending}
+              className="ml-auto rounded-md border border-info/60 px-3 py-1.5 text-sm text-info hover:bg-input disabled:opacity-50"
+            >
+              {doeMut.isPending ? t('newRun.optimization.submitting') : t('newRun.optimization.submit')}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* cost_engine */}
       <section className="mb-3 rounded-lg border border-border bg-surface p-4">

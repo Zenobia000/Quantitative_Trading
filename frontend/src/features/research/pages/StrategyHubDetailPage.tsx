@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useStrategyHubDetail } from '../hooks/useStrategyHub'
+import { useStrategyAsset } from '../hooks/useStrategyRegistry'
 import { useDatasets } from '@/features/system/hooks/useSystem'
 import { BranchExperimentsSection } from '../components/branches/BranchExperimentsSection'
 import { CandidateStateBadge } from '../components/candidates/CandidateStateBadge'
@@ -52,6 +53,7 @@ export function StrategyHubDetailPage() {
   const navigate = useNavigate()
   const { name } = useParams<{ name: string }>()
   const { registry, runsQ, candidatesQ, detail } = useStrategyHubDetail(name)
+  const assetQ = useStrategyAsset(name)
 
   const back = { label: t('strategyHub.detail.back'), to: '/research/strategies' }
   const route = `/research/strategies/${encodeURIComponent(name ?? '')}`
@@ -125,6 +127,9 @@ export function StrategyHubDetailPage() {
 
       {/* 使用的資料卡（反向索引搬家自資料字典：語意屬策略側，多策略也不擠字典） */}
       <UsedDatasetsSection strategy={detail.name} />
+
+      {/* Strategy Package descriptor（ADR-008）：策略不是單一 script，而是 repo package。 */}
+      <StrategyPackageSection asset={assetQ.data?.data ?? null} loading={assetQ.isLoading} />
 
       {/* 候選生命週期（IA 裁決 B） */}
       <CandidateLifecycle
@@ -231,6 +236,69 @@ export function StrategyHubDetailPage() {
         )}
       </section>
     </div>
+  )
+}
+
+function StrategyPackageSection({
+  asset,
+  loading,
+}: {
+  asset: {
+    package: string
+    package_path: string
+    files: { path: string; role: string; present: boolean }[]
+    workflows: string[]
+  } | null
+  loading: boolean
+}) {
+  const { t } = useTranslation('research')
+  if (loading && !asset) return null
+  if (!asset) return null
+
+  return (
+    <section className="mb-3 rounded-lg border border-border bg-surface p-4">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <div className="text-xs uppercase tracking-wide text-text-muted">
+          {t('strategyHub.detail.package.title')}
+        </div>
+        <code className="font-mono text-xs text-text-secondary">{asset.package}</code>
+        <code className="ml-auto font-mono text-[11px] text-text-muted">{asset.package_path}</code>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-2">
+        <div>
+          <div className="mb-1 text-[11px] text-text-muted">{t('strategyHub.detail.package.files')}</div>
+          <div className="flex flex-wrap gap-1.5">
+            {asset.files.map((f) => (
+              <span
+                key={f.path}
+                title={f.role}
+                className={`rounded-md border px-2 py-0.5 font-mono text-xs ${
+                  f.present
+                    ? 'border-border bg-surface-raised text-text-secondary'
+                    : 'border-warning/50 bg-warning/5 text-warning'
+                }`}
+              >
+                {f.path}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="mb-1 text-[11px] text-text-muted">{t('strategyHub.detail.package.workflows')}</div>
+          {asset.workflows.length ? (
+            <div className="flex flex-wrap gap-1.5">
+              {asset.workflows.map((w) => (
+                <span key={w} className="rounded-md border border-info/40 px-2 py-0.5 font-mono text-xs text-info">
+                  {w}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-xs text-text-muted">{t('strategyHub.detail.package.noWorkflows')}</span>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }
 

@@ -66,10 +66,16 @@
 | 10.1 | 具名 Universe 讀模型 + `GET /system/universes`（SPEC-01 Slice 1、ADR-007）— 🔨 進行中 | 2.2, 8.1 |
 | 10.2 | New Run 股票池選單 + 後端解析（SPEC-01 Slice 2，接 Q2/Q4/Q5：預設池+提示）— ✅ 落地 | 10.1 |
 | 10.2b | 資料字典/策略頁 UX：反向索引搬策略頁、卡片教 data.get 用法、収合（SPEC-01 Slice 2.5）— ✅ 落地 | 10.1 |
-| 10.3 | Eligibility 篩選層：finlab set_universe 靜態 + 處置/注意/變更交易時變遮罩（SPEC-01 Slice 3、Q3）— ⏳ 前置需 token 驗 frame 形狀 | 10.1 |
-| 10.4 | 資料字典下載對接、presence 相對 Universe+span（SPEC-01 Slice 4、Q1）— ⏳ | 10.1 |
+| 10.3 | Eligibility 篩選層：finlab set_universe 靜態 + 處置/注意/變更交易時變遮罩（SPEC-01 Slice 3、Q3）— ✅ 落地 | 10.1 |
+| 10.4a | 資料字典 runtime-only 標示 + ingest default universe fallback（SPEC-01 Slice 4a、Q1）— ✅ 落地 | 10.1 |
+| 10.4b | 資料字典下載對接、presence 相對 Universe+span（SPEC-01 Slice 4b/4c、Q1）— ⏳ | 10.4a |
+| 11.1 | Strategy Package descriptor：`GET /strategies/{strategy}/asset`（SPEC-02、ADR-008、ADR-R06）— ✅ 落地 | 4.1, 8.1 |
+| 11.2 | New Run 動態 params form：由 `config_schema` 產生 guided params，raw JSON 僅 advanced fallback（SPEC-02）— ✅ 落地 | 11.1 |
+| 11.3 | DOE 最佳化 schema + grid editor：`GET /strategies/{strategy}/optimization-schema` + `POST /research/workflows/doe`（SPEC-02）— ✅ 落地 | 11.1 |
 
 > **WP 10（具名股票池對接）**：真相源為 `specs/SPEC-01-named-universe-artifact.md` + `adrs/ADR-007`。收斂前端資料管理四功能（資料字典/資料匯入/股票池建置/資料集清單）的斷線。finlab SDK 事實已本機實測（見 SPEC-01 §2）。
+>
+> **WP 11（策略資產包與動態研究 UI）**：真相源為 `specs/SPEC-02-dynamic-strategy-params-and-optimization-ui.md` + ADR-008 + `adrs/ADR-R06-strategy-package-read-models.md`。策略撰寫留在 repo/AI coding/IDE；UI 透過策略 package descriptor、config schema 與 DOE schema 互動。
 
 ## 5. 風險管理
 
@@ -79,4 +85,3 @@
 | Broker SDK 行為不穩 | 錯單/漏單 | PaperBroker、dry run、idempotency |
 | 資料品質不穩 | 回測與交易失真 | DQ gate、bundle manifest |
 | 單人維運負擔 | 無法恢復 | runbook、backup、alert |
-

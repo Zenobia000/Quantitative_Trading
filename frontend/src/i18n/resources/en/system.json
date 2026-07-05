@@ -32,7 +32,8 @@
       },
       "local": {
         "cached": "Local",
-        "notCached": "Not downloaded"
+        "notCached": "Not downloaded",
+        "runtimeOnly": "Runtime fetch"
       }
     },
     "ops": {

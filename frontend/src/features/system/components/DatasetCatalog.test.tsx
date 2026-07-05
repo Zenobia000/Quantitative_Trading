@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DatasetCatalog } from './DatasetCatalog'
 
 // mock cards use the real /system/datasets shape (api.gen.ts DatasetCard):
-// {key, name_zh, category, freq, history_start, description, local, used_by}
+// {key, name_zh, category, freq, history_start, description, local, used_by, bundle_backed}
 const CARDS = [
   {
     key: 'etl:adj_close',
@@ -15,6 +15,7 @@ const CARDS = [
     description: '除權息還原後收盤價',
     local: 'cached',
     used_by: ['four_layer', 'momentum'],
+    bundle_backed: true,
   },
   {
     key: 'institutional_investors_trading_summary:投信買賣超股數',
@@ -25,6 +26,7 @@ const CARDS = [
     description: '投信買賣超股數',
     local: 'not_cached',
     used_by: [],
+    bundle_backed: true,
   },
   {
     key: 'monthly_revenue:當月營收',
@@ -33,8 +35,9 @@ const CARDS = [
     freq: '月',
     history_start: '2007',
     description: '每月10日前公告之單月營收',
-    local: 'cached',
+    local: 'not_cached',
     used_by: ['revenue_growth'],
+    bundle_backed: false,
   },
 ]
 
@@ -97,12 +100,13 @@ describe('DatasetCatalog', () => {
     expect(screen.queryByText('投信買賣超')).not.toBeInTheDocument()
   })
 
-  it('shows cached vs not_cached states honestly (no fake download button)', async () => {
+  it('shows bundle-backed cache state and runtime-only state honestly', async () => {
     mockApi()
     renderCatalog()
     await waitFor(() => expect(screen.getByText('投信買賣超')).toBeInTheDocument())
     expect(screen.getAllByText('本地已有').length).toBeGreaterThan(0) // cached cards
-    expect(screen.getByText('未下載')).toBeInTheDocument() // not_cached card
+    expect(screen.getByText('未下載')).toBeInTheDocument() // bundle-backed not_cached card
+    expect(screen.getByText('執行時抓取')).toBeInTheDocument() // runtime-only data.get category
     // honest UI: no fabricated "download" action rendered
     expect(screen.queryByText('下載到本地')).not.toBeInTheDocument()
   })

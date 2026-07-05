@@ -184,6 +184,12 @@
         "compare": "比較",
         "needTwo": "需 ≥2 個 run 方可比較",
         "notebook": "在 Notebook 開啟"
+      },
+      "package": {
+        "title": "策略資料夾",
+        "files": "Package files",
+        "workflows": "Research workflows",
+        "noWorkflows": "尚未宣告 workflow"
       }
     }
   },
@@ -208,9 +214,17 @@
       "defaultHint": "未指定 → 使用系統預設股票池（開發用大型股）。正式回測建議先在「資料」頁建置 survivorship-clean 股票池再於此選用。"
     },
     "params": {
+      "guidedTitle": "策略參數（由 config_schema 動態產生）",
       "summary": "進階 · 參數（策略參數 JSON，選填；預設空物件）",
       "errorObject": "參數需為 JSON 物件（例：{\"box_period\": 60}）",
       "errorParse": "參數 JSON 格式錯誤"
+    },
+    "optimization": {
+      "title": "參數最佳化 · DOE grid",
+      "window": "IS {{start}} → {{end}} · {{symbols}} 檔",
+      "gridStats": "{{axes}} axes · {{configs}} configs",
+      "submit": "提交 DOE 最佳化",
+      "submitting": "提交中…"
     },
     "engine": {
       "label": "引擎"
@@ -224,7 +238,7 @@
       "submitting": "提交中…"
     },
     "pending": {
-      "paramForm": "由 config_schema 驅動的參數表單 / range-step / 標的篩選（待後端擴充）",
+      "paramForm": "策略撰寫仍在 repo / AI coding / IDE；此頁只設定已註冊策略的參數與 DOE grid",
       "cost": "成本攤平（手續費 / 滑點 / 漲跌停 / T+2）（待後端擴充）"
     }
   },

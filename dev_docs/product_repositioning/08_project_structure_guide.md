@@ -44,6 +44,13 @@ services/research_validation/
   domain/
   application/
   adapters/
+  strategies/
+    <strategy_pkg>/
+      __init__.py
+      strategy.py          # alpha / signal / portfolio construction pure logic
+      runner.py            # StrategyRunner adapter + @register_strategy
+      research_config.py   # DOE / GO_GATES / TRUTH_GATE / PAPER_REPLAY / UNIVERSE
+      README.md            # optional human docs
   tests/
 
 services/execution_gateway/
@@ -63,6 +70,18 @@ packages/contracts/
   examples/
 ```
 
+## 4.1 Strategy Package 契約（ADR-008 / ADR-R06）
+
+策略是資料夾，不是單一 script。每個 `strategies/<strategy_pkg>/` 透過
+`runner.py` 註冊為可執行策略，透過 `config_model` 暴露動態參數 schema，
+透過 `research_config.py` 暴露 DOE / validation workflow。前端不得直接讀
+Python 檔案或任意執行使用者程式碼；一律消費後端 read model：
+
+- `GET /strategies`：策略型錄與 `config_schema`
+- `GET /strategies/{strategy}/asset`：策略資料夾 descriptor
+- `GET /strategies/{strategy}/optimization-schema`：DOE grid read model
+- `POST /runs` / `POST /research/workflows/doe`：執行單次 run / 參數最佳化
+
 ## 5. 禁止結構
 
 - `research_validation` 不可 import `execution_gateway.adapters.broker`。
@@ -81,4 +100,3 @@ docs/
   api/
   operations/
 ```
-

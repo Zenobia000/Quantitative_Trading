@@ -111,10 +111,11 @@ Universe（具名產物 — 一等實體）
 - 前端 `UniverseBuildCard` 加板別下拉 + 排除 flagged checkbox（含 hint）。
 - 測試：`ineligible_asof` 3 案 + `select_survivorship_universe(exclude_frames)` 2 案 + workflow opt-in 1 案。
 
-### Slice 4 — 資料下載對接資料字典（接 Q1，最後做）
-- 資料字典 presence 由「全域 category 二元」→「相對選定 Universe + span」。
-- 卡片 `not_cached` → 一鍵補該表（symbols 來自池、span 來自 manifest）。
-- 對三類無 ingest 路徑者（財報/月營收/融資融券）：**先明確標示「此類不入本地 bundle，執行時 `data.get` 即抓」或開 ingest 表**——二選一由 ADR-007 決策後定。
+### Slice 4 — 資料下載對接資料字典（接 Q1）
+- **Slice 4a ✅ 已落地**：`GET /system/datasets` 回傳 `bundle_backed`，讓 UI 區分「可進本地 parquet bundle」與「執行時 `data.get` 即抓」。財報/月營收/融資融券先採 ADR-007 決策：**不入本地 bundle，UI 明示 runtime fetch**，不再顯示誤導性的 `not_cached` 灰態。
+- **Slice 4a ✅ 已落地**：`POST /system/ingest` 的 `symbols` 改選填；省略/空陣列時使用 `DEFAULT_UNIVERSE`，支援資料字典/資料匯入的一鍵下載，不要求使用者重打 symbols。
+- **Slice 4b ⏳ 待做**：資料字典 presence 由「全域 category 二元」→「相對選定 Universe + span」。
+- **Slice 4c ⏳ 待做**：卡片 `not_cached` → 一鍵補該表（symbols 來自池、span 來自 manifest）；現階段已先打通 API default universe fallback，尚未做 per-card action。
 
 ### 非目標（本 spec 不做）
 - 不搬 build 到研究區（§Q2：build 留 Data，只在研究補 select）。

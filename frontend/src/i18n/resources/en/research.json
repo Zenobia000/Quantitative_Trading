@@ -184,6 +184,12 @@
         "compare": "Compare",
         "needTwo": "Needs ≥2 runs to compare",
         "notebook": "Open in Notebook"
+      },
+      "package": {
+        "title": "Strategy Package",
+        "files": "Package files",
+        "workflows": "Research workflows",
+        "noWorkflows": "No workflows declared"
       }
     }
   },
@@ -208,9 +214,17 @@
       "defaultHint": "Unset → uses the system default pool (dev-scale large caps). For a real backtest, build a survivorship-clean pool on the Data page first, then select it here."
     },
     "params": {
+      "guidedTitle": "Strategy params (generated from config_schema)",
       "summary": "Advanced · Params (strategy params JSON, optional; defaults to empty object)",
       "errorObject": "Params must be a JSON object (e.g. {\"box_period\": 60})",
       "errorParse": "Invalid params JSON"
+    },
+    "optimization": {
+      "title": "Parameter Optimization · DOE grid",
+      "window": "IS {{start}} → {{end}} · {{symbols}} symbols",
+      "gridStats": "{{axes}} axes · {{configs}} configs",
+      "submit": "Submit DOE Optimization",
+      "submitting": "Submitting…"
     },
     "engine": {
       "label": "Engine"
@@ -224,7 +238,7 @@
       "submitting": "Submitting…"
     },
     "pending": {
-      "paramForm": "config_schema-driven param form / range-step / universe filter (pending backend)",
+      "paramForm": "Strategy authoring stays in repo / AI coding / IDE; this page configures registered strategy params and DOE grid",
       "cost": "Cost modeling (fees / slippage / price limits / T+2) (pending backend)"
     }
   },

@@ -44,7 +44,8 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 | 16 | `16_wbs_development_plan.md` | 分階段 WBS 與里程碑。 |
 | 17 | `17_frontend_information_architecture.md` | 前端資訊架構、頁面、路由、旅程。 |
 | 18 | `18_refactor_wbs.md` | 現況碼 → golden 七層的重構 WBS、kill-list、波次。 |
-| — | `adrs/` | Repositioning refactor ADRs（R01–R05），見 `adrs/INDEX.md`。 |
+| — | `adrs/` | Repositioning refactor ADRs（R01–R06），見 `adrs/INDEX.md`。 |
+| — | `specs/` | Product slices：SPEC-01 named universe、SPEC-02 strategy package / dynamic params / optimization UI。 |
 
 ## 3. 決策摘要
 
@@ -56,6 +57,7 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 | 基礎設施 | 單機或小型 VPS，Docker Compose + systemd；不做 K8s。 |
 | 資料頻率 | EOD / 財報 / 籌碼 / 月營收；不做 Tick / Order Book。 |
 | 交付方式 | API-first、contract-first、ADR-first。 |
+| 策略撰寫 | 策略是 repo 內 Strategy Package；AI coding/IDE 寫策略，Console 透過 descriptor/schema/workflow 互動。 |
 
 ## 4. 非目標
 
@@ -63,4 +65,3 @@ FinLab / backtest_platform 僅屬第 2 層 Research & Validation：負責 Alpha 
 - 不遷就既有模組命名或技術債。
 - 不做機構級 Tick/HFT/EMS/K8s/RBAC。
 - 不讓研究程式直接碰 Broker API。
-

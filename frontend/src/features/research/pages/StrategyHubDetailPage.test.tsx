@@ -75,6 +75,7 @@ function candidate(over: Partial<Candidate> = {}): Candidate {
 
 function mockApis(sets: {
   strategies?: unknown[]
+  asset?: unknown
   runs?: unknown[]
   watch?: unknown[]
   candidates?: unknown[]
@@ -84,7 +85,20 @@ function mockApis(sets: {
     vi.fn(async (url: string) => {
       const path = new URL(url, 'http://x').pathname
       const data =
-        path === '/strategies'
+        path.endsWith('/asset')
+          ? (sets.asset ?? {
+              strategy: 'four_layer',
+              package: 'backtest_platform.strategies.four_layer_resonance',
+              package_path: 'src/backtest_platform/strategies/four_layer_resonance',
+              files: [
+                { path: 'strategy.py', role: 'alpha_logic', present: true },
+                { path: 'runner.py', role: 'platform_adapter', present: true },
+                { path: 'research_config.py', role: 'research_workflows', present: true },
+              ],
+              workflows: ['doe'],
+              endpoints: {},
+            })
+          : path === '/strategies'
           ? (sets.strategies ?? [])
           : path === '/runs'
             ? (sets.runs ?? [])
@@ -141,6 +155,9 @@ describe('StrategyHubDetailPage', () => {
     expect(screen.getByText('box_period')).toBeInTheDocument()
     // research premise section present
     expect(screen.getByText('研究命題')).toBeInTheDocument()
+    // strategy package descriptor present
+    expect(screen.getByText('策略資料夾')).toBeInTheDocument()
+    expect(screen.getByText('strategy.py')).toBeInTheDocument()
   })
 
   it('candidate present → lifecycle section (state + profile + next_action + decision trail)', async () => {

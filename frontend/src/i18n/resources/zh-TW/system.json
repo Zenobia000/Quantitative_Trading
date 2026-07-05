@@ -32,7 +32,8 @@
       },
       "local": {
         "cached": "本地已有",
-        "notCached": "未下載"
+        "notCached": "未下載",
+        "runtimeOnly": "執行時抓取"
       }
     },
     "ops": {

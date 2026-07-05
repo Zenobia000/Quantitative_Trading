@@ -90,10 +90,11 @@ function usageSnippet(key: string): string {
 function DatasetCardTile({ card }: { card: DatasetCard }) {
   const { t } = useTranslation('system')
   const cached = card.local === 'cached'
+  const bundleBacked = card.bundle_backed
   const freqLabel = FREQ_KEY[card.freq] ? t(`data.catalog.freq.${FREQ_KEY[card.freq]}`) : card.freq
   const usage = usageSnippet(card.key)
   return (
-    <details className={`group border border-border bg-surface ${cached ? '' : 'opacity-70'}`}>
+    <details className={`group border border-border bg-surface ${bundleBacked && !cached ? 'opacity-70' : ''}`}>
       <summary className="flex cursor-pointer select-none flex-wrap items-center gap-2 px-3 py-2 marker:text-text-muted">
         <span className="text-sm font-semibold text-text">{card.name_zh}</span>
         <StatusBadge tone="muted">{t(`data.catalog.category.${card.category}`)}</StatusBadge>
@@ -101,7 +102,9 @@ function DatasetCardTile({ card }: { card: DatasetCard }) {
           {freqLabel} · {t('data.catalog.since', { year: card.history_start })}
         </span>
         <span className="ml-auto text-xs">
-          {cached ? (
+          {!bundleBacked ? (
+            <StatusBadge tone="muted">{t('data.catalog.local.runtimeOnly')}</StatusBadge>
+          ) : cached ? (
             <span className="inline-flex items-center gap-1 text-gain">
               <span aria-hidden>●</span> {t('data.catalog.local.cached')}
             </span>
