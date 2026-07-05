@@ -50,7 +50,7 @@ import time  # noqa: E402
 
 import pytest  # noqa: E402
 
-from backtest_platform.jobs import job_store  # noqa: E402
+from backtest_platform.services.monitoring_ops.jobs import job_store  # noqa: E402
 
 _INGEST_REQ = {
     "symbols": ["2330", "2317"],

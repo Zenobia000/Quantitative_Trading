@@ -1,6 +1,5 @@
-"""Re-export shim (W5.2b) — moved to ``services.monitoring_ops.jobs``.
+"""Async job runner (8.H.6) — dependency-free in-process jobs with JSONL state.
 
-Async job runner (8.H.6) — dependency-free in-process jobs with JSONL state.
 The research loop must not block on a long sweep/ingest: ``POST`` a job, get a
 ``job_id`` back, poll ``/.../status``. This package provides the minimal job
 abstraction (no external queue service): a job store (append-only JSONL state snapshots),
