@@ -2,7 +2,8 @@
  * Release gate（UI route /deploy/gate?run_id=）。屬 Governance 子流程，檢查研究證據能否發布。
  * is_gate_checklist 接真實 GET /gate/spec（shipped，顯示硬門檻規格）。
  * 選定 candidate run（?run_id=）後：接真實 GET /research/validate/{id}/gate-state（validation_status
- * + stage + 轉移歷史）與 GET /research/validate/{id}/wfa（IS252/OOS63 rolling fold 日期窗）。
+ * + stage + 轉移歷史）、GET /research/validate/{id}/wfa（IS252/OOS63 rolling fold 日期窗）
+ * 與 GET /research/validate/{id}/health（13 指標 green/yellow/red 表，run metrics 投影）。
  * WFA scatter（per-fold IS/OOS 績效）需 parquet → pending；OOS vault / redline / signoff 亦 pending。
  */
 import { useState } from 'react'
@@ -11,10 +12,21 @@ import { useTranslation } from 'react-i18next'
 import { useGateSpec } from '../hooks/useGateSpec'
 import { useGateState } from '../hooks/useGateState'
 import { useValidateWfa } from '../hooks/useValidateWfa'
+import { useValidateHealth } from '../hooks/useValidateHealth'
+import type { HealthLight } from '../api/health'
 import { PendingNote } from '@/components/PendingNote'
 import { SkeletonRows } from '@/components/Skeleton'
 import { EnumBadge } from '@/components/EnumBadge'
+import { StatusBadge } from '@/components/StatusBadge'
 import { useErrorText } from '@/i18n/useErrorText'
+
+// 13 指標燈號 → StatusBadge tone。na = 缺漏指標（不靜默判綠）。
+const LIGHT_TONE: Record<HealthLight, 'gain' | 'warning' | 'error' | 'muted'> = {
+  green: 'gain',
+  yellow: 'warning',
+  red: 'error',
+  na: 'muted',
+}
 
 export function ValidateGatePage() {
   const { t } = useTranslation('research')
@@ -29,9 +41,12 @@ export function ValidateGatePage() {
 
   const gateState = useGateState(runId || undefined)
   const wfa = useValidateWfa(runId || undefined)
+  const health = useValidateHealth(runId || undefined)
   const gs = gateState.data?.data
   const folds = wfa.data?.data?.folds ?? []
   const wfaCriteria = wfa.data?.data?.criteria ?? {}
+  const healthReport = health.data?.data
+  const healthRows = healthReport?.rows ?? []
 
   return (
     <div>
@@ -197,6 +212,60 @@ export function ValidateGatePage() {
               ))}
             </ul>
           )}
+          </div>
+        </section>
+      )}
+
+      {/* 13 指標健康表 — 真實 GET /research/validate/{id}/health（run metrics 投影） */}
+      {runId && (
+        <section className="mb-3 border border-border bg-panel">
+          <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+            <h2 className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-text-muted">
+              {t('validate.health.title')}
+            </h2>
+            <span className="ml-auto text-xs text-text-muted">{t('validate.health.window')}</span>
+          </div>
+          <div className="p-3">
+            {health.isLoading ? (
+              <SkeletonRows rows={4} cols={3} />
+            ) : healthRows.length === 0 ? (
+              <p className="text-sm text-text-muted">{t('validate.health.empty')}</p>
+            ) : (
+              <>
+                <div className="mb-2 font-mono text-[11px] text-text-secondary">
+                  {t('validate.health.counts', {
+                    green: healthReport?.counts.green ?? 0,
+                    yellow: healthReport?.counts.yellow ?? 0,
+                    red: healthReport?.counts.red ?? 0,
+                    na: healthReport?.counts.na ?? 0,
+                  })}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-base text-left font-mono text-[10px] uppercase tracking-[0.14em] text-text-muted">
+                        <th className="p-2 font-medium">{t('validate.health.colIndicator')}</th>
+                        <th className="p-2 text-right font-medium">{t('validate.health.colValue')}</th>
+                        <th className="p-2 font-medium">{t('validate.health.colLight')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {healthRows.map((r) => (
+                        <tr key={r.key} className="border-b border-border/60 bg-surface hover:bg-row">
+                          <td className="p-2 text-text-secondary">{r.label}</td>
+                          <td className="p-2 text-right font-mono tabular">
+                            {r.value == null ? '—' : r.value}
+                          </td>
+                          <td className="p-2">
+                            <StatusBadge tone={LIGHT_TONE[r.light]}>{r.light.toUpperCase()}</StatusBadge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
           </div>
         </section>
       )}

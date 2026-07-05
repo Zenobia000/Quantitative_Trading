@@ -431,6 +431,15 @@
       "title": "WFA folds",
       "window": "(IS 252d + OOS 63d rolling 63d)",
       "empty": "This run has no folds (missing IS window or window too short)."
+    },
+    "health": {
+      "title": "Strategy Health Table (13 indicators)",
+      "window": "v2.md §4.3.1 green/yellow/red bands",
+      "empty": "This run has no metrics (not yet backtested or not persisted).",
+      "colIndicator": "Indicator",
+      "colValue": "Value",
+      "colLight": "Light",
+      "counts": "green {{green}} · yellow {{yellow}} · red {{red}} · NA {{na}}"
     }
   },
   "promote": {

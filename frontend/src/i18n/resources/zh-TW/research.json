@@ -431,6 +431,15 @@
       "title": "WFA folds",
       "window": "（IS 252d + OOS 63d rolling 63d）",
       "empty": "此 run 無 fold（缺 IS 區間或視窗過短）。"
+    },
+    "health": {
+      "title": "策略健康表（13 指標）",
+      "window": "v2.md §4.3.1 green/yellow/red 分帶",
+      "empty": "此 run 無 metrics（尚未回測或未持久化）。",
+      "colIndicator": "指標",
+      "colValue": "數值",
+      "colLight": "燈號",
+      "counts": "綠 {{green}} · 黃 {{yellow}} · 紅 {{red}} · NA {{na}}"
     }
   },
   "promote": {

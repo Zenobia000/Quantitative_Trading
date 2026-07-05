@@ -49,7 +49,7 @@
 | FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | ✅ done |
 | FE-R4 | frontend-reset | 重做 Governance/Risk/Trading：release gate、paper、target portfolio、order intent、risk decision、fill/reconciliation | FE-R2 | feature-branch | XL | ✅ done |
 | FE-R5 | frontend-reset | 重做 Operations：PnL、positions、alerts、incidents、jobs、audit，補 Playwright screenshot audit | FE-R3/4 | feature-branch | L | ✅ done（screenshot audit 見 §7.5 + review sign-off） |
-| FE-R6 | frontend-reset | 前端「待後端」全面盤點（A doc-drift／B 合理 pending／C 死碼）：先清 C 類死鷹架（WiredPage/ENDPOINT/pageSections + 孤兒 getHomeFleet/getSystemHealth/monitor useStrategies），router 塌縮為純 REAL map 迭代；續修 A 類過時註解、A′ 靜態 PendingNote→wired hook、接 validate health 表 | FE-R5 | worktree | M | 🚧 in progress（C 已清；A/A′/health 續）|
+| FE-R6 | frontend-reset | 前端「待後端」全面盤點（A doc-drift／B 合理 pending／C 死碼）：清 C 類死鷹架（WiredPage/ENDPOINT/pageSections + 孤兒 getHomeFleet/getSystemHealth/monitor useStrategies），router 塌縮為純 REAL map 迭代；修 A 類過時註解；A′ 靜態 PendingNote→wired hook（HomePage 假狀態、monitor 10 端點）；接 validate 13 指標 health 表（run metrics 真投影，非 pending） | FE-R5 | worktree | M | ✅ done（5 commits；typecheck 綠、235 fe tests）|
 
 ## 3.1 執行發現與解決（2026-07-05）
 
