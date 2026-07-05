@@ -1,14 +1,14 @@
 # Frontend Reset — Playwright Screenshot Audit 審查與簽核
 
 - **日期**: 2026-07-05
-- **審查者**: Claude (e2e-validation, 後端 session)
-- **標的**: `dev_docs/ui_audit/codex_2026-07-05/`（codex session 產生的 23 route × 3 viewport 截圖 + `manifest.json`）
-- **對應 WBS**: `18_refactor_wbs.md` §7.5 最後一項「Frontend reset 仍需 Playwright screenshot audit」；FE-R5 交付項
-- **對應驗收**: §7.4 Wall Street operations console 驗收準則
+- **審查者**: Codex
+- **標的**: `dev_docs/ui_audit/codex_2026-07-05/`（Codex UI audit run 產生的 23 route × 3 viewport 截圖 + `manifest.json`）
+- **對應 WBS**: `18_refactor_wbs.md` §7.5「Playwright screenshot audit 完成」；FE-R5 交付項
+- **對應驗收**: §7.4 Codex-style operations console 驗收準則
 
 ## 1. 方法
 
-codex 已用 `frontend/e2e/audit/screenshot.config.ts`（`npm run audit:screens`）對重設計後的前端跑過截圖 audit，涵蓋 desktop(1440)/laptop(1280)/mobile(390) 三 viewport、23 條 route，輸出至 `codex_2026-07-05/`。**但 codex 只產截圖、未做審查與簽核**（`ui_audit/` 為 untracked、§7.5 checkbox 仍未打勾）。本文件補上 audit 的審查半場：解析 `manifest.json` 全 route 狀態 + 逐 viewport 目視關鍵頁面，對照 §7.4 驗收準則出結論。
+已用 `frontend/e2e/audit/screenshot.config.ts`（`npm run audit:screens`）對重設計後的前端跑過截圖 audit，涵蓋 desktop(1440)/laptop(1280)/mobile(390) 三 viewport、23 條 route，輸出至 `codex_2026-07-05/`。本文件補上 audit review：解析 `manifest.json` 全 route 狀態 + 逐 viewport 目視關鍵頁面，對照 §7.4 Codex-style 驗收準則出結論。
 
 ## 2. 關鍵發現：audit 在「後端全 500」的降級狀態下截圖
 
@@ -16,7 +16,7 @@ codex 已用 `frontend/e2e/audit/screenshot.config.ts`（`npm run audit:screens`
 
 **根因 = audit 環境，非前端缺陷、非後端 code bug：**
 
-- API 需 PostgreSQL（`config/settings.py` + `require_postgres` 拒絕 shipped 預設密碼）。codex 的 audit 後端（`127.0.0.1:8083`）顯然未接上可用的 Postgres/seed，故所有 DB-backed endpoint 500。
+- API 需 PostgreSQL（`config/settings.py` + `require_postgres` 拒絕 shipped 預設密碼）。本次 audit 後端（`127.0.0.1:8083`）未接上可用的 Postgres/seed，故所有 DB-backed endpoint 500。
 - 後端 code 本身健康：`pytest -o addopts=""` **1443 passed / 3 skipped / 0 failed**；`lint-imports` 3 kept / 0 broken；`check_openapi_drift.py` `[OK] live spec matches frontend/openapi.json`。
 - 前端未 crash：**23/23 route `isNotFound: false`**，無白屏。
 
@@ -43,7 +43,7 @@ codex 已用 `frontend/e2e/audit/screenshot.config.ts`（`npm run audit:screens`
 
 ## 5. 後續（follow-up，非本簽核阻塞項）
 
-1. **Seeded happy-path 重跑（選作）**：`docker-compose up` Postgres + 設真 `POSTGRES_PASSWORD` + migrate + seed（runs/evals/strategies）+ 隔離 port 重跑 `audit:screens`，補驗 populated ledger 密度。因需 evaluate pipeline seed（codex 該次亦 `NO_RUN_SEEDED`），建議由持有 audit infra 的前端 session 於乾淨窗口執行，避免多 session 搶 port/DB。
+1. **Seeded happy-path 重跑（選作）**：`docker-compose up` Postgres + 設真 `POSTGRES_PASSWORD` + migrate + seed（runs/evals/strategies）+ 隔離 port 重跑 `audit:screens`，補驗 populated ledger 密度。因需 evaluate pipeline seed（本次亦 `NO_RUN_SEEDED`），建議於乾淨窗口執行，避免多 session 搶 port/DB。
 2. **`dev_docs/25_fe_be_rest_contract.md` 缺檔**：使 `check_openapi_drift.py` 一項 inventory 檢查 ERROR（pre-existing，與本次無關），待補。
 
 ## 影響評估
