@@ -45,10 +45,10 @@
 | W8.1 | 8-docs | 同步 dev_docs 08/09、撰 repositioning ADR、維護本 WBS 狀態欄 | W2.1 | direct-commit | M | ✅ |
 | FE-R0 | frontend-reset | 前端重設計 WBS/北極星：廢止舊 Grok/web_design 真相源，改採 Codex-style operations console，以 golden 七層為 IA | — | feature-branch | S | ✅ done |
 | FE-R1 | frontend-reset | 重寫全局 tokens、AppShell、nav、首頁 Command Center；建立交易/風控/營運密集系統視覺基線 | FE-R0 | feature-branch | M | ✅ done |
-| FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | ⏳ 本波 |
-| FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | ⏳ 本波 |
-| FE-R4 | frontend-reset | 重做 Governance/Risk/Trading：release gate、paper、target portfolio、order intent、risk decision、fill/reconciliation | FE-R2 | feature-branch | XL | 下一波 |
-| FE-R5 | frontend-reset | 重做 Operations：PnL、positions、alerts、incidents、jobs、audit，補 Playwright screenshot audit | FE-R3/4 | feature-branch | L | 下一波 |
+| FE-R2 | frontend-reset | 全頁 IA 重排：Data / Research / Governance / Trading / Risk / Operations / System；舊 Live OOS/Deployment 只作 Governance 子流程 | FE-R1 | feature-branch | L | ✅ done |
+| FE-R3 | frontend-reset | 重做 Research 工作台：策略庫、候選池、runs、report、compare、sweep 全改成研究 terminal + evidence ledger | FE-R2 | feature-branch | XL | ✅ done |
+| FE-R4 | frontend-reset | 重做 Governance/Risk/Trading：release gate、paper、target portfolio、order intent、risk decision、fill/reconciliation | FE-R2 | feature-branch | XL | ✅ done |
+| FE-R5 | frontend-reset | 重做 Operations：PnL、positions、alerts、incidents、jobs、audit，補 Playwright screenshot audit | FE-R3/4 | feature-branch | L | ✅ done（screenshot audit 見 §7.5 + review sign-off） |
 
 ## 3.1 執行發現與解決（2026-07-05）
 
