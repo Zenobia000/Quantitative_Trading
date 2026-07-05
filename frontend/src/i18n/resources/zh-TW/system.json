@@ -16,7 +16,18 @@
       "copyUsage": "複製取數呼叫",
       "docLink": "finlab 資料庫文件 ↗",
       "usedByLabel": "使用中的策略",
+      "download": "補本地資料",
       "since": "自 {{year}}",
+      "universe": {
+        "resource": "具名股票池",
+        "pending": "具名股票池（待後端目錄產出）",
+        "empty": "尚無具名股票池",
+        "default": "系統預設",
+        "label": "資料範圍",
+        "span": "期間",
+        "defaultSpan": "—",
+        "symbols": "{{n}} 檔"
+      },
       "category": {
         "all": "全部",
         "price_volume": "價量",

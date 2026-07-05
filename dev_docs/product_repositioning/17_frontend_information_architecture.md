@@ -78,6 +78,7 @@
 ### Data Dictionary（ADR-007 / SPEC-01）
 
 - 資料字典是 strategy authoring surface：查 finlab key、名稱、說明、頻率與 `data.get('<key>')` 用法。
+- 資料字典頁提供 Universe scope selector，讓 bundle-backed 資料卡的一鍵補本地動作能對應到選定池與 span。
 - `bundle_backed=true`：顯示本地已有 / 未下載二元 cache state。
 - `bundle_backed=false`：顯示 runtime fetch；不呈現成 `not_cached`，避免暗示可補本地 bundle。
 - 策略反向索引不在資料字典卡片顯示，改在策略詳情頁依策略聚合。
