@@ -18,7 +18,7 @@
 ### 後端（Python，uv）
 
 ```bash
-cd quant_platform/backtest_platform
+cd quant_platform
 cp .env.example .env                       # 填 FINLAB/FINMIND/SHIOAJI/DISCORD token（可選）
 uv sync --extra sprint1 --extra api --extra dev   # 主要棧：FinLab/FinMind、sim/vectorbt、FastAPI、測試
 uv run pytest -q                            # 全套單元 + 整合測試（1116 passed）
@@ -27,7 +27,7 @@ uv run pytest -q                            # 全套單元 + 整合測試（1116
 ### 資料庫（TimescaleDB，Docker）
 
 ```bash
-cd quant_platform/backtest_platform
+cd quant_platform
 docker compose up -d timescaledb
 POSTGRES_PASSWORD=quant_local_dev_password uv run python ../scripts/seed_demo_data.py
 ```
@@ -35,8 +35,8 @@ POSTGRES_PASSWORD=quant_local_dev_password uv run python ../scripts/seed_demo_da
 ### HTTP API（FastAPI）
 
 ```bash
-cd quant_platform/backtest_platform
-POSTGRES_PASSWORD=quant_local_dev_password uv run uvicorn backtest_platform.api.app:app --reload --port 8083
+cd quant_platform
+POSTGRES_PASSWORD=quant_local_dev_password uv run uvicorn quant_platform.apps.api.app:app --reload --port 8083
 # OpenAPI 文件：http://localhost:8083/docs（統一信封 {success,data,error,meta}，見 dev_docs/25）
 ```
 
@@ -69,11 +69,11 @@ build-universe → doe → go-gates → truth-gate → paper-replay
 | `paper-replay` | paper 重放 sim（收 forward OOS 前的最後一關） | ADR-029 |
 
 ```bash
-cd quant_platform/backtest_platform
+cd quant_platform
 # --dry-run 只印 config 不跑；真實資料工作流加 --extra data_paid（FinLab token）
-uv run python -m backtest_platform.research.cli build-universe --strategy inst_flow --dry-run
-uv run python -m backtest_platform.research.cli doe          --strategy inst_flow --dry-run
-uv run python -m backtest_platform.research.cli truth-gate   --strategy inst_flow
+uv run python -m quant_platform.services.research_validation.cli build-universe --strategy inst_flow --dry-run
+uv run python -m quant_platform.services.research_validation.cli doe          --strategy inst_flow --dry-run
+uv run python -m quant_platform.services.research_validation.cli truth-gate   --strategy inst_flow
 ```
 
 > 另有唯讀審判庭 `run-is`（逐條綠紅落 runs ledger）、`runs`/`compare`/`validate`/`promote-check` 研究 CLI，見 [dev_docs/06](dev_docs/06_api_design_specification.md) §3.5。
@@ -84,15 +84,17 @@ uv run python -m backtest_platform.research.cli truth-gate   --strategy inst_flo
 
 ```
 .
-├── quant_platform/          # Golden monorepo（W7.1 收斂）
-│   ├── backtest_platform/   # Python 研究/驗證平台（維持 backtest_platform import path）
-│   │   ├── src/backtest_platform/   # domain/application/adapters（research 三層）+ services/ 5 個 + api
-│   │   ├── tests/           # pytest（1453 passed）
-│   │   ├── docker/          # TimescaleDB init schema
-│   │   └── deploy/          # systemd/cron 運維單元
+├── quant_platform/          # Golden monorepo（backend 已碎解，import root = quant_platform）
+│   ├── pyproject.toml       # 單一 package src-layout（name=research_platform）
+│   ├── src/quant_platform/  # backend 碎解後的 golden 結構
+│   │   ├── apps/api/        # FastAPI composition root（uvicorn quant_platform.apps.api.app:app）
+│   │   ├── packages/        # domain / application / adapters / infrastructure / contracts
+│   │   └── services/        # data_platform / research_validation / governance_release /
+│   │                        #   strategy_runtime / risk_gate / execution_gateway / monitoring_ops
 │   ├── apps/web_console/    # React 19 + TS + Vite 前端（研究/監控/系統三 zone + Cmd-K）
-│   ├── packages/contracts/  # 跨層 published language（schemas + examples）
-│   ├── services/            # golden service 骨架（M1-M6 逐服務碎解目標）
+│   ├── tests/               # pytest（1454 passed, cov 92.87%）
+│   ├── docker/              # TimescaleDB init schema
+│   ├── deploy/              # systemd/cron 運維單元
 │   └── docs/research_notes/ # 策略點子筆記 + 歷史規格 archive
 ├── dev_docs/                # 工程文檔（INDEX + PRD + REST 契約 + ADR + 審查報告）
 ├── scripts/                 # check_openapi_drift 等 repo-root 工具

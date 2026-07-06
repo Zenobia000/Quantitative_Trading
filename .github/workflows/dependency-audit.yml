@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: quant_platform/backtest_platform
+        working-directory: quant_platform
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
