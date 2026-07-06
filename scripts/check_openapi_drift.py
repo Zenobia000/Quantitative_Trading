@@ -7,14 +7,14 @@ finds drift. Designed to run from the repo root, both locally
 
 Check A — OpenAPI drift
     Dumps the *live* OpenAPI spec from the running FastAPI app
-    (``backtest_platform.api.app:app``) via ``uv run`` and compares it, in a
+    (``quant_platform.apps.api.app:app``) via ``uv run`` and compares it, in a
     canonical (key-sorted) form, against the committed ``frontend/openapi.json``.
     A mismatch means the frontend contract snapshot is stale — regenerate it
     with ``npm run gen:api`` after re-dumping the spec.
 
 Check B — runs DDL / db_writer column alignment
     Parses the ``runs`` table column list from the TimescaleDB init DDL
-    (``backtest_platform/docker/timescaledb/init.sql``) and the ``_RUNS_COLS``
+    (``quant_platform/docker/timescaledb/init.sql``) and the ``_RUNS_COLS``
     tuple from ``data/db_writer.py`` (via ``ast`` — no import, no heavy deps).
     Every column db_writer inserts into must exist in the DDL, and every
     NOT NULL column without a DEFAULT must be supplied by db_writer. Either
@@ -47,13 +47,15 @@ from pathlib import Path
 # Paths (all derived from this file's location — repo-root independent)
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
-BACKEND_DIR = REPO_ROOT / "quant_platform" / "backtest_platform"
+# W-carve: backend package carved into quant_platform golden {apps,packages,services}
+# and pyproject lifted up to the quant_platform/ project root.
+BACKEND_DIR = REPO_ROOT / "quant_platform"
 # frontend moved to quant_platform/apps/web_console in W7.1 (monorepo relocation).
 OPENAPI_SNAPSHOT = REPO_ROOT / "quant_platform" / "apps" / "web_console" / "openapi.json"
 INIT_SQL = BACKEND_DIR / "docker" / "timescaledb" / "init.sql"
-# _RUNS_COLS moved db_writer.py → runs_writer.py in W5.2c (db_writer split).
-RUNS_WRITER = BACKEND_DIR / "src" / "backtest_platform" / "data" / "runs_writer.py"
-API_DIR = BACKEND_DIR / "src" / "backtest_platform" / "api"
+# _RUNS_COLS lives in packages/infrastructure/runs_writer.py after the carve.
+RUNS_WRITER = BACKEND_DIR / "src" / "quant_platform" / "packages" / "infrastructure" / "runs_writer.py"
+API_DIR = BACKEND_DIR / "src" / "quant_platform" / "apps" / "api"
 ENVELOPE_PY = API_DIR / "envelope.py"
 ROUTERS_DIR = API_DIR / "routers"
 
@@ -86,7 +88,7 @@ def dump_live_openapi() -> dict:
     os.close(fd)
     dump_code = (
         "import json;"
-        "from backtest_platform.api.app import app;"
+        "from quant_platform.apps.api.app import app;"
         f"json.dump(app.openapi(), open({tmp_path!r}, 'w'), sort_keys=True)"
     )
     try:
