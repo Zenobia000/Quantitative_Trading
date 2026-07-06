@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: quant_platform/backtest_platform
+        working-directory: quant_platform
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: quant_platform/backtest_platform
+        working-directory: quant_platform
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
@@ -98,7 +98,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install API deps (script imports the FastAPI app)
-        working-directory: quant_platform/backtest_platform
+        working-directory: quant_platform
         run: uv sync --extra api
       - name: Check OpenAPI + runs DDL contract drift
         run: python3 scripts/check_openapi_drift.py
