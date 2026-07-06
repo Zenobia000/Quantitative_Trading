@@ -18,7 +18,7 @@ from typing import Any
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-BACKTEST_ROOT = REPO_ROOT / "backtest_platform"
+BACKTEST_ROOT = REPO_ROOT / "quant_platform"
 SRC_ROOT = BACKTEST_ROOT / "src"
 CONTRACT_EXAMPLES = REPO_ROOT / "packages" / "contracts" / "examples"
 
@@ -145,15 +145,15 @@ def _series_for(run_id: str, *, points: int = 24, start: float = 10_000_000.0) -
 
 
 def _seed_ledgers(reports_root: Path) -> dict[str, int]:
-    from backtest_platform.governance.live_oos_queue import DEFAULT_QUEUE_PATH
-    from backtest_platform.governance.promotion_store import DEFAULT_PROMOTION_PATH
-    from backtest_platform.governance.watch_registry import DEFAULT_WATCH_PATH
-    from backtest_platform.orchestration.after_close import DEFAULT_MARKER_PATH
-    from backtest_platform.research.evaluation.report_pack import write_report_pack
-    from backtest_platform.research.evaluation.store import DEFAULT_EVALUATIONS_PATH
-    from backtest_platform.research.run_series_store import write_series
-    from backtest_platform.research.runs_store import DEFAULT_RUNS_PATH
-    from backtest_platform.research.validation_store import DEFAULT_VALIDATION_PATH
+    from quant_platform.services.governance_release.live_oos_queue import DEFAULT_QUEUE_PATH
+    from quant_platform.services.governance_release.promotion_store import DEFAULT_PROMOTION_PATH
+    from quant_platform.services.governance_release.watch_registry import DEFAULT_WATCH_PATH
+    from quant_platform.services.strategy_runtime.after_close import DEFAULT_MARKER_PATH
+    from quant_platform.services.research_validation.evaluation.report_pack import write_report_pack
+    from quant_platform.services.research_validation.evaluation.store import DEFAULT_EVALUATIONS_PATH
+    from quant_platform.packages.adapters.run_series_store import write_series
+    from quant_platform.packages.adapters.runs_store import DEFAULT_RUNS_PATH
+    from quant_platform.packages.adapters.validation_store import DEFAULT_VALIDATION_PATH
 
     evaluation = _load_example("evaluation_result.example.json")
     candidate_payload = _load_example("candidate_pool.example.json")
@@ -370,14 +370,9 @@ def _seed_data_cache(data_root: Path) -> dict[str, int]:
 
 
 def _seed_db() -> dict[str, int]:
-    from backtest_platform.data.db_writer import (
-        DBConfig,
-        _connection,
-        upsert_equity_snapshots,
-        upsert_fills,
-        upsert_runs,
-        upsert_signals,
-    )
+    from quant_platform.packages.infrastructure.db_kernel import DBConfig, _connection
+    from quant_platform.services.monitoring_ops.telemetry_writer import upsert_equity_snapshots, upsert_fills, upsert_signals
+    from quant_platform.packages.infrastructure.runs_writer import upsert_runs
 
     cfg = DBConfig.from_env()
     run_ids = list(RUN_IDS.values())

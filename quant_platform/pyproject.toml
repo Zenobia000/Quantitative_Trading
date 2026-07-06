@@ -1,0 +1,227 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research_platform"
+version = "0.1.0"
+description = "Four-Layer Resonance Strategy Backtest Platform for Taiwan Stocks"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"  # cap retained for native-dep wheels; zipline-reloaded (prior 3.12-cap driver) removed 2026-07-03 (ADR-037)
+license = { text = "Proprietary" }
+authors = [{ name = "Self" }]
+
+dependencies = [
+    # Data
+    # pandas 2.x + numpy 2.x (zipline-reloaded 3.1.1 直接相容；2026-06-01 升級開放 vectorbt)
+    "pandas>=2.0,<3",
+    "numpy>=2.0,<3",
+    "pyarrow>=15.0",
+    "duckdb>=1.0",
+    "psycopg2-binary>=2.9",
+    # SQLAlchemy 升回 2.x（zipline-reloaded 3.0.4 支援，比 zipline-tej 進步）
+    "sqlalchemy>=2.0",
+    "FinMind>=1.7",
+    # Strategy / Math
+    "scipy>=1.12",
+    # Note: ta-lib-bin removed 2026-06-01 (Spike S1) — M1 indicators 全自寫純 numpy
+    # /pandas，無 import talib；ta-lib-bin 0.4.26 也無 Windows wheel
+    # Backtest engines (installed selectively per milestone)
+    # vectorbt has heavy native deps; opt-in via extras.
+    # Utilities
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "loguru>=0.7",
+    "click>=8.1",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+# Taiwan trading calendar: exchange-calendars XTAI sessions — the after-close
+# scheduler's precise holiday gate (runtime/trading_calendar.py). Was the M2
+# `mainframe` extra (zipline-reloaded engine, ADR-013); zipline removed 2026-07-03
+# (ADR-037 supersedes ADR-013). exchange-calendars is kept — it is a LIVE calendar
+# dependency of the scheduler, not a zipline artifact.
+calendar = [
+    "exchange-calendars>=4.5",
+]
+# Vector engine for grid/WFA optimization — see ADR-007
+# 2026-06-01 起與 zipline-reloaded 3.1.1 / pandas 2 同棧相容（ADR-013 升級）
+engines = [
+    "vectorbt>=1.0",
+]
+# Paid data source — see ADR-006 (Note: requires FINLAB_API_TOKEN)
+data_paid = [
+    "finlab>=1.2",
+]
+validation = [
+    "quantstats>=0.0.62",
+    "pyfolio-reloaded>=0.9.6",
+    "empyrical-reloaded>=0.5.10",
+    "hmmlearn>=0.3",
+    "ruptures>=1.1",
+]
+api = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "httpx>=0.27",
+    "websockets>=12",
+]
+broker = [
+    "shioaji>=1.2",
+]
+# Alerts — Discord notifier only. System metrics dashboards were removed from the
+# local stack; FastAPI/React now own the operator console.
+monitoring = [
+    "httpx>=0.27",
+]
+dev = [
+    # pytest pinned <9: pytest-asyncio 1.x still calls Package.obj at collectstart,
+    # which pytest 9 removed → "AttributeError: 'Package' object has no attribute
+    # 'obj'" breaks collection of the tests/<pkg>/ sub-packages. Pin until
+    # pytest-asyncio ships a pytest-9-compatible release (tracked, tech-debt #4).
+    "pytest>=8.3,<9",
+    "pytest-cov>=4.1",
+    "pytest-asyncio>=0.24,<2",
+    "ruff>=0.3",
+    "mypy>=1.9",
+    # Architecture fitness functions — locks the golden layer-2 boundary
+    # (Research never imports broker/execution). See ADR-R03 + 18_refactor_wbs.
+    "import-linter>=2.0",
+]
+# Convenience: install M2 Sprint 1 requirements
+sprint1 = [
+    # zipline-reloaded removed 2026-07-03 (ADR-037); exchange-calendars kept for
+    # the trading-calendar gate.
+    "exchange-calendars>=4.5",
+    "finlab>=1.2",
+    "shioaji>=1.2",
+    # monitoring required for Discord notifier tests
+    "httpx>=0.27",
+    # Sprint 2: tearsheet (CLI --tearsheet) + validation comparison
+    "quantstats>=0.0.62",
+    "empyrical-reloaded>=0.5.10",
+    # Sprint 2 cross-check (pandas 2 stack)
+    "vectorbt>=1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra --strict-markers --cov=quant_platform --cov-report=term-missing --cov-fail-under=80"
+asyncio_mode = "strict"
+markers = [
+    "integration: requires external services (DB, FinMind API)",
+    "slow: takes more than 5 seconds",
+]
+
+# Coverage gate — Stream D Wave 2 ratchet (2026-06-02).
+# Wave 1 baseline (PR #12): 65% (transitional).
+# Wave 2: TEST-002 (algorithms 0→97%), TEST-003 (cli 0→95%),
+# TEST-004 (schemas), TEST-005 (pipeline 0→100%), TEST-006 (finmind_etl 75→98%).
+# Achieved: ~93%; gate locked at 80% to give breathing room for future refactors
+# while staying above ADR-016 KPI of 80%.
+[tool.coverage.run]
+source = ["src/quant_platform"]
+branch = true
+omit = [
+    # Skeleton / namespace packages with no production code (per Q4 decision)
+    "src/quant_platform/apps/__init__.py",
+    "src/quant_platform/packages/__init__.py",
+    "src/quant_platform/packages/infrastructure/__init__.py",
+    "src/quant_platform/services/__init__.py",
+    "src/quant_platform/packages/adapters/data_feed/__init__.py",
+    "src/quant_platform/services/research_validation/strategies/__init__.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "\\.\\.\\.$",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]  # handled by formatter
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+# --- Architecture Fitness Functions (import-linter) -------------------------
+# Locks the golden layer-2 boundary: Research & Validation never imports the
+# execution/risk/ops layers, and pure research-domain code never imports web/DB/
+# broker frameworks. Run: `lint-imports`. See ADR-R03 + dev_docs/product_
+# repositioning/18_refactor_wbs.md. Contracts tighten as extraction waves land.
+[tool.importlinter]
+root_package = "quant_platform"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layer-2 (research_validation + shared packages) must not import execution/risk/ops services"
+type = "forbidden"
+source_modules = [
+    "quant_platform.packages.domain",
+    "quant_platform.packages.application",
+    "quant_platform.packages.adapters",
+    "quant_platform.services.research_validation",
+]
+forbidden_modules = [
+    # The execution/risk/ops bounded services. Research & shared libs never import them
+    # (ADR-R03/R05). data_platform is an upstream data provider, not forbidden here.
+    "quant_platform.services.risk_gate",
+    "quant_platform.services.execution_gateway",
+    "quant_platform.services.strategy_runtime",
+    "quant_platform.services.monitoring_ops",
+]
+
+[[tool.importlinter.contracts]]
+name = "Layer-2 (research_validation + shared packages) must not import Layer-3 governance"
+type = "forbidden"
+source_modules = [
+    "quant_platform.packages.domain",
+    "quant_platform.packages.application",
+    "quant_platform.packages.adapters",
+    "quant_platform.services.research_validation",
+]
+forbidden_modules = [
+    "quant_platform.services.governance_release",
+]
+ignore_imports = [
+    # research_validation.cli is the composition root for the `candidates` CLI group:
+    # the one place that wires the concrete governance live-OOS queue into
+    # candidate_store's injected enqueue port (W1.3). Composition roots are exempt.
+    "quant_platform.services.research_validation.cli -> quant_platform.services.governance_release.live_oos_queue",
+]
+# Direction is one-way: governance depends on research outputs, never the reverse
+# (ADR-R02). candidate_store's live-OOS enqueue is inverted via an injected port.
+
+[[tool.importlinter.contracts]]
+name = "Pure domain (strategies/validation/packages.domain) must not import web/DB/broker frameworks"
+type = "forbidden"
+source_modules = [
+    "quant_platform.services.research_validation.strategies",
+    "quant_platform.services.research_validation.validation",
+    # The extracted domain layer is framework/DB/IO-free by design; lock it so future
+    # edits can't silently pull in web/DB/broker deps.
+    "quant_platform.packages.domain",
+]
+forbidden_modules = [
+    "sqlalchemy",
+    "fastapi",
+    "shioaji",
+    "requests",
+]

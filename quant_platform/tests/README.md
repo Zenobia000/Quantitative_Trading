@@ -1,3 +1,3 @@
 # tests/
 
-Migration target for `backtest_platform/tests/` — tests move with their package/service (W7.1 big-bang).
+Backend test suite for the `quant_platform` package. Tests are organised by their target package/service; `pyproject.toml` sets `testpaths = ["tests"]` and `pythonpath = ["src"]`.
