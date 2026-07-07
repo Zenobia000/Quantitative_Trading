@@ -62,10 +62,10 @@ ENV/
 data/raw/
 data/processed/
 data/cache/
-backtest_platform/data/
-backtest_platform/data/raw/
-backtest_platform/data/processed/
-backtest_platform/reports/
+# backend carved into quant_platform/ (W7.1 + carve); local runtime data/output
+quant_platform/data/
+quant_platform/reports/
+quant_platform/.env
 
 # =====================================================
 # Claude Code — 設定保留，logs/cache 不要
