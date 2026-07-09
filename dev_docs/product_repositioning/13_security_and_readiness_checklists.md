@@ -8,6 +8,7 @@
 - 交易預設 fail closed。
 - Audit log append-only。
 - Secrets 不進 git、artifact、log、frontend。
+- 研究 agent（Claude Code）不持有 broker/finlab 憑證，只碰 research 表面（ADR-009）。
 
 ## B. 資料安全
 
@@ -38,6 +39,10 @@
 | Kill switch 可 halt all | [ ] |
 | Fill ingestion idempotent | [ ] |
 | Reconciliation mismatch => halt next trading | [ ] |
+| 研究 agent 不 import/呼叫 execution/broker（research⊄services） | [ ] |
+| 研究 agent 不持有憑證（finlab/broker 走 env / secret manager） | [ ] |
+| sweep/DOE trials 誠實計數，DSR deflation 未被繞過 | [ ] |
+| 跨 governance 閘門（select-live-oos / promote）須人核准 | [ ] |
 
 ## E. 生產準備
 

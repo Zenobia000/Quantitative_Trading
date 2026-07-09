@@ -214,6 +214,9 @@ erDiagram
 - 不做 K8s / multi-region HA。
 - 不讓 Research 直連 Broker API。
 - 不把 backtest equity 當 live position。
+- 不自建自然語言→code 編譯器（Claude Code 即是；ADR-009）。
+- 不做「UI 背後起 headless agent 幫終端使用者寫策略」的 runtime 引擎，也不做多租戶 SaaS。
+- 研究 agent 不接 MCP：用 Python + finlab SDK + `research.cli`；邊界靠 import-linter + 人 review，非 MCP sandbox。
 
 ## 8. Observability
 
@@ -268,7 +271,9 @@ flowchart TB
 | Stream-aligned | 產品與策略生命週期 |
 | Platform | Data、Foundation、CI/CD |
 | Complicated-subsystem | Research validation、Risk |
-| Enabling | 文件、模板、runbook |
+| Enabling | 文件、模板、runbook、skills + `strategies/CLAUDE.md` |
+
+Claude Code（dev-time research harness）是 Stream-aligned 策略生命週期的加速器：agent 自主跑 research 閉環，operator 監督並在 governance 閘門核准。授權邊界（research 自主 / execution off-limits / governance 人審）見 ADR-009 / SPEC-03 §5。
 
 ## 12. Migration Path
 

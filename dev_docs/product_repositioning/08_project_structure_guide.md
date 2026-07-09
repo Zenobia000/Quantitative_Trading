@@ -82,6 +82,22 @@ Python 檔案或任意執行使用者程式碼；一律消費後端 read model�
 - `GET /strategies/{strategy}/optimization-schema`：DOE grid read model
 - `POST /runs` / `POST /research/workflows/doe`：執行單次 run / 參數最佳化
 
+## 4.2 AI 研究撰寫 harness 面（ADR-009 / SPEC-03）
+
+Claude Code（dev-time）在 repo 內以四個面取用平台，**無 MCP**：
+
+```text
+repo
+├── strategies/<pkg>/          ① 撰寫面：agent 寫 strategy package
+├── strategies/CLAUDE.md       ④ 紀律面：策略撰寫鐵律（execution off-limits、trials 誠實）
+├── Claude Code skills         ④ 紀律面：策略撰寫 / 防過擬合 / 資料字典判讀
+├── strategies/common/ 等積木   ② 積木面：panel/mechanics/metrics 可 import 積木（authoring SDK）
+└── research.cli + importable   ③ 管道面：agent 跑回測/驗證/評估（非 MCP）
+```
+
+- agent 用 **Python + finlab SDK（`data.search` 離線可用）+ `research.cli`** 取用平台，不接 MCP tool 層。
+- 邊界不靠 MCP：`research/strategies/validation ⊄ services` 由 import-linter 物理強制 + 人 review PR（見 §5）。
+
 ## 5. 禁止結構
 
 - `research_validation` 不可 import `execution_gateway.adapters.broker`。

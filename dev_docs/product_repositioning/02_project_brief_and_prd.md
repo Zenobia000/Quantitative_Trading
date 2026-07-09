@@ -37,6 +37,7 @@
 | :--- | :--- | :--- |
 | US-RES-001 | As a researcher, I want 用因子與規則產生選股清單 so that 我能驗證 Alpha。 | 產出 `AlphaSignal`、`TargetPortfolio`、`BacktestReport`。 |
 | US-RES-002 | As a researcher, I want WFA/DSR/PBO so that 我不被過擬合騙。 | sweep trials 全留存，不只保存最佳結果。 |
+| US-RES-003 | As an operator, I want 驅動 Claude Code（dev-time）撰寫策略並跑 research 閉環 so that 不必手刻每個 package。 | agent 用 `research.cli` + finlab SDK 產出通過 conformance 的策略；execution off-limits；跑越多 trial 越誠實 increment trials counter（ADR-009 / SPEC-03）。 |
 
 ### Epic C: Governance & Release
 
@@ -65,7 +66,7 @@
 | 類別 | 範圍內 |
 | :--- | :--- |
 | Data | EOD OHLCV、財報、籌碼、月營收、公司行動、trading calendar、bundle lineage |
-| Research | 因子、選股、進出場、停利停損、加減碼、portfolio simulation、backtest、WFA |
+| Research | 因子、選股、進出場、停利停損、加減碼、portfolio simulation、backtest、WFA；策略撰寫經 Claude Code dev-time harness（ADR-009） |
 | Governance | strategy definition、parameter store、approval、paper/watch、version、rollback |
 | Production | strategy runtime、portfolio engine、risk gate、personal execution、broker adapter |
 | Monitoring | PnL、drawdown、decay、reconciliation、alert、runbook |

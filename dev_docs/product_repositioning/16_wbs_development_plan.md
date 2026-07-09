@@ -72,10 +72,16 @@
 | 11.1 | Strategy Package descriptor：`GET /strategies/{strategy}/asset`（SPEC-02、ADR-008、ADR-R06）— ✅ 落地 | 4.1, 8.1 |
 | 11.2 | New Run 動態 params form：由 `config_schema` 產生 guided params，raw JSON 僅 advanced fallback（SPEC-02）— ✅ 落地 | 11.1 |
 | 11.3 | DOE 最佳化 schema + grid editor：`GET /strategies/{strategy}/optimization-schema` + `POST /research/workflows/doe`（SPEC-02）— ✅ 落地 | 11.1 |
+| 12.0 | Claude Code 研究撰寫 harness 定位固化：SPEC-03 + ADR-009 + INDEX/WBS 同步（dev-time、無 MCP、授權矩陣、邊界鐵律）— 🟡 spec draft | 11.1 |
+| 12.1 | P0 skills + `strategies/CLAUDE.md`：策略撰寫規格 / 防過擬合紀律（trials 誠實計數）/ 資料字典判讀；純 filesystem + `research.cli` 端到端產出通過 conformance 的策略 | 12.0 |
+| 12.2 | P1：agent「保留候選」接既有 run pipeline，evidence ledger 與 UI 一致 | 12.1 |
+| 12.3 | P2：從 agent 反覆手刻 pattern 抽出/硬化 authoring SDK 積木 | 12.1 |
 
 > **WP 10（具名股票池對接）**：真相源為 `specs/SPEC-01-named-universe-artifact.md` + `adrs/ADR-007`。收斂前端資料管理四功能（資料字典/資料匯入/股票池建置/資料集清單）的斷線。finlab SDK 事實已本機實測（見 SPEC-01 §2）。
 >
 > **WP 11（策略資產包與動態研究 UI）**：真相源為 `specs/SPEC-02-dynamic-strategy-params-and-optimization-ui.md` + ADR-008 + `adrs/ADR-R06-strategy-package-read-models.md`。策略撰寫留在 repo/AI coding/IDE；UI 透過策略 package descriptor、config schema 與 DOE schema 互動。
+>
+> **WP 12（Claude Code 研究撰寫 harness）**：真相源為 `specs/SPEC-03-claude-code-authoring-harness.md` + ADR-009（於 `04_architecture_decision_records.md`，延續 golden 產品 ADR 連號）。把 WP 11 的「AI coding/IDE 撰寫」具體化為 Claude Code dev-time harness：無 MCP、非 runtime 引擎、非 SaaS；授權矩陣（research 自主 / execution off-limits / governance 人審）與 trials 誠實計數鐵律見 SPEC-03 §5–6。地毯掃描結論見 `.claude/context/decisions/explore-2026-07-06-0158-research-surface-agent-feasibility.md`。
 
 ## 5. 風險管理
 

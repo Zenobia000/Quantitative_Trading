@@ -9,6 +9,7 @@
 - 是否新增或更新 contract/schema。
 - 是否有 negative path 測試。
 - 是否通過 architecture fitness functions。
+- AI 撰寫的策略是否通過 conformance gate、sweep/DOE trials 是否誠實計入 trials counter。
 
 ## 2. 高風險審查點
 
@@ -20,6 +21,7 @@
 | Data | bundle lineage、DQ gate |
 | Security | secrets 不進 log/git |
 | Observability | trace_id、strategy_id、package_id |
+| AI 撰寫 harness | agent 只碰 research；execution off-limits；trials 誠實；跨 governance 閘門須人核准（ADR-009） |
 
 ## 3. 重構時機
 

@@ -37,6 +37,31 @@ Feature: Research boundary
     And it does not create any BrokerOrder
 ```
 
+### Feature: AI 研究撰寫 harness 紀律（ADR-009 / SPEC-03）
+
+```gherkin
+Feature: Research authoring agent discipline
+  Scenario: Agent stays inside the research surface
+    Given a Claude Code research agent authoring a strategy
+    When the agent runs research work
+    Then it only uses research.cli and importable research functions
+    But it does not invoke orchestration.cli or any broker/execution path
+    And it does not hold broker or finlab credentials
+
+  Scenario: Honest trials accounting keeps DSR deflation valid
+    Given the agent runs N sweep or DOE trials
+    When it selects a candidate
+    Then it increments the trials counter by N
+    And the deflated Sharpe reflects the true search count
+    And a candidate that only survives un-deflated is not promoted
+
+  Scenario: Agent stops at the governance gate
+    Given the agent has produced a candidate with evidence
+    When the candidate reaches select-live-oos or promote
+    Then a human approves with an audit reason
+    And the agent does not cross the gate autonomously
+```
+
 ### Feature: Governance 發布閘門
 
 ```gherkin
